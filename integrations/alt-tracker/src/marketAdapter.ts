@@ -56,6 +56,34 @@ export async function fetchSpotObservation(exchange: Exchange, asset: string): P
   };
 }
 
+export type PriceSelection = {
+  observation: Observation;
+  rank_basis: "configured_priority_then_exchange_availability";
+};
+
+const exchangePriority: Exchange[] = ["binance", "okx", "bybit", "mexc"];
+
+/**
+ * Returns one canonical display price.
+ * Priority is explicit: Binance first; fallback follows the configured exchange rank.
+ * The ranking must be maintained from a published exchange-quality ranking, while
+ * availability of the requested asset is checked in real time.
+ */
+export async function fetchDisplaySpotPrice(asset: string): Promise<PriceSelection> {
+  for (const exchange of exchangePriority) {
+    try {
+      const observation = await fetchSpotObservation(exchange, asset);
+      return {
+        observation,
+        rank_basis: "configured_priority_then_exchange_availability"
+      };
+    } catch {
+      // Continue to the next ranked exchange when the pair is unavailable or the source fails.
+    }
+  }
+  throw new Error("No ranked exchange provides a valid spot price for " + asset);
+}
+
 export async function fetchBtcSpotObservations(): Promise<Observation[]> {
   const exchanges: Exchange[] = ["binance", "bybit", "okx", "mexc"];
   const results = await Promise.allSettled(
