@@ -1,12 +1,113 @@
 {
-  "registry_version": "1.0.0",
+  "registry_version": "1.0.1",
   "sources": [
-    {"source_id":"protocol.primary","name":"Bitcoin Developer Reference","type":"primary","url":"https://developer.bitcoin.org/reference/","priority":1,"reliability":"high","access_method":"documentation/RPC","notes":"Protocol and node-level facts."},
-    {"source_id":"network.primary","name":"Mempool.space","type":"primary","url":"https://mempool.space/","priority":1,"reliability":"high","access_method":"REST/WebSocket API","notes":"Public Bitcoin network, mempool and Lightning data. API documentation confirms REST and WebSocket endpoints.","evidence":"citeturn0search0turn0search6"},
-    {"source_id":"market.primary","name":"Market data provider","type":"market","url":null,"priority":2,"reliability":"to_validate","access_method":"adapter","notes":"Production provider to be selected and normalized before automated deployment."},
-    {"source_id":"institutional.primary","name":"Farside Investors — Bitcoin ETF flows","type":"institutional","url":"https://farside.co.uk/btc/","priority":2,"reliability":"high","access_method":"web/table","notes":"US spot Bitcoin ETF flow and holdings data; requires parser/reconciliation."},
-    {"source_id":"analytics","name":"Glassnode","type":"analytics","url":"https://glassnode.com/","priority":3,"reliability":"high","access_method":"API/dashboard","notes":"On-chain and market analytics; methodology must be preserved with observations."},
-    {"source_id":"lightning.primary","name":"Mempool.space Lightning","type":"primary","url":"https://mempool.space/docs/api/rest","priority":1,"reliability":"high","access_method":"REST API","notes":"Lightning network stats including nodes, channels and capacity.","evidence":"citeturn0search0"},
-    {"source_id":"macro.primary","name":"US Treasury / Federal Reserve / BLS","type":"official","url":"https://home.treasury.gov/","priority":1,"reliability":"high","access_method":"official releases/API","notes":"US macroeconomic series; individual metric adapters should map to the authoritative agency."}
+    {
+      "source_id": "protocol.primary",
+      "name": "Bitcoin Developer Reference",
+      "type": "primary",
+      "url": "https://developer.bitcoin.org/reference/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "documentation/RPC",
+      "notes": "Protocol and node-level facts."
+    },
+    {
+      "source_id": "network.primary",
+      "name": "Mempool.space",
+      "type": "primary",
+      "url": "https://mempool.space/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket API",
+      "notes": "Public Bitcoin network, mempool and Lightning data. API documentation confirms REST and WebSocket endpoints.",
+      "evidence": "citeturn0search0turn0search6"
+    },
+    {
+      "source_id": "market.primary",
+      "name": "Market data provider",
+      "type": "market",
+      "url": null,
+      "priority": 2,
+      "reliability": "to_validate",
+      "access_method": "adapter",
+      "notes": "Production provider to be selected and normalized before automated deployment."
+    },
+    {
+      "source_id": "institutional.primary",
+      "name": "Farside Investors — Bitcoin ETF flows",
+      "type": "institutional",
+      "url": "https://farside.co.uk/btc/",
+      "priority": 2,
+      "reliability": "high",
+      "access_method": "web/table",
+      "notes": "US spot Bitcoin ETF flow and holdings data; requires parser/reconciliation."
+    },
+    {
+      "source_id": "analytics",
+      "name": "Glassnode",
+      "type": "analytics",
+      "url": "https://glassnode.com/",
+      "priority": 3,
+      "reliability": "high",
+      "access_method": "API/dashboard",
+      "notes": "On-chain and market analytics; methodology must be preserved with observations."
+    },
+    {
+      "source_id": "lightning.primary",
+      "name": "Mempool.space Lightning",
+      "type": "primary",
+      "url": "https://mempool.space/docs/api/rest",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST API",
+      "notes": "Lightning network stats including nodes, channels and capacity.",
+      "evidence": "citeturn0search0"
+    },
+    {
+      "source_id": "macro.primary",
+      "name": "US Treasury / Federal Reserve / BLS",
+      "type": "official",
+      "url": "https://home.treasury.gov/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "official releases/API",
+      "notes": "US macroeconomic series; individual metric adapters should map to the authoritative agency."
+    },
+    {
+      "source_id": "market.binance",
+      "name": "Binance Spot Market API",
+      "type": "primary",
+      "url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST"
+    },
+    {
+      "source_id": "market.bybit",
+      "name": "Bybit V5 Market API",
+      "type": "primary",
+      "url": "https://bybit-exchange.github.io/docs/v5/market/tickers",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket"
+    },
+    {
+      "source_id": "market.okx",
+      "name": "OKX V5 Market API",
+      "type": "primary",
+      "url": "https://www.okx.com/docs-v5/en/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket"
+    },
+    {
+      "source_id": "market.mexc",
+      "name": "MEXC Spot Market API",
+      "type": "primary",
+      "url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/",
+      "priority": 1,
+      "reliability": "to_validate",
+      "access_method": "REST"
+    }
   ]
 }
