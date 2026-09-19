@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "name": "Crypto Asset Universe v1",
+  "max_assets": 50,
+  "selection_policy": {
+    "mode": "curated",
+    "principle": "Only assets explicitly included in this registry are available for tracking.",
+    "selection_question": "If this project disappeared, would our understanding of cryptoeconomy development materially change?",
+    "not_allowed": [
+      "blind top-N by market capitalization",
+      "automatic inclusion of every exchange-listed asset",
+      "user-added arbitrary assets outside the approved universe"
+    ]
+  },
+  "ui_policy": {
+    "add_button": true,
+    "label": "+ Добавить",
+    "search": true,
+    "show_only_approved_assets": true,
+    "show_already_added_assets": false,
+    "allow_arbitrary_symbol": false,
+    "max_user_selected_assets": 50
+  },
+  "asset_fields": [
+    "asset_id",
+    "symbol",
+    "name",
+    "category",
+    "research_tier",
+    "enabled",
+    "binance_symbol",
+    "fallback_symbols"
+  ],
+  "categories": [
+    "core",
+    "l1_infrastructure",
+    "defi",
+    "stablecoin_payments",
+    "ai_compute",
+    "rwa_tokenization",
+    "bitcoin_ecosystem",
+    "special_cases"
+  ],
+  "research_tiers": {
+    "A": "full research and monitoring",
+    "B": "standard research and monitoring",
+    "C": "market/basic monitoring"
+  },
+  "assets": []
+}
