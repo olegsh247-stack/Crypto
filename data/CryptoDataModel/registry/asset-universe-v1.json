@@ -46,5 +46,21 @@
     "B": "standard research and monitoring",
     "C": "market/basic monitoring"
   },
-  "assets": []
+  "assets": [
+    {
+      "asset_id": "dash",
+      "symbol": "DASH",
+      "name": "Dash",
+      "category": "l1_infrastructure",
+      "research_tier": "B",
+      "enabled": true,
+      "binance_symbol": "DASHUSDT",
+      "fallback_symbols": {
+        "okx": "DASH-USDT",
+        "bybit": "DASHUSDT",
+        "mexc": "DASHUSDT"
+      },
+      "research_reason": "Established PoW payments-focused L1 with a distinctive second-tier masternode architecture, InstantSend, CoinJoin, ChainLocks and on-chain treasury governance."
+    }
+  ]
 }
