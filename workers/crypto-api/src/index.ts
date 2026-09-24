@@ -54,6 +54,48 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/assets" || url.pathname === "/api/assets/") {
+      if (!env.DATABASE_URL) {
+        return json(
+          { status: "error", service: "crypto-api", database: "not_configured" },
+          500
+        );
+      }
+
+      try {
+        const sql = neon(env.DATABASE_URL);
+        const assets = await sql`
+          select
+            asset_id,
+            symbol,
+            name,
+            category,
+            research_tier,
+            enabled,
+            binance_symbol,
+            fallback_symbols,
+            research_reason
+          from assets
+          where enabled = true
+          order by
+            case research_tier when 'A' then 1 when 'B' then 2 when 'C' then 3 else 4 end,
+            symbol
+        `;
+
+        return json({
+          api_version: "1.0.0",
+          assets,
+          count: assets.length,
+          max_assets: 50
+        });
+      } catch {
+        return json(
+          { status: "error", service: "crypto-api", error: "database_query_failed" },
+          503
+        );
+      }
+    }
+
     const assetId = getAssetId(url.pathname);
     if (assetId) {
       if (!env.DATABASE_URL) {
