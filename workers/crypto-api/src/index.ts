@@ -4,11 +4,18 @@ interface Env {
   DATABASE_URL: string;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
 function json(data: unknown, status = 200): Response {
   return Response.json(data, {
     status,
     headers: {
-      "Cache-Control": "public, max-age=30"
+      "Cache-Control": "public, max-age=30",
+      ...corsHeaders
     }
   });
 }
@@ -21,6 +28,10 @@ function getAssetId(pathname: string): string | null {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
 
     if (url.pathname === "/api/health") {
       return json({
