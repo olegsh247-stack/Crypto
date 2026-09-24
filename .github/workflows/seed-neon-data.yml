@@ -2,6 +2,12 @@ name: Seed Neon data
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "infrastructure/neon/seed-v1.sql"
+      - ".github/workflows/seed-neon-data.yml"
 
 jobs:
   seed:
