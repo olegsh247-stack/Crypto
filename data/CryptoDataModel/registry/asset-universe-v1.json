@@ -76,6 +76,111 @@
         "mexc": "DASHUSDT"
       },
       "research_reason": "Established PoW payments-focused L1 with a distinctive second-tier masternode architecture, InstantSend, CoinJoin, ChainLocks and on-chain treasury governance."
+    },
+    {
+      "asset_id": "eth",
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "category": "core",
+      "research_tier": "A",
+      "enabled": true,
+      "binance_symbol": "ETHUSDT",
+      "fallback_symbols": {
+        "okx": "ETH-USDT",
+        "bybit": "ETHUSDT",
+        "mexc": "ETHUSDT"
+      },
+      "research_reason": "Core programmable crypto network and major settlement, DeFi and smart-contract infrastructure."
+    },
+    {
+      "asset_id": "sol",
+      "symbol": "SOL",
+      "name": "Solana",
+      "category": "l1_infrastructure",
+      "research_tier": "A",
+      "enabled": true,
+      "binance_symbol": "SOLUSDT",
+      "fallback_symbols": {
+        "okx": "SOL-USDT",
+        "bybit": "SOLUSDT",
+        "mexc": "SOLUSDT"
+      },
+      "research_reason": "Major high-throughput smart-contract L1 with a distinct execution and ecosystem model."
+    },
+    {
+      "asset_id": "cake",
+      "symbol": "CAKE",
+      "name": "PancakeSwap",
+      "category": "defi",
+      "research_tier": "B",
+      "enabled": true,
+      "binance_symbol": "CAKEUSDT",
+      "fallback_symbols": {
+        "okx": "CAKE-USDT",
+        "bybit": "CAKEUSDT",
+        "mexc": "CAKEUSDT"
+      },
+      "research_reason": "Major DeFi protocol token representing decentralized exchange infrastructure and on-chain liquidity activity."
+    },
+    {
+      "asset_id": "bch",
+      "symbol": "BCH",
+      "name": "Bitcoin Cash",
+      "category": "bitcoin_ecosystem",
+      "research_tier": "B",
+      "enabled": true,
+      "binance_symbol": "BCHUSDT",
+      "fallback_symbols": {
+        "okx": "BCH-USDT",
+        "bybit": "BCHUSDT",
+        "mexc": "BCHUSDT"
+      },
+      "research_reason": "Major Bitcoin fork with a distinct block-size and payments-oriented design path."
+    },
+    {
+      "asset_id": "ltc",
+      "symbol": "LTC",
+      "name": "Litecoin",
+      "category": "l1_infrastructure",
+      "research_tier": "B",
+      "enabled": true,
+      "binance_symbol": "LTCUSDT",
+      "fallback_symbols": {
+        "okx": "LTC-USDT",
+        "bybit": "LTCUSDT",
+        "mexc": "LTCUSDT"
+      },
+      "research_reason": "Long-running PoW monetary and payments-focused network with a distinct role in crypto market history."
+    },
+    {
+      "asset_id": "xrp",
+      "symbol": "XRP",
+      "name": "XRP",
+      "category": "l1_infrastructure",
+      "research_tier": "A",
+      "enabled": true,
+      "binance_symbol": "XRPUSDT",
+      "fallback_symbols": {
+        "okx": "XRP-USDT",
+        "bybit": "XRPUSDT",
+        "mexc": "XRPUSDT"
+      },
+      "research_reason": "Major payment and settlement-oriented cryptoasset with a distinct ledger architecture and institutional ecosystem."
+    },
+    {
+      "asset_id": "trx",
+      "symbol": "TRX",
+      "name": "TRON",
+      "category": "stablecoin_payments",
+      "research_tier": "A",
+      "enabled": true,
+      "binance_symbol": "TRXUSDT",
+      "fallback_symbols": {
+        "okx": "TRX-USDT",
+        "bybit": "TRXUSDT",
+        "mexc": "TRXUSDT"
+      },
+      "research_reason": "Major smart-contract network with significant stablecoin settlement and payments activity."
     }
   ]
 }
