@@ -48,6 +48,21 @@
   },
   "assets": [
     {
+      "asset_id": "btc",
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "category": "core",
+      "research_tier": "A",
+      "enabled": true,
+      "binance_symbol": "BTCUSDT",
+      "fallback_symbols": {
+        "okx": "BTC-USDT",
+        "bybit": "BTCUSDT",
+        "mexc": "BTCUSDT"
+      },
+      "research_reason": "Core monetary cryptoasset and primary research subject of the Crypto project."
+    },
+    {
       "asset_id": "dash",
       "symbol": "DASH",
       "name": "Dash",
