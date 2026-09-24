@@ -12,7 +12,14 @@ values
    'Core monetary cryptoasset and primary research subject of the Crypto project.'),
   ('dash','DASH','Dash','l1_infrastructure','B',true,'DASHUSDT',
    '{"okx":"DASH-USDT","bybit":"DASHUSDT","mexc":"DASHUSDT"}'::jsonb,
-   'Established PoW payments-focused L1 with a distinctive second-tier masternode architecture, InstantSend, CoinJoin, ChainLocks and on-chain treasury governance.')
+   'Established PoW payments-focused L1 with a distinctive second-tier masternode architecture, InstantSend, CoinJoin, ChainLocks and on-chain treasury governance.'),
+  ('eth','ETH','Ethereum','core','A',true,'ETHUSDT', '{"okx":"ETH-USDT","bybit":"ETHUSDT","mexc":"ETHUSDT"}'::jsonb, 'Core programmable crypto network and major settlement, DeFi and smart-contract infrastructure.'),
+  ('sol','SOL','Solana','l1_infrastructure','A',true,'SOLUSDT', '{"okx":"SOL-USDT","bybit":"SOLUSDT","mexc":"SOLUSDT"}'::jsonb, 'Major high-throughput smart-contract L1 with a distinct execution and ecosystem model.'),
+  ('cake','CAKE','PancakeSwap','defi','B',true,'CAKEUSDT', '{"okx":"CAKE-USDT","bybit":"CAKEUSDT","mexc":"CAKEUSDT"}'::jsonb, 'Major DeFi protocol token representing decentralized exchange infrastructure and on-chain liquidity activity.'),
+  ('bch','BCH','Bitcoin Cash','bitcoin_ecosystem','B',true,'BCHUSDT', '{"okx":"BCH-USDT","bybit":"BCHUSDT","mexc":"BCHUSDT"}'::jsonb, 'Major Bitcoin fork with a distinct block-size and payments-oriented design path.'),
+  ('ltc','LTC','Litecoin','l1_infrastructure','B',true,'LTCUSDT', '{"okx":"LTC-USDT","bybit":"LTCUSDT","mexc":"LTCUSDT"}'::jsonb, 'Long-running PoW monetary and payments-focused network with a distinct role in crypto market history.'),
+  ('xrp','XRP','XRP','l1_infrastructure','A',true,'XRPUSDT', '{"okx":"XRP-USDT","bybit":"XRPUSDT","mexc":"XRPUSDT"}'::jsonb, 'Major payment and settlement-oriented cryptoasset with a distinct ledger architecture and institutional ecosystem.'),
+  ('trx','TRX','TRON','stablecoin_payments','A',true,'TRXUSDT', '{"okx":"TRX-USDT","bybit":"TRXUSDT","mexc":"TRXUSDT"}'::jsonb, 'Major smart-contract network with significant stablecoin settlement and payments activity.')
 on conflict (asset_id) do update set
   symbol=excluded.symbol,name=excluded.name,category=excluded.category,
   research_tier=excluded.research_tier,enabled=excluded.enabled,
