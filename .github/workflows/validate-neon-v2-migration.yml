@@ -1,0 +1,43 @@
+name: Validate Neon Research Engine v2 migration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql'
+      - '.github/workflows/validate-neon-v2-migration.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Validate migration in rollback transaction
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          BEGIN;
+          \i infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
+          ROLLBACK;
+          SQL
+
+      - name: Validate existing v1 objects
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('assets','metric_definitions','sources','observations','research_snapshots','monitoring_events','scenario_states','market_daily_candles','schema_migrations');" | grep -qx '9'
+          echo 'Existing v1 schema check: OK'
