@@ -1,0 +1,52 @@
+name: Apply Neon Research Engine v2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql'
+      - '.github/workflows/apply-neon-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check database secret
+        run: test -n "$DATABASE_URL"
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply migration in transaction
+        run: |
+          psql "$DATABASE_URL" \
+            --set=ON_ERROR_STOP=1 \
+            --single-transaction \
+            --file=infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
+
+      - name: Verify v2 tables
+        run: |
+          psql "$DATABASE_URL" \
+            --set=ON_ERROR_STOP=1 \
+            --tuples-only --no-align \
+            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status');" \
+            | grep -qx '10'
+
+      - name: Verify migration marker
+        run: |
+          psql "$DATABASE_URL" \
+            --set=ON_ERROR_STOP=1 \
+            --tuples-only --no-align \
+            --command="SELECT version FROM schema_migrations WHERE version='2026-09-24-research-engine-v2';" \
+            | grep -qx '2026-09-24-research-engine-v2'
