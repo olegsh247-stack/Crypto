@@ -1,9 +1,7 @@
 -- CryptoDataModel v2 — Research Engine Layer
 -- Safe additive migration on top of infrastructure/neon/schema-v1.sql.
 -- No v1 table is dropped or renamed. Existing data is preserved.
--- This migration is intentionally not destructive.
-
-BEGIN;
+-- The caller controls the transaction so validation can run and roll back safely.
 
 CREATE TABLE IF NOT EXISTS asset_types (
   asset_type_id text PRIMARY KEY,
@@ -36,11 +34,8 @@ ALTER TABLE assets
   ADD COLUMN IF NOT EXISTS primary_asset_type_id text REFERENCES asset_types(asset_type_id),
   ADD COLUMN IF NOT EXISTS secondary_asset_type_id text REFERENCES asset_types(asset_type_id);
 
-CREATE INDEX IF NOT EXISTS assets_primary_asset_type_idx
-  ON assets (primary_asset_type_id);
-
-CREATE INDEX IF NOT EXISTS assets_secondary_asset_type_idx
-  ON assets (secondary_asset_type_id);
+CREATE INDEX IF NOT EXISTS assets_primary_asset_type_idx ON assets (primary_asset_type_id);
+CREATE INDEX IF NOT EXISTS assets_secondary_asset_type_idx ON assets (secondary_asset_type_id);
 
 CREATE TABLE IF NOT EXISTS research_domains (
   research_domain_id text PRIMARY KEY,
@@ -72,9 +67,7 @@ CREATE TABLE IF NOT EXISTS research_blocks (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (snapshot_id, block_number)
 );
-
-CREATE INDEX IF NOT EXISTS research_blocks_snapshot_idx
-  ON research_blocks (snapshot_id, block_number);
+CREATE INDEX IF NOT EXISTS research_blocks_snapshot_idx ON research_blocks (snapshot_id, block_number);
 
 CREATE TABLE IF NOT EXISTS research_block_domains (
   research_block_id uuid NOT NULL REFERENCES research_blocks(research_block_id) ON DELETE CASCADE,
@@ -83,9 +76,7 @@ CREATE TABLE IF NOT EXISTS research_block_domains (
   display_order smallint,
   PRIMARY KEY (research_block_id, research_domain_id)
 );
-
-CREATE INDEX IF NOT EXISTS research_block_domains_domain_idx
-  ON research_block_domains (research_domain_id);
+CREATE INDEX IF NOT EXISTS research_block_domains_domain_idx ON research_block_domains (research_domain_id);
 
 CREATE TABLE IF NOT EXISTS evidence (
   evidence_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -105,7 +96,6 @@ CREATE TABLE IF NOT EXISTS evidence (
   as_of timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS evidence_snapshot_idx ON evidence (snapshot_id);
 CREATE INDEX IF NOT EXISTS evidence_observation_idx ON evidence (observation_id);
 CREATE INDEX IF NOT EXISTS evidence_source_idx ON evidence (source_id);
@@ -125,9 +115,7 @@ CREATE TABLE IF NOT EXISTS critical_factors (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (snapshot_id, name)
 );
-
-CREATE INDEX IF NOT EXISTS critical_factors_asset_snapshot_idx
-  ON critical_factors (asset_id, snapshot_id);
+CREATE INDEX IF NOT EXISTS critical_factors_asset_snapshot_idx ON critical_factors (asset_id, snapshot_id);
 
 CREATE TABLE IF NOT EXISTS research_scores (
   score_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -144,9 +132,7 @@ CREATE TABLE IF NOT EXISTS research_scores (
   CHECK (value IS NULL OR (scale_min IS NOT NULL AND scale_max IS NOT NULL AND scale_min < scale_max AND value BETWEEN scale_min AND scale_max)),
   UNIQUE (snapshot_id, score_type, methodology_version)
 );
-
-CREATE INDEX IF NOT EXISTS research_scores_asset_snapshot_idx
-  ON research_scores (asset_id, snapshot_id, score_type);
+CREATE INDEX IF NOT EXISTS research_scores_asset_snapshot_idx ON research_scores (asset_id, snapshot_id, score_type);
 
 CREATE TABLE IF NOT EXISTS research_scenarios (
   research_scenario_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -161,9 +147,7 @@ CREATE TABLE IF NOT EXISTS research_scenarios (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (snapshot_id, scenario_type)
 );
-
-CREATE INDEX IF NOT EXISTS research_scenarios_snapshot_idx
-  ON research_scenarios (snapshot_id, scenario_type);
+CREATE INDEX IF NOT EXISTS research_scenarios_snapshot_idx ON research_scenarios (snapshot_id, scenario_type);
 
 CREATE TABLE IF NOT EXISTS monitoring_signals (
   monitoring_signal_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -182,9 +166,7 @@ CREATE TABLE IF NOT EXISTS monitoring_signals (
   confidence numeric(5,4) CHECK (confidence BETWEEN 0 AND 1),
   last_updated_at timestamptz NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS monitoring_signals_asset_status_idx
-  ON monitoring_signals (asset_id, status);
+CREATE INDEX IF NOT EXISTS monitoring_signals_asset_status_idx ON monitoring_signals (asset_id, status);
 
 CREATE TABLE IF NOT EXISTS research_status (
   research_status_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -197,13 +179,8 @@ CREATE TABLE IF NOT EXISTS research_status (
   next_review_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS research_status_snapshot_idx ON research_status (snapshot_id);
 
-CREATE INDEX IF NOT EXISTS research_status_snapshot_idx
-  ON research_status (snapshot_id);
-
--- Record the migration only after all statements above succeed.
 INSERT INTO schema_migrations (version)
 VALUES ('2026-09-24-research-engine-v2')
 ON CONFLICT (version) DO NOTHING;
-
-COMMIT;
