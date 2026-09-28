@@ -1,9 +1,4 @@
 import MarketTabs from "../components/MarketTabs";
-
-export default function CommoditiesPage() {
-  return <main className="shell">
-    <MarketTabs />
-    <header className="section"><h1>Commodities</h1><p className="muted">Commodity instruments remain separate from crypto Assets and Pairs while using the same navigation model.</p></header>
-    <section className="card"><div className="row"><strong>Commodity Engine</strong><span className="pill">Ready</span></div><p className="muted">This keeps the interface extensible without pretending that a commodity is a crypto Asset.</p></section>
-  </main>;
+import { getCommodities } from "../../lib/api";
+export default async function CommoditiesPage(){let data:any={commodities:[]};let error="";try{data=await getCommodities()}catch(e){error=e instanceof Error?e.message:"Unable to load commodities"}return <main className="shell"><MarketTabs/><header className="section"><div className="row"><div><h1>Commodities</h1><p className="muted">Live commodities from the dynamic engine.</p></div><span className="pill">{data.commodities?.length??0} loaded</span></div></header>{error?<div className="error">{error}</div>:<section className="grid">{(data.commodities??[]).map((c:any)=><article className="card" key={c.id}><div className="row"><strong>{c.symbol}</strong><span className="pill">{c.unit??"—"}</span></div><h2>{c.name}</h2></article>)}</section>}</main>;
 }
