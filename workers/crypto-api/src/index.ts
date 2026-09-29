@@ -2,121 +2,44 @@ import { neon } from "@neondatabase/serverless";
 
 interface Env { DATABASE_URL: string; }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
-};
+const corsHeaders = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type"};
+function json(data: unknown,status=200):Response{return Response.json(data,{status,headers:{"Cache-Control":"no-store",...corsHeaders}})}
+async function body(request:Request){try{return await request.json() as Record<string,unknown>}catch{return null}}
+function text(value:unknown){return typeof value==="string"?value.trim():""}
+function getAssetId(pathname:string){const m=pathname.match(/^\/api\/assets\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]).toLowerCase():null}
+function getPairId(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
+function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
 
-function json(data: unknown, status = 200): Response {
-  return Response.json(data, { status, headers: { "Cache-Control": "no-store", ...corsHeaders } });
-}
-
-async function body(request: Request) {
-  try { return await request.json() as Record<string, unknown>; }
-  catch { return null; }
-}
-
-function text(value: unknown) { return typeof value === "string" ? value.trim() : ""; }
-function getAssetId(pathname: string): string | null {
-  const match = pathname.match(/^\/api\/assets\/([^/]+)\/?$/);
-  return match ? decodeURIComponent(match[1]).toLowerCase() : null;
-}
-function getPairId(pathname: string): string | null {
-  const match = pathname.match(/^\/api\/pairs\/([^/]+)\/?$/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-function getCommodityId(pathname: string): string | null {
-  const match = pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
-    if (!env.DATABASE_URL) return json({ status: "error", service: "crypto-api", database: "not_configured" }, 500);
-    const sql = neon(env.DATABASE_URL);
-
-    if (url.pathname === "/api/health") return json({ status: "ok", service: "crypto-api" });
-    if (url.pathname === "/api/db-health") {
-      try { const result = await sql`select now() as now`; return json({ status: "ok", service: "crypto-api", database: "ok", now: result[0]?.now ?? null }); }
-      catch { return json({ status: "error", service: "crypto-api", database: "unavailable" }, 503); }
-    }
-
-    if (url.pathname === "/api/assets" || url.pathname === "/api/assets/") {
-      if (request.method === "POST") {
-        const data = await body(request); const symbol = text(data?.symbol).toUpperCase(); const name = text(data?.name);
-        if (!symbol || !name) return json({ status: "error", error: "symbol_and_name_required" }, 400);
-        try {
-          const rows = await sql`
-            insert into assets (asset_id, symbol, name, category, enabled, research_reason)
-            values (${symbol.toLowerCase()}, ${symbol}, ${name}, 'CRYPTO', true, 'Added through Dynamic Asset Engine')
-            on conflict (asset_id) do update set symbol=excluded.symbol, name=excluded.name, enabled=true
-            returning asset_id, symbol, name, category, enabled
-          `;
-          return json({ status: "ok", item: rows[0] }, 201);
-        } catch (error) { return json({ status: "error", error: "asset_persistence_failed", detail: String(error) }, 503); }
-      }
-      if (request.method !== "GET") return json({ status: "error", error: "method_not_allowed" }, 405);
-      try {
-        const assets = await sql`
-          select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,
-                 at.code as asset_type_code,at.name as asset_type_name,rs.status as research_status,rs.reason as research_status_reason,rs.last_research_at
-          from assets a left join asset_types at on at.id::text=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id
-          where a.enabled=true order by case a.research_tier when 'A' then 1 when 'B' then 2 when 'C' then 3 else 4 end,a.symbol`;
-        return json({ api_version: "1.2.0", assets, count: assets.length, max_assets: 50 });
-      } catch { return json({ status: "error", service: "crypto-api", error: "database_query_failed" }, 503); }
-    }
-
-    const assetId = getAssetId(url.pathname);
-    if (assetId) {
-      if (request.method === "DELETE") {
-        try { const rows = await sql`update assets set enabled=false where asset_id=${assetId} returning asset_id,symbol,enabled`; return rows[0] ? json({ status:"ok", item:rows[0] }) : json({ status:"error", error:"asset_not_found" },404); }
-        catch { return json({ status:"error", error:"asset_persistence_failed" },503); }
-      }
-      if (request.method !== "GET") return json({ status:"error", error:"method_not_allowed" },405);
-      try {
-        const assets = await sql`select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,a.secondary_asset_type_id,at.code as asset_type_code,at.name as asset_type_name,at.description as asset_type_description,rs.status as research_status,rs.reason as research_status_reason,rs.last_research_at,rs.last_major_update_at,rs.next_review_at from assets a left join asset_types at on at.id::text=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id where a.asset_id=${assetId} limit 1`;
-        if (!assets[0]) return json({ status:"error", error:"asset_not_found", asset_id:assetId },404);
-        const [metrics,history,researchSnapshots,scenarios,events,sources,blocks,domains,factors,scores,signals] = await Promise.all([
-          sql`select distinct on (o.metric_id) o.metric_id,coalesce(o.value_numeric,o.value_integer::numeric) as value,o.value_boolean,o.value_text,o.value_json,o.unit,o.observed_at,o.source_id,o.source_url,o.status,case when o.freshness='CURRENT' then 'fresh' when o.freshness='STALE' then 'stale' when o.freshness='EXPIRED' then 'unknown' else 'unknown' end as freshness,o.revision from observations o where o.asset_id=${assetId} order by o.metric_id,o.observed_at desc,o.revision desc`,
-          sql`select candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,quote_volume,trade_count,source_id,source_symbol from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit 30`,
-          sql`select snapshot_id,version,status,title,content,published_at,created_at from research_snapshots where asset_id=${assetId} order by version desc limit 1`,
-          sql`select scenario_id,state,confidence,rationale,indicators,observed_at,snapshot_id from scenario_states where asset_id=${assetId} order by observed_at desc limit 20`,
-          sql`select event_id,metric_id,event_type,severity,observed_at,details,status,created_at,closed_at from monitoring_events where asset_id=${assetId} order by observed_at desc limit 50`,
-          sql`select distinct s.source_id,s.name,s.source_type,s.base_url,s.trust_level,s.description from sources s join observations o on o.source_id=s.source_id where o.asset_id=${assetId} order by s.source_id`,
-          sql`select rb.id,rb.block_number,rb.title,rb.status,rb.summary,rb.analysis,rb.confidence,coalesce(json_agg(json_build_object('code',rd.code,'name',rd.name,'relevance_weight',rbd.relevance_weight,'display_order',rbd.display_order) order by rbd.display_order nulls last,rd.display_order) filter(where rd.id is not null),'[]'::json) as domains from research_blocks rb left join research_block_domains rbd on rbd.research_block_id=rb.id left join research_domains rd on rd.id=rbd.research_domain_id where rb.research_snapshot_id=(select snapshot_id from research_snapshots where asset_id=${assetId} order by version desc limit 1) group by rb.id order by rb.block_number`,
-          sql`select id,code,name,description,display_order from research_domains order by display_order`,
-          sql`select id,name,description,importance_weight,current_state,trend,confidence,thesis_impact,monitoring_priority,research_snapshot_id from critical_factors where asset_id=${assetId} order by monitoring_priority nulls last,name`,
-          sql`select id,score_type,value,scale_min,scale_max,methodology_version,confidence,explanation,calculated_at,research_snapshot_id from scores where asset_id=${assetId} order by calculated_at desc,score_type`,
-          sql`select id,critical_factor_id,metric_id,monitoring_event_id,name,current_value,previous_value,direction,threshold,threshold_type,thesis_impact,status,confidence,last_updated_at from monitoring_signals where asset_id=${assetId} order by status,name`
-        ]);
-        const normalizedMetrics=metrics.map((m:any)=>({metric_id:m.metric_id,value:m.value!==null&&m.value!==undefined?Number(m.value):m.value_text??m.value_boolean??m.value_json??null,unit:m.unit,observed_at:m.observed_at,source_id:m.source_id,source_url:m.source_url,status:m.status,freshness:m.freshness,revision:m.revision}));
-        const snapshot=researchSnapshots[0]?{snapshot_id:researchSnapshots[0].snapshot_id,research_version:String(researchSnapshots[0].version),methodology_version:"CryptoResearch v2",research_date:researchSnapshots[0].published_at??researchSnapshots[0].created_at,title:researchSnapshots[0].title,content:researchSnapshots[0].content,status:researchSnapshots[0].status}:null;
-        return json({api_version:"1.2.0",engine:"DynamicAssetEngine",asset:assets[0],metrics:normalizedMetrics,history:history.reverse(),research_snapshot:snapshot,research_blocks:blocks,research_domains:domains,critical_factors:factors,scores,monitoring_signals:signals,scenario_states:scenarios,monitoring_events:events,sources});
-      } catch { return json({ status:"error", service:"crypto-api", error:"database_query_failed" },503); }
-    }
-
-    if (url.pathname === "/api/pairs" || url.pathname === "/api/pairs/") {
-      if (request.method === "POST") {
-        const data=await body(request); const symbol=text(data?.symbol).toUpperCase(); const exchange=text(data?.exchange)||null; const parts=symbol.split("/");
-        if (parts.length!==2 || !parts[0] || !parts[1] || parts[0]===parts[1]) return json({status:"error",error:"valid_base_quote_pair_required"},400);
-        try { const rows=await sql`insert into market_pairs (symbol,base_asset,quote_asset,exchange,enabled) values (${symbol},${parts[0]},${parts[1]},${exchange},true) on conflict (symbol,exchange) do update set enabled=true returning *`; return json({status:"ok",item:rows[0]},201); }
-        catch(error){ return json({status:"error",error:"pair_persistence_failed",detail:String(error)},503); }
-      }
-      if (request.method === "GET") { try { const rows=await sql`select * from market_pairs where enabled=true order by symbol`; return json({items:rows,count:rows.length}); } catch { return json({status:"error",error:"pair_query_failed"},503); } }
-      return json({status:"error",error:"method_not_allowed"},405);
-    }
-    const pairId=getPairId(url.pathname); if(pairId && request.method==="DELETE"){try{const rows=await sql`update market_pairs set enabled=false,disabled_at=now() where id=${pairId} returning *`;return rows[0]?json({status:"ok",item:rows[0]}):json({status:"error",error:"pair_not_found"},404)}catch{return json({status:"error",error:"pair_persistence_failed"},503)}}
-
-    if (url.pathname === "/api/commodities" || url.pathname === "/api/commodities/") {
-      if (request.method === "POST") { const data=await body(request); const symbol=text(data?.symbol).toUpperCase(); const name=text(data?.name); const unit=text(data?.unit)||null; if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400); try{const rows=await sql`insert into commodities(symbol,name,unit,enabled) values(${symbol},${name},${unit},true) on conflict(symbol) do update set name=excluded.name,unit=excluded.unit,enabled=true returning *`;return json({status:"ok",item:rows[0]},201)}catch(error){return json({status:"error",error:"commodity_persistence_failed",detail:String(error)},503)} }
-      if (request.method === "GET") { try{const rows=await sql`select * from commodities where enabled=true order by symbol`;return json({items:rows,count:rows.length})}catch{return json({status:"error",error:"commodity_query_failed"},503)} }
-      return json({status:"error",error:"method_not_allowed"},405);
-    }
-    const commodityId=getCommodityId(url.pathname); if(commodityId&&request.method==="DELETE"){try{const rows=await sql`update commodities set enabled=false,disabled_at=now() where id=${commodityId} returning *`;return rows[0]?json({status:"ok",item:rows[0]}):json({status:"error",error:"commodity_not_found"},404)}catch{return json({status:"error",error:"commodity_persistence_failed"},503)}}
-
-    return json({ status:"ok", service:"crypto-api", message:"Crypto API is running" });
-  }
-};
+export default {async fetch(request:Request,env:Env):Promise<Response>{
+ const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
+ if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
+ if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
+ if(url.pathname==="/api/assets"||url.pathname==="/api/assets/"){
+  if(request.method==="POST"){const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name);if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);try{const r=await sql`insert into assets(asset_id,symbol,name,category,enabled,research_reason) values(${symbol.toLowerCase()},${symbol},${name},'CRYPTO',true,'Added through Dynamic Asset Engine') on conflict(asset_id) do update set symbol=excluded.symbol,name=excluded.name,enabled=true returning asset_id,symbol,name,category,enabled`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"asset_persistence_failed",detail:String(error)},503)}}
+  if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);try{const assets=await sql`select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,at.code as asset_type_code,at.name as asset_type_name,rs.status as research_status,rs.reason as research_status_reason,rs.last_research_at from assets a left join asset_types at on at.id::text=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id where a.enabled=true order by case a.research_tier when 'A' then 1 when 'B' then 2 when 'C' then 3 else 4 end,a.symbol`;return json({api_version:"1.3.0",assets,count:assets.length,max_assets:50})}catch{return json({status:"error",service:"crypto-api",error:"database_query_failed"},503)}}
+ const assetId=getAssetId(url.pathname);if(assetId){
+  if(request.method==="DELETE"){try{const r=await sql`update assets set enabled=false where asset_id=${assetId} returning asset_id,symbol,enabled`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"asset_not_found"},404)}catch{return json({status:"error",error:"asset_persistence_failed"},503)}}
+  if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);try{
+   const assets=await sql`select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,a.secondary_asset_type_id,at.code as asset_type_code,at.name as asset_type_name,at.description as asset_type_description,rs.status as research_status,rs.reason as research_status_reason,rs.last_research_at,rs.last_major_update_at,rs.next_review_at from assets a left join asset_types at on at.id::text=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id where a.asset_id=${assetId} limit 1`;if(!assets[0])return json({status:"error",error:"asset_not_found",asset_id:assetId},404);
+   const [metrics,history,researchSnapshots,scenarios,events,sources,blocks,domains,factors,scores,signals]=await Promise.all([
+    sql`select distinct on(o.metric_id)o.metric_id,coalesce(o.value_numeric,o.value_integer::numeric) as value,o.value_boolean,o.value_text,o.value_json,o.unit,o.observed_at,o.source_id,o.source_url,o.status,case when o.freshness='CURRENT' then 'fresh' when o.freshness='STALE' then 'stale' when o.freshness='EXPIRED' then 'unknown' else 'unknown' end as freshness,o.revision from observations o where o.asset_id=${assetId} order by o.metric_id,o.observed_at desc,o.revision desc`,
+    sql`select candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,quote_volume,trade_count,source_id,source_symbol from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit 30`,
+    sql`select snapshot_id,version,status,title,content,published_at,created_at from research_snapshots where asset_id=${assetId} order by version desc limit 1`,
+    sql`select scenario_id,state,confidence,rationale,indicators,observed_at,snapshot_id from scenario_states where asset_id=${assetId} order by observed_at desc limit 20`,
+    sql`select event_id,metric_id,event_type,severity,observed_at,details,status,created_at,closed_at from monitoring_events where asset_id=${assetId} order by observed_at desc limit 50`,
+    sql`select distinct s.source_id,s.name,s.source_type,s.base_url,s.trust_level,s.description from sources s join observations o on o.source_id=s.source_id where o.asset_id=${assetId} order by s.source_id`,
+    sql`select rb.id,rb.block_number,rb.title,rb.status,rb.summary,rb.analysis,rb.confidence,coalesce(json_agg(json_build_object('code',rd.code,'name',rd.name,'relevance_weight',rbd.relevance_weight,'display_order',rbd.display_order) order by rbd.display_order nulls last,rd.display_order) filter(where rd.id is not null),'[]'::json) as domains from research_blocks rb left join research_block_domains rbd on rbd.research_block_id=rb.id left join research_domains rd on rd.id=rbd.research_domain_id where rb.research_snapshot_id=(select snapshot_id from research_snapshots where asset_id=${assetId} order by version desc limit 1) group by rb.id order by rb.block_number`,
+    sql`select id,code,name,description,display_order from research_domains order by display_order`,
+    sql`select id,name,description,importance_weight,current_state,trend,confidence,thesis_impact,monitoring_priority,research_snapshot_id from critical_factors where asset_id=${assetId} order by monitoring_priority nulls last,name`,
+    sql`select id,score_type,value,scale_min,scale_max,methodology_version,confidence,explanation,calculated_at,research_snapshot_id from scores where asset_id=${assetId} order by calculated_at desc,score_type`,
+    sql`select id,critical_factor_id,metric_id,monitoring_event_id,name,current_value,previous_value,direction,threshold,threshold_type,thesis_impact,status,confidence,last_updated_at from monitoring_signals where asset_id=${assetId} order by status,name`
+   ]);
+   const progress={completed:blocks.filter((b:any)=>["COMPLETED","PUBLISHED","DONE"].includes(String(b.status).toUpperCase())).length,total:15};progress.percentage=Math.round(progress.completed/progress.total*100);const normalizedMetrics=metrics.map((m:any)=>({metric_id:m.metric_id,value:m.value!==null&&m.value!==undefined?Number(m.value):m.value_text??m.value_boolean??m.value_json??null,unit:m.unit,observed_at:m.observed_at,source_id:m.source_id,source_url:m.source_url,status:m.status,freshness:m.freshness,revision:m.revision}));const snapshot=researchSnapshots[0]?{snapshot_id:researchSnapshots[0].snapshot_id,research_version:String(researchSnapshots[0].version),methodology_version:"CryptoResearch v2",research_date:researchSnapshots[0].published_at??researchSnapshots[0].created_at,title:researchSnapshots[0].title,content:researchSnapshots[0].content,status:researchSnapshots[0].status}:null;return json({api_version:"1.3.0",engine:"DynamicAssetEngine",asset:assets[0],research_progress:progress,metrics:normalizedMetrics,history:history.reverse(),research_snapshot:snapshot,research_blocks:blocks,research_domains:domains,critical_factors:factors,scores,monitoring_signals:signals,scenario_states:scenarios,monitoring_events:events,sources})
+  }catch{return json({status:"error",service:"crypto-api",error:"database_query_failed"},503)}}
+ }
+ if(url.pathname==="/api/pairs"||url.pathname==="/api/pairs/"){if(request.method==="POST"){const d=await body(request),symbol=text(d?.symbol).toUpperCase(),exchange=text(d?.exchange)||null,p=symbol.split("/");if(p.length!==2||!p[0]||!p[1]||p[0]===p[1])return json({status:"error",error:"valid_base_quote_pair_required"},400);try{const r=await sql`insert into market_pairs(symbol,base_asset,quote_asset,exchange,enabled) values(${symbol},${p[0]},${p[1]},${exchange},true) on conflict(symbol,exchange) do update set enabled=true returning *`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"pair_persistence_failed",detail:String(error)},503)}}if(request.method==="GET"){try{const r=await sql`select * from market_pairs where enabled=true order by symbol`;return json({items:r,count:r.length})}catch{return json({status:"error",error:"pair_query_failed"},503)}}return json({status:"error",error:"method_not_allowed"},405)}
+ const pairId=getPairId(url.pathname);if(pairId&&request.method==="DELETE"){try{const r=await sql`update market_pairs set enabled=false,disabled_at=now() where id=${pairId} returning *`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"pair_not_found"},404)}catch{return json({status:"error",error:"pair_persistence_failed"},503)}}
+ if(url.pathname==="/api/commodities"||url.pathname==="/api/commodities/"){if(request.method==="POST"){const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),unit=text(d?.unit)||null;if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);try{const r=await sql`insert into commodities(symbol,name,unit,enabled) values(${symbol},${name},${unit},true) on conflict(symbol) do update set name=excluded.name,unit=excluded.unit,enabled=true returning *`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"commodity_persistence_failed",detail:String(error)},503)}}if(request.method==="GET"){try{const r=await sql`select * from commodities where enabled=true order by symbol`;return json({items:r,count:r.length})}catch{return json({status:"error",error:"commodity_query_failed"},503)}}return json({status:"error",error:"method_not_allowed"},405)}
+ const commodityId=getCommodityId(url.pathname);if(commodityId&&request.method==="DELETE"){try{const r=await sql`update commodities set enabled=false,disabled_at=now() where id=${commodityId} returning *`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"commodity_not_found"},404)}catch{return json({status:"error",error:"commodity_persistence_failed"},503)}}
+ return json({status:"ok",service:"crypto-api",message:"Crypto API is running"});
+}};
