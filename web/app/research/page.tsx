@@ -13,19 +13,22 @@ export default async function ResearchPage() {
 
   return <main className="shell">
     <MarketTabs />
-    <header className="section"><div className="row"><div><p className="muted">Research</p><h1>Research Status</h1><p className="muted">One view of the research lifecycle. Monitoring remains part of the same system.</p></div><span className="pill">{assets.length} assets</span></div></header>
+    <header className="section"><div className="row"><div><p className="muted">Research</p><h1>Research Status</h1><p className="muted">Research lifecycle and monitoring in one place.</p></div><span className="pill">{assets.length} assets</span></div></header>
     {error ? <div className="error section">{error}</div> : <>
-      <section className="grid">
+      <section className="grid" aria-label="Research status summary">
         <div className="card"><span className="muted">In progress</span><h2>{counts.progress}</h2></div>
         <div className="card"><span className="muted">Research complete</span><h2>{counts.complete}</h2></div>
         <div className="card"><span className="muted">Monitoring</span><h2>{counts.monitoring}</h2></div>
         <div className="card"><span className="muted">Not started</span><h2>{counts.notStarted}</h2></div>
       </section>
-      <section className="section grid">{sorted.map(asset => <Link className="card" href={`/assets/${asset.asset_id}`} key={asset.asset_id}>
-        <div className="row"><strong>{asset.symbol}</strong><span className="pill">{asset.research_status ?? "Not started"}</span></div>
-        <h2>{asset.name}</h2>
-        <div className="row"><span className="muted">Research tier</span><span>{asset.research_tier ?? "—"}</span></div>
-      </Link>)}</section>
+      <section className="section">
+        <div className="row"><div><h2>Assets</h2><p className="muted">Open an Asset to read the full research.</p></div><span className="pill">15 blocks per Asset</span></div>
+        <div className="grid">{sorted.map(asset => <Link className="card" href={`/assets/${asset.asset_id}`} key={asset.asset_id}>
+          <div className="row"><strong>{asset.symbol}</strong><span className="pill">{asset.research_status ?? "Not started"}</span></div>
+          <h2>{asset.name}</h2>
+          <div className="row"><span className="muted">Research tier</span><span>{asset.research_tier ?? "—"}</span></div>
+        </Link>)}</div>
+      </section>
     </>}
   </main>;
 }
