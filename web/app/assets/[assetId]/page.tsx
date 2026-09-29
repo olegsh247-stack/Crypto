@@ -8,48 +8,10 @@ export default async function AssetPage({ params }: { params: Promise<{ assetId:
   const { assetId } = await params;
   let data: any;
   try { data = await getAsset(assetId); } catch (e) { return <main className="shell"><MarketTabs /><Link href="/">← Assets</Link><div className="error section">Unable to load asset: {e instanceof Error ? e.message : "unknown error"}</div></main>; }
-  const asset = data.asset;
-  const research = data.research_snapshot;
-  const blocks = normalizeResearchBlocks(data.research_blocks);
-  const domains = data.research_domains ?? [];
-  const factors = data.critical_factors ?? [];
-  const scores = data.scores ?? [];
-  const monitoring = data.monitoring_signals ?? [];
-  const scenarios = data.scenarios ?? data.scenario_states ?? [];
-  const progress = getResearchProgress(blocks);
-  const status = getResearchStatus(blocks);
-  const blockMap = new Map(blocks.map((b) => [b.number, b]));
-  const completedBlocks = blocks.filter((b) => ["Complete", "Completed", "Research complete"].includes(b.status));
-  const executiveSummary = research?.content?.summary ?? research?.summary ?? completedBlocks.find((b) => b.number === 14)?.summary ?? null;
-  const keyConclusion = completedBlocks.find((b) => b.number === 14)?.analysis ?? null;
-
-  return <main className="shell">
-    <MarketTabs />
-    <div className="section"><Link href="/">← Assets</Link><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div>
-    <section className="section card">
-      <div className="row"><div><p className="muted">Executive view</p><h2>Research conclusion</h2></div><span className="pill">{status}</span></div>
-      <p>{executiveSummary ?? "The research is still being assembled. Use the block status below to see what is available."}</p>
-      {keyConclusion && <p className="muted">{keyConclusion}</p>}
-      <div className="row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div>
-      <div aria-label={`Research progress ${progress.percent}%`} style={{height:8,background:"var(--viz-border)",borderRadius:99,overflow:"hidden",marginTop:10}}><div style={{height:"100%",width:`${progress.percent}%`,background:"var(--viz-accent)"}} /></div>
-    </section>
-    <section className="grid section">
-      <div className="card"><span className="muted">Status</span><h2>{status}</h2></div>
-      <div className="card"><span className="muted">Critical factors</span><h2>{factors.length}</h2></div>
-      <div className="card"><span className="muted">Scenarios</span><h2>{scenarios.length}</h2></div>
-      <div className="card"><span className="muted">Monitoring signals</span><h2>{monitoring.length}</h2></div>
-    </section>
-    <div className="detail">
-      <section>
-        <div className="section"><div className="row"><h2>Research — Structure 1</h2><span className="pill">15 blocks</span></div>{STRUCTURE_1_BLOCKS.map((definition)=><article className="card section" key={definition.number}><div className="row"><h3>{String(definition.number).padStart(2,"0")} · {definition.title}</h3><span className="pill">{blockMap.get(definition.number)?.status ?? "Not started"}</span></div>{blockMap.get(definition.number)?.summary ? <><p>{blockMap.get(definition.number)?.summary}</p>{blockMap.get(definition.number)?.analysis && <p className="muted">{blockMap.get(definition.number)?.analysis}</p>}</> : <p className="muted">Research block not completed yet.</p>}</article>)}</div>
-        <div className="section card"><h2>Critical Factors</h2>{factors.length ? factors.map((f:any)=><div className="row" key={f.id}><span>{f.name}</span><span className="muted">{f.trend ?? "—"}</span></div>) : <p className="muted">No factors recorded yet.</p>}</div>
-        <div className="section card"><h2>Scenarios</h2>{scenarios.length ? scenarios.map((s:any)=><div className="row" key={s.id ?? s.scenario_id}><span>{s.scenario_type ?? s.state}</span><span>{s.confidence ?? "—"}</span></div>) : <p className="muted">No scenarios recorded yet.</p>}</div>
-      </section>
-      <aside>
-        <div className="card"><h2>Research Domains</h2>{domains.map((d:any)=><div className="row" key={d.id}><span>{d.name}</span><span className="muted">{d.code}</span></div>)}</div>
-        <div className="section card"><h2>Scores</h2>{scores.length ? scores.map((s:any)=><div className="row" key={s.id}><span>{s.score_type}</span><strong>{s.value ?? "—"}</strong></div>) : <p className="muted">No scores recorded yet.</p>}</div>
-        <div className="section card"><h2>Monitoring</h2>{monitoring.length ? monitoring.map((m:any)=><div className="row" key={m.id}><span>{m.name}</span><span className="pill">{m.status}</span></div>) : <p className="muted">No live signals recorded yet.</p>}</div>
-      </aside>
-    </div>
-  </main>;
+  const asset = data.asset; const research = data.research_snapshot; const blocks = normalizeResearchBlocks(data.research_blocks); const domains = data.research_domains ?? []; const factors = data.critical_factors ?? []; const scores = data.scores ?? []; const monitoring = data.monitoring_signals ?? []; const scenarios = data.scenarios ?? data.scenario_states ?? []; const progress = getResearchProgress(blocks); const status = getResearchStatus(blocks); const blockMap = new Map(blocks.map((b) => [b.number, b]));
+  const executiveSummary = research?.content?.summary ?? research?.summary ?? blocks.find((b:any) => b.number === 14)?.summary ?? null; const keyConclusion = blocks.find((b:any) => b.number === 14)?.analysis ?? null;
+  return <main className="shell"><MarketTabs /><div className="section"><Link href="/">← Assets</Link><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div>
+    <section className="section card"><div className="row"><div><p className="muted">Executive view</p><h2>Research conclusion</h2></div><span className="pill">{status}</span></div><p>{executiveSummary ?? "The research is still being assembled. Use the block status below to see what is available."}</p>{keyConclusion && <p className="muted">{keyConclusion}</p>}<div className="row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div><div aria-label={`Research progress ${progress.percent}%`} style={{height:8,background:"var(--viz-border)",borderRadius:99,overflow:"hidden",marginTop:10}}><div style={{height:"100%",width:`${progress.percent}%`,background:"var(--viz-accent)"}} /></div><div className="row" style={{marginTop:16}}><Link className="button" href={`/assets/${assetId}/research`}>Open full research</Link></div></section>
+    <section className="grid section"><div className="card"><span className="muted">Status</span><h2>{status}</h2></div><div className="card"><span className="muted">Critical factors</span><h2>{factors.length}</h2></div><div className="card"><span className="muted">Scenarios</span><h2>{scenarios.length}</h2></div><div className="card"><span className="muted">Monitoring signals</span><h2>{monitoring.length}</h2></div></section>
+    <div className="detail"><section><div className="section"><div className="row"><h2>Research — Structure 1</h2><span className="pill">15 blocks</span></div>{STRUCTURE_1_BLOCKS.map(def=><article className="card section" key={def.number}><div className="row"><h3>{String(def.number).padStart(2,"0")} · {def.title}</h3><span className="pill">{blockMap.get(def.number)?.status ?? "Not started"}</span></div>{blockMap.get(def.number)?.summary?<><p>{blockMap.get(def.number)?.summary}</p>{blockMap.get(def.number)?.analysis&&<p className="muted">{blockMap.get(def.number)?.analysis}</p>}</>:<p className="muted">Research block not completed yet.</p>}</article>)}</div><div className="section card"><h2>Critical Factors</h2>{factors.length?factors.map((f:any)=><div className="row" key={f.id}><span>{f.name}</span><span className="muted">{f.trend??"—"}</span></div>):<p className="muted">No factors recorded yet.</p>}</div><div className="section card"><h2>Scenarios</h2>{scenarios.length?scenarios.map((s:any)=><div className="row" key={s.id??s.scenario_id}><span>{s.scenario_type??s.state}</span><span>{s.confidence??"—"}</span></div>):<p className="muted">No scenarios recorded yet.</p>}</div></section><aside><div className="card"><h2>Research Domains</h2>{domains.map((d:any)=><div className="row" key={d.id}><span>{d.name}</span><span className="muted">{d.code}</span></div>)}</div><div className="section card"><h2>Scores</h2>{scores.length?scores.map((s:any)=><div className="row" key={s.id}><span>{s.score_type}</span><strong>{s.value??"—"}</strong></div>):<p className="muted">No scores recorded yet.</p>}</div><div className="section card"><h2>Monitoring</h2>{monitoring.length?monitoring.map((m:any)=><div className="row" key={m.id}><span>{m.name}</span><span className="pill">{m.status}</span></div>):<p className="muted">No live signals recorded yet.</p>}</div></aside></div></main>;
 }
