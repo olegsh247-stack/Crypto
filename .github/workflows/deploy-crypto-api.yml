@@ -45,9 +45,16 @@ jobs:
       - name: Verify health and live database schema
         run: |
           set -euo pipefail
-          base="https://crypto-api.olegsh247.workers.dev"
+          base="https://crypto-api.oleg247.workers.dev"
           health="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/db-health")"
           echo "HEALTH: $health"
           schema="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/admin/db-schema")"
           echo "$schema" | python -m json.tool
-          echo "$schema" | python -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="ok" and d.get("read_only") is True and isinstance(d.get("tables"),list); print(f"SCHEMA_OK tables={len(d[\"tables\"])} columns={len(d.get(\"columns\",[]))} constraints={len(d.get(\"constraints\",[]))} indexes={len(d.get(\"indexes\",[]))}")'
+          SCHEMA_JSON="$schema" python - <<'PY'
+          import json, os
+          d = json.loads(os.environ["SCHEMA_JSON"])
+          assert d.get("status") == "ok"
+          assert d.get("read_only") is True
+          assert isinstance(d.get("tables"), list)
+          print(f"SCHEMA_OK tables={len(d['tables'])} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
+          PY
