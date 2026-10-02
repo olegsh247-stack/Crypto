@@ -45,7 +45,7 @@ jobs:
       - name: Verify health and live database schema
         run: |
           set -euo pipefail
-          base="https://crypto-api.oleg247.workers.dev"
+          base="https://crypto-api.olegsh247.workers.dev"
           health="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/db-health")"
           echo "HEALTH: $health"
           schema="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/admin/db-schema")"
