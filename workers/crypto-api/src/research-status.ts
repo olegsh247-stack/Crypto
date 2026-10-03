@@ -1,11 +1,11 @@
-export type ResearchStatus = "Not started" | "In progress" | "Research complete" | "Monitoring";
+import { deriveResearchLifecycle, isCompletedBlock, type ResearchLifecycleStatus } from "../../../shared/research-status-contract";
 
-const COMPLETE = new Set(["COMPLETED", "PUBLISHED", "DONE", "COMPLETE", "RESEARCH COMPLETE"]);
+export type ResearchStatus = ResearchLifecycleStatus;
 
 export function calculateResearchStatus(blocks: Array<{ block_number?: number; status?: string | null }>): { status: ResearchStatus; completed: number; total: number; percentage: number } {
   const total = 15;
-  const completed = blocks.filter((block) => COMPLETE.has(String(block.status ?? "").trim().toUpperCase())).length;
-  const monitoringComplete = blocks.some((block) => Number(block.block_number) === 15 && COMPLETE.has(String(block.status ?? "").trim().toUpperCase()));
-  const status: ResearchStatus = completed === 0 ? "Not started" : completed < total ? "In progress" : monitoringComplete ? "Monitoring" : "Research complete";
+  const completed = blocks.filter((block) => isCompletedBlock(block.status)).length;
+  const monitoringComplete = blocks.some((block) => Number(block.block_number) === 15 && isCompletedBlock(block.status));
+  const status = deriveResearchLifecycle(completed, total, monitoringComplete);
   return { status, completed, total, percentage: Math.round((completed / total) * 100) };
 }
