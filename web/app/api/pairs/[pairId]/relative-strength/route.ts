@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getLiveRelativeStrength } from "../../../../../../lib/pair-history";
-import { getRelativeStrengthSignal } from "../../../../../../lib/relative-strength";
+import { getLiveRelativeStrength } from "../../../../../lib/pair-history";
+import { getRelativeStrengthSignal } from "../../../../../lib/relative-strength";
 
 export async function GET(request: Request, { params }: { params: Promise<{ pairId: string }> }) {
   const { pairId } = await params;
