@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql'
+      - 'infrastructure/neon/migrations/2026-09-28-engine-items.sql'
       - '.github/workflows/apply-neon-v2.yml'
   workflow_dispatch:
 
@@ -28,20 +29,35 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Apply migration in transaction
+      - name: Apply Research Engine v2 migration
         run: |
           psql "$DATABASE_URL" \
             --set=ON_ERROR_STOP=1 \
             --single-transaction \
             --file=infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
 
-      - name: Verify v2 tables
+      - name: Apply Engine items migration
+        run: |
+          psql "$DATABASE_URL" \
+            --set=ON_ERROR_STOP=1 \
+            --single-transaction \
+            --file=infrastructure/neon/migrations/2026-09-28-engine-items.sql
+
+      - name: Verify required Engine tables
         run: |
           psql "$DATABASE_URL" \
             --set=ON_ERROR_STOP=1 \
             --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status');" \
-            | grep -qx '10'
+            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');" \
+            | grep -qx '12'
+
+      - name: Verify market_pairs contract
+        run: |
+          psql "$DATABASE_URL" \
+            --set=ON_ERROR_STOP=1 \
+            --tuples-only --no-align \
+            --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" \
+            | grep -qx '5'
 
       - name: Verify migration marker
         run: |
