@@ -2,12 +2,14 @@ import { neon } from "@neondatabase/serverless";
 
 export type EngineDb = ReturnType<typeof neon>;
 
+const DEFAULT_ASSET_CATEGORY = "core";
+
 export async function addAsset(sql: EngineDb, input: { symbol: string; name: string }) {
   const symbol = input.symbol.trim().toUpperCase();
   const name = input.name.trim();
   const rows = await sql`
     insert into assets (asset_id, symbol, name, category, enabled, research_reason)
-    values (${symbol.toLowerCase()}, ${symbol}, ${name}, 'crypto', true, 'Added through Dynamic Asset Engine')
+    values (${symbol.toLowerCase()}, ${symbol}, ${name}, ${DEFAULT_ASSET_CATEGORY}, true, 'Added through Dynamic Asset Engine')
     on conflict (asset_id) do update
       set enabled = true, name = excluded.name
     returning asset_id, symbol, name, category, enabled, research_reason
