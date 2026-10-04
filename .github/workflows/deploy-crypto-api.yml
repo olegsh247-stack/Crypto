@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "workers/crypto-api/**"
+      - "shared/**"
       - "wrangler.toml"
       - ".github/workflows/deploy-crypto-api.yml"
   workflow_dispatch:
@@ -45,7 +46,7 @@ jobs:
       - name: Verify health and live database schema
         run: |
           set -euo pipefail
-          base="https://crypto-api.olegsh247.workers.dev"
+          base="https://crypto-api.oleg247.workers.dev"
           health="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/db-health")"
           echo "HEALTH: $health"
           schema="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/admin/db-schema")"
@@ -56,5 +57,9 @@ jobs:
           assert d.get("status") == "ok"
           assert d.get("read_only") is True
           assert isinstance(d.get("tables"), list)
-          print(f"SCHEMA_OK tables={len(d['tables'])} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
+          required = {"assets", "asset_types", "research_snapshots", "research_blocks", "research_domains", "research_block_domains", "critical_factors", "research_scores", "scenario_states", "monitoring_signals", "research_status", "market_pairs"}
+          actual = {row["table_name"] for row in d["tables"]}
+          missing = sorted(required - actual)
+          assert not missing, f"MISSING_REQUIRED_ENGINE_TABLES: {missing}"
+          print(f"SCHEMA_OK required_engine_tables={len(required)} total_tables={len(actual)} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
           PY
