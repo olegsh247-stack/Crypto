@@ -8,7 +8,10 @@ export async function getBinanceCandles(symbol: string, days: number): Promise<C
   const response = await fetch(url, { next: { revalidate: 60 } });
   if (!response.ok) throw new Error(`Binance history request failed for ${symbol}: ${response.status}`);
   const rows = await response.json() as unknown[];
-  return rows.map((row: any[]) => ({ time: Number(row[0]), close: Number(row[4]) })).filter(c => Number.isFinite(c.time) && Number.isFinite(c.close) && c.close > 0);
+  return rows.map((row: unknown) => {
+    const values = Array.isArray(row) ? row : [];
+    return { time: Number(values[0]), close: Number(values[4]) };
+  }).filter(c => Number.isFinite(c.time) && Number.isFinite(c.close) && c.close > 0);
 }
 
 export function relativeChangePercent(candles: Candle[]): number {
