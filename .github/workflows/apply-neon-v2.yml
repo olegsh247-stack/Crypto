@@ -45,24 +45,42 @@ jobs:
 
       - name: Verify required Engine tables
         run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');" | grep -qx '12'
+          count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');")
+          echo "Engine tables: $count / 12"
+          test "$count" = "12"
 
       - name: Verify market_pairs contract
         run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" | grep -qx '5'
+          count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');")
+          echo "market_pairs columns: $count / 5"
+          test "$count" = "5"
 
       - name: Verify ETH Asset Card
         run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core';" | grep -qx '1'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' AND block_number BETWEEN 1 AND 15 AND status='complete';" | grep -qx '15'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_block_domains rb JOIN research_blocks b ON b.research_block_id=rb.research_block_id WHERE b.snapshot_id='ETH-2026-10-04-v1';" | grep -qx '15'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM critical_factors WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '6'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '3'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scores WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '5'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='ETH';" | grep -qx '6'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_status WHERE asset_id='ETH' AND status='current';" | grep -qx '1'
+          asset=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core';")
+          blocks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' AND block_number BETWEEN 1 AND 15 AND status='complete';")
+          domains=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_block_domains rb JOIN research_blocks b ON b.research_block_id=rb.research_block_id WHERE b.snapshot_id='ETH-2026-10-04-v1';")
+          factors=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM critical_factors WHERE snapshot_id='ETH-2026-10-04-v1';")
+          scenarios=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1';")
+          scores=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scores WHERE snapshot_id='ETH-2026-10-04-v1';")
+          signals=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='ETH';")
+          freshness=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_status WHERE asset_id='ETH' AND status='current';")
+          echo "ETH asset: $asset / 1"
+          echo "ETH blocks: $blocks / 15"
+          echo "ETH block-domain links: $domains / 15"
+          echo "ETH critical factors: $factors / 6"
+          echo "ETH scenarios: $scenarios / 3"
+          echo "ETH scores: $scores / 5"
+          echo "ETH monitoring signals: $signals / 6"
+          echo "ETH freshness rows: $freshness / 1"
+          test "$asset" = "1"
+          test "$blocks" = "15"
+          test "$domains" = "15"
+          test "$factors" = "6"
+          test "$scenarios" = "3"
+          test "$scores" = "5"
+          test "$signals" = "6"
+          test "$freshness" = "1"
 
       - name: Verify migration markers
         run: |
