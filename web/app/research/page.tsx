@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { getAssets, type Asset } from "../../lib/api";
 import MarketTabs from "../components/MarketTabs";
+import { getResearchStatusLabel, getResearchFreshnessLabel } from "../../lib/research-status";
 
-const statusOrder = ["In progress", "Research complete", "Monitoring", "Not started"];
+const statusOrder = ["in_progress", "complete", "monitoring", "not_started"] as const;
 
 export default async function ResearchPage() {
   let assets: Asset[] = [];
   let error = "";
   try { assets = await getAssets(); } catch (e) { error = e instanceof Error ? e.message : "Unable to load research"; }
-  const sorted = [...assets].sort((a, b) => statusOrder.indexOf(a.research_status ?? "Not started") - statusOrder.indexOf(b.research_status ?? "Not started"));
-  const counts = { monitoring: assets.filter(a => a.research_status === "Monitoring").length, complete: assets.filter(a => a.research_status === "Research complete").length, progress: assets.filter(a => a.research_status === "In progress").length, notStarted: assets.filter(a => !a.research_status || a.research_status === "Not started").length };
+  const sorted = [...assets].sort((a, b) => statusOrder.indexOf(a.research_status ?? "not_started") - statusOrder.indexOf(b.research_status ?? "not_started"));
+  const counts = { monitoring: assets.filter(a => a.research_status === "monitoring").length, complete: assets.filter(a => a.research_status === "complete").length, progress: assets.filter(a => a.research_status === "in_progress").length, notStarted: assets.filter(a => !a.research_status || a.research_status === "not_started").length };
 
   return <main className="shell">
     <MarketTabs />
@@ -24,9 +25,10 @@ export default async function ResearchPage() {
       <section className="section">
         <div className="row"><div><h2>Assets</h2><p className="muted">Open an Asset to read the full research.</p></div><span className="pill">15 blocks per Asset</span></div>
         <div className="grid">{sorted.map(asset => <Link className="card" href={`/assets/${asset.asset_id}`} key={asset.asset_id}>
-          <div className="row"><strong>{asset.symbol}</strong><span className="pill">{asset.research_status ?? "Not started"}</span></div>
+          <div className="row"><strong>{asset.symbol}</strong><span className="pill">{asset.research_status ? getResearchStatusLabel(asset.research_status) : "Not started"}</span></div>
           <h2>{asset.name}</h2>
           <div className="row"><span className="muted">Research tier</span><span>{asset.research_tier ?? "—"}</span></div>
+          {asset.research_freshness && <div className="row"><span className="muted">Freshness</span><span>{getResearchFreshnessLabel(asset.research_freshness.status)}</span></div>}
         </Link>)}</div>
       </section>
     </>}
