@@ -8,21 +8,11 @@ export const RESEARCH_FRESHNESS_STATUSES = ["current", "update_recommended", "ou
 export type ResearchFreshnessStatus = (typeof RESEARCH_FRESHNESS_STATUSES)[number];
 
 const BLOCK_ALIASES: Record<string, ResearchBlockStatus> = {
-  not_started: "not_started",
-  "not started": "not_started",
-  partial: "partial",
-  complete: "complete",
-  completed: "complete",
-  published: "complete",
-  done: "complete",
-  "research complete": "complete",
-  n_a: "n_a",
-  "n/a": "n_a",
+  not_started: "not_started", "not started": "not_started", partial: "partial", complete: "complete", completed: "complete", published: "complete", done: "complete", "research complete": "complete", n_a: "n_a", "n/a": "n_a"
 };
 
 export function normalizeResearchBlockStatus(value: unknown): ResearchBlockStatus {
-  const key = String(value ?? "").trim().toLowerCase();
-  return BLOCK_ALIASES[key] ?? "not_started";
+  return BLOCK_ALIASES[String(value ?? "").trim().toLowerCase()] ?? "not_started";
 }
 
 export function isCompletedBlock(value: unknown): boolean {
@@ -37,4 +27,12 @@ export function deriveResearchLifecycle(completed: number, total = 15, monitorin
 
 export function lifecycleLabel(status: ResearchLifecycleStatus): string {
   return { not_started: "Not started", in_progress: "In progress", complete: "Research complete", monitoring: "Monitoring" }[status];
+}
+
+export function blockStatusLabel(status: unknown): string {
+  return { not_started: "Not started", partial: "Partial", complete: "Complete", n_a: "N/A" }[normalizeResearchBlockStatus(status)];
+}
+
+export function freshnessLabel(status: ResearchFreshnessStatus): string {
+  return { current: "Current", update_recommended: "Update recommended", outdated: "Outdated" }[status];
 }
