@@ -1,5 +1,5 @@
 import { STRUCTURE_1_BLOCKS, type ResearchBlock } from "./research-structure";
-import { deriveResearchLifecycle, isCompletedBlock, lifecycleLabel, normalizeResearchBlockStatus, type ResearchLifecycleStatus, type ResearchFreshnessStatus } from "../../shared/research-status-contract";
+import { blockStatusLabel, deriveResearchLifecycle, freshnessLabel, isCompletedBlock, lifecycleLabel, normalizeResearchBlockStatus, type ResearchLifecycleStatus, type ResearchFreshnessStatus } from "../../shared/research-status-contract";
 
 export type ResearchStatus = ResearchLifecycleStatus;
 
@@ -9,9 +9,9 @@ export function getResearchStatus(blocks: ResearchBlock[]): ResearchStatus {
   return deriveResearchLifecycle(completed, STRUCTURE_1_BLOCKS.length, !!monitoring && isCompletedBlock(monitoring.status));
 }
 
-export function getResearchStatusLabel(status: ResearchStatus): string {
-  return lifecycleLabel(status);
-}
+export function getResearchStatusLabel(status: ResearchStatus): string { return lifecycleLabel(status); }
+export function getResearchBlockStatusLabel(status: unknown): string { return blockStatusLabel(status); }
+export function getResearchFreshnessLabel(status: ResearchFreshnessStatus): string { return freshnessLabel(status); }
 
 export function getResearchProgress(blocks: ResearchBlock[]) {
   const completed = blocks.filter((b) => isCompletedBlock(b.status)).length;
