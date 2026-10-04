@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAssets, type Asset } from "../lib/api";
 import MarketTabs from "./components/MarketTabs";
+import { getResearchStatusLabel, getResearchFreshnessLabel } from "../lib/research-status";
 
 export default async function Home() {
   let assets: Asset[] = [];
@@ -14,7 +15,8 @@ export default async function Home() {
       {assets.map((asset) => <Link className="card" href={`/assets/${asset.asset_id}`} key={asset.asset_id}>
         <div className="row"><strong>{asset.symbol}</strong><span className="pill">{asset.research_tier ?? "—"}</span></div>
         <h2>{asset.name}</h2><p className="muted">{asset.asset_type?.name ?? asset.category ?? "Crypto asset"}</p>
-        <div className="row"><span className="muted">Research</span><span>{asset.research_status ?? "Not started"}</span></div>
+        <div className="row"><span className="muted">Research</span><span>{asset.research_status ? getResearchStatusLabel(asset.research_status) : "Not started"}</span></div>
+        {asset.research_freshness && <div className="row"><span className="muted">Freshness</span><span>{getResearchFreshnessLabel(asset.research_freshness.status)}</span></div>}
       </Link>)}
     </section>}
   </main>;
