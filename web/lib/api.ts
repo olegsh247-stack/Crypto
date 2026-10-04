@@ -8,7 +8,8 @@ export type Asset = {
   binance_symbol?: string | null;
   research_reason?: string | null;
   asset_type?: { code: string; name: string } | null;
-  research_status?: string | null;
+  research_status?: "not_started" | "in_progress" | "complete" | "monitoring" | null;
+  research_freshness?: { status: "current" | "update_recommended" | "outdated"; reason?: string | null } | null;
 };
 
 const API_BASE = process.env.CRYPTO_API_URL ?? "http://localhost:8787";
@@ -23,4 +24,4 @@ export async function disablePair(id:string){return api<any>(`/api/pairs/${encod
 export async function getPairHistory(symbol:string,days=30,interval="1d"){return api<any>(`/api/pairs/${encodeURIComponent(symbol)}/history?days=${days}&interval=${encodeURIComponent(interval)}`)}
 export async function getCommodities(){return api<any>("/api/commodities")}
 export async function createCommodity(input:{symbol:string;name:string;unit?:string}){return api<any>("/api/commodities",{method:"POST",body:JSON.stringify(input)})}
-export async function disableCommodity(id:string){return api<any>(`/api/commodities/${encodeURIComponent(id)}`,{method:"DELETE"})}
+export async function disableCommodity(id:string){return api<any>(`/api/commodities/${encodeURIComponent(id)}` ,{method:"DELETE"})}
