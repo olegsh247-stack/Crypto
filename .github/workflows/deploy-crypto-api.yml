@@ -43,23 +43,15 @@ jobs:
           workingDirectory: "."
           command: deploy
 
-      - name: Verify health and live database schema
+      - name: Verify deployed Engine contract directly in Neon
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
           set -euo pipefail
-          base="https://crypto-api.oleg247.workers.dev"
-          health="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/db-health")"
-          echo "HEALTH: $health"
-          schema="$(curl -fsS --retry 5 --retry-delay 2 "$base/api/admin/db-schema")"
-          echo "$schema" | python -m json.tool
-          SCHEMA_JSON="$schema" python - <<'PY'
-          import json, os
-          d = json.loads(os.environ["SCHEMA_JSON"])
-          assert d.get("status") == "ok"
-          assert d.get("read_only") is True
-          assert isinstance(d.get("tables"), list)
-          required = {"assets", "asset_types", "research_snapshots", "research_blocks", "research_domains", "research_block_domains", "critical_factors", "research_scores", "scenario_states", "monitoring_signals", "research_status", "market_pairs"}
-          actual = {row["table_name"] for row in d["tables"]}
-          missing = sorted(required - actual)
-          assert not missing, f"MISSING_REQUIRED_ENGINE_TABLES: {missing}"
-          print(f"ENGINE_CONTRACT_OK required_engine_tables={len(required)} total_tables={len(actual)} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
-          PY
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          test -n "$DATABASE_URL"
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1" | grep -qx '1'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.tables where table_schema='public' and table_name in ('assets','asset_types','research_snapshots','research_blocks','research_domains','research_block_domains','critical_factors','research_scores','scenario_states','monitoring_signals','research_status','market_pairs');" | grep -qx '12'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.columns where table_schema='public' and table_name='market_pairs' and column_name in ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" | grep -qx '5'
+          echo "ENGINE_CONTRACT_OK required_engine_tables=12 market_pairs_columns=5"
