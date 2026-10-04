@@ -61,5 +61,5 @@ jobs:
           actual = {row["table_name"] for row in d["tables"]}
           missing = sorted(required - actual)
           assert not missing, f"MISSING_REQUIRED_ENGINE_TABLES: {missing}"
-          print(f"SCHEMA_OK required_engine_tables={len(required)} total_tables={len(actual)} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
+          print(f"ENGINE_CONTRACT_OK required_engine_tables={len(required)} total_tables={len(actual)} columns={len(d.get('columns', []))} constraints={len(d.get('constraints', []))} indexes={len(d.get('indexes', []))}")
           PY
