@@ -29,55 +29,42 @@ jobs:
           sudo apt-get install -y postgresql-client
 
       - name: Apply Research Engine v2 migration
-        run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
 
       - name: Apply Engine items migration
-        run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-28-engine-items.sql
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-28-engine-items.sql
 
-      - name: Apply ETH Asset Card migration
-        run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-04-eth-asset-card.sql
+      - name: Apply canonical ETH Asset Card
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-04-eth-asset-card.sql
+
+      - name: Finalize ETH Asset Card
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-eth-asset-card.sql
+
+      - name: Finalize ETH classification
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-eth-asset-type.sql
 
       - name: Verify required Engine tables
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');" \
-            | grep -qx '12'
+            --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');" | grep -qx '12'
 
       - name: Verify market_pairs contract
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" \
-            | grep -qx '5'
+            --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" | grep -qx '5'
 
       - name: Verify ETH Asset Card
         run: |
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core';" \
-            | grep -qx '1'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' AND block_number BETWEEN 1 AND 15 AND status='complete';" \
-            | grep -qx '15'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM critical_factors WHERE snapshot_id='ETH-2026-10-04-v1';" \
-            | grep -qx '6'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1';" \
-            | grep -qx '3'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM research_scores WHERE snapshot_id='ETH-2026-10-04-v1';" \
-            | grep -qx '5'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='ETH';" \
-            | grep -qx '6'
-          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT COUNT(*) FROM research_status WHERE asset_id='ETH' AND status='current';" \
-            | grep -qx '1'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core';" | grep -qx '1'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' AND block_number BETWEEN 1 AND 15 AND status='complete';" | grep -qx '15'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_block_domains rb JOIN research_blocks b ON b.research_block_id=rb.research_block_id WHERE b.snapshot_id='ETH-2026-10-04-v1';" | grep -qx '15'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM critical_factors WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '6'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '3'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scores WHERE snapshot_id='ETH-2026-10-04-v1';" | grep -qx '5'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='ETH';" | grep -qx '6'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_status WHERE asset_id='ETH' AND status='current';" | grep -qx '1'
 
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card') ORDER BY version;" \
-            | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card'
+            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type'
