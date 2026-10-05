@@ -97,6 +97,15 @@ jobs:
           test "$missing_category" = "0"
           test "$missing_name" = "0"
 
+      - name: Verify canonical market identities
+        run: |
+          invalid_market_identities=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('btc','BTC','BTCUSDT'),('dash','DASH','DASHUSDT'),('eth','ETH','ETHUSDT'),('sol','SOL','SOLUSDT'),('cake','CAKE','CAKEUSDT'),('bch','BCH','BCHUSDT'),('ltc','LTC','LTCUSDT'),('xrp','XRP','XRPUSDT'),('trx','TRX','TRXUSDT')) expected(asset_id,symbol,binance_symbol) WHERE NOT EXISTS (SELECT 1 FROM assets a WHERE a.asset_id=expected.asset_id AND a.symbol=expected.symbol AND a.binance_symbol=expected.binance_symbol AND jsonb_typeof(a.fallback_symbols)='object' AND a.fallback_symbols <> '{}'::jsonb);")
+          invalid_fallbacks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id IN ('btc','dash','eth','sol','cake','bch','ltc','xrp','trx') AND (jsonb_typeof(fallback_symbols) <> 'object' OR fallback_symbols = '{}'::jsonb OR NOT (fallback_symbols ? 'okx') OR NOT (fallback_symbols ? 'bybit') OR NOT (fallback_symbols ? 'mexc'));")
+          echo "Invalid canonical market identities: $invalid_market_identities / 0"
+          echo "Invalid fallback mappings: $invalid_fallbacks / 0"
+          test "$invalid_market_identities" = "0"
+          test "$invalid_fallbacks" = "0"
+
       - name: Verify canonical asset type classifications
         run: |
           invalid_classifications=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('btc','monetary_asset'),('dash','l1_settlement_asset'),('eth','l1_settlement_asset'),('sol','l1_execution_asset'),('cake','defi_protocol_token'),('bch','monetary_asset'),('ltc','monetary_asset'),('xrp','l1_settlement_asset'),('trx','l1_settlement_asset')) expected(asset_id,primary_asset_type_id) WHERE NOT EXISTS (SELECT 1 FROM assets a WHERE a.asset_id=expected.asset_id AND a.primary_asset_type_id=expected.primary_asset_type_id);" )
