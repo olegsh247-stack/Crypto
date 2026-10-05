@@ -19,9 +19,14 @@ export function isCompletedBlock(value: unknown): boolean {
   return normalizeResearchBlockStatus(value) === "complete";
 }
 
-export function deriveResearchLifecycle(completed: number, total = 15, monitoringComplete = false): ResearchLifecycleStatus {
-  if (completed === 0) return "not_started";
-  if (completed < total) return "in_progress";
+export function isResolvedBlock(value: unknown): boolean {
+  const status = normalizeResearchBlockStatus(value);
+  return status === "complete" || status === "n_a";
+}
+
+export function deriveResearchLifecycle(resolved: number, total = 15, monitoringComplete = false): ResearchLifecycleStatus {
+  if (resolved === 0) return "not_started";
+  if (resolved < total) return "in_progress";
   return monitoringComplete ? "monitoring" : "complete";
 }
 
