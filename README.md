@@ -16,7 +16,7 @@
 
 **Задача → Исследование → Факты → Анализ → Результат → Мониторинг**
 
-Подробная методология и формат исследования определены в **CryptoResearch v1**.
+Подробная методология и формат исследования определены в **CryptoResearch v2 / Structure 1**.
 
 ## Структура исследования
 
@@ -38,14 +38,14 @@
 
 ## Текущий актив
 
-**Bitcoin (BTC)**
+**Ethereum (ETH)** — первый полный Asset Card в CryptoResearch v2 / Structure 1.
 
-Первое исследование:
+Исследовательский baseline:
 
-**BTC — Полное исследование Bitcoin, сентябрь 2026**
+**ETH — Deep Research 01–15, октябрь 2026**
 
-После проверки методологии на Bitcoin она будет применяться к другим активам.
+Asset Card включает 15 исследовательских блоков, критические факторы, сценарии, scores и monitoring signals.
 
 ## Skill
 
-`skills/CryptoResearch/SKILL.md` — **CryptoResearch v1**
+`skills/CryptoResearch/SKILL.md` — **CryptoResearch v2 / Structure 1**
