@@ -34,6 +34,9 @@ jobs:
       - name: Apply Engine items migration
         run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-28-engine-items.sql
 
+      - name: Apply market pair integrity migration
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-07-market-pair-integrity.sql
+
       - name: Apply canonical ETH Asset Card
         run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-04-eth-asset-card.sql
 
@@ -60,6 +63,21 @@ jobs:
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='market_pairs' AND column_name IN ('symbol','base_asset_id','quote_asset_id','exchange','enabled');")
           echo "market_pairs columns: $count / 5"
           test "$count" = "5"
+
+      - name: Verify market pair integrity
+        run: |
+          orphan_base=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs mp LEFT JOIN assets a ON a.asset_id=mp.base_asset_id WHERE a.asset_id IS NULL;")
+          orphan_quote=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs mp LEFT JOIN assets a ON a.asset_id=mp.quote_asset_id WHERE a.asset_id IS NULL;")
+          invalid_symbol=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs WHERE symbol <> upper(symbol) OR position('/' in symbol)=0;")
+          identical_legs=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs WHERE base_asset_id=quote_asset_id;")
+          echo "Orphan base assets: $orphan_base / 0"
+          echo "Orphan quote assets: $orphan_quote / 0"
+          echo "Invalid pair symbols: $invalid_symbol / 0"
+          echo "Identical pair legs: $identical_legs / 0"
+          test "$orphan_base" = "0"
+          test "$orphan_quote" = "0"
+          test "$invalid_symbol" = "0"
+          test "$identical_legs" = "0"
 
       - name: Verify Asset Registry contract
         run: |
@@ -154,4 +172,4 @@ jobs:
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities'
+            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities','2026-10-07-market-pair-integrity') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities\n2026-10-07-market-pair-integrity'
