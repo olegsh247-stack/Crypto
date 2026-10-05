@@ -52,6 +52,9 @@ jobs:
       - name: Canonicalize asset identities
         run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-06-canonicalize-asset-identities.sql
 
+      - name: Apply canonical USDT market pairs
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-08-canonical-usdt-market-pairs.sql
+
       - name: Verify required Engine tables
         run: |
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');")
@@ -78,6 +81,15 @@ jobs:
           test "$orphan_quote" = "0"
           test "$invalid_symbol" = "0"
           test "$identical_legs" = "0"
+
+      - name: Verify canonical market pairs
+        run: |
+          usdt=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='usdt' AND symbol='USDT' AND primary_asset_type_id='stablecoin' AND category='stablecoin' AND enabled;")
+          pairs=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('BTC/USDT','btc'),('DASH/USDT','dash'),('ETH/USDT','eth'),('SOL/USDT','sol'),('CAKE/USDT','cake'),('BCH/USDT','bch'),('LTC/USDT','ltc'),('XRP/USDT','xrp'),('TRX/USDT','trx')) expected(symbol,base_asset_id) WHERE NOT EXISTS (SELECT 1 FROM market_pairs mp WHERE mp.symbol=expected.symbol AND mp.base_asset_id=expected.base_asset_id AND mp.quote_asset_id='usdt' AND mp.exchange='binance' AND mp.enabled);")
+          echo "USDT quote asset: $usdt / 1"
+          echo "Missing canonical pairs: $pairs / 0"
+          test "$usdt" = "1"
+          test "$pairs" = "0"
 
       - name: Verify Asset Registry contract
         run: |
@@ -108,7 +120,7 @@ jobs:
 
       - name: Verify canonical asset type classifications
         run: |
-          invalid_classifications=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('btc','monetary_asset'),('dash','l1_settlement_asset'),('eth','l1_settlement_asset'),('sol','l1_execution_asset'),('cake','defi_protocol_token'),('bch','monetary_asset'),('ltc','monetary_asset'),('xrp','l1_settlement_asset'),('trx','l1_settlement_asset')) expected(asset_id,primary_asset_type_id) WHERE NOT EXISTS (SELECT 1 FROM assets a WHERE a.asset_id=expected.asset_id AND a.primary_asset_type_id=expected.primary_asset_type_id);" )
+          invalid_classifications=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('btc','monetary_asset'),('dash','l1_settlement_asset'),('eth','l1_settlement_asset'),('sol','l1_execution_asset'),('cake','defi_protocol_token'),('bch','monetary_asset'),('ltc','monetary_asset'),('xrp','l1_settlement_asset'),('trx','l1_settlement_asset')) expected(asset_id,primary_asset_type_id) WHERE NOT EXISTS (SELECT 1 FROM assets a WHERE a.asset_id=expected.asset_id AND a.primary_asset_type_id=expected.primary_asset_type_id);")
           echo "Invalid canonical asset classifications: $invalid_classifications / 0"
           test "$invalid_classifications" = "0"
 
@@ -181,4 +193,4 @@ jobs:
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities','2026-10-07-market-pair-integrity') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities\n2026-10-07-market-pair-integrity'
+            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities','2026-10-07-market-pair-integrity','2026-10-08-canonical-usdt-market-pairs') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities\n2026-10-07-market-pair-integrity\n2026-10-08-canonical-usdt-market-pairs'
