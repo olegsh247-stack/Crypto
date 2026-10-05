@@ -103,18 +103,24 @@ jobs:
       - name: Verify ETH Asset Card contract integrity
         run: |
           missing_blocks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM generate_series(1,15) n WHERE NOT EXISTS (SELECT 1 FROM research_blocks rb WHERE rb.snapshot_id='ETH-2026-10-04-v1' AND rb.block_number=n AND rb.status='complete');")
+          duplicate_blocks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (SELECT block_number FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' GROUP BY block_number HAVING COUNT(*) <> 1) d;")
+          domain_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_domains;")
           incomplete_domain_blocks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM generate_series(1,15) n WHERE NOT EXISTS (SELECT 1 FROM research_blocks rb JOIN research_block_domains rbd ON rbd.research_block_id=rb.research_block_id WHERE rb.snapshot_id='ETH-2026-10-04-v1' AND rb.block_number=n);")
           scenario_types=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1' AND scenario_type IN ('bull','base','bear');")
           distinct_scenario_types=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(DISTINCT scenario_type) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1' AND scenario_type IN ('bull','base','bear');")
           score_types=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(DISTINCT score_type) FROM research_scores WHERE asset_id='eth' AND snapshot_id='ETH-2026-10-04-v1' AND score_type IN ('health','thesis','value_accrual','confidence','competitive_position');")
           signal_names=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(DISTINCT name) FROM monitoring_signals WHERE asset_id='eth';")
           echo "Missing complete blocks: $missing_blocks / 0"
+          echo "Duplicate block numbers: $duplicate_blocks / 0"
+          echo "Research domains: $domain_count / 6"
           echo "Blocks without domain mapping: $incomplete_domain_blocks / 0"
           echo "Scenario rows: $scenario_types / 3"
           echo "Distinct scenarios: $distinct_scenario_types / 3"
           echo "Score types: $score_types / 5"
           echo "Distinct monitoring signals: $signal_names / 6"
           test "$missing_blocks" = "0"
+          test "$duplicate_blocks" = "0"
+          test "$domain_count" = "6"
           test "$incomplete_domain_blocks" = "0"
           test "$scenario_types" = "3"
           test "$distinct_scenario_types" = "3"
