@@ -61,6 +61,24 @@ jobs:
           echo "market_pairs columns: $count / 5"
           test "$count" = "5"
 
+      - name: Verify Asset Registry contract
+        run: |
+          invalid_ids=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id <> lower(asset_id);")
+          missing_type=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE enabled AND primary_asset_type_id IS NULL;")
+          invalid_tier=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE research_tier NOT IN ('A','B','C');")
+          missing_category=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE enabled AND NULLIF(trim(category),'') IS NULL;")
+          missing_name=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE enabled AND NULLIF(trim(name),'') IS NULL;")
+          echo "Non-canonical asset IDs: $invalid_ids / 0"
+          echo "Enabled assets without primary type: $missing_type / 0"
+          echo "Invalid research tiers: $invalid_tier / 0"
+          echo "Enabled assets without category: $missing_category / 0"
+          echo "Enabled assets without name: $missing_name / 0"
+          test "$invalid_ids" = "0"
+          test "$missing_type" = "0"
+          test "$invalid_tier" = "0"
+          test "$missing_category" = "0"
+          test "$missing_name" = "0"
+
       - name: Verify canonical asset identities
         run: |
           eth=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='eth' AND symbol='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core' AND research_tier='A';")
