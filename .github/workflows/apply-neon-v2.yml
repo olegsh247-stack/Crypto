@@ -43,6 +43,9 @@ jobs:
       - name: Finalize ETH classification
         run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-eth-asset-type.sql
 
+      - name: Normalize monitoring signal uniqueness
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-monitoring-signal-uniqueness.sql
+
       - name: Verify required Engine tables
         run: |
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');")
@@ -85,4 +88,4 @@ jobs:
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type'
+            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness'
