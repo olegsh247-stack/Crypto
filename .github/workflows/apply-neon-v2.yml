@@ -46,6 +46,9 @@ jobs:
       - name: Normalize monitoring signal uniqueness
         run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-monitoring-signal-uniqueness.sql
 
+      - name: Canonicalize asset identities
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-06-canonicalize-asset-identities.sql
+
       - name: Verify required Engine tables
         run: |
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');")
@@ -58,16 +61,26 @@ jobs:
           echo "market_pairs columns: $count / 5"
           test "$count" = "5"
 
+      - name: Verify canonical asset identities
+        run: |
+          eth=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='eth' AND symbol='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core' AND research_tier='A';")
+          uppercase=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH';")
+          echo "canonical eth: $eth / 1"
+          echo "uppercase ETH rows: $uppercase / 0"
+          test "$eth" = "1"
+          test "$uppercase" = "0"
+
       - name: Verify ETH Asset Card
         run: |
-          asset=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core';")
+          asset=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='eth' AND primary_asset_type_id='l1_settlement_asset' AND category='core';")
           blocks=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1' AND block_number BETWEEN 1 AND 15 AND status='complete';")
           domains=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_block_domains rb JOIN research_blocks b ON b.research_block_id=rb.research_block_id WHERE b.snapshot_id='ETH-2026-10-04-v1';")
-          factors=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM critical_factors WHERE snapshot_id='ETH-2026-10-04-v1';")
+          factors=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM critical_factors WHERE asset_id='eth' AND snapshot_id='ETH-2026-10-04-v1';")
           scenarios=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scenarios WHERE snapshot_id='ETH-2026-10-04-v1';")
-          scores=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scores WHERE snapshot_id='ETH-2026-10-04-v1';")
-          signals=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='ETH';")
-          freshness=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_status WHERE asset_id='ETH' AND status='current';")
+          scores=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_scores WHERE asset_id='eth' AND snapshot_id='ETH-2026-10-04-v1';")
+          signals=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM monitoring_signals WHERE asset_id='eth';")
+          freshness=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM research_status WHERE asset_id='eth' AND status='current';")
+          lifecycle=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT CASE WHEN COUNT(*)=0 THEN 'not_started' WHEN bool_or(block_number=15 AND status='complete') THEN 'monitoring' WHEN COUNT(*)>=15 THEN 'complete' ELSE 'in_progress' END FROM research_blocks WHERE snapshot_id='ETH-2026-10-04-v1';")
           echo "ETH asset: $asset / 1"
           echo "ETH blocks: $blocks / 15"
           echo "ETH block-domain links: $domains / 15"
@@ -76,6 +89,7 @@ jobs:
           echo "ETH scores: $scores / 5"
           echo "ETH monitoring signals: $signals / 6"
           echo "ETH freshness rows: $freshness / 1"
+          echo "ETH lifecycle: $lifecycle / monitoring"
           test "$asset" = "1"
           test "$blocks" = "15"
           test "$domains" = "15"
@@ -84,8 +98,9 @@ jobs:
           test "$scores" = "5"
           test "$signals" = "6"
           test "$freshness" = "1"
+          test "$lifecycle" = "monitoring"
 
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness'
+            --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities'
