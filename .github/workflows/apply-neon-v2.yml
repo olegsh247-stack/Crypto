@@ -79,6 +79,12 @@ jobs:
           test "$missing_category" = "0"
           test "$missing_name" = "0"
 
+      - name: Verify canonical asset type classifications
+        run: |
+          invalid_classifications=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (VALUES ('btc','monetary_asset'),('dash','l1_settlement_asset'),('eth','l1_settlement_asset'),('sol','l1_execution_asset'),('cake','defi_protocol_token'),('bch','monetary_asset'),('ltc','monetary_asset'),('xrp','l1_settlement_asset'),('trx','l1_settlement_asset')) expected(asset_id,primary_asset_type_id) WHERE NOT EXISTS (SELECT 1 FROM assets a WHERE a.asset_id=expected.asset_id AND a.primary_asset_type_id=expected.primary_asset_type_id);" )
+          echo "Invalid canonical asset classifications: $invalid_classifications / 0"
+          test "$invalid_classifications" = "0"
+
       - name: Verify canonical asset identities
         run: |
           eth=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id='eth' AND symbol='ETH' AND primary_asset_type_id='l1_settlement_asset' AND category='core' AND research_tier='A';")
