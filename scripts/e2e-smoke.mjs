@@ -43,11 +43,22 @@ for (const symbol of ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","
   assert(symbols.has(symbol), "pair " + symbol);
 }
 
-for (const symbol of ["BTC/USDT","ETH/USDT"]) {
+const canonicalSymbols = ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","BCH/USDT","LTC/USDT","XRP/USDT","TRX/USDT"];
+const historyResults = [];
+for (const symbol of canonicalSymbols) {
   const history = await get("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=7&interval=1d");
   assert(history.pair === symbol, symbol + " history identity");
+  assert(["Binance","Kraken","CoinGecko","stored_market_history"].includes(history.source), symbol + " supported history source");
   assert(Array.isArray(history.rows) && history.rows.length >= 2, symbol + " history rows");
   assert(Array.isArray(history.normalized?.relative) && history.normalized.relative.length >= 2, symbol + " normalized history");
+  historyResults.push({symbol,source:history.source,rows:history.rows.length});
 }
 
-console.log("E2E_OK health=1 db=1 assets=9+ eth_blocks=15 pairs=9 histories=2");
+for (const symbol of ["BTC/USDT","ETH/USDT"]) {
+  const first = historyResults.find(x => x.symbol === symbol);
+  const repeat = await get("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=7&interval=1d");
+  assert(repeat.pair === symbol && Array.isArray(repeat.rows) && repeat.rows.length >= 2, symbol + " repeat history");
+  assert(repeat.rows.length === first.rows, symbol + " repeat row-count stability");
+}
+
+console.log("E2E_OK health=1 db=1 assets=9+ eth_blocks=15 pairs=9 histories=9 repeat=2");
