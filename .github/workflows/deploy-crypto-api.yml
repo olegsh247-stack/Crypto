@@ -101,7 +101,7 @@ jobs:
           curl -fsS "http://127.0.0.1:8787/api/health" >/dev/null
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-1.json
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-2.json
-          actual_assets="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true;" | tr -d '[:space:]')"
+          actual_assets="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true;" | xargs)"
           test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
           usdt_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where asset_id='usdt' and symbol='USDT';" | tr -d '[:space:]')"
           test "$usdt_count" = "1"
