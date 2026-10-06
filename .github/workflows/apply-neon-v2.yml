@@ -74,6 +74,10 @@ jobs:
           test "$usdt" = "1"
           test "$pairs" = "0"
 
+      - name: Report non-canonical asset IDs
+        run: |
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT asset_id FROM assets WHERE asset_id <> lower(asset_id) ORDER BY asset_id;"
+
       - name: Verify Asset Registry contract
         run: |
           invalid_ids=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE asset_id <> lower(asset_id);")
