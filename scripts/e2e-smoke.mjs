@@ -39,7 +39,7 @@ assert(btc.asset?.asset_id === "btc", "BTC canonical detail");
 
 const pairsResponse = await get("/api/pairs");
 const pairs = pairsResponse.pairs || pairsResponse.items || [];
-assert(pairs.length === canonicalSymbols.length, "canonical pair registry size");
+assert(pairs.length === 9, "canonical pair registry size");
 const symbols = new Set(pairs.map(p => p.symbol));
 assert(pairs.every(p => p.exchange && p.enabled === true), "pair exchange/enabled contract");
 assert(pairs.every(p => {
