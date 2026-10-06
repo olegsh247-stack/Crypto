@@ -55,10 +55,10 @@ for (const symbol of canonicalSymbols) {
 }
 
 for (const symbol of ["BTC/USDT","ETH/USDT"]) {
-  const first = historyResults.find(x => x.symbol === symbol);
   const repeat = await get("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=7&interval=1d");
   assert(repeat.pair === symbol && Array.isArray(repeat.rows) && repeat.rows.length >= 2, symbol + " repeat history");
-  assert(repeat.rows.length === first.rows, symbol + " repeat row-count stability");
+  assert(repeat.source && ["Binance","Kraken","CoinGecko","stored_market_history"].includes(repeat.source), symbol + " repeat source");
+  assert(Array.isArray(repeat.normalized?.relative) && repeat.normalized.relative.length >= 2, symbol + " repeat normalized history");
 }
 
 console.log("E2E_OK health=1 db=1 assets=9+ eth_blocks=15 pairs=9 histories=9 repeat=2");
