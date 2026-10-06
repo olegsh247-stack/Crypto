@@ -65,6 +65,7 @@ jobs:
           test -n "$DATABASE_URL"
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1" | grep -qx '1'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.tables where table_schema='public' and table_name in ('assets','asset_types','research_snapshots','research_blocks','research_domains','research_block_domains','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs');" | grep -qx '12'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from pg_constraint where conrelid='market_pairs'::regclass and conname='market_pairs_exchange_symbol_unique';" | grep -qx '1'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.columns where table_schema='public' and table_name='market_pairs' and column_name in ('symbol','base_asset_id','quote_asset_id','exchange','enabled');" | grep -qx '5'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where asset_id='eth' and symbol='ETH' and primary_asset_type_id='l1_settlement_asset';" | grep -qx '1'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where asset_id='ETH';" | grep -qx '0'
