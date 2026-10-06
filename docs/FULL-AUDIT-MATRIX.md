@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06
 Репозиторий: olegsh247-stack/Crypto
-Статус: FULL REPOSITORY AUDIT — BATCH 1+2 REPAIR APPLIED (live CI/DB verification pending)
+Статус: FULL REPOSITORY AUDIT — BATCH 1+2 REPAIR APPLIED (live CI/DB verification in progress)
 
 > Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level Cloudflare/Neon состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
 
@@ -93,7 +93,7 @@ Admin schema endpoint is protected in current source.
 
 ## P1 — Batch 1 / Batch 2
 
-**Batch 1 and Batch 2 implementation is committed. Remaining GREEN/YELLOW items require live CI/DB verification, not further architectural repair.**
+**Batch 1 and Batch 2 implementation is committed. Live CI exposed one legacy uppercase `ETH` row left behind by the historical migration order; Batch 1 now includes `2026-10-10-remove-legacy-uppercase-eth.sql` to canonicalize that remaining data.**
 
 
 ### P1-01 — Market Pair identity
