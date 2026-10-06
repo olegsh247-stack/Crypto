@@ -4,6 +4,15 @@ BEGIN;
 -- Asset Card migration when that migration was previously run after the
 -- 2026-10-06 canonicalization step. Move any remaining references back to
 -- the canonical lowercase asset and remove the duplicate registry row.
+-- If a legacy monitoring signal duplicates an existing canonical signal,
+-- keep the canonical row and remove only the legacy duplicate.
+DELETE FROM monitoring_signals legacy
+WHERE legacy.asset_id='ETH'
+  AND EXISTS (
+    SELECT 1 FROM monitoring_signals canonical
+    WHERE canonical.asset_id='eth' AND canonical.name=legacy.name
+  );
+
 UPDATE research_snapshots SET asset_id='eth' WHERE asset_id='ETH';
 UPDATE observations SET asset_id='eth' WHERE asset_id='ETH';
 UPDATE monitoring_events SET asset_id='eth' WHERE asset_id='ETH';
