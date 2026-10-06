@@ -60,7 +60,7 @@ async function ingestAssetDaily(sql:any, asset:any){
  }
  if(!rows.length){
   try{
-   const gecko=await coingeckoUsdKlines(assetSymbol,8);
+   const gecko=coingeckoDaily(await coingeckoUsdKlines(assetSymbol,14));
    rows=gecko.map((r:any)=>({time:r.time,open:r.close,high:r.close,low:r.close,close:r.close,volume:0}));
    sourceId="market_coingecko";
   }catch{}
@@ -91,6 +91,15 @@ async function coingeckoUsdKlines(asset:string,days:number){
  if(!response.ok)throw new Error(`CoinGecko ${asset}: ${response.status}`);
  const data=await response.json() as any;
  return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
+
+function coingeckoDaily(rows:any[]){
+ const byDay=new Map<string,any>();
+ for(const row of rows){
+  const day=new Date(row.time).toISOString().slice(0,10);
+  byDay.set(day,row);
+ }
+ return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 
 export default {
