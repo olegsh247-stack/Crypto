@@ -3,15 +3,7 @@ name: Deploy Crypto API
 # Batch 1+2 post-migration live verification
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "workers/crypto-api/**"
-      - "shared/**"
-      - "wrangler.toml"
-      - ".github/workflows/deploy-crypto-api.yml"
-      - "scripts/e2e-smoke.mjs"
+  workflow_call:
   workflow_dispatch:
 
 jobs:
