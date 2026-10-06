@@ -33,6 +33,10 @@ async function usdKlines(asset:string,interval:string,limit:number){
  if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
  return binanceKlines(asset+"USDT",interval,limit);
 }
+async function storedAssetKlines(sql:any,assetId:string,limit:number){
+ const rows=await sql`select candle_open_at as time,close_price as close from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit ${limit}`;
+ return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
+}
 
 export default {async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
@@ -56,19 +60,30 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
   const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
   const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
   const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
-  const pair=results[0].status==="fulfilled"?results[0].value:null;
-  const base=results[1].status==="fulfilled"?results[1].value:null;
-  const quote=results[2].status==="fulfilled"?results[2].value:null;
+  let pair=results[0].status==="fulfilled"?results[0].value:null;
+  let base=results[1].status==="fulfilled"?results[1].value:null;
+  let quote=results[2].status==="fulfilled"?results[2].value:null;
+  let historySource="Binance";
   if(!pair){
-    const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
-    return json({status:"error",error:"binance_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
+    const [storedBase,storedQuote]=await Promise.all([
+      storedAssetKlines(sql,String(registered.base_asset_id),limit),
+      storedAssetKlines(sql,String(registered.quote_asset_id),limit)
+    ]);
+    if(quoteIsStable && storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
+    else if(baseIsStable && storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
+    else if(storedBase.length&&storedQuote.length){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
+    historySource=pair?"stored_market_history":"Binance";
+    if(!pair){
+      const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
+      return json({status:"error",error:"market_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
+    }
   }
   const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
   const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
   const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
   if(!rows.length)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
   const normalize=(key:"pair"|"baseUsd"|"quoteUsd")=>{const first=rows[0]?.[key];return rows.map((r:any)=>({time:r.time,value:first?Number(((r[key]/first)*100).toFixed(3)):null})).filter((r:any)=>r.value!==null)};
-  return json({status:"ok",source:"Binance",pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
+  return json({status:"ok",source:historySource,pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
  }
  if(url.pathname==="/api/assets"||url.pathname==="/api/assets/"){
   if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),category=text(d?.category)||"core",tier=text(d?.research_tier)||"C",primaryAssetTypeId=text(d?.primary_asset_type_id),requestedEnabled=d?.enabled===undefined?null:Boolean(d?.enabled);if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);if(!["A","B","C"].includes(tier))return json({status:"error",error:"invalid_research_tier"},400);if(!["core","defi","l1_infrastructure","bitcoin_ecosystem","stablecoin_payments"].includes(category))return json({status:"error",error:"invalid_category"},400);if(requestedEnabled===true&&!primaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);try{if(primaryAssetTypeId){const type=await sql`select asset_type_id from asset_types where asset_type_id=${primaryAssetTypeId} and is_active=true limit 1`;if(!type[0])return json({status:"error",error:"invalid_primary_asset_type"},400)}const existing=await sql`select enabled,primary_asset_type_id from assets where asset_id=${symbol.toLowerCase()} limit 1`;const enabled=requestedEnabled===null?(existing[0]?.enabled??false):requestedEnabled;const resolvedPrimaryAssetTypeId=primaryAssetTypeId||existing[0]?.primary_asset_type_id||null;if(enabled&&!resolvedPrimaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);const r=await sql`insert into assets(asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id,research_reason) values(${symbol.toLowerCase()},${symbol},${name},${category},${tier},${enabled},${resolvedPrimaryAssetTypeId},'Added through Dynamic Asset Engine') on conflict(asset_id) do update set symbol=excluded.symbol,name=excluded.name,category=excluded.category,research_tier=excluded.research_tier,enabled=excluded.enabled,primary_asset_type_id=excluded.primary_asset_type_id,updated_at=now() returning asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"asset_persistence_failed"},503)}}
