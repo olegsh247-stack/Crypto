@@ -39,6 +39,27 @@ jobs:
           chmod +x scripts/migrate-neon.sh
           ./scripts/migrate-neon.sh
 
+      - name: Clean database bootstrap rehearsal
+        run: |
+          set -euo pipefail
+          docker run -d --name crypto-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
+          trap 'docker rm -f crypto-postgres >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
+          chmod +x scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='assets';" | grep -qx '1'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='market_daily_candles';" | grep -qx '1'
+          migration_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;" | tr -d '[:space:]')"
+          duplicate_markers="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select version,count(*) from schema_migrations group by version having count(*) > 1) d;" | tr -d '[:space:]')"
+          test "$migration_count" -gt 0
+          test "$duplicate_markers" = "0"
+          echo "CLEAN_BOOTSTRAP_OK migrations=$migration_count duplicate_markers=0 rerun=1"
+
       - name: Verify required Engine tables
         run: |
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('asset_types','research_domains','research_blocks','research_block_domains','evidence','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs','commodities');")
