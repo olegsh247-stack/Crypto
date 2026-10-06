@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06
 Репозиторий: olegsh247-stack/Crypto
-Статус: FULL REPOSITORY AUDIT — BATCH 1+2 REPAIR VERIFIED
+Статус: FULL REPOSITORY AUDIT — BATCH 1+2 + E2E/UI REPAIR VERIFIED
 
 > Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level Cloudflare/Neon состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
 
@@ -378,3 +378,19 @@ Before VPS migration:
 - [ ] no unresolved P1 without decision
 
 **Only after these checks should INFRA-BATCH-1 begin.**
+
+
+### E2E/UI verification — 2026-10-06
+
+- Live Worker endpoint: `https://crypto-api.olegsh247.workers.dev`
+- API smoke: **SUCCESS**
+- DB health: **SUCCESS**
+- Asset Registry: BTC + ETH canonical IDs verified
+- ETH Research Card: 15 resolved blocks verified
+- Canonical market pairs: 9 verified
+- BTC/USDT history: **SUCCESS**
+- ETH/USDT history: **SUCCESS**
+- Neon Engine contract verification after deployment: **SUCCESS**
+- Next.js web build: **SUCCESS**
+- UI mutation paths now use a server-side admin proxy instead of exposing admin credentials to the browser.
+- Market history has exchange-provider fallback handling; Binance public market-data egress from the Worker was returning 403/451, so the runtime now falls back to Kraken public OHLC and then persistent/secondary sources. Kraken documents its public OHLC endpoints as unauthenticated market data. cite turn4search0 turn4search4 
