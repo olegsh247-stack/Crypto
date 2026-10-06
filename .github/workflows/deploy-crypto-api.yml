@@ -10,6 +10,7 @@ on:
       - "shared/**"
       - "wrangler.toml"
       - ".github/workflows/deploy-crypto-api.yml"
+      - "scripts/e2e-smoke.mjs"
   workflow_dispatch:
 
 jobs:
