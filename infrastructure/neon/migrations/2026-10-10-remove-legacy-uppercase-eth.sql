@@ -13,6 +13,13 @@ WHERE legacy.asset_id='ETH'
     WHERE canonical.asset_id='eth' AND canonical.name=legacy.name
   );
 
+DELETE FROM research_status legacy
+WHERE legacy.asset_id='ETH'
+  AND EXISTS (
+    SELECT 1 FROM research_status canonical
+    WHERE canonical.asset_id='eth'
+  );
+
 UPDATE research_snapshots SET asset_id='eth' WHERE asset_id='ETH';
 UPDATE observations SET asset_id='eth' WHERE asset_id='ETH';
 UPDATE monitoring_events SET asset_id='eth' WHERE asset_id='ETH';
