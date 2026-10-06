@@ -28,32 +28,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Apply Research Engine v2 migration
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql
-
-      - name: Apply Engine items migration
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-09-28-engine-items.sql
-
-      - name: Apply market pair integrity migration
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-07-market-pair-integrity.sql
-
-      - name: Apply canonical ETH Asset Card
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-04-eth-asset-card.sql
-
-      - name: Finalize ETH Asset Card
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-eth-asset-card.sql
-
-      - name: Finalize ETH classification
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-eth-asset-type.sql
-
-      - name: Normalize monitoring signal uniqueness
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-05-monitoring-signal-uniqueness.sql
-
-      - name: Canonicalize asset identities
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-06-canonicalize-asset-identities.sql
-
-      - name: Apply canonical USDT market pairs
-        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --single-transaction --file=infrastructure/neon/migrations/2026-10-08-canonical-usdt-market-pairs.sql
+      - name: Apply schema and versioned migrations
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL"
+          chmod +x scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
 
       - name: Verify required Engine tables
         run: |
@@ -194,3 +175,34 @@ jobs:
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
             --command="SELECT version FROM schema_migrations WHERE version IN ('2026-09-24-research-engine-v2','2026-10-04-eth-asset-card','2026-10-05-eth-asset-card','2026-10-05-eth-asset-type','2026-10-05-monitoring-signal-uniqueness','2026-10-06-canonicalize-asset-identities','2026-10-07-market-pair-integrity','2026-10-08-canonical-usdt-market-pairs') ORDER BY version;" | grep -qx $'2026-09-24-research-engine-v2\n2026-10-04-eth-asset-card\n2026-10-05-eth-asset-card\n2026-10-05-eth-asset-type\n2026-10-05-monitoring-signal-uniqueness\n2026-10-06-canonicalize-asset-identities\n2026-10-07-market-pair-integrity\n2026-10-08-canonical-usdt-market-pairs'
+
+      - name: Verify exchange-aware market pair identity
+        run: |
+          pair_unique=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM pg_constraint WHERE conrelid='market_pairs'::regclass AND conname='market_pairs_exchange_symbol_unique';")
+          nullable_exchange=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs WHERE exchange IS NULL OR btrim(exchange)='';")
+          duplicate_pairs=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM (SELECT exchange,symbol FROM market_pairs GROUP BY exchange,symbol HAVING COUNT(*)>1) d;")
+          echo "Exchange/symbol unique constraint: $pair_unique / 1"
+          echo "Missing exchange: $nullable_exchange / 0"
+          echo "Duplicate exchange/symbol pairs: $duplicate_pairs / 0"
+          test "$pair_unique" = "1"
+          test "$nullable_exchange" = "0"
+          test "$duplicate_pairs" = "0"
+
+      - name: Verify pair identity matches registry legs
+        run: |
+          mismatch=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM market_pairs mp JOIN assets ba ON ba.asset_id=mp.base_asset_id JOIN assets qa ON qa.asset_id=mp.quote_asset_id WHERE mp.symbol <> upper(ba.symbol || '/' || qa.symbol);")
+          echo "Pair symbol/registry mismatches: $mismatch / 0"
+          test "$mismatch" = "0"
+
+      - name: Verify dynamic Asset Registry contract
+        run: |
+          enabled_missing_type=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets WHERE enabled AND primary_asset_type_id IS NULL;")
+          enabled_invalid_type=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM assets a LEFT JOIN asset_types t ON t.asset_type_id=a.primary_asset_type_id WHERE a.enabled AND t.asset_type_id IS NULL;")
+          echo "Enabled assets without type: $enabled_missing_type / 0"
+          echo "Enabled assets with invalid type: $enabled_invalid_type / 0"
+          test "$enabled_missing_type" = "0"
+          test "$enabled_invalid_type" = "0"
+
+      - name: Verify migration runner marker
+        run: |
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT version FROM schema_migrations WHERE version='2026-10-09-market-pair-identity';" | grep -qx '2026-10-09-market-pair-identity'
