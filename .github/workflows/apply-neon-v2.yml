@@ -2,13 +2,7 @@ name: Apply Neon Research Engine v2
 # Batch 1/2 live verification trigger
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'infrastructure/neon/schema-v1.sql'
-      - 'infrastructure/neon/migrations/**.sql'
-      - 'scripts/migrate-neon.sh'
-      - '.github/workflows/apply-neon-v2.yml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:
