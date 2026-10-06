@@ -75,6 +75,13 @@ jobs:
           curl -sS -D - "$CRYPTO_API_URL/api/health" -o /tmp/health.json
           cat /tmp/health.json || true
 
+      - name: Install PostgreSQL client for DB verification
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq || true
+          sudo apt-get install -y postgresql-client || test -x /usr/bin/psql
+          command -v psql
+
       - name: Scheduled ingestion E2E and idempotency
         if: ${{ always() }}
         env:
@@ -94,8 +101,6 @@ jobs:
           curl -fsS "http://127.0.0.1:8787/api/health" >/dev/null
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-1.json
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-2.json
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
           actual_assets="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true;" | tr -d '[:space:]')"
           test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
           usdt_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where asset_id='usdt' and symbol='USDT';" | tr -d '[:space:]')"
@@ -116,8 +121,6 @@ jobs:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
           test -n "$DATABASE_URL"
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1" | grep -qx '1'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.tables where table_schema='public' and table_name in ('assets','asset_types','research_snapshots','research_blocks','research_domains','research_block_domains','critical_factors','research_scores','research_scenarios','monitoring_signals','research_status','market_pairs');" | grep -qx '12'
