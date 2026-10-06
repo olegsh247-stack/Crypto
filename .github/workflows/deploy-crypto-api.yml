@@ -82,6 +82,34 @@ jobs:
           curl -sS -D - "$CRYPTO_API_URL/api/health" -o /tmp/health.json
           cat /tmp/health.json || true
 
+      - name: Scheduled ingestion E2E and idempotency
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        working-directory: workers/crypto-api
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          printf 'DATABASE_URL=%s\n' "$DATABASE_URL" > .dev.vars
+          npx wrangler dev --test-scheduled --local --port 8787 > /tmp/crypto-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true; rm -f .dev.vars' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:8787/api/health" >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -fsS "http://127.0.0.1:8787/api/health" >/dev/null
+          curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-1.json
+          curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-2.json
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          for asset in btc dash eth sol cake bch ltc xrp trx; do
+            count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset';" | tr -d '[:space:]')"
+            test "$count" -ge 2
+          done
+          duplicate_keys="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at,count(*) from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;" | tr -d '[:space:]')"
+          test "$duplicate_keys" = "0"
+          echo "INGESTION_E2E_OK assets=9 runs=2 duplicate_keys=0"
+
       - name: Verify deployed Engine contract directly in Neon
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
