@@ -84,6 +84,7 @@ jobs:
           cat /tmp/health.json || true
 
       - name: Scheduled ingestion E2E and idempotency
+        if: ${{ always() }}
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         working-directory: workers/crypto-api
@@ -112,6 +113,7 @@ jobs:
           echo "INGESTION_E2E_OK assets=9 runs=2 duplicate_keys=0"
 
       - name: Verify deployed Engine contract directly in Neon
+        if: ${{ always() }}
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
