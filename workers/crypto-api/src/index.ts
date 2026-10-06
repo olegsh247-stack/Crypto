@@ -38,6 +38,17 @@ async function storedAssetKlines(sql:any,assetId:string,limit:number){
  return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
 }
 const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
+const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
+async function krakenUsdKlines(asset:string){
+ const pair=KRAKEN_USD_PAIRS[asset];
+ if(!pair)return [];
+ const response=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`Kraken ${asset}: ${response.status}`);
+ const data=await response.json() as any;
+ const key=Object.keys(data?.result??{}).find(k=>k!=="last");
+ const rows=key?data.result[key]:[];
+ return Array.isArray(rows)?rows.map((r:any)=>({time:new Date(Number(r[0])*1000).toISOString(),close:Number(r[4])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
 async function coingeckoUsdKlines(asset:string,days:number){
  const id=COINGECKO_IDS[asset];
  if(!id)return [];
@@ -74,6 +85,16 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
   let base=results[1].status==="fulfilled"?results[1].value:null;
   let quote=results[2].status==="fulfilled"?results[2].value:null;
   let historySource="Binance";
+  if(!pair){
+    try{
+      const krakenBase=baseIsStable?[]:await krakenUsdKlines(baseAsset);
+      const krakenQuote=quoteIsStable?[]:await krakenUsdKlines(quoteAsset);
+      if(quoteIsStable&&krakenBase.length){pair=krakenBase.map((r:any)=>({time:r.time,close:r.close}));base=krakenBase;}
+      else if(baseIsStable&&krakenQuote.length){pair=krakenQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=krakenQuote;}
+      else if(krakenBase.length&&krakenQuote.length){const qMap=new Map(krakenQuote.map((r:any)=>[r.time,r.close]));pair=krakenBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=krakenBase;quote=krakenQuote;}
+      if(pair)historySource="Kraken";
+    }catch{}
+  }
   if(!pair){
     const geckoDays=Math.max(1,Math.ceil(days));
     try{
