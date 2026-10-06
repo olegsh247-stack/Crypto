@@ -47,8 +47,35 @@ async function krakenUsdKlines(asset:string){
  const data=await response.json() as any;
  const key=Object.keys(data?.result??{}).find(k=>k!=="last");
  const rows=key?data.result[key]:[];
- return Array.isArray(rows)?rows.map((r:any)=>({time:new Date(Number(r[0])*1000).toISOString(),close:Number(r[4])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+ return Array.isArray(rows)?rows.map((r:any)=>({time:new Date(Number(r[0])*1000).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[6]??0)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
 }
+async function ingestAssetDaily(sql:any, asset:any){
+ const assetSymbol=String(asset.symbol).toUpperCase();
+ const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
+ let rows:any[]=[];
+ let sourceId="market_binance";
+ try{rows=await binanceKlines(binanceSymbol,"1d",8);}catch{}
+ if(!rows.length){
+  try{rows=await krakenUsdKlines(assetSymbol);sourceId="market_kraken";}catch{}
+ }
+ if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
+ let written=0;
+ for(const row of rows.slice(-8)){
+  const openAt=new Date(row.time);
+  const closeAt=new Date(openAt.getTime()+24*60*60*1000);
+  const open=Number(row.open??row.close),high=Number(row.high??row.close),low=Number(row.low??row.close),close=Number(row.close),volume=Number(row.volume??0);
+  if(![open.getTime(),closeAt.getTime(),open,high,low,close].every(Number.isFinite))continue;
+  await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
+    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${open},${high},${low},${close},${volume||null},${sourceId},${binanceSymbol})
+    on conflict(asset_id,candle_open_at) do update set
+      candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,
+      low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
+      source_id=excluded.source_id,source_symbol=excluded.source_symbol`;
+  written++;
+ }
+ return {asset_id:asset.asset_id,rows:written,source:sourceId};
+}
+
 async function coingeckoUsdKlines(asset:string,days:number){
  const id=COINGECKO_IDS[asset];
  if(!id)return [];
@@ -59,7 +86,16 @@ async function coingeckoUsdKlines(asset:string,days:number){
  return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
 }
 
-export default {async fetch(request:Request,env:Env):Promise<Response>{
+export default {
+ async scheduled(_controller:ScheduledController,env:Env){
+  if(!env.DATABASE_URL)return;
+  const sql=neon(env.DATABASE_URL);
+  const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
+  for(const asset of assets){
+   try{await ingestAssetDaily(sql,asset);}catch{}
+  }
+ },
+ async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
@@ -138,4 +174,5 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  if(url.pathname==="/api/commodities"||url.pathname==="/api/commodities/"){if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),unit=text(d?.unit)||null;if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);try{const r=await sql`insert into commodities(symbol,name,unit,enabled) values(${symbol},${name},${unit},true) on conflict(symbol) do update set name=excluded.name,unit=excluded.unit,enabled=true returning *`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"commodity_persistence_failed"},503)}}if(request.method==="GET"){try{const r=await sql`select * from commodities where enabled=true order by symbol`;return json({items:r,count:r.length})}catch{return json({status:"error",error:"commodity_query_failed"},503)}}return json({status:"error",error:"method_not_allowed"},405)}
  const commodityId=getCommodityId(url.pathname);if(commodityId&&request.method==="DELETE"){const auth=requireAdmin(request,env);if(auth)return auth;try{const r=await sql`update commodities set enabled=false,disabled_at=now() where id=${commodityId}::uuid returning *`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"commodity_not_found"},404)}catch{return json({status:"error",error:"commodity_persistence_failed"},503)}}
  return json({status:"ok",service:"crypto-api",message:"Crypto API is running"});
-}};
+}
+};
