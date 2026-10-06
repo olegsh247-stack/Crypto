@@ -74,6 +74,14 @@ jobs:
           set -euo pipefail
           node scripts/e2e-smoke.mjs
 
+      - name: Diagnose live E2E endpoint on failure
+        if: failure()
+        run: |
+          set +e
+          echo "CRYPTO_API_URL=$CRYPTO_API_URL"
+          curl -sS -D - "$CRYPTO_API_URL/api/health" -o /tmp/health.json
+          cat /tmp/health.json || true
+
       - name: Verify deployed Engine contract directly in Neon
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
