@@ -63,10 +63,10 @@ async function ingestAssetDaily(sql:any, asset:any){
  for(const row of rows.slice(-8)){
   const openAt=new Date(row.time);
   const closeAt=new Date(openAt.getTime()+24*60*60*1000);
-  const open=Number(row.open??row.close),high=Number(row.high??row.close),low=Number(row.low??row.close),close=Number(row.close),volume=Number(row.volume??0);
-  if(![open.getTime(),closeAt.getTime(),open,high,low,close].every(Number.isFinite))continue;
+  const openPrice=Number(row.open??row.close),high=Number(row.high??row.close),low=Number(row.low??row.close),close=Number(row.close),volume=Number(row.volume??0);
+  if(![openAt.getTime(),closeAt.getTime(),openPrice,high,low,close].every(Number.isFinite))continue;
   await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
-    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${open},${high},${low},${close},${volume||null},${sourceId},${binanceSymbol})
+    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${openPrice},${high},${low},${close},${volume||null},${sourceId},${binanceSymbol})
     on conflict(asset_id,candle_open_at) do update set
       candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,
       low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
