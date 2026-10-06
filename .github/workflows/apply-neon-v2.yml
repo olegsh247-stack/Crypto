@@ -1,4 +1,5 @@
 name: Apply Neon Research Engine v2
+# Batch 1/2 live verification trigger
 
 on:
   push:
