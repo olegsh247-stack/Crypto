@@ -56,6 +56,23 @@ jobs:
           workingDirectory: "."
           command: deploy
 
+      - name: Enable stable workers.dev endpoint for live E2E
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/crypto-api/subdomain"             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             -H "Content-Type: application/json"             --data '{"enabled":true}' | tee /tmp/worker-subdomain.json
+          test "$(jq -r '.success' /tmp/worker-subdomain.json)" = "true"
+          subdomain="$(curl -fsS "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq -r '.result.subdomain')"
+          test -n "$subdomain" && test "$subdomain" != "null"
+          echo "CRYPTO_API_URL=https://crypto-api.$subdomain.workers.dev" >> "$GITHUB_ENV"
+
+      - name: Live API E2E
+        run: |
+          set -euo pipefail
+          node scripts/e2e-smoke.mjs
+
       - name: Verify deployed Engine contract directly in Neon
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
