@@ -1,0 +1,39 @@
+name: Crypto Release Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/**"
+      - "shared/**"
+      - "web/**"
+      - "infrastructure/neon/**"
+      - "scripts/**"
+      - "wrangler.toml"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crypto-production-release
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: 1. Database migration and contract gate
+    uses: ./.github/workflows/apply-neon-v2.yml
+    secrets: inherit
+
+  build-web:
+    name: 2. Web build gate
+    needs: migrate
+    uses: ./.github/workflows/web-build.yml
+    secrets: inherit
+
+  deploy-api:
+    name: 3. Worker deploy and live E2E gate
+    needs: build-web
+    uses: ./.github/workflows/deploy-crypto-api.yml
+    secrets: inherit
