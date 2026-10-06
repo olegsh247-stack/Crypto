@@ -14,9 +14,20 @@ function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.head
 function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
 
 async function binanceKlines(symbol:string,interval:string,limit:number){
- const endpoint=`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
- const response=await fetch(endpoint,{headers:{Accept:"application/json"}});if(!response.ok)throw new Error(`Binance ${symbol}: ${response.status}`);const rows=await response.json() as unknown[];
- return rows.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])}));
+ const query=`symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+ const endpoints=[`https://data-api.binance.vision/api/v3/klines?${query}`,`https://api-gcp.binance.com/api/v3/klines?${query}`,`https://api.binance.com/api/v3/klines?${query}`];
+ let lastStatus=0;
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+   if(response.ok){
+    const rows=await response.json() as unknown[];
+    if(Array.isArray(rows)&&rows.length)return rows.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])}));
+   }
+   lastStatus=response.status;
+  }catch{}
+ }
+ throw new Error(`Binance ${symbol}: ${lastStatus||"unavailable"}`);
 }
 async function usdKlines(asset:string,interval:string,limit:number){
  if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
