@@ -1,7 +1,32 @@
 BEGIN;
 
--- Canonical asset identity is lowercase. Merge the legacy uppercase ETH card into eth.
--- The old seed created eth already; research data is replaced by the canonical ETH card.
+-- Canonical asset identity is lowercase. Make the canonical ETH parent exist
+-- before re-pointing any legacy uppercase ETH research rows. This keeps the
+-- migration valid on both seeded and completely clean databases.
+INSERT INTO assets (
+  asset_id, symbol, name, category, research_tier, enabled,
+  binance_symbol, fallback_symbols, research_reason, primary_asset_type_id
+)
+SELECT
+  'eth', symbol, name, category, research_tier, enabled,
+  binance_symbol, fallback_symbols, research_reason, 'l1_settlement_asset'
+FROM assets
+WHERE asset_id='ETH'
+ON CONFLICT (asset_id) DO NOTHING;
+
+INSERT INTO assets (
+  asset_id, symbol, name, category, research_tier, enabled,
+  binance_symbol, fallback_symbols, research_reason, primary_asset_type_id
+)
+VALUES (
+  'eth', 'ETH', 'Ethereum', 'core', 'A', true,
+  'ETHUSDT', '{}'::jsonb,
+  'First complete Asset Card implementation for CryptoResearch v2 / Structure 1.',
+  'l1_settlement_asset'
+)
+ON CONFLICT (asset_id) DO NOTHING;
+
+-- The canonical ETH card wins if a lowercase placeholder already exists.
 DELETE FROM research_status WHERE asset_id='eth';
 DELETE FROM monitoring_signals WHERE asset_id='eth';
 DELETE FROM research_snapshots WHERE asset_id='eth';
