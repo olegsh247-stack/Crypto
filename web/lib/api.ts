@@ -9,6 +9,8 @@ export type Asset = {
   research_reason?: string | null;
   asset_type?: { code: string; name: string } | null;
   research_status?: "not_started" | "in_progress" | "complete" | "monitoring" | null;
+  research?: { lifecycle?: "not_started" | "in_progress" | "complete" | "monitoring" | null; freshness?: string | null };
+
   research_freshness?: { status: "current" | "update_recommended" | "outdated"; reason?: string | null } | null;
 };
 
