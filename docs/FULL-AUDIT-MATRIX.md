@@ -393,4 +393,4 @@ Before VPS migration:
 - Neon Engine contract verification after deployment: **SUCCESS**
 - Next.js web build: **SUCCESS**
 - UI mutation paths now use a server-side admin proxy instead of exposing admin credentials to the browser.
-- Market history has exchange-provider fallback handling; Binance public market-data egress from the Worker was returning 403/451, so the runtime now falls back to Kraken public OHLC and then persistent/secondary sources. Kraken documents its public OHLC endpoints as unauthenticated market data. cite turn4search0 turn4search4 
+- Market history has exchange-provider fallback handling; Binance public market-data egress from the Worker was returning 403/451, so the runtime now falls back to Kraken public OHLC and then persistent/secondary sources. Kraken documents its public OHLC endpoints as unauthenticated market data. 
