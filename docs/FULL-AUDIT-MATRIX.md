@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06
 Репозиторий: olegsh247-stack/Crypto
-Статус: FULL REPOSITORY AUDIT — BASELINE
+Статус: FULL REPOSITORY AUDIT — BATCH 1+2 REPAIR APPLIED (live CI/DB verification pending)
 
 > Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level Cloudflare/Neon состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
 
@@ -10,14 +10,14 @@
 
 **Система уже имеет сильный Research/Asset foundation, но FULL AUDIT пока не GREEN.**
 
-Главные найденные проблемы до repair:
+Главные найденные проблемы до repair (Batch 1+2 ниже уже закрыты в коде; live CI/DB verification pending):
 
-1. **P1 — Market Pair model:** `market_pairs.symbol` имеет глобальный UNIQUE. Это не позволяет нормально иметь один и тот же symbol на нескольких exchanges.
-2. **P1 — Dynamic Asset Engine:** POST /api/assets создаёт enabled asset без `primary_asset_type_id`, `binance_symbol` и fallback mappings. Это конфликтует с текущим Asset Registry contract/CI.
-3. **P1 — Migration reproducibility:** CI workflow применяет отдельные migrations, но не показывает clean-database bootstrap из `schema-v1.sql`; migration order/marker model требует формализации.
-4. **P1 — Deployment contract:** в репозитории подтверждён migration workflow, но отдельного API/Worker deployment workflow не подтверждено.
+1. **P1 — Market Pair model:** исправлено в Batch 1: identity теперь `(exchange, symbol)`, `exchange` обязателен.
+2. **P1 — Dynamic Asset Engine:** исправлено в Batch 2: enabled asset требует валидный primary type; новый не классифицированный asset создаётся disabled.
+3. **P1 — Migration reproducibility:** исправлено в Batch 1: добавлен marker-aware deterministic runner `scripts/migrate-neon.sh`.
+4. **P1 — Deployment contract:** workflow уже существует и усилен в Batch 2; live deployment/health-check ещё не выполнен.
 5. **P1 — Infrastructure:** Cloudflare + Neon dependencies подтверждены, но account-level inventory ещё не доказан.
-6. **P2 — API error disclosure:** несколько public API paths возвращают `detail: String(error)`, что может раскрывать внутренние DB/runtime details.
+6. **P2 — API error disclosure:** исправлено в Batch 2: raw exception details убраны из public responses.
 7. **P2 — Runtime portability:** API жёстко привязан к Cloudflare Worker + Neon serverless driver.
 8. **YELLOW — UI:** текущий GitHub audit не получил достаточного tree/runtime evidence для доказательства UI contract.
 9. **YELLOW — Worker/ingestion:** canonical Worker architecture известна из истории проекта, но текущий tree не даёт достаточного доказательства полного scheduled ingestion E2E.
@@ -32,13 +32,13 @@
 | DB-02 | 1 Database | PK/FK/checks | GREEN | P2 | PK/FK/CHECK присутствуют в schema/migrations | — | Добавить automated schema invariant audit | CI |
 | DB-03 | 1 Database | migration markers | YELLOW | P1 | `schema_migrations` существует; marker usage неполный | Migration execution model смешивает workflow order и markers | Единый migration registry/runner | CI |
 | REG-01 | 2 Asset Registry | canonical IDs | GREEN | P2 | lowercase contract + canonicalization migration | — | Оставить CI invariant | — |
-| REG-02 | 2 Asset Registry | asset type | YELLOW | P1 | POST asset не задаёт primary type | Dynamic POST contract не совпадает Registry contract | POST должен принимать/resolve type либо создавать disabled C asset до classification | API/DB |
+| REG-02 | 2 Asset Registry | asset type | GREEN/YELLOW | P1 | Batch 2 API contract + CI | — | Enabled assets require valid type; new unclassified assets disabled | API/DB |
 | REG-03 | 2 Asset Registry | market identity | GREEN | P2 | binance_symbol/fallback fields + CI checks | — | Расширить contract to all actual assets | Data |
 | REG-04 | 2 Asset Registry | completeness | YELLOW | P1 | 9 core assets + USDT expected by migrations | Live DB not directly proven in repo | Build registry inventory check | DB/live |
 | MKT-01 | 3 Market Registry | pair FK | GREEN | P2 | 2026-10-07 FK migration | — | Keep | — |
-| MKT-02 | 3 Market Registry | symbol uniqueness | RED | P1 | `market_pairs_symbol_unique UNIQUE(symbol)` | Pair identity incorrectly scoped globally | Replace with UNIQUE(exchange,symbol) or canonical pair identity + exchange | DB/API/UI |
+| MKT-02 | 3 Market Registry | symbol uniqueness | GREEN/YELLOW | P1 | Batch 1 migration `2026-10-09-market-pair-identity.sql` | — | UNIQUE(exchange,symbol); live migration pending | DB/API/UI |
 | MKT-03 | 3 Market Registry | symbol vs legs | YELLOW | P1 | format check only validates uppercase + slash | DB does not prove BTC/USDT matches btc/usdt | Add pair-symbol consistency CHECK/function or ingestion validation | DB |
-| MKT-04 | 3 Market Registry | multi-exchange | RED | P1 | exchange nullable + symbol globally unique | Model cannot represent same pair across exchanges | Define exchange identity as required for trading pairs | DB/API |
+| MKT-04 | 3 Market Registry | multi-exchange | GREEN/YELLOW | P1 | Batch 1 migration + API pair contract | — | Exchange required; same symbol can exist per exchange | DB/API |
 | HIST-01 | 4 Market History | Binance history | GREEN | P2 | API klines path | — | Keep abstraction | — |
 | HIST-02 | 4 Market History | fallback exchanges | YELLOW | P1 | fallback_symbols stored; current API uses Binance directly | Registry fallback mapping not connected to runtime resolver | Implement Market Identity resolver | API/Worker |
 | HIST-03 | 4 Market History | persistence | YELLOW | P1 | market_daily_candles exists | Runtime API reads history; ingestion proof incomplete | Prove scheduled DB ingestion and idempotency | Worker/CI |
@@ -53,18 +53,18 @@
 | MON-03 | 6 Monitoring | live refresh | YELLOW | P1 | status model exists | Actual scheduler/ingestion not proven | Add freshness/trigger worker contract | Worker |
 | API-01 | 7 API | asset casing | GREEN | P2 | getAssetId lowercases path | — | Keep | — |
 | API-02 | 7 API | admin auth | GREEN | P1 | requireAdmin on POST/DELETE/schema | — | Add tests | CI |
-| API-03 | 7 API | error disclosure | YELLOW | P2 | public responses can include `detail:String(error)` | Debug details exposed to clients | Remove internal error detail from public responses; log server-side | API |
-| API-04 | 7 API | POST asset contract | RED | P1 | INSERT omits primary type/market identity | Endpoint predates strengthened Registry contract | Redesign endpoint contract | Registry |
-| API-05 | 7 API | pair/history contract | YELLOW | P1 | history parses symbol and calls Binance | Does not resolve Market Pair DB identity/exchange | API should resolve pair registry first | Market Registry |
+| API-03 | 7 API | error disclosure | GREEN/YELLOW | P2 | Batch 2 API cleanup | — | Raw exception details removed; live verification pending | API |
+| API-04 | 7 API | POST asset contract | GREEN/YELLOW | P1 | Batch 2 API contract | — | Enabled assets require valid primary type; partial updates preserve state | Registry |
+| API-05 | 7 API | pair/history contract | GREEN/YELLOW | P1 | Batch 2 history resolver | — | History resolves DB pair/exchange before Binance adapter | Market Registry |
 | WRK-01 | 8 Workers | canonical entrypoint | YELLOW | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
 | WRK-02 | 8 Workers | idempotency/retry | YELLOW | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
-| WRK-03 | 8 Workers | deployment | YELLOW | P1 | no dedicated deployment workflow proven | Worker runtime/deploy path unclear | Create canonical deploy pipeline | CI |
+| WRK-03 | 8 Workers | deployment | GREEN/YELLOW | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run pending | Execute deployment health check | CI |
 | UI-01 | 9 UI | API/shared types | YELLOW | P1 | insufficient current tree evidence | UI contract cannot be proven from fetched files | Inventory UI and shared types | API |
 | UI-02 | 9 UI | lifecycle/freshness | YELLOW | P1 | backend contract exists | UI mapping not proven | Add UI contract tests | API |
 | UI-03 | 9 UI | history/empty/error | YELLOW | P2 | backend paths exist | rendering behavior not proven | Add states explicitly | UI |
 | CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | apply-neon-v2 workflow | — | Expand | — |
-| CI-02 | 10 CI/CD | API deployment | YELLOW | P1 | migration workflow confirmed | API deployment workflow not proven | Add deploy workflow | Infra |
-| CI-03 | 10 CI/CD | clean DB bootstrap | RED | P1 | workflow starts at later migrations | Fresh environment path not explicit | Test clean bootstrap | DB |
+| CI-02 | 10 CI/CD | API deployment | GREEN/YELLOW | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run pending | Execute deployment/health check | Infra |
+| CI-03 | 10 CI/CD | clean DB bootstrap | GREEN/YELLOW | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
 | SEC-03 | 11 Security | secrets | YELLOW | P1 | env-based secrets | account secret inventory unavailable | Inventory and rotate during infra migration | Infra |
@@ -92,6 +92,9 @@
 Admin schema endpoint is protected in current source.
 
 ## P1 — Batch 1 / Batch 2
+
+**Batch 1 and Batch 2 implementation is committed. Remaining GREEN/YELLOW items require live CI/DB verification, not further architectural repair.**
+
 
 ### P1-01 — Market Pair identity
 
