@@ -5,6 +5,7 @@ if (!base) throw new Error("CRYPTO_API_URL is required");
 async function get(path) {
   const response = await fetch(base + path, { headers: { accept: "application/json" } });
   const body = await response.json().catch(() => ({}));
+  console.log(path, response.status);
   if (!response.ok) throw new Error(path + " -> " + response.status + " " + JSON.stringify(body));
   return body;
 }
@@ -19,8 +20,9 @@ assert(db.status === "ok" && db.database === "ok", "db-health");
 const assetsResponse = await get("/api/assets");
 const assets = assetsResponse.assets || [];
 const byId = new Map(assets.map(a => [a.asset_id, a]));
+assert(assets.length >= 9, "canonical enabled asset registry");
 for (const id of ["btc", "eth"]) {
-  assert(byId.has(id), "asset " + id + " is enabled and visible");
+  assert(byId.has(id), "asset " + id);
   assert(byId.get(id).asset_id === id, id + " canonical id");
   assert(byId.get(id).research_status, id + " research status");
 }
@@ -48,4 +50,4 @@ for (const symbol of ["BTC/USDT","ETH/USDT"]) {
   assert(Array.isArray(history.normalized?.relative) && history.normalized.relative.length >= 2, symbol + " normalized history");
 }
 
-console.log("E2E_OK health=1 db=1 assets=2 eth_blocks=15 pairs=9 histories=2");
+console.log("E2E_OK health=1 db=1 assets=9+ eth_blocks=15 pairs=9 histories=2");
