@@ -40,13 +40,15 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
   const limit=Math.min(days*(interval==="1d"?1:interval==="4h"?6:24)+1,1000);
   const pairSymbol=baseAsset+quoteAsset;
   const pairPromise=binanceKlines(pairSymbol,interval,limit);
-  const basePromise=usdKlines(baseAsset,interval,limit);
-  const quotePromise=usdKlines(quoteAsset,interval,limit);
+  const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
+  const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
+  const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
+  const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
   const [pair,base,quote]=await Promise.all([pairPromise,basePromise,quotePromise]).catch(()=>[null,null,null] as any);
   if(!pair)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
   const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
   const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
-  const rows=pair.map((p:any)=>{const b=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC"?1:baseMap?.get(p.time)??null;const q=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC"?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
+  const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
   if(!rows.length)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
   const normalize=(key:"pair"|"baseUsd"|"quoteUsd")=>{const first=rows[0]?.[key];return rows.map((r:any)=>({time:r.time,value:first?Number(((r[key]/first)*100).toFixed(3)):null})).filter((r:any)=>r.value!==null)};
   return json({status:"ok",source:"Binance",pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
