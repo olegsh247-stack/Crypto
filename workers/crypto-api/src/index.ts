@@ -37,6 +37,16 @@ async function storedAssetKlines(sql:any,assetId:string,limit:number){
  const rows=await sql`select candle_open_at as time,close_price as close from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit ${limit}`;
  return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
 }
+const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
+async function coingeckoUsdKlines(asset:string,days:number){
+ const id=COINGECKO_IDS[asset];
+ if(!id)return [];
+ const endpoint=`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${Math.max(1,Math.min(days,90))}`;
+ const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`CoinGecko ${asset}: ${response.status}`);
+ const data=await response.json() as any;
+ return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
 
 export default {async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
@@ -65,6 +75,17 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
   let quote=results[2].status==="fulfilled"?results[2].value:null;
   let historySource="Binance";
   if(!pair){
+    const geckoDays=Math.max(1,Math.ceil(days));
+    try{
+      const geckoBase=baseIsStable?[]:await coingeckoUsdKlines(baseAsset,geckoDays);
+      const geckoQuote=quoteIsStable?[]:await coingeckoUsdKlines(quoteAsset,geckoDays);
+      if(quoteIsStable&&geckoBase.length){pair=geckoBase.map((r:any)=>({time:r.time,close:r.close}));base=geckoBase;}
+      else if(baseIsStable&&geckoQuote.length){pair=geckoQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=geckoQuote;}
+      else if(geckoBase.length&&geckoQuote.length){const qMap=new Map(geckoQuote.map((r:any)=>[r.time,r.close]));pair=geckoBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=geckoBase;quote=geckoQuote;}
+      if(pair)historySource="CoinGecko";
+    }catch{}
+  }
+  if(!pair){
     const [storedBase,storedQuote]=await Promise.all([
       storedAssetKlines(sql,String(registered.base_asset_id),limit),
       storedAssetKlines(sql,String(registered.quote_asset_id),limit)
@@ -72,11 +93,11 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
     if(quoteIsStable && storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
     else if(baseIsStable && storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
     else if(storedBase.length&&storedQuote.length){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
-    historySource=pair?"stored_market_history":"Binance";
-    if(!pair){
-      const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
-      return json({status:"error",error:"market_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
-    }
+    if(pair)historySource="stored_market_history";
+  }
+  if(!pair){
+    const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
+    return json({status:"error",error:"market_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
   }
   const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
   const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
