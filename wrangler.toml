@@ -1,3 +1,6 @@
 name = "crypto-api"
 main = "workers/crypto-api/src/index.ts"
 compatibility_date = "2026-09-20"
+
+[triggers]
+crons = ["30 0 * * *"]
