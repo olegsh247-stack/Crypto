@@ -16,7 +16,7 @@ function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({
 async function binanceKlines(symbol:string,interval:string,limit:number){
  const query=`symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
  const endpoints=[`https://data-api.binance.vision/api/v3/klines?${query}`,`https://api-gcp.binance.com/api/v3/klines?${query}`,`https://api.binance.com/api/v3/klines?${query}`];
- let lastStatus=0;
+ const statuses:string[]=[];
  for(const endpoint of endpoints){
   try{
    const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
@@ -24,10 +24,10 @@ async function binanceKlines(symbol:string,interval:string,limit:number){
     const rows=await response.json() as unknown[];
     if(Array.isArray(rows)&&rows.length)return rows.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])}));
    }
-   lastStatus=response.status;
-  }catch{}
+   statuses.push(endpoint.split("/")[2]+":"+response.status);
+  }catch(error){statuses.push(endpoint.split("/")[2]+":network_error")}
  }
- throw new Error(`Binance ${symbol}: ${lastStatus||"unavailable"}`);
+ throw new Error(`Binance ${symbol}: ${statuses.join(",")}`);
 }
 async function usdKlines(asset:string,interval:string,limit:number){
  if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
@@ -55,8 +55,14 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
   const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
   const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
   const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
-  const [pair,base,quote]=await Promise.all([pairPromise,basePromise,quotePromise]).catch(()=>[null,null,null] as any);
-  if(!pair)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
+  const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
+  const pair=results[0].status==="fulfilled"?results[0].value:null;
+  const base=results[1].status==="fulfilled"?results[1].value:null;
+  const quote=results[2].status==="fulfilled"?results[2].value:null;
+  if(!pair){
+    const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
+    return json({status:"error",error:"binance_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
+  }
   const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
   const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
   const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
