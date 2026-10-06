@@ -58,6 +58,13 @@ async function ingestAssetDaily(sql:any, asset:any){
  if(!rows.length){
   try{rows=await krakenUsdKlines(assetSymbol);sourceId="market_kraken";}catch{}
  }
+ if(!rows.length){
+  try{
+   const gecko=await coingeckoUsdKlines(assetSymbol,8);
+   rows=gecko.map((r:any)=>({time:r.time,open:r.close,high:r.close,low:r.close,close:r.close,volume:0}));
+   sourceId="market_coingecko";
+  }catch{}
+ }
  if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
  let written=0;
  for(const row of rows.slice(-8)){
