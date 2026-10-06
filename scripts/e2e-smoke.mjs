@@ -21,8 +21,10 @@ const assetsResponse = await get("/api/assets");
 const assets = assetsResponse.assets || [];
 const byId = new Map(assets.map(a => [a.asset_id, a]));
 const expectedAssetIds = ["btc","dash","eth","sol","cake","bch","ltc","xrp","trx"];
-assert(assets.length === expectedAssetIds.length, "canonical enabled asset registry size");
+const canonicalAssets = assets.filter(a => a.asset_id !== "usdt");
+assert(canonicalAssets.length === expectedAssetIds.length, "canonical non-stable asset registry size");
 assert(expectedAssetIds.every(id => byId.has(id)), "canonical enabled asset registry identities");
+assert(byId.has("usdt") && byId.get("usdt").symbol === "USDT", "USDT quote asset");
 for (const id of ["btc", "eth"]) {
   assert(byId.has(id), "asset " + id);
   assert(byId.get(id).asset_id === id, id + " canonical id");
@@ -68,4 +70,4 @@ for (const symbol of ["BTC/USDT","ETH/USDT"]) {
   assert(Array.isArray(repeat.normalized?.relative) && repeat.normalized.relative.length >= 2, symbol + " repeat normalized history");
 }
 
-console.log("E2E_OK health=1 db=1 assets=9_exact eth_blocks=15 pairs=9_identity=1 histories=9 repeat=2");
+console.log("E2E_OK health=1 db=1 assets=9_exact usdt=1 eth_blocks=15 pairs=9_identity=1 histories=9 repeat=2");
