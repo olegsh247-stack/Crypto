@@ -1,5 +1,5 @@
 import { neon } from "./db.js";
-import { calculateResearchStatus } from "./research-status";
+import { calculateResearchStatus } from "./research-status.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
 type ScheduledController = unknown;
