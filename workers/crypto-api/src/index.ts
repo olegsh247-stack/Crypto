@@ -113,10 +113,11 @@ export default {
   if(!env.DATABASE_URL)return;
   const sql=neon(env.DATABASE_URL);
   const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
-  await Promise.allSettled(assets.map(async asset=>{
-   try{await ingestAssetDaily(sql,asset);}catch{}
-  }));
-  try{await refreshMonitoring(sql);}catch{}
+  const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
+  const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+  if(successfulIngestion.length>0){
+   try{await refreshMonitoring(sql);}catch{}
+  }
  },
  async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
