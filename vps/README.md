@@ -14,11 +14,13 @@ From the repository root:
 
 The existing migration runner is intentionally reused. This proves that the VPS PostgreSQL target can consume the same schema and migrations.
 
-## Build and start the Node API
+## Build and start the Node API and worker
 
-`docker compose up --build api`
+`docker compose up --build api worker`
 
-Then verify GET /api/health, GET /api/db-health, GET /api/assets and GET /api/pairs.
+The API is HTTP-only. Scheduled ingestion runs in the separate `worker` process and shares the same PostgreSQL target. The worker executes once on startup and then at `WORKER_INTERVAL_MS` (24h by default).
+
+Then verify GET /api/health, GET /api/db-health, GET /api/assets and GET /api/pairs. Worker logs should report `service":"crypto-worker-vps"` with ingestion counts.
 
 ## Safety
 
