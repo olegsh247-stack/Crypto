@@ -1,4 +1,4 @@
-import { neon } from "../../api/src/db.js";
+import { neon } from "./db.js";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
