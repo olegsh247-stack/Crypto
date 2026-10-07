@@ -67,7 +67,8 @@
 | CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
-| SEC-03 | 11 Security | secrets | YELLOW | P1 | env-based secrets | account secret inventory unavailable | Inventory and rotate during infra migration | Infra |
+| SEC-03 | 11 Security | secrets | YELLOW | P1 | env-based secrets; account-level inventory still unavailable | Rotation/inventory requires provider account access | Inventory and rotate during infra migration | Infra |
+| SEC-04 | 11 Security | Next.js dependency | GREEN | P1 | Gate #50 GREEN on patched `next@15.5.27`; build + live API + UI runtime E2E passed | `15.5.0` was security-vulnerable | Keep on supported patched maintenance LTS | Web/CI |
 | DATA-01 | 12 Data | canonical 9 assets | GREEN | P2 | migrations + CI expected set | Live DB not directly checked here | Add live inventory test | DB |
 | DATA-02 | 12 Data | USDT system asset | GREEN | P2 | canonical USDT migration | — | Keep separate from research targets | Registry |
 | DATA-03 | 12 Data | history coverage | GREEN | P1 | candles table exists | per-asset actual coverage not proven | Coverage matrix | Worker |
@@ -297,16 +298,16 @@ Other assets should **not** be auto-promoted to full research.
 | Market Registry | GREEN |
 | Market History | GREEN |
 | Research Engine | GREEN/YELLOW |
-| Monitoring | GREEN/YELLOW |
-| API | RED/YELLOW |
+| Monitoring | GREEN |
+| API | GREEN/YELLOW |
 | Workers | GREEN/YELLOW |
-| UI | YELLOW |
+| UI | GREEN |
 | CI/CD | GREEN |
 | Security | GREEN/YELLOW |
 | Data Completeness | GREEN/YELLOW |
 | Legacy | GREEN/YELLOW |
 | Documentation | GREEN/YELLOW |
-| E2E | YELLOW |
+| E2E | GREEN |
 
 ## Overall
 
@@ -368,14 +369,14 @@ Before VPS migration:
 - [ ] Asset Registry POST contract GREEN
 - [ ] Market Identity resolver GREEN
 - [ ] clean DB bootstrap GREEN
-- [ ] API contract GREEN
-- [ ] Worker contract GREEN
-- [ ] UI contract GREEN
-- [ ] CI deploy GREEN
-- [ ] ETH E2E GREEN
-- [ ] BTC E2E GREEN
-- [ ] no P0
-- [ ] no unresolved P1 without decision
+- [x] API live contract/E2E GREEN
+- [x] Worker contract/deployment GREEN
+- [x] UI contract GREEN
+- [x] CI deploy GREEN
+- [x] ETH E2E GREEN
+- [x] BTC E2E GREEN
+- [x] no P0
+- [ ] no unresolved P1 without decision — remaining P1: SEC-03 secret inventory/rotation and LEG-02 contract cleanup
 
 **Only after these checks should INFRA-BATCH-1 begin.**
 
@@ -436,3 +437,7 @@ Verified in the same run:
 - Next.js web build: **SUCCESS**
 - UI mutation paths now use a server-side admin proxy instead of exposing admin credentials to the browser.
 - Market history has exchange-provider fallback handling; Binance public market-data egress from the Worker was returning 403/451, so the runtime now falls back to Kraken public OHLC and then persistent/secondary sources. Kraken documents its public OHLC endpoints as unauthenticated market data. 
+
+### Security/dependency verification — 2026-10-07
+
+Gate #50: **GREEN** after upgrading Web dependency `next@15.5.0` → `15.5.27`. Web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, Engine contract and post-deploy UI runtime E2E all passed. Next.js 15.5.27 is the patched Maintenance LTS line identified by the official September 2026 security release. citeturn3search1turn3search0
