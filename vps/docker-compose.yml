@@ -16,7 +16,9 @@ services:
       retries: 30
 
   api:
-    build: ./api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     environment:
       DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
       ADMIN_TOKEN: local-development-only
@@ -30,7 +32,9 @@ services:
       - "8080:8080"
 
   worker:
-    build: ./worker
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
     environment:
       DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
       WORKER_INTERVAL_MS: "86400000"
