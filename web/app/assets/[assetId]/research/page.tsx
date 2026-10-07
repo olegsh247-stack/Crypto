@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAsset } from "../../../../lib/api";
 import MarketTabs from "../../../components/MarketTabs";
 import { STRUCTURE_1_BLOCKS } from "../../../../lib/research-structure";
-import { getResearchProgress, getResearchStatus, normalizeResearchBlocks } from "../../../../lib/research-status";
+import { getResearchProgress, normalizeResearchBlocks } from "../../../../lib/research-status";
 
 export default async function DeepResearchPage({ params }: { params: Promise<{ assetId: string }> }) {
   const { assetId } = await params;
