@@ -35,6 +35,8 @@ const eth = await get("/api/assets/eth");
 assert(eth.asset?.asset_id === "eth", "ETH canonical detail");
 assert(eth.asset?.research_status_source === "server_engine", "ETH lifecycle server authority");
 assert(eth.asset?.research_status === eth.asset?.research?.lifecycle, "ETH lifecycle consistency");
+assert(["current","update_recommended","outdated"].includes(eth.asset?.research_freshness), "ETH freshness contract");
+assert(eth.asset?.research?.freshness === eth.asset?.research_freshness, "ETH freshness consistency");
 assert(eth.research_snapshot?.status === "PUBLISHED", "ETH published research snapshot");
 assert(Array.isArray(eth.research_blocks) && eth.research_blocks.length === 15, "ETH has 15 research blocks");
 assert(eth.research_blocks.every(b => ["complete", "n_a"].includes(b.status)), "ETH blocks resolved");
