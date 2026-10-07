@@ -1,0 +1,45 @@
+name: UI Runtime Contract E2E
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package.json
+      - run: npm install
+      - run: npm run build
+      - name: Runtime UI contract E2E
+        env:
+          CRYPTO_API_URL: https://crypto-api.olegsh247.workers.dev
+        run: |
+          set -euo pipefail
+          CRYPTO_API_URL="$CRYPTO_API_URL" npm run start -- -p 3000 > /tmp/crypto-web.log 2>&1 &
+          web_pid=$!
+          trap 'kill "$web_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:3000/" >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
+          curl -fsS "http://127.0.0.1:3000/pairs" >/tmp/ui-pairs.html
+          curl -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
+          curl -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-research.html
+          grep -q 'href="/pairs"' /tmp/ui-home.html
+          grep -q '/pairs/' /tmp/ui-pairs.html
+          grep -q 'ETH' /tmp/ui-eth.html
+          grep -q 'Monitoring' /tmp/ui-eth.html
+          grep -q 'Freshness:' /tmp/ui-eth.html
+          grep -q '15 blocks' /tmp/ui-eth.html
+          grep -q 'Research chapters' /tmp/ui-research.html
+          echo "UI_RUNTIME_E2E_OK home=1 pairs=1 eth=1 lifecycle=1 freshness=1 research=1"
