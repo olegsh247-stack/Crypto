@@ -2,6 +2,7 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY worker/package.json ./worker/
 COPY shared ./shared
+RUN cd shared && npm install && npm run build
 RUN cd worker && npm install
 COPY worker/tsconfig.json ./worker/
 COPY worker/src ./worker/src
