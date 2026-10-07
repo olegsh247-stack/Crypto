@@ -105,7 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           auth=(-H 'Authorization: Bearer local-development-only' -H 'Content-Type: application/json')
-          code=$(curl -sS -o /tmp/asset-mutation.json -w '%{http_code}' "\${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d '{"symbol":"VPSQA","name":"VPS QA Asset","enabled":false}')
+          code=$(curl -sS -o /tmp/asset-mutation.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d '{"symbol":"VPSQA","name":"VPS QA Asset","enabled":false}')
           test "$code" = "201"
           python3 - <<'PY'
           import json
@@ -114,9 +114,9 @@ jobs:
           assert d['item']['asset_id']=='vpsqa'
           PY
           asset_id=vpsqa
-          code=$(curl -sS -o /tmp/asset-delete.json -w '%{http_code}' "\${auth[@]}" -X DELETE "http://127.0.0.1:8080/api/assets/$asset_id")
+          code=$(curl -sS -o /tmp/asset-delete.json -w '%{http_code}' "${auth[@]}" -X DELETE "http://127.0.0.1:8080/api/assets/$asset_id")
           test "$code" = "200"
-          code=$(curl -sS -o /tmp/pair-mutation.json -w '%{http_code}' "\${auth[@]}" -X POST http://127.0.0.1:8080/api/pairs -d '{"symbol":"BTC/USDT","exchange":"binance"}')
+          code=$(curl -sS -o /tmp/pair-mutation.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/pairs -d '{"symbol":"BTC/USDT","exchange":"binance"}')
           test "$code" = "201"
           python3 - <<'PY'
           import json
@@ -126,7 +126,7 @@ jobs:
           assert d['item']['exchange']=='binance'
           assert d['item']['enabled'] is True
           PY
-          code=$(curl -sS -o /tmp/commodity-mutation.json -w '%{http_code}' "\${auth[@]}" -X POST http://127.0.0.1:8080/api/commodities -d '{"symbol":"VPSQA","name":"VPS QA Commodity","unit":"unit"}')
+          code=$(curl -sS -o /tmp/commodity-mutation.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/commodities -d '{"symbol":"VPSQA","name":"VPS QA Commodity","unit":"unit"}')
           test "$code" = "201"
           python3 - <<'PY'
           import json
@@ -139,7 +139,7 @@ jobs:
           print(json.load(open('/tmp/commodity-mutation.json'))['item']['id'])
           PY
           )
-          code=$(curl -sS -o /tmp/commodity-delete.json -w '%{http_code}' "\${auth[@]}" -X DELETE "http://127.0.0.1:8080/api/commodities/$commodity_id")
+          code=$(curl -sS -o /tmp/commodity-delete.json -w '%{http_code}' "${auth[@]}" -X DELETE "http://127.0.0.1:8080/api/commodities/$commodity_id")
           test "$code" = "200"
           echo "VPS_API_MUTATIONS_OK asset_create_delete=1 pair_upsert=1 commodity_create_delete=1"
       - name: VPS admin boundary E2E
