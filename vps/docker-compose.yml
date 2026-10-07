@@ -29,5 +29,14 @@ services:
     ports:
       - "8080:8080"
 
+  worker:
+    build: ./worker
+    environment:
+      DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
+      WORKER_INTERVAL_MS: "86400000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   crypto-postgres:
