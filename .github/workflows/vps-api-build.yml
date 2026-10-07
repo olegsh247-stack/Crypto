@@ -1,0 +1,52 @@
+name: VPS API Build Rehearsal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "vps/**"
+      - "shared/**"
+      - "infrastructure/neon/**"
+      - "scripts/migrate-neon.sh"
+      - ".github/workflows/vps-api-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install VPS API dependencies
+        working-directory: vps/api
+        run: npm install
+      - name: Build VPS API
+        working-directory: vps/api
+        run: npm run build
+      - name: Start PostgreSQL rehearsal
+        run: |
+          docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
+          trap 'docker rm -f crypto-vps-postgres >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1 && break
+            sleep 2
+          done
+          pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test
+      - name: Bootstrap PostgreSQL with repository migrations
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
+          chmod +x scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;")
+          duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select version from schema_migrations group by version having count(*) > 1) d;")
+          test "$count" -gt 0
+          test "$duplicates" = "0"
+          echo "VPS_DB_BOOTSTRAP_OK migrations=$count duplicate_markers=0 rerun=1"
