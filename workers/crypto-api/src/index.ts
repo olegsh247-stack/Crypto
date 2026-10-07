@@ -103,7 +103,7 @@ function coingeckoDaily(rows:any[]){
  return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 
-async refreshMonitoring(sql:any){
+async function refreshMonitoring(sql:any){
  await sql`update monitoring_signals set last_updated_at=now() where status <> 'disabled'`;
  await sql`update research_status set status='outdated',reason='Scheduled monitoring refresh: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
 }
