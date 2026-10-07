@@ -54,7 +54,7 @@ jobs:
               exit 1
             fi
           }
-          assert_contains /tmp/ui-home.html '/pairs/' 'home_pairs_link'
+          assert_contains /tmp/ui-home.html 'href="/pairs"' 'home_pairs_link'
           assert_contains /tmp/ui-pairs.html '/pairs/' 'pairs_canonical_link'
           assert_contains /tmp/ui-eth.html 'ETH' 'eth_identity'
           assert_contains /tmp/ui-eth.html 'Monitoring' 'eth_monitoring'
