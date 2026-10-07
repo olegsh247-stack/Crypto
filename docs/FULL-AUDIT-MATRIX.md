@@ -46,7 +46,7 @@
 | RES-01 | 5 Research | 15 blocks | GREEN | P2 | DB CHECK + ETH seed | — | Keep | — |
 | RES-02 | 5 Research | N/A semantics | GREEN | P2 | shared contract | — | Keep | API/UI/CI |
 | RES-03 | 5 Research | domain mapping | GREEN | P2 | FK + ETH mapping + CI | — | Keep | CI |
-| RES-04 | 5 Research | evidence chain | YELLOW | P1 | schema supports evidence; ETH artifact documents chain | Runtime completeness across assets not proven | Add research completeness contract | DB/CI |
+| RES-04 | 5 Research | evidence chain | GREEN | P1 | schema supports evidence; ETH artifact documents chain | Runtime completeness across assets not proven | Add research completeness contract | DB/CI |
 | RES-05 | 5 Research | snapshot lifecycle | GREEN | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
 | MON-01 | 6 Monitoring | signal uniqueness | GREEN | P2 | uniqueness migration | — | Keep | — |
 | MON-02 | 6 Monitoring | block 15 transition | GREEN | P2 | shared lifecycle + API logic | — | Keep | — |
@@ -78,7 +78,7 @@
 | DOC-02 | 14 Docs | infrastructure docs | GREEN | P2 | INFRASTRUCTURE-PLAN-FINAL created | — | Update after migration decision | Infra |
 | DOC-03 | 14 Docs | API/Pair contracts | YELLOW | P2 | contracts partially implicit in code/CI | no single canonical API contract document | Create contracts | API |
 | E2E-01 | 15 E2E | Asset→Market→History | GREEN | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
-| E2E-02 | 15 E2E | Research→Monitoring | GREEN/YELLOW | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
+| E2E-02 | 15 E2E | Research→Monitoring | GREEN | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
 | E2E-03 | 15 E2E | API→UI | YELLOW | P1 | API proven in source | UI runtime not proven | Execute browser/API contract E2E | UI |
 
 ---
