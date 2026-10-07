@@ -107,6 +107,12 @@ jobs:
           assert len(d.get('rows',[]))>0, d
           print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
           PY
+      - name: VPS API parity against live Worker
+        env:
+          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
+          VPS_API_URL: http://127.0.0.1:8080
+        run: node scripts/vps-api-parity.mjs
+
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
