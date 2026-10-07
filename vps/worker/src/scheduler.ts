@@ -2,6 +2,35 @@ import { neon } from "./db.js";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
+const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
+const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
+
+async function binanceKlines(symbol:string,interval:string,limit:number){
+ const query=`symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+ const endpoints=[`https://data-api.binance.vision/api/v3/klines?${query}`,`https://api-gcp.binance.com/api/v3/klines?${query}`,`https://api.binance.com/api/v3/klines?${query}`];
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+   if(response.ok){
+    const rows=await response.json() as unknown[];
+    if(Array.isArray(rows)&&rows.length)return rows.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])}));
+   }
+  }catch{}
+ }
+ throw new Error(`Binance ${symbol}: unavailable`);
+}
+
+async function krakenUsdKlines(asset:string){
+ const pair=KRAKEN_USD_PAIRS[asset];
+ if(!pair)return [];
+ const response=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`Kraken ${asset}: ${response.status}`);
+ const data=await response.json() as any;
+ const key=Object.keys(data?.result??{}).find(k=>k!=="last");
+ const rows=key?data.result[key]:[];
+ return Array.isArray(rows)?rows.map((r:any)=>({time:new Date(Number(r[0])*1000).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[6]??0)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
+
 async function ingestAssetDaily(sql:any, asset:any){
  const assetSymbol=String(asset.symbol).toUpperCase();
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
