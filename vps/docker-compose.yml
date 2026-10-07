@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: crypto
+      POSTGRES_USER: crypto
+      POSTGRES_PASSWORD: crypto_local_only
+    ports:
+      - "55432:5432"
+    volumes:
+      - crypto-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto -d crypto"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
+      ADMIN_TOKEN: local-development-only
+      CORS_ORIGIN: http://localhost:3000
+      PORT: "8080"
+      HOST: 0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  crypto-postgres:
