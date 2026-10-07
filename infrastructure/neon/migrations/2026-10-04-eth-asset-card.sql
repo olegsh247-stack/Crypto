@@ -71,6 +71,87 @@ FROM research_blocks rb JOIN mappings m ON m.block_number=rb.block_number
 WHERE rb.snapshot_id='ETH-2026-10-04-v1'
 ON CONFLICT (research_block_id,research_domain_id) DO UPDATE SET relevance_weight=EXCLUDED.relevance_weight,display_order=EXCLUDED.display_order;
 
+INSERT INTO metric_definitions (metric_id, namespace, name, description, default_unit, value_type)
+VALUES
+  ('eth_research_role','research','ETH role baseline','Qualitative research baseline for ETH role and utility.',NULL,'text'),
+  ('eth_research_technology','research','ETH technology baseline','Qualitative research baseline for Ethereum architecture and roadmap.',NULL,'text'),
+  ('eth_research_tokenomics','research','ETH tokenomics baseline','Qualitative research baseline for ETH supply and value accrual.',NULL,'text'),
+  ('eth_research_ecosystem','research','ETH ecosystem baseline','Qualitative research baseline for Ethereum ecosystem depth.',NULL,'text'),
+  ('eth_research_adoption','research','ETH adoption baseline','Qualitative research baseline for activity and adoption.',NULL,'text'),
+  ('eth_research_institutions','research','ETH institutional baseline','Qualitative research baseline for institutional relevance.',NULL,'text'),
+  ('eth_research_governance','research','ETH governance baseline','Qualitative research baseline for governance.',NULL,'text'),
+  ('eth_research_macro','research','ETH macro baseline','Qualitative research baseline for macro sensitivity.',NULL,'text'),
+  ('eth_research_competition','research','ETH competition baseline','Qualitative research baseline for competition.',NULL,'text'),
+  ('eth_research_risk','research','ETH risk baseline','Qualitative research baseline for material risks.',NULL,'text'),
+  ('eth_research_catalyst','research','ETH catalyst baseline','Qualitative research baseline for catalysts.',NULL,'text'),
+  ('eth_research_scenario','research','ETH scenario baseline','Qualitative research baseline for scenarios.',NULL,'text'),
+  ('eth_research_conclusion','research','ETH conclusion baseline','Qualitative research baseline for thesis conclusion.',NULL,'text'),
+  ('eth_research_monitoring','research','ETH monitoring baseline','Qualitative research baseline for monitoring design.',NULL,'text')
+ON CONFLICT (metric_id) DO NOTHING;
+
+WITH obs(metric_id,source_id,value_text) AS (
+  VALUES
+  ('eth_research_role','ethereum_org_roadmap','Ethereum is a general-purpose smart-contract settlement network; ETH supports gas, staking, security and collateral roles.'),
+  ('eth_research_technology','ethereum_org_roadmap','Ethereum uses proof-of-stake and separate execution and consensus layers; scaling is centered on L2s and data availability.'),
+  ('eth_research_tokenomics','ethereum_foundation','ETH net supply is determined by issuance and EIP-1559 burn; value accrual depends on staking, settlement demand and ecosystem activity.'),
+  ('eth_research_ecosystem','ethereum_foundation','Ethereum has a deep ecosystem across DeFi, stablecoins, tokenization, DAOs, infrastructure and L2s.'),
+  ('eth_research_adoption','ethereum_foundation','Activity is distributed across Ethereum L1 and L2 environments and requires combined monitoring of settlement, blobs, transfers, staking and fees.'),
+  ('eth_research_institutions','ethereum_foundation','ETH has institutional relevance through programmable settlement, staking yield and ecosystem exposure.'),
+  ('eth_research_governance','ethereum_org_roadmap','Ethereum governance is social and technical rather than simple token voting; upgrade coordination remains a material consideration.'),
+  ('eth_research_macro','ethereum_foundation','ETH is exposed to liquidity, real yields, risk appetite, regulation and institutional allocation.'),
+  ('eth_research_competition','ethereum_org_roadmap','Ethereum competes with Solana, other L1s, L2 ecosystems and alternative settlement environments.'),
+  ('eth_research_risk','ethereum_foundation','Material risks include value-accrual weakness, L2 fragmentation, competition, governance, security, centralization, regulation and cryptographic transition.'),
+  ('eth_research_catalyst','ethereum_org_glamsterdam','Glamsterdam is a major roadmap catalyst alongside higher capacity, interoperability, stablecoins, RWAs and institutional staking.'),
+  ('eth_research_scenario','ethereum_foundation','Bull, base and bear scenarios are defined around scaling, adoption, value accrual and competitive pressure.'),
+  ('eth_research_conclusion','ethereum_org_roadmap','Ethereum thesis is settlement, security and data availability for a multi-layer economy, conditional on sufficient ETH value accrual.'),
+  ('eth_research_monitoring','ethereum_org_roadmap','Monitoring chain is DATA → METRIC → SIGNAL → ASSESSMENT → CONFIDENCE → THESIS IMPACT → STATUS.')
+)
+INSERT INTO observations (metric_id,asset_id,value_text,observed_at,source_id,source_url,methodology)
+SELECT metric_id,'ETH',value_text,now(),source_id,
+       CASE source_id
+         WHEN 'ethereum_org_roadmap' THEN 'https://ethereum.org/roadmap/'
+         WHEN 'ethereum_org_glamsterdam' THEN 'https://ethereum.org/roadmap/glamsterdam/'
+         WHEN 'ethereum_foundation' THEN 'https://ethereum.foundation/'
+       END,
+       'CryptoResearch v2 / Structure 1 qualitative baseline'
+FROM obs
+WHERE NOT EXISTS (
+  SELECT 1 FROM observations o
+  WHERE o.asset_id='ETH' AND o.metric_id=obs.metric_id AND o.source_id=obs.source_id
+);
+
+WITH evidence_map(block_number,metric_id,source_id,claim,signal,assessment,thesis_impact,status) AS (
+  VALUES
+  (1,'eth_research_role','ethereum_org_roadmap','Ethereum is a general-purpose settlement and smart-contract network with ETH serving core network roles.','stable','Strong strategic role.','positive','strong'),
+  (2,'eth_research_technology','ethereum_org_roadmap','Ethereum scaling is built around proof-of-stake, L2s and data availability.','improving','Strong architecture with execution complexity risk.','positive','strong'),
+  (3,'eth_research_tokenomics','ethereum_foundation','ETH value accrual depends on staking, settlement demand and the issuance/burn balance.','mixed','Moderate and improving, but conditional.','mixed','watch'),
+  (4,'eth_research_technology','ethereum_org_roadmap','Ethereum protocol development is in an active scaling phase.','improving','Roadmap execution is a material positive catalyst.','positive','strong'),
+  (5,'eth_research_ecosystem','ethereum_foundation','Ethereum retains deep ecosystem breadth across major crypto application categories.','stable','Strong ecosystem position.','positive','strong'),
+  (6,'eth_research_adoption','ethereum_foundation','Ethereum activity spans L1 and L2 and must be evaluated as a combined settlement ecosystem.','mixed','Adoption is strong but value-accrual linkage remains mixed.','mixed','watch'),
+  (7,'eth_research_institutions','ethereum_foundation','ETH has institutional relevance through settlement, staking and ecosystem exposure.','improving','Strong potential with realized demand requiring monitoring.','positive','watch'),
+  (8,'eth_research_governance','ethereum_org_roadmap','Ethereum governance is distributed across technical and social coordination rather than simple token voting.','stable','Governance resilience is strong; upgrade coordination is a risk.','positive','strong'),
+  (9,'eth_research_macro','ethereum_foundation','ETH remains sensitive to liquidity, real yields, risk appetite, regulation and institutional allocation.','mixed','Macro regime materially affects ETH beta.','mixed','watch'),
+  (10,'eth_research_competition','ethereum_org_roadmap','Ethereum faces credible competition from alternative L1s, L2 environments and settlement architectures.','mixed','Competitive position is strong but contested.','mixed','watch'),
+  (11,'eth_research_risk','ethereum_foundation','ETH faces material risks across value accrual, fragmentation, competition, governance, security, centralization and regulation.','mixed','Overall risk is medium.','negative','watch'),
+  (12,'eth_research_catalyst','ethereum_org_glamsterdam','Protocol upgrades and ecosystem growth provide identifiable catalysts for the Ethereum thesis.','improving','Catalyst quality is strong with execution risk.','positive','strong'),
+  (13,'eth_research_scenario','ethereum_foundation','Bull, base and bear scenarios are driven by scaling, adoption, value accrual and competitive outcomes.','mixed','Base scenario currently dominates with positive catalysts.','mixed','watch'),
+  (14,'eth_research_conclusion','ethereum_org_roadmap','Ethereum remains a positive but conditional thesis centered on settlement, security, data availability and ETH value accrual.','improving','Conclusion is positive but conditional.','positive','strong'),
+  (15,'eth_research_monitoring','ethereum_org_roadmap','Monitoring must connect data and metrics to signals, assessments, confidence, thesis impact and status.','stable','Monitoring design is defined; live refresh remains a separate concern.','neutral','strong')
+)
+INSERT INTO evidence (snapshot_id,research_block_id,research_domain_id,observation_id,source_id,evidence_type,claim,data_summary,signal,assessment,confidence,thesis_impact,status,as_of)
+SELECT 'ETH-2026-10-04-v1',rb.research_block_id,rbdom.research_domain_id,o.observation_id,e.source_id,
+       'fact',e.claim,o.value_text,e.signal,e.assessment,
+       CASE e.status WHEN 'strong' THEN 0.90 WHEN 'watch' THEN 0.75 ELSE 0.60 END,
+       e.thesis_impact,e.status,o.observed_at
+FROM evidence_map e
+JOIN research_blocks rb ON rb.snapshot_id='ETH-2026-10-04-v1' AND rb.block_number=e.block_number
+LEFT JOIN research_block_domains rbdom ON rbdom.research_block_id=rb.research_block_id
+JOIN observations o ON o.asset_id='ETH' AND o.metric_id=e.metric_id AND o.source_id=e.source_id
+WHERE NOT EXISTS (
+  SELECT 1 FROM evidence x
+  WHERE x.snapshot_id='ETH-2026-10-04-v1' AND x.research_block_id=rb.research_block_id
+);
+
 WITH factors(name,description,importance_weight,current_state,trend,confidence,thesis_impact,monitoring_priority) AS (
   VALUES
   ('Network Adoption','Growth and quality of Ethereum settlement and ecosystem usage.','0.85','Strong ecosystem; activity distributed across L1 and L2.','improving','0.75','positive',2),
