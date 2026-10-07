@@ -6,8 +6,8 @@ import { getRelativeStrengthSignal } from "../../../lib/relative-strength";
 
 export default async function PairPage({ params }: { params: Promise<{ pairId: string }> }) {
   const { pairId } = await params;
+  let data;
   try { data = await getPairs(); } catch(e) { return <main className="shell"><MarketTabs/><div className="error section">Unable to load pairs: {e instanceof Error ? e.message : "unknown error"}</div></main>; }
-  const data = await getPairs();
   const pair = (data.items ?? data.pairs ?? []).find((p) => String(p.id) === pairId || String(p.symbol).toLowerCase() === decodeURIComponent(pairId).toLowerCase());
   if (!pair) return <main className="shell"><MarketTabs/><div className="error section">Pair not found: {decodeURIComponent(pairId)}</div></main>;
 
