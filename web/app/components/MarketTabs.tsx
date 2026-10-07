@@ -10,10 +10,9 @@ export default function MarketTabs() {
   const inResearch = pathname.startsWith("/research");
   const active = pathname === "/" ? "Home" : inResearch ? "Research" : inAssets ? "Assets" : pathname.startsWith("/pairs") ? "Pair" : pathname.startsWith("/commodities") ? "Commodities" : "Home";
   const marketActive = !inResearch;
-
   return <nav className="tabs" aria-label="Crypto product sections">
     <Link className={`tab ${active === "Home" ? "active" : ""}`} href="/">Home</Link>
-    <Link className={`tab ${active === "Assets" ? "active" : ""}`} href="/">Assets</Link>
+    <Link className={`tab ${active === "Assets" ? "active" : ""}`} href="/#assets">Assets</Link>
     <Link className={`tab ${active === "Research" ? "active" : ""}`} href="/research">Research</Link>
     <span className="tab-spacer" aria-hidden="true" />
     <Link className={`tab secondary ${active === "Pair" ? "active" : ""}`} href="/pairs">Pair</Link>
