@@ -193,6 +193,27 @@ jobs:
           test "$score_types" = "5"
           test "$signal_names" = "6"
 
+      - name: Verify ETH evidence chain
+        run: |
+          evidence_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM evidence WHERE snapshot_id='ETH-2026-10-04-v1';")
+          blocks_with_evidence=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(DISTINCT rb.block_number) FROM research_blocks rb JOIN evidence e ON e.research_block_id=rb.research_block_id WHERE rb.snapshot_id='ETH-2026-10-04-v1';")
+          missing_observation=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM evidence WHERE snapshot_id='ETH-2026-10-04-v1' AND (observation_id IS NULL OR source_id IS NULL OR claim IS NULL OR btrim(claim)='');")
+          missing_source_url=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="SELECT COUNT(*) FROM evidence e JOIN observations o ON o.observation_id=e.observation_id WHERE e.snapshot_id='ETH-2026-10-04-v1' AND (o.source_url IS NULL OR btrim(o.source_url)='');")
+          orphan_observation=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --command="SELECT COUNT(*) FROM evidence e LEFT JOIN observations o ON o.observation_id=e.observation_id WHERE e.snapshot_id='ETH-2026-10-04-v1' AND o.observation_id IS NULL;")
+          published_without_evidence=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --command="SELECT COUNT(*) FROM research_blocks rb JOIN research_snapshots rs ON rs.snapshot_id=rb.snapshot_id WHERE rs.snapshot_id='ETH-2026-10-04-v1' AND rs.status='PUBLISHED' AND rb.status='complete' AND NOT EXISTS (SELECT 1 FROM evidence e WHERE e.research_block_id=rb.research_block_id);")
+          echo "ETH evidence rows: $evidence_count / >=15"
+          echo "ETH blocks with evidence: $blocks_with_evidence / 15"
+          echo "ETH evidence missing observation/source/claim: $missing_observation / 0"
+          echo "ETH evidence missing source URL: $missing_source_url / 0"
+          echo "ETH orphan observations: $orphan_observation / 0"
+          echo "Published complete blocks without evidence: $published_without_evidence / 0"
+          test "$evidence_count" -ge 15
+          test "$blocks_with_evidence" = "15"
+          test "$missing_observation" = "0"
+          test "$missing_source_url" = "0"
+          test "$orphan_observation" = "0"
+          test "$published_without_evidence" = "0"
+
       - name: Verify migration markers
         run: |
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align \
