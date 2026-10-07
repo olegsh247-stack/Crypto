@@ -2,7 +2,6 @@ import { neon } from "./db.js";
 import { calculateResearchStatus } from "./research-status.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
-type ScheduledController = unknown;
 function corsHeaders(env:Env){return {"Access-Control-Allow-Origin":process.env.CORS_ORIGIN??"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization"};}
 function json(data:unknown,status=200,env?:Env):Response{return Response.json(data,{status,headers:{"Cache-Control":"no-store",...corsHeaders(env??{DATABASE_URL:""})}})}
 async function body(request:Request){try{return await request.json() as Record<string,unknown>}catch{return null}}
