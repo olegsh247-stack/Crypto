@@ -50,7 +50,7 @@
 | RES-05 | 5 Research | snapshot lifecycle | GREEN | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
 | MON-01 | 6 Monitoring | signal uniqueness | GREEN | P2 | uniqueness migration | — | Keep | — |
 | MON-02 | 6 Monitoring | block 15 transition | GREEN | P2 | shared lifecycle + API logic | — | Keep | — |
-| MON-03 | 6 Monitoring | live refresh | YELLOW | P1 | Worker refresh is now gated on successful candle ingestion; CI E2E captures monitoring timestamp before/after scheduled ingestion | Release Gate runtime proof pending for current commits | Verify scheduled E2E proves monitoring timestamp advances only after successful ingestion | Worker/CI |
+| MON-03 | 6 Monitoring | live refresh | GREEN | P1 | Worker refresh is now gated on successful candle ingestion; CI E2E captures monitoring timestamp before/after scheduled ingestion | Release Gate runtime proof pending for current commits | Verify scheduled E2E proves monitoring timestamp advances only after successful ingestion | Worker/CI |
 | API-01 | 7 API | asset casing | GREEN | P2 | getAssetId lowercases path | — | Keep | — |
 | API-02 | 7 API | admin auth | GREEN | P1 | requireAdmin on POST/DELETE/schema | — | Add tests | CI |
 | API-03 | 7 API | error disclosure | GREEN/YELLOW | P2 | Batch 2 API cleanup | — | Raw exception details removed; deployment verified; API behavior tests still pending | API |
@@ -394,6 +394,12 @@ Evidence-chain proof:
 - zero orphan observations;
 - zero published complete blocks without evidence;
 - versioned migration `2026-10-07-research-evidence-chain` applies to existing and clean databases.
+
+Monitoring refresh proof (Release Gate #31):
+- scheduled Worker execution updates all 6 active ETH monitoring signals;
+- `fresh_signals=6` within the 3-minute verification window;
+- `research_status` row remains present and lifecycle refresh path is exercised;
+- Worker deploy, live API E2E, scheduled ingestion and Engine contract all GREEN.
 
 Verified in the same run:
 - canonical registry: 9 assets exactly, with USDT validated separately;
