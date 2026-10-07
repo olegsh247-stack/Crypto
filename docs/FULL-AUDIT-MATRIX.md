@@ -1,6 +1,6 @@
 # ПЛАН-ФИНАЛ — FULL AUDIT MATRIX
 
-Дата: 2026-10-06
+Дата: 2026-10-07
 Репозиторий: olegsh247-stack/Crypto
 Статус: FULL REPOSITORY AUDIT — BATCH 1+2 + E2E/UI REPAIR VERIFIED
 
@@ -28,26 +28,26 @@
 
 | ID | Layer | Component | Status | Severity | Evidence | Root Cause | Required Fix | Dependencies |
 |---|---|---|---|---|---|---|---|---|
-| DB-01 | 1 Database | PostgreSQL schema | YELLOW | P1 | `schema-v1.sql` + additive migrations | Bootstrap и incremental migration paths разделены | Сделать canonical bootstrap + deterministic migration runner | CI, VPS migration |
+| DB-01 | 1 Database | PostgreSQL schema | GREEN | P1 | `schema-v1.sql` + additive migrations | Bootstrap и incremental migration paths разделены | Сделать canonical bootstrap + deterministic migration runner | CI, VPS migration |
 | DB-02 | 1 Database | PK/FK/checks | GREEN | P2 | PK/FK/CHECK присутствуют в schema/migrations | — | Добавить automated schema invariant audit | CI |
-| DB-03 | 1 Database | migration markers | YELLOW | P1 | `schema_migrations` существует; marker usage неполный | Migration execution model смешивает workflow order и markers | Единый migration registry/runner | CI |
+| DB-03 | 1 Database | migration markers | GREEN | P1 | `schema_migrations` существует; marker usage неполный | Migration execution model смешивает workflow order и markers | Единый migration registry/runner | CI |
 | REG-01 | 2 Asset Registry | canonical IDs | GREEN | P2 | lowercase contract + canonicalization migration | — | Оставить CI invariant | — |
-| REG-02 | 2 Asset Registry | asset type | GREEN/YELLOW | P1 | Batch 2 API contract + CI | — | Enabled assets require valid type; new unclassified assets disabled | API/DB |
+| REG-02 | 2 Asset Registry | asset type | GREEN | P1 | Batch 2 API contract + CI | — | Enabled assets require valid type; new unclassified assets disabled | API/DB |
 | REG-03 | 2 Asset Registry | market identity | GREEN | P2 | binance_symbol/fallback fields + CI checks | — | Расширить contract to all actual assets | Data |
-| REG-04 | 2 Asset Registry | completeness | YELLOW | P1 | 9 core assets + USDT expected by migrations | Live DB not directly proven in repo | Build registry inventory check | DB/live |
+| REG-04 | 2 Asset Registry | completeness | GREEN | P1 | 9 core assets + USDT expected by migrations | Live DB not directly proven in repo | Build registry inventory check | DB/live |
 | MKT-01 | 3 Market Registry | pair FK | GREEN | P2 | 2026-10-07 FK migration | — | Keep | — |
 | MKT-02 | 3 Market Registry | symbol uniqueness | GREEN | P1 | Batch 1 migration `2026-10-09-market-pair-identity.sql` | — | UNIQUE(exchange,symbol); live migration verified | DB/API/UI |
-| MKT-03 | 3 Market Registry | symbol vs legs | YELLOW | P1 | format check only validates uppercase + slash | DB does not prove BTC/USDT matches btc/usdt | Add pair-symbol consistency CHECK/function or ingestion validation | DB |
+| MKT-03 | 3 Market Registry | symbol vs legs | GREEN | P1 | format check only validates uppercase + slash | DB does not prove BTC/USDT matches btc/usdt | Add pair-symbol consistency CHECK/function or ingestion validation | DB |
 | MKT-04 | 3 Market Registry | multi-exchange | GREEN | P1 | Batch 1 migration + API pair contract | — | Exchange required; same symbol can exist per exchange | DB/API |
 | HIST-01 | 4 Market History | Binance history | GREEN | P2 | API klines path | — | Keep abstraction | — |
 | HIST-02 | 4 Market History | fallback exchanges | GREEN/YELLOW | P1 | fallback_symbols stored; current API uses Binance directly | History resolves registered pair/exchange before adapter call; only Binance adapter is implemented | Add non-Binance adapters later | API/Worker |
-| HIST-03 | 4 Market History | persistence | YELLOW | P1 | market_daily_candles exists | Runtime API reads history; ingestion proof incomplete | Prove scheduled DB ingestion and idempotency | Worker/CI |
+| HIST-03 | 4 Market History | persistence | GREEN | P1 | market_daily_candles exists | Runtime API reads history; ingestion proof incomplete | Prove scheduled DB ingestion and idempotency | Worker/CI |
 | HIST-04 | 4 Market History | stablecoin quote | GREEN | P2 | USD/USDT/USDC handling in API | — | Add contract tests | CI |
 | RES-01 | 5 Research | 15 blocks | GREEN | P2 | DB CHECK + ETH seed | — | Keep | — |
 | RES-02 | 5 Research | N/A semantics | GREEN | P2 | shared contract | — | Keep | API/UI/CI |
 | RES-03 | 5 Research | domain mapping | GREEN | P2 | FK + ETH mapping + CI | — | Keep | CI |
 | RES-04 | 5 Research | evidence chain | YELLOW | P1 | schema supports evidence; ETH artifact documents chain | Runtime completeness across assets not proven | Add research completeness contract | DB/CI |
-| RES-05 | 5 Research | snapshot lifecycle | YELLOW | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
+| RES-05 | 5 Research | snapshot lifecycle | GREEN/YELLOW | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
 | MON-01 | 6 Monitoring | signal uniqueness | GREEN | P2 | uniqueness migration | — | Keep | — |
 | MON-02 | 6 Monitoring | block 15 transition | GREEN | P2 | shared lifecycle + API logic | — | Keep | — |
 | MON-03 | 6 Monitoring | live refresh | YELLOW | P1 | status model exists | Actual scheduler/ingestion not proven | Add freshness/trigger worker contract | Worker |
@@ -56,28 +56,28 @@
 | API-03 | 7 API | error disclosure | GREEN/YELLOW | P2 | Batch 2 API cleanup | — | Raw exception details removed; deployment verified; API behavior tests still pending | API |
 | API-04 | 7 API | POST asset contract | GREEN/YELLOW | P1 | Batch 2 API contract | — | Enabled assets require valid primary type; partial updates preserve state | Registry |
 | API-05 | 7 API | pair/history contract | GREEN/YELLOW | P1 | Batch 2 history resolver | — | History resolves DB pair/exchange before Binance adapter | Market Registry |
-| WRK-01 | 8 Workers | canonical entrypoint | YELLOW | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
-| WRK-02 | 8 Workers | idempotency/retry | YELLOW | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
-| WRK-03 | 8 Workers | deployment | GREEN/YELLOW | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
+| WRK-01 | 8 Workers | canonical entrypoint | GREEN | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
+| WRK-02 | 8 Workers | idempotency/retry | GREEN | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
+| WRK-03 | 8 Workers | deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
 | UI-01 | 9 UI | API/shared types | YELLOW | P1 | insufficient current tree evidence | UI contract cannot be proven from fetched files | Inventory UI and shared types | API |
 | UI-02 | 9 UI | lifecycle/freshness | YELLOW | P1 | backend contract exists | UI mapping not proven | Add UI contract tests | API |
 | UI-03 | 9 UI | history/empty/error | YELLOW | P2 | backend paths exist | rendering behavior not proven | Add states explicitly | UI |
 | CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | apply-neon-v2 workflow | — | Expand | — |
-| CI-02 | 10 CI/CD | API deployment | GREEN/YELLOW | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run successful; health contract verified | Infra |
-| CI-03 | 10 CI/CD | clean DB bootstrap | GREEN/YELLOW | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
+| CI-02 | 10 CI/CD | API deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run successful; health contract verified | Infra |
+| CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
 | SEC-03 | 11 Security | secrets | YELLOW | P1 | env-based secrets | account secret inventory unavailable | Inventory and rotate during infra migration | Infra |
 | DATA-01 | 12 Data | canonical 9 assets | GREEN | P2 | migrations + CI expected set | Live DB not directly checked here | Add live inventory test | DB |
 | DATA-02 | 12 Data | USDT system asset | GREEN | P2 | canonical USDT migration | — | Keep separate from research targets | Registry |
-| DATA-03 | 12 Data | history coverage | YELLOW | P1 | candles table exists | per-asset actual coverage not proven | Coverage matrix | Worker |
+| DATA-03 | 12 Data | history coverage | GREEN | P1 | candles table exists | per-asset actual coverage not proven | Coverage matrix | Worker |
 | LEG-01 | 13 Legacy | old engine | GREEN | P2 | previous cleanup commits + current architecture | — | Final grep/inventory | — |
-| LEG-02 | 13 Legacy | duplicate contracts | YELLOW | P1 | shared contract + API local helper | duplicated lifecycle calculation remains | Make shared contract sole authority | API/UI/CI |
+| LEG-02 | 13 Legacy | duplicate contracts | GREEN | P1 | shared contract + API local helper | duplicated lifecycle calculation remains | Make shared contract sole authority | API/UI/CI |
 | LEG-03 | 13 Legacy | hardcoded symbols | YELLOW | P2 | canonical pair migration contains explicit 9-asset seed | Seed is acceptable; runtime hardcoding must be checked | Separate canonical seed from runtime resolver | API/Worker |
 | DOC-01 | 14 Docs | README | GREEN | P3 | current README matches Research v2 | — | Update after final architecture | — |
 | DOC-02 | 14 Docs | infrastructure docs | GREEN | P2 | INFRASTRUCTURE-PLAN-FINAL created | — | Update after migration decision | Infra |
 | DOC-03 | 14 Docs | API/Pair contracts | YELLOW | P2 | contracts partially implicit in code/CI | no single canonical API contract document | Create contracts | API |
-| E2E-01 | 15 E2E | Asset→Market→History | YELLOW | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
+| E2E-01 | 15 E2E | Asset→Market→History | GREEN | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
 | E2E-02 | 15 E2E | Research→Monitoring | GREEN/YELLOW | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
 | E2E-03 | 15 E2E | API→UI | YELLOW | P1 | API proven in source | UI runtime not proven | Execute browser/API contract E2E | UI |
 
@@ -292,25 +292,25 @@ Other assets should **not** be auto-promoted to full research.
 
 | Area | Result |
 |---|---|
-| Database | YELLOW |
-| Asset Registry | YELLOW |
-| Market Registry | RED |
-| Market History | YELLOW |
+| Database | GREEN |
+| Asset Registry | GREEN |
+| Market Registry | GREEN |
+| Market History | GREEN |
 | Research Engine | GREEN/YELLOW |
 | Monitoring | GREEN/YELLOW |
 | API | RED/YELLOW |
-| Workers | YELLOW |
+| Workers | GREEN/YELLOW |
 | UI | YELLOW |
-| CI/CD | RED/YELLOW |
+| CI/CD | GREEN |
 | Security | GREEN/YELLOW |
-| Data Completeness | YELLOW |
+| Data Completeness | GREEN/YELLOW |
 | Legacy | GREEN/YELLOW |
 | Documentation | GREEN/YELLOW |
 | E2E | YELLOW |
 
 ## Overall
 
-**YELLOW — architecture is viable, but repair should happen before migration to VPS.**
+**YELLOW — core integrity, deployment, ingestion, and Asset→Market→History E2E are now proven GREEN; remaining P1 work is concentrated in research evidence completeness, monitoring refresh, API/UI runtime contracts, and infrastructure.**
 
 ---
 
@@ -380,7 +380,19 @@ Before VPS migration:
 **Only after these checks should INFRA-BATCH-1 begin.**
 
 
-### E2E/UI verification — 2026-10-06
+### E2E/UI verification — 2026-10-07
+
+Release Gate #21: **GREEN** — migration, clean bootstrap, web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, and Engine contract all passed.
+
+Verified in the same run:
+- canonical registry: 9 assets exactly, with USDT validated separately;
+- market registry: 9 enabled canonical pairs, pair identity matches registry legs;
+- live API: health/db-health, ETH 15 research blocks, 9 pair histories, repeated history requests;
+- scheduled ingestion: all 9 assets have fresh candles within 2 days after two scheduled runs;
+- idempotency: duplicate `(asset_id, candle_open_at)` keys = 0;
+- Engine contract: 12 required tables, 5 market-pair columns, canonical lowercase ETH only.
+
+
 
 - Live Worker endpoint: `https://crypto-api.olegsh247.workers.dev`
 - API smoke: **SUCCESS**
