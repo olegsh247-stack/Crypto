@@ -99,6 +99,8 @@ jobs:
             sleep 2
           done
           curl -fsS "http://127.0.0.1:8787/api/health" >/dev/null
+          monitoring_before="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at),'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';" | tr -d '[:space:]')"
+          echo "MONITORING_REFRESH_BEFORE $monitoring_before"
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-1.json
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-2.json
           actual_assets="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true and asset_id <> 'usdt';" | xargs)"
@@ -120,11 +122,13 @@ jobs:
           echo "INGESTION_DUPLICATES count=$duplicate_keys"
           test "$duplicate_keys" = "0"
           monitoring_fresh="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled' and last_updated_at >= now() - interval '3 minutes';" | tr -d '[:space:]')"
+          monitoring_after="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at),'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';" | tr -d '[:space:]')"
           research_status_rows="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from research_status where status in ('current','update_recommended','outdated');" | tr -d '[:space:]')"
-          echo "MONITORING_REFRESH fresh_signals=$monitoring_fresh status_rows=$research_status_rows"
+          echo "MONITORING_REFRESH before=$monitoring_before after=$monitoring_after fresh_signals=$monitoring_fresh status_rows=$research_status_rows"
+          test "$monitoring_after" != "$monitoring_before"
           test "$monitoring_fresh" -ge 6
           test "$research_status_rows" -ge 1
-          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 fresh_2d=1 runs=2 duplicate_keys=0 monitoring_refresh=1"
+          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 fresh_2d=1 runs=2 duplicate_keys=0 monitoring_refresh=1 monitoring_triggered_by_ingestion=1"
 
       - name: Verify deployed Engine contract directly in Neon
         if: ${{ always() }}
