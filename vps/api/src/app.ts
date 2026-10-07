@@ -1,0 +1,203 @@
+import { neon } from "./db.js";
+import { calculateResearchStatus } from "./research-status";
+
+export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
+type ScheduledController = unknown;
+const corsHeaders={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization"};
+function json(data:unknown,status=200):Response{return Response.json(data,{status,headers:{"Cache-Control":"no-store",...corsHeaders}})}
+async function body(request:Request){try{return await request.json() as Record<string,unknown>}catch{return null}}
+function text(value:unknown){return typeof value==="string"?value.trim():""}
+function getAssetId(pathname:string){const m=pathname.match(/^\/api\/assets\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]).toLowerCase():null}
+function getPairId(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
+function getPairHistorySymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/history\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
+function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
+function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.headers.get("Authorization")===`Bearer ${env.ADMIN_TOKEN}`}
+function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
+
+async function binanceKlines(symbol:string,interval:string,limit:number){
+ const query=`symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+ const endpoints=[`https://data-api.binance.vision/api/v3/klines?${query}`,`https://api-gcp.binance.com/api/v3/klines?${query}`,`https://api.binance.com/api/v3/klines?${query}`];
+ const statuses:string[]=[];
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+   if(response.ok){
+    const rows=await response.json() as unknown[];
+    if(Array.isArray(rows)&&rows.length)return rows.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[5])}));
+   }
+   statuses.push(endpoint.split("/")[2]+":"+response.status);
+  }catch(error){statuses.push(endpoint.split("/")[2]+":network_error")}
+ }
+ throw new Error(`Binance ${symbol}: ${statuses.join(",")}`);
+}
+async function usdKlines(asset:string,interval:string,limit:number){
+ if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
+ return binanceKlines(asset+"USDT",interval,limit);
+}
+async function storedAssetKlines(sql:any,assetId:string,limit:number){
+ const rows=await sql`select candle_open_at as time,close_price as close from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit ${limit}`;
+ return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
+}
+const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
+const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
+async function krakenUsdKlines(asset:string){
+ const pair=KRAKEN_USD_PAIRS[asset];
+ if(!pair)return [];
+ const response=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`Kraken ${asset}: ${response.status}`);
+ const data=await response.json() as any;
+ const key=Object.keys(data?.result??{}).find(k=>k!=="last");
+ const rows=key?data.result[key]:[];
+ return Array.isArray(rows)?rows.map((r:any)=>({time:new Date(Number(r[0])*1000).toISOString(),open:Number(r[1]),high:Number(r[2]),low:Number(r[3]),close:Number(r[4]),volume:Number(r[6]??0)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
+async function ingestAssetDaily(sql:any, asset:any){
+ const assetSymbol=String(asset.symbol).toUpperCase();
+ const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
+ let rows:any[]=[];
+ let sourceId="market_binance";
+ try{rows=await binanceKlines(binanceSymbol,"1d",8);}catch{}
+ if(!rows.length){
+  try{rows=await krakenUsdKlines(assetSymbol);sourceId="market_kraken";}catch{}
+ }
+ if(!rows.length){
+  try{
+   const gecko=coingeckoDaily(await coingeckoUsdKlines(assetSymbol,14));
+   rows=gecko.map((r:any)=>({time:r.time,open:r.close,high:r.close,low:r.close,close:r.close,volume:0}));
+   sourceId="market_coingecko";
+  }catch{}
+ }
+ if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
+ let written=0;
+ const sourceSymbol=sourceId==="market_kraken"?(KRAKEN_USD_PAIRS[assetSymbol]??binanceSymbol):sourceId==="market_coingecko"?COINGECKO_IDS[assetSymbol]??binanceSymbol:binanceSymbol;
+ for(const row of rows.slice(-8)){
+  const openAt=new Date(row.time);
+  const closeAt=new Date(openAt.getTime()+24*60*60*1000);
+  const openPrice=Number(row.open??row.close),high=Number(row.high??row.close),low=Number(row.low??row.close),close=Number(row.close),volume=Number(row.volume??0);
+  if(![openAt.getTime(),closeAt.getTime(),openPrice,high,low,close].every(Number.isFinite))continue;
+  await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
+    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${openPrice},${high},${low},${close},${volume||null},${sourceId},${sourceSymbol})
+    on conflict(asset_id,candle_open_at) do update set
+      candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,
+      low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
+      source_id=excluded.source_id,source_symbol=excluded.source_symbol`;
+  written++;
+ }
+ return {asset_id:asset.asset_id,rows:written,source:sourceId};
+}
+
+async function coingeckoUsdKlines(asset:string,days:number){
+ const id=COINGECKO_IDS[asset];
+ if(!id)return [];
+ const endpoint=`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${Math.max(1,Math.min(days,90))}`;
+ const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`CoinGecko ${asset}: ${response.status}`);
+ const data=await response.json() as any;
+ return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
+
+function coingeckoDaily(rows:any[]){
+ const byDay=new Map<string,any>();
+ for(const row of rows){
+  const day=new Date(row.time).toISOString().slice(0,10);
+  byDay.set(day,row);
+ }
+ return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
+}
+
+async function refreshMonitoring(sql:any){
+ await sql`update monitoring_signals set last_updated_at=now() where status <> 'disabled'`;
+ await sql`update research_status set status='outdated',reason='Scheduled monitoring refresh: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
+}
+
+export default {
+ async scheduled(_controller:ScheduledController,env:Env){
+  if(!env.DATABASE_URL)return;
+  const sql=neon(env.DATABASE_URL);
+  const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
+  const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
+  const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+  if(successfulIngestion.length>0){
+   try{await refreshMonitoring(sql);}catch{}
+  }
+ },
+ async fetch(request:Request,env:Env):Promise<Response>{
+ const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
+ if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
+ if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
+ if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
+ const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
+  const days=Math.min(Math.max(Number(url.searchParams.get("days")??30),1),90),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);
+  const parts=pairHistory.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
+  const [baseAsset,quoteAsset]=parts;
+  const pairRegistry=await sql`select mp.symbol,mp.base_asset_id,mp.quote_asset_id,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairHistory} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
+  if(!pairRegistry[0])return json({status:"error",error:"market_pair_not_registered",pair:pairHistory},404);
+  const registered=pairRegistry[0];
+  if(String(registered.base_symbol).toUpperCase()!==baseAsset||String(registered.quote_symbol).toUpperCase()!==quoteAsset)return json({status:"error",error:"market_pair_identity_mismatch",pair:pairHistory},409);
+  if(String(registered.exchange).toLowerCase()!=="binance")return json({status:"error",error:"exchange_not_supported",exchange:registered.exchange,pair:pairHistory},501);
+  const limit=Math.min(days*(interval==="1d"?1:interval==="4h"?6:24)+1,1000);
+  const pairSymbol=baseAsset+quoteAsset;
+  const pairPromise=binanceKlines(pairSymbol,interval,limit);
+  const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
+  const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
+  const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
+  const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
+  const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
+  let pair=results[0].status==="fulfilled"?results[0].value:null;
+  let base=results[1].status==="fulfilled"?results[1].value:null;
+  let quote=results[2].status==="fulfilled"?results[2].value:null;
+  let historySource="Binance";
+  if(!pair){
+    try{
+      const krakenBase=baseIsStable?[]:await krakenUsdKlines(baseAsset);
+      const krakenQuote=quoteIsStable?[]:await krakenUsdKlines(quoteAsset);
+      if(quoteIsStable&&krakenBase.length){pair=krakenBase.map((r:any)=>({time:r.time,close:r.close}));base=krakenBase;}
+      else if(baseIsStable&&krakenQuote.length){pair=krakenQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=krakenQuote;}
+      else if(krakenBase.length&&krakenQuote.length){const qMap=new Map(krakenQuote.map((r:any)=>[r.time,r.close]));pair=krakenBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=krakenBase;quote=krakenQuote;}
+      if(pair)historySource="Kraken";
+    }catch{}
+  }
+  if(!pair){
+    const geckoDays=Math.max(1,Math.ceil(days));
+    try{
+      const geckoBase=baseIsStable?[]:await coingeckoUsdKlines(baseAsset,geckoDays);
+      const geckoQuote=quoteIsStable?[]:await coingeckoUsdKlines(quoteAsset,geckoDays);
+      if(quoteIsStable&&geckoBase.length){pair=geckoBase.map((r:any)=>({time:r.time,close:r.close}));base=geckoBase;}
+      else if(baseIsStable&&geckoQuote.length){pair=geckoQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=geckoQuote;}
+      else if(geckoBase.length&&geckoQuote.length){const qMap=new Map(geckoQuote.map((r:any)=>[r.time,r.close]));pair=geckoBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=geckoBase;quote=geckoQuote;}
+      if(pair)historySource="CoinGecko";
+    }catch{}
+  }
+  if(!pair){
+    const [storedBase,storedQuote]=await Promise.all([
+      storedAssetKlines(sql,String(registered.base_asset_id),limit),
+      storedAssetKlines(sql,String(registered.quote_asset_id),limit)
+    ]);
+    if(quoteIsStable && storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
+    else if(baseIsStable && storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
+    else if(storedBase.length&&storedQuote.length){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
+    if(pair)historySource="stored_market_history";
+  }
+  if(!pair){
+    const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
+    return json({status:"error",error:"market_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
+  }
+  const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
+  const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
+  const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
+  if(!rows.length)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
+  const normalize=(key:"pair"|"baseUsd"|"quoteUsd")=>{const first=rows[0]?.[key];return rows.map((r:any)=>({time:r.time,value:first?Number(((r[key]/first)*100).toFixed(3)):null})).filter((r:any)=>r.value!==null)};
+  return json({status:"ok",source:historySource,pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
+ }
+ if(url.pathname==="/api/assets"||url.pathname==="/api/assets/"){
+  if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),category=text(d?.category)||"core",tier=text(d?.research_tier)||"C",primaryAssetTypeId=text(d?.primary_asset_type_id),requestedEnabled=d?.enabled===undefined?null:Boolean(d?.enabled);if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);if(!["A","B","C"].includes(tier))return json({status:"error",error:"invalid_research_tier"},400);if(!["core","defi","l1_infrastructure","bitcoin_ecosystem","stablecoin_payments"].includes(category))return json({status:"error",error:"invalid_category"},400);if(requestedEnabled===true&&!primaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);try{if(primaryAssetTypeId){const type=await sql`select asset_type_id from asset_types where asset_type_id=${primaryAssetTypeId} and is_active=true limit 1`;if(!type[0])return json({status:"error",error:"invalid_primary_asset_type"},400)}const existing=await sql`select enabled,primary_asset_type_id from assets where asset_id=${symbol.toLowerCase()} limit 1`;const enabled=requestedEnabled===null?(existing[0]?.enabled??false):requestedEnabled;const resolvedPrimaryAssetTypeId=primaryAssetTypeId||existing[0]?.primary_asset_type_id||null;if(enabled&&!resolvedPrimaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);const r=await sql`insert into assets(asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id,research_reason) values(${symbol.toLowerCase()},${symbol},${name},${category},${tier},${enabled},${resolvedPrimaryAssetTypeId},'Added through Dynamic Asset Engine') on conflict(asset_id) do update set symbol=excluded.symbol,name=excluded.name,category=excluded.category,research_tier=excluded.research_tier,enabled=excluded.enabled,primary_asset_type_id=excluded.primary_asset_type_id,updated_at=now() returning asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"asset_persistence_failed"},503)}}
+  if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);try{const assets=await sql`select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,at.code as asset_type_code,at.name as asset_type_name,rs.status as research_freshness,rs.reason as research_status_reason,rs.last_research_at,case when coalesce(b.completed,0)=0 then 'not_started' when coalesce(b.monitoring,false) then 'monitoring' when coalesce(b.completed,0)>=15 then 'complete' else 'in_progress' end as research_lifecycle from assets a left join asset_types at on at.asset_type_id=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id left join lateral (select count(*) filter(where rb.status='complete') as completed,bool_or(rb.block_number=15 and rb.status='complete') as monitoring from research_blocks rb where rb.snapshot_id=rs.snapshot_id) b on true where a.enabled=true order by case a.research_tier when 'A' then 1 when 'B' then 2 when 'C' then 3 else 4 end,a.symbol`;return json({api_version:"1.5.0",assets:assets.map((a:any)=>({...a,research_status:a.research_lifecycle,research_freshness:a.research_freshness?{status:a.research_freshness,reason:a.research_status_reason??null,last_research_at:a.last_research_at??null}:null,research:{lifecycle:a.research_lifecycle,freshness:a.research_freshness}})),count:assets.length,max_assets:50})}catch(error){return json({status:"error",service:"crypto-api",error:"database_query_failed"},503)}}
+  const assetId=getAssetId(url.pathname);if(assetId){
+  if(request.method==="DELETE"){const auth=requireAdmin(request,env);if(auth)return auth;try{const r=await sql`update assets set enabled=false,updated_at=now() where asset_id=${assetId} returning asset_id,symbol,enabled`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"asset_not_found"},404)}catch{return json({status:"error",error:"asset_persistence_failed"},503)}}
+  if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);try{const assets=await sql`select a.asset_id,a.symbol,a.name,a.category,a.research_tier,a.enabled,a.binance_symbol,a.fallback_symbols,a.research_reason,a.primary_asset_type_id,a.secondary_asset_type_id,at.code as asset_type_code,at.name as asset_type_name,at.description as asset_type_description,rs.status as research_freshness,rs.reason as research_status_reason,rs.last_research_at,rs.last_major_update_at,rs.next_review_at from assets a left join asset_types at on at.asset_type_id=a.primary_asset_type_id left join research_status rs on rs.asset_id=a.asset_id where a.asset_id=${assetId} limit 1`;if(!assets[0])return json({status:"error",error:"asset_not_found",asset_id:assetId},404);const [metrics,history,researchSnapshots,researchScenarios,scenarioStates,events,sources,blocks,domains,factors,scores,signals]=await Promise.all([sql`select distinct on(o.metric_id)o.metric_id,coalesce(o.value_numeric,o.value_integer::numeric) as value,o.value_boolean,o.value_text,o.value_json,o.unit,o.observed_at,o.source_id,o.source_url,o.status,case when o.freshness='CURRENT' then 'fresh' when o.freshness='STALE' then 'stale' when o.freshness='EXPIRED' then 'unknown' else 'unknown' end as freshness,o.revision from observations o where o.asset_id=${assetId} order by o.metric_id,o.observed_at desc,o.revision desc`,sql`select candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,quote_volume,trade_count,source_id,source_symbol from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit 30`,sql`select snapshot_id,version,status,title,content,published_at,created_at from research_snapshots where asset_id=${assetId} and status='PUBLISHED' order by version desc limit 1`,sql`select research_scenario_id,scenario_type,probability,assumptions,supporting_evidence,invalidation_conditions,thesis_impact,confidence,created_at from research_scenarios where snapshot_id=(select snapshot_id from research_snapshots where asset_id=${assetId} and status='PUBLISHED' order by version desc limit 1) order by case scenario_type when 'base' then 1 when 'bull' then 2 when 'bear' then 3 else 4 end`,sql`select scenario_state_id,scenario_id,state,confidence,rationale,indicators,observed_at,snapshot_id from scenario_states where asset_id=${assetId} order by observed_at desc limit 20`,sql`select event_id,metric_id,event_type,severity,observed_at,details,status,created_at,closed_at from monitoring_events where asset_id=${assetId} order by observed_at desc limit 50`,sql`select distinct s.source_id,s.name,s.source_type,s.base_url,s.trust_level,s.description from sources s join observations o on o.source_id=s.source_id where o.asset_id=${assetId} order by s.source_id`,sql`select rb.research_block_id,rb.block_number,rb.title,rb.status,rb.summary,rb.analysis,rb.confidence,coalesce(json_agg(json_build_object('code',rd.code,'name',rd.name,'relevance_weight',rbd.relevance_weight,'display_order',rbd.display_order) order by rbd.display_order nulls last,rd.display_order) filter(where rd.research_domain_id is not null),'[]'::json) as domains from research_blocks rb left join research_block_domains rbd on rbd.research_block_id=rb.research_block_id left join research_domains rd on rd.research_domain_id=rbd.research_domain_id where rb.snapshot_id=(select snapshot_id from research_snapshots where asset_id=${assetId} and status='PUBLISHED' order by version desc limit 1) group by rb.research_block_id order by rb.block_number`,sql`select research_domain_id,code,name,description,display_order from research_domains order by display_order`,sql`select critical_factor_id,name,description,importance_weight,current_state,trend,confidence,thesis_impact,monitoring_priority,snapshot_id from critical_factors where asset_id=${assetId} order by monitoring_priority nulls last,name`,sql`select score_id,score_type,value,scale_min,scale_max,methodology_version,confidence,explanation,calculated_at,snapshot_id from research_scores where asset_id=${assetId} order by calculated_at desc,score_type`,sql`select monitoring_signal_id,critical_factor_id,metric_id,monitoring_event_id,name,current_value,previous_value,direction,threshold,threshold_type,thesis_impact,status,confidence,last_updated_at from monitoring_signals where asset_id=${assetId} order by status,name`]);const researchStatus=calculateResearchStatus(blocks.map((b:any)=>({block_number:b.block_number,status:b.status})));const nextReviewAt=assets[0].next_review_at?new Date(assets[0].next_review_at):null;const reviewExpired=nextReviewAt&&!Number.isNaN(nextReviewAt.getTime())&&nextReviewAt.getTime()<Date.now();const freshness=assets[0].research_freshness??((researchStatus.status==="monitoring"||researchStatus.status==="complete")?(reviewExpired?"outdated":"current"):null);const normalizedMetrics=metrics.map((m:any)=>({metric_id:m.metric_id,value:m.value!==null&&m.value!==undefined?Number(m.value):m.value_text??m.value_boolean??m.value_json??null,unit:m.unit,observed_at:m.observed_at,source_id:m.source_id,source_url:m.source_url,status:m.status,freshness:m.freshness,revision:m.revision}));const snapshot=researchSnapshots[0]?{snapshot_id:researchSnapshots[0].snapshot_id,research_version:String(researchSnapshots[0].version),methodology_version:"CryptoResearch v2",research_date:researchSnapshots[0].published_at??researchSnapshots[0].created_at,title:researchSnapshots[0].title,content:researchSnapshots[0].content,status:researchSnapshots[0].status}:null;const freshnessPayload=freshness?{status:freshness,reason:assets[0].research_status_reason??null,last_research_at:assets[0].last_research_at??null}:null;return json({api_version:"1.5.0",engine:"DynamicAssetEngine",asset:{...assets[0],research_status:researchStatus.status,research_status_source:"server_engine",research_freshness:freshnessPayload,research:{lifecycle:researchStatus.status,freshness}},research_progress:researchStatus,metrics:normalizedMetrics,history:history.reverse(),research_snapshot:snapshot,research_blocks:blocks,research_domains:domains,critical_factors:factors,scores,research_scenarios:researchScenarios,scenario_states:scenarioStates,monitoring_signals:signals,monitoring_events:events,sources})}catch(error){return json({status:"error",service:"crypto-api",error:"database_query_failed"},503)}}
+ if(url.pathname==="/api/pairs"||url.pathname==="/api/pairs/"){if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),exchange=text(d?.exchange).toLowerCase(),p=symbol.split("/");if(!exchange)return json({status:"error",error:"exchange_required"},400);if(p.length!==2||!p[0]||!p[1]||p[0]===p[1])return json({status:"error",error:"valid_base_quote_pair_required"},400);try{const assets=await sql`select asset_id,symbol from assets where enabled=true and upper(symbol) in (${p[0]},${p[1]}) limit 2`;if(assets.length<2)return json({status:"error",error:"pair_assets_not_found"},400);const baseAsset=assets.find((a:any)=>String(a.symbol).toUpperCase()===p[0]),quoteAsset=assets.find((a:any)=>String(a.symbol).toUpperCase()===p[1]);if(!baseAsset||!quoteAsset)return json({status:"error",error:"pair_assets_not_found"},400);const r=await sql`insert into market_pairs(symbol,base_asset_id,quote_asset_id,exchange,enabled) values(${symbol},${baseAsset.asset_id},${quoteAsset.asset_id},${exchange},true) on conflict(exchange,symbol) do update set base_asset_id=excluded.base_asset_id,quote_asset_id=excluded.quote_asset_id,enabled=true,disabled_at=null returning *`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"pair_persistence_failed"},503)}}if(request.method==="GET"){try{const r=await sql`select mp.id,mp.symbol,mp.base_asset_id,ba.symbol as base_asset,mp.quote_asset_id,qa.symbol as quote_asset,mp.exchange,mp.enabled,mp.created_at,mp.disabled_at from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where mp.enabled=true order by mp.exchange,mp.symbol`;return json({items:r,pairs:r,count:r.length})}catch{return json({status:"error",error:"pair_query_failed"},503)}}return json({status:"error",error:"method_not_allowed"},405)}
+ const pairId=getPairId(url.pathname);if(pairId&&request.method==="DELETE"){const auth=requireAdmin(request,env);if(auth)return auth;try{const r=await sql`update market_pairs set enabled=false,disabled_at=now() where id=${pairId}::uuid returning *`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"pair_not_found"},404)}catch{return json({status:"error",error:"pair_persistence_failed"},503)}}
+ if(url.pathname==="/api/commodities"||url.pathname==="/api/commodities/"){if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),unit=text(d?.unit)||null;if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);try{const r=await sql`insert into commodities(symbol,name,unit,enabled) values(${symbol},${name},${unit},true) on conflict(symbol) do update set name=excluded.name,unit=excluded.unit,enabled=true returning *`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"commodity_persistence_failed"},503)}}if(request.method==="GET"){try{const r=await sql`select * from commodities where enabled=true order by symbol`;return json({items:r,count:r.length})}catch{return json({status:"error",error:"commodity_query_failed"},503)}}return json({status:"error",error:"method_not_allowed"},405)}
+ const commodityId=getCommodityId(url.pathname);if(commodityId&&request.method==="DELETE"){const auth=requireAdmin(request,env);if(auth)return auth;try{const r=await sql`update commodities set enabled=false,disabled_at=now() where id=${commodityId}::uuid returning *`;return r[0]?json({status:"ok",item:r[0]}):json({status:"error",error:"commodity_not_found"},404)}catch{return json({status:"error",error:"commodity_persistence_failed"},503)}}
+ return json({status:"ok",service:"crypto-api",message:"Crypto API is running"});
+}
+};
