@@ -37,7 +37,6 @@ jobs:
       - name: Start PostgreSQL rehearsal
         run: |
           docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
-          trap 'docker rm -f crypto-vps-postgres >/dev/null 2>&1 || true' EXIT
           for i in $(seq 1 30); do
             pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1 && break
             sleep 2
@@ -200,3 +199,6 @@ jobs:
           code=$(curl -sS -o /tmp/admin-ok.json -w '%{http_code}' -H 'Authorization: Bearer local-development-only' http://127.0.0.1:8080/api/admin/db-schema)
           test "$code" = "200"
           echo "VPS_API_ADMIN_OK unauthorized=401 authorized=200"
+      - name: Cleanup PostgreSQL rehearsal
+        if: always()
+        run: docker rm -f crypto-vps-postgres >/dev/null 2>&1 || true
