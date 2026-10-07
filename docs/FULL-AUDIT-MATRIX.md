@@ -19,8 +19,8 @@
 5. **P1 — Infrastructure:** Cloudflare + Neon dependencies подтверждены, но account-level inventory ещё не доказан.
 6. **P2 — API error disclosure:** исправлено в Batch 2: raw exception details убраны из public responses.
 7. **P2 — Runtime portability:** API жёстко привязан к Cloudflare Worker + Neon serverless driver.
-8. **YELLOW — UI:** текущий GitHub audit не получил достаточного tree/runtime evidence для доказательства UI contract.
-9. **YELLOW — Worker/ingestion:** canonical Worker architecture известна из истории проекта, но текущий tree не даёт достаточного доказательства полного scheduled ingestion E2E.
+8. **GREEN — UI:** Release Gate #50 содержит post-deploy UI runtime E2E для текущего Web+Worker.
+9. **GREEN — Worker/ingestion:** Release Gate #50 подтверждает scheduled ingestion, idempotency и monitoring refresh.
 
 ---
 
