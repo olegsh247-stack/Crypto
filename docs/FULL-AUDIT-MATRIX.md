@@ -440,4 +440,4 @@ Verified in the same run:
 
 ### Security/dependency verification — 2026-10-07
 
-Gate #50: **GREEN** after upgrading Web dependency `next@15.5.0` → `15.5.27`. Web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, Engine contract and post-deploy UI runtime E2E all passed. Next.js 15.5.27 is the patched Maintenance LTS line identified by the official September 2026 security release. citeturn3search1turn3search0
+Gate #50: **GREEN** after upgrading Web dependency `next@15.5.0` → `15.5.27`. Web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, Engine contract and post-deploy UI runtime E2E all passed. Next.js 15.5.27 is the patched Maintenance LTS line identified by the official September 2026 security release. See official Next.js September 2026 security release.
