@@ -1,8 +1,8 @@
-import { deriveResearchLifecycle, isCompletedBlock, isResolvedBlock, type ResearchLifecycleStatus } from "../../../shared/research-status-contract";
+import { deriveResearchLifecycle, isCompletedBlock, isResolvedBlock, type ResearchLifecycleStatus } from "../../../shared/research-status-contract.js";
 
 export type ResearchStatus = ResearchLifecycleStatus;
 
-export function calculateResearchStatus(blocks: Array<{ block_number?: number; status?: string | null }>): { status: ResearchStatus; completed: number; total: number; percentage: number } {
+export function calculateResearchStatus(blocks: Array<{ block_number?: number; status?: string | null }>): { status: ResearchStatus; completed: number; resolved: number; total: number; percentage: number } {
   const total = 15;
   const canonicalBlocks = blocks.filter((block) => Number(block.block_number) >= 1 && Number(block.block_number) <= total);
   const completed = canonicalBlocks.filter((block) => isCompletedBlock(block.status)).length;
