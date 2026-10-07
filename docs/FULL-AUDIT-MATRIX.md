@@ -77,7 +77,7 @@
 | LEG-03 | 13 Legacy | hardcoded symbols | YELLOW | P2 | canonical pair migration contains explicit 9-asset seed | Seed is acceptable; runtime hardcoding must be checked | Separate canonical seed from runtime resolver | API/Worker |
 | DOC-01 | 14 Docs | README | GREEN | P3 | current README matches Research v2 | — | Update after final architecture | — |
 | DOC-02 | 14 Docs | infrastructure docs | GREEN | P2 | INFRASTRUCTURE-PLAN-FINAL created | — | Update after migration decision | Infra |
-| DOC-03 | 14 Docs | API/Pair contracts | YELLOW | P2 | contracts partially implicit in code/CI | no single canonical API contract document | Create contracts | API |
+| DOC-03 | 14 Docs | API/Pair contracts | GREEN | P2 | `docs/API-CONTRACTS.md` + `shared/api-contract.ts` + Release Gate #50 | Canonical endpoint, MarketPair, history, lifecycle and security-boundary contracts are documented | Keep document synchronized with shared contracts | API |
 | E2E-01 | 15 E2E | Asset→Market→History | GREEN | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
 | E2E-02 | 15 E2E | Research→Monitoring | GREEN | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
 | E2E-03 | 15 E2E | API→UI | GREEN | P1 | Release Gate #49: deployed Worker + Web runtime, ETH lifecycle/freshness/research and canonical pair navigation all verified | — | Keep post-deploy UI runtime gate | UI/API/CI |
@@ -311,7 +311,7 @@ Other assets should **not** be auto-promoted to full research.
 
 ## Overall
 
-**YELLOW — core integrity, deployment, ingestion, and Asset→Market→History E2E are now proven GREEN; remaining P1 work is concentrated in research evidence completeness, monitoring refresh, API/UI runtime contracts, and infrastructure.**
+**Current audit:** core integrity, deployment, ingestion, Asset→Market→History, Research→Monitoring, and API→UI runtime are GREEN. Remaining work is P2 cleanup plus the account-level SEC-03 inventory/rotation action required before VPS cutover.
 
 ---
 
