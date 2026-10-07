@@ -153,28 +153,36 @@ jobs:
         run: |
           set -euo pipefail
           before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
-          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals;")
+          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           result=$(grep -Eo '\\{"status":"ok","service":"crypto-worker-vps"[^}]*\\}' /tmp/crypto-vps-worker-1.log | tail -1)
           test -n "$result"
           successful=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["successful"])' "$result")
           written=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["written"])' "$result")
-          test "$successful" -gt 0
+          test "$successful" = "9"
           test "$written" -gt 0
           test "$after" -gt "$before"
+          actual_assets=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true and asset_id <> 'usdt';" | xargs)
+          test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
+          for asset in btc dash eth sol cake bch ltc xrp trx; do
+            total=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset';" | tr -d '[:space:]')
+            fresh=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset' and candle_open_at >= current_date - interval '2 days';" | tr -d '[:space:]')
+            echo "VPS_WORKER_ASSET asset=$asset total=$total fresh_2d=$fresh"
+            test "$fresh" -ge 1
+          done
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-2.log
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;")
           test "$duplicates" = "0"
-          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals;")
-          monitoring_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals;")
+          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
+          monitoring_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled';")
           if [ "$monitoring_count" -gt 0 ]; then
             test "$monitoring_after" != "$monitoring_before"
             monitoring_refresh=1
           else
             monitoring_refresh=0
           fi
-          echo "VPS_WORKER_E2E_OK successful=$successful written=$written candles_before=$before candles_after=$after duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
+          echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
       - name: VPS admin boundary E2E
         run: |
           set -euo pipefail
