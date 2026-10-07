@@ -47,7 +47,7 @@
 | RES-02 | 5 Research | N/A semantics | GREEN | P2 | shared contract | — | Keep | API/UI/CI |
 | RES-03 | 5 Research | domain mapping | GREEN | P2 | FK + ETH mapping + CI | — | Keep | CI |
 | RES-04 | 5 Research | evidence chain | YELLOW | P1 | schema supports evidence; ETH artifact documents chain | Runtime completeness across assets not proven | Add research completeness contract | DB/CI |
-| RES-05 | 5 Research | snapshot lifecycle | GREEN/YELLOW | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
+| RES-05 | 5 Research | snapshot lifecycle | GREEN | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
 | MON-01 | 6 Monitoring | signal uniqueness | GREEN | P2 | uniqueness migration | — | Keep | — |
 | MON-02 | 6 Monitoring | block 15 transition | GREEN | P2 | shared lifecycle + API logic | — | Keep | — |
 | MON-03 | 6 Monitoring | live refresh | YELLOW | P1 | status model exists | Actual scheduler/ingestion not proven | Add freshness/trigger worker contract | Worker |
@@ -55,7 +55,7 @@
 | API-02 | 7 API | admin auth | GREEN | P1 | requireAdmin on POST/DELETE/schema | — | Add tests | CI |
 | API-03 | 7 API | error disclosure | GREEN/YELLOW | P2 | Batch 2 API cleanup | — | Raw exception details removed; deployment verified; API behavior tests still pending | API |
 | API-04 | 7 API | POST asset contract | GREEN/YELLOW | P1 | Batch 2 API contract | — | Enabled assets require valid primary type; partial updates preserve state | Registry |
-| API-05 | 7 API | pair/history contract | GREEN/YELLOW | P1 | Batch 2 history resolver | — | History resolves DB pair/exchange before Binance adapter | Market Registry |
+| API-05 | 7 API | pair/history contract | GREEN | P1 | Batch 2 history resolver | — | History resolves DB pair/exchange before Binance adapter | Market Registry |
 | WRK-01 | 8 Workers | canonical entrypoint | GREEN | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
 | WRK-02 | 8 Workers | idempotency/retry | GREEN | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
 | WRK-03 | 8 Workers | deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
