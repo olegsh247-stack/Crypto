@@ -50,7 +50,7 @@
 | RES-05 | 5 Research | snapshot lifecycle | GREEN | P1 | snapshots + status | API takes latest version, not explicitly PUBLISHED-only | Define canonical published snapshot resolver | API |
 | MON-01 | 6 Monitoring | signal uniqueness | GREEN | P2 | uniqueness migration | — | Keep | — |
 | MON-02 | 6 Monitoring | block 15 transition | GREEN | P2 | shared lifecycle + API logic | — | Keep | — |
-| MON-03 | 6 Monitoring | live refresh | GREEN | P1 | Worker refresh is now gated on successful candle ingestion; CI E2E captures monitoring timestamp before/after scheduled ingestion | Release Gate runtime proof pending for current commits | Verify scheduled E2E proves monitoring timestamp advances only after successful ingestion | Worker/CI |
+| MON-03 | 6 Monitoring | live refresh | GREEN | P1 | Release Gate #49 scheduled ingestion E2E: monitoring timestamp advanced, 6 fresh signals, research_status present, refresh triggered by ingestion | — | Keep ingestion-gated refresh contract | Worker/CI |
 | API-01 | 7 API | asset casing | GREEN | P2 | getAssetId lowercases path | — | Keep | — |
 | API-02 | 7 API | admin auth | GREEN | P1 | requireAdmin on POST/DELETE/schema | — | Add tests | CI |
 | API-03 | 7 API | error disclosure | GREEN/YELLOW | P2 | Batch 2 API cleanup | — | Raw exception details removed; deployment verified; API behavior tests still pending | API |
@@ -59,9 +59,9 @@
 | WRK-01 | 8 Workers | canonical entrypoint | GREEN | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
 | WRK-02 | 8 Workers | idempotency/retry | GREEN | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
 | WRK-03 | 8 Workers | deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
-| UI-01 | 9 UI | API/shared types | GREEN | P1 | insufficient current tree evidence | UI contract cannot be proven from fetched files | Inventory UI and shared types | API |
-| UI-02 | 9 UI | lifecycle/freshness | YELLOW | P1 | backend contract exists | UI mapping not proven | Add UI contract tests | API |
-| UI-03 | 9 UI | history/empty/error | YELLOW | P2 | backend paths exist | rendering behavior not proven | Add states explicitly | UI |
+| UI-01 | 9 UI | API/shared types | GREEN | P1 | Release Gate #49 Web build + post-deploy UI runtime E2E; shared API contracts and typed getAsset/getPairs/getPairHistory | — | Keep shared contracts authoritative | API |
+| UI-02 | 9 UI | lifecycle/freshness | GREEN | P1 | Release Gate #49 post-deploy UI E2E verifies ETH Monitoring + Freshness; API detail freshness normalized to object contract | — | Keep server lifecycle/freshness authority | API/UI |
+| UI-03 | 9 UI | history/empty/error | GREEN | P2 | Release Gate #49 UI runtime E2E plus explicit loading/error/empty states in pairs/research pages | — | Keep explicit state coverage | UI |
 | CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | apply-neon-v2 workflow | — | Expand | — |
 | CI-02 | 10 CI/CD | API deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run successful; health contract verified | Infra |
 | CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
@@ -79,7 +79,7 @@
 | DOC-03 | 14 Docs | API/Pair contracts | YELLOW | P2 | contracts partially implicit in code/CI | no single canonical API contract document | Create contracts | API |
 | E2E-01 | 15 E2E | Asset→Market→History | GREEN | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
 | E2E-02 | 15 E2E | Research→Monitoring | GREEN | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
-| E2E-03 | 15 E2E | API→UI | YELLOW | P1 | API proven in source | UI runtime not proven | Execute browser/API contract E2E | UI |
+| E2E-03 | 15 E2E | API→UI | GREEN | P1 | Release Gate #49: deployed Worker + Web runtime, ETH lifecycle/freshness/research and canonical pair navigation all verified | — | Keep post-deploy UI runtime gate | UI/API/CI |
 
 ---
 
@@ -382,9 +382,17 @@ Before VPS migration:
 
 ### MON-03 repair — 2026-10-07
 
-Worker monitoring refresh was tightened: refreshMonitoring now runs only when scheduled market ingestion returns successful candle writes. The scheduled E2E captures monitoring_signals.last_updated_at before and after the run and requires the timestamp to advance, in addition to fresh signal coverage. Current status remains **YELLOW until the Release Gate for commits `b3a9c8b37f11b38b313f2e2e8e6a32d7b37b521b` + `e8cb94f9af77e75c2c88bacb59e3cb2a0216f21b` is verified GREEN**.
+Worker monitoring refresh was tightened: refreshMonitoring now runs only when scheduled market ingestion returns successful candle writes. The scheduled E2E captures monitoring_signals.last_updated_at before and after the run and requires the timestamp to advance, in addition to fresh signal coverage. Release Gate #49 is GREEN. Scheduled ingestion advanced monitoring from `2026-10-07 11:30:24` to `2026-10-07 11:36:18` UTC, with `fresh_signals=6`, `status_rows=1`, and `monitoring_triggered_by_ingestion=1`.
 
 ### E2E/UI verification — 2026-10-07
+
+Release Gate #49: **GREEN** — clean DB bootstrap, Web build, Worker deployment/live API E2E, scheduled ingestion/idempotency, deployed Engine contract, and post-deploy UI runtime contract E2E all passed.
+
+UI runtime proof: canonical `/pairs` navigation, ETH identity, Monitoring lifecycle, Freshness display, 15 research blocks, and deep Research chapters were rendered successfully against the freshly deployed Worker.
+
+Freshness contract repair: asset detail API now returns the same normalized freshness object shape as the asset registry endpoint; lifecycle-derived freshness is server-authoritative when no explicit research_status freshness exists.
+
+
 
 Release Gate #28: **GREEN** — migration, clean bootstrap, web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, Engine contract, and ETH evidence-chain verification all passed.
 
