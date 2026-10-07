@@ -6,15 +6,18 @@ import { usePathname, useRouter } from "next/navigation";
 export default function MarketTabs() {
   const pathname = usePathname();
   const router = useRouter();
-  const active = pathname.startsWith("/assets") ? "Assets" : pathname.startsWith("/pairs") ? "Pair" : pathname.startsWith("/commodities") ? "Commodities" : pathname.startsWith("/research") ? "Research" : "Assets";
-  const marketActive = active !== "Research";
+  const inAssets = pathname.startsWith("/assets");
+  const inResearch = pathname.startsWith("/research");
+  const active = pathname === "/" ? "Home" : inResearch ? "Research" : inAssets ? "Assets" : pathname.startsWith("/pairs") ? "Pair" : pathname.startsWith("/commodities") ? "Commodities" : "Home";
+  const marketActive = !inResearch;
 
-  return <nav className="tabs" aria-label="Market sections">
+  return <nav className="tabs" aria-label="Crypto product sections">
+    <Link className={`tab ${active === "Home" ? "active" : ""}`} href="/">Home</Link>
     <Link className={`tab ${active === "Assets" ? "active" : ""}`} href="/">Assets</Link>
-    <Link className={`tab ${active === "Pair" ? "active" : ""}`} href="/pairs">Pair</Link>
-    <Link className={`tab ${active === "Commodities" ? "active" : ""}`} href="/commodities">Commodities</Link>
     <Link className={`tab ${active === "Research" ? "active" : ""}`} href="/research">Research</Link>
-    <button className="tab action" type="button" disabled={!marketActive} aria-label={`Add ${active}`} onClick={() => router.push(active === "Assets" ? "/assets/add" : active === "Pair" ? "/pairs/add" : "/commodities/add")}>+</button>
-    <button className="tab action" type="button" disabled={!marketActive} aria-label={`Remove ${active}`} onClick={() => router.push(active === "Assets" ? "/assets/remove" : active === "Pair" ? "/pairs/remove" : "/commodities/remove")}>−</button>
+    <span className="tab-spacer" aria-hidden="true" />
+    <Link className={`tab secondary ${active === "Pair" ? "active" : ""}`} href="/pairs">Pair</Link>
+    <Link className={`tab secondary ${active === "Commodities" ? "active" : ""}`} href="/commodities">Commodities</Link>
+    <button className="tab action" type="button" disabled={!marketActive} aria-label="Add asset" onClick={() => router.push("/assets/add")}>+</button>
   </nav>;
 }
