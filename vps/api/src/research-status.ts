@@ -1,4 +1,4 @@
-import { deriveResearchLifecycle, isCompletedBlock, isResolvedBlock, type ResearchLifecycleStatus } from "../../../shared/research-status-contract.js";
+import { deriveResearchLifecycle, isCompletedBlock, isResolvedBlock, type ResearchLifecycleStatus } from "@crypto/vps-runtime";
 
 export type ResearchStatus = ResearchLifecycleStatus;
 
