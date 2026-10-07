@@ -382,7 +382,14 @@ Before VPS migration:
 
 ### E2E/UI verification — 2026-10-07
 
-Release Gate #21: **GREEN** — migration, clean bootstrap, web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, and Engine contract all passed.
+Release Gate #28: **GREEN** — migration, clean bootstrap, web build, Worker deploy, live API E2E, scheduled ingestion/idempotency, Engine contract, and ETH evidence-chain verification all passed.
+
+Evidence-chain proof:
+- 15/15 published complete ETH research blocks have evidence;
+- every evidence row has observation, source, claim and source URL;
+- zero orphan observations;
+- zero published complete blocks without evidence;
+- versioned migration `2026-10-07-research-evidence-chain` applies to existing and clean databases.
 
 Verified in the same run:
 - canonical registry: 9 assets exactly, with USDT validated separately;
