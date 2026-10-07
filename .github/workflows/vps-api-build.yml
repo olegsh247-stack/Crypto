@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -50,3 +50,62 @@ jobs:
           test "$count" -gt 0
           test "$duplicates" = "0"
           echo "VPS_DB_BOOTSTRAP_OK migrations=$count duplicate_markers=0 rerun=1"
+      - name: Start VPS API
+        working-directory: vps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+          ADMIN_TOKEN: local-development-only
+          CORS_ORIGIN: http://localhost:3000
+          PORT: 8080
+          HOST: 127.0.0.1
+        run: |
+          nohup node dist/server.js > /tmp/crypto-vps-api.log 2>&1 &
+          echo $! > /tmp/crypto-vps-api.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8080/api/health >/dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8080/api/health | tee /tmp/health.json
+          curl -fsS http://127.0.0.1:8080/api/db-health | tee /tmp/db-health.json
+      - name: VPS API contract E2E
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8080/api/assets > /tmp/assets.json
+          curl -fsS http://127.0.0.1:8080/api/pairs > /tmp/pairs.json
+          python3 - <<'PY'
+          import json
+          assets=json.load(open('/tmp/assets.json'))
+          pairs=json.load(open('/tmp/pairs.json'))
+          items=assets.get('items',assets if isinstance(assets,list) else [])
+          pitems=pairs.get('items',pairs.get('pairs',[]))
+          assert len(items)==9, f"assets={len(items)}"
+          assert len(pitems)==9, f"pairs={len(pitems)}"
+          assert all(p.get('enabled') is True for p in pitems)
+          print(f"VPS_API_REGISTRY_OK assets={len(items)} pairs={len(pitems)}")
+          PY
+          curl -fsS http://127.0.0.1:8080/api/assets/eth > /tmp/eth.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/eth.json'))
+          asset=d.get('asset',d)
+          assert asset.get('asset_id')=='eth', asset
+          assert asset.get('research_status') in ('current','outdated','in_progress','complete','monitoring','not_started'), asset
+          assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
+          print("VPS_API_ETH_OK lifecycle=1 freshness=1")
+          PY
+          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/history.json'))
+          assert d.get('status')=='ok', d
+          assert len(d.get('rows',[]))>0, d
+          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
+          PY
+      - name: VPS admin boundary E2E
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/admin.json -w '%{http_code}' http://127.0.0.1:8080/api/admin/db-schema)
+          test "$code" = "401"
+          code=$(curl -sS -o /tmp/admin-ok.json -w '%{http_code}' -H 'Authorization: Bearer local-development-only' http://127.0.0.1:8080/api/admin/db-schema)
+          test "$code" = "200"
+          echo "VPS_API_ADMIN_OK unauthorized=401 authorized=200"
