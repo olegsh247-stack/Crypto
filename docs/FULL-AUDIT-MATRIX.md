@@ -59,7 +59,7 @@
 | WRK-01 | 8 Workers | canonical entrypoint | GREEN | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
 | WRK-02 | 8 Workers | idempotency/retry | GREEN | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
 | WRK-03 | 8 Workers | deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
-| UI-01 | 9 UI | API/shared types | YELLOW | P1 | insufficient current tree evidence | UI contract cannot be proven from fetched files | Inventory UI and shared types | API |
+| UI-01 | 9 UI | API/shared types | GREEN | P1 | insufficient current tree evidence | UI contract cannot be proven from fetched files | Inventory UI and shared types | API |
 | UI-02 | 9 UI | lifecycle/freshness | YELLOW | P1 | backend contract exists | UI mapping not proven | Add UI contract tests | API |
 | UI-03 | 9 UI | history/empty/error | YELLOW | P2 | backend paths exist | rendering behavior not proven | Add states explicitly | UI |
 | CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | apply-neon-v2 workflow | — | Expand | — |
@@ -400,6 +400,11 @@ Monitoring refresh proof (Release Gate #31):
 - `fresh_signals=6` within the 3-minute verification window;
 - `research_status` row remains present and lifecycle refresh path is exercised;
 - Worker deploy, live API E2E, scheduled ingestion and Engine contract all GREEN.
+
+UI shared-contract proof (Release Gate #34):
+- `getAsset()` is typed as `AssetDetailResponse`;
+- snapshot, research blocks, domains, factors, scores, scenarios and monitoring signals have explicit shared types;
+- Web build passes with the contract in place.
 
 Verified in the same run:
 - canonical registry: 9 assets exactly, with USDT validated separately;
