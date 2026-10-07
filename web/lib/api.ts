@@ -1,4 +1,5 @@
 import type { AdminMutationResponse, MarketPair, PairHistoryResponse, PairsResponse } from "../../shared/api-contract";
+export type { MarketPair } from "../../shared/api-contract";
 
 export type Asset = {
   asset_id: string;
