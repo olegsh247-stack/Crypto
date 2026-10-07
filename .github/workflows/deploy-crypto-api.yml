@@ -102,18 +102,24 @@ jobs:
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-1.json
           curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled?cron=30+0+*+*+*" >/tmp/ingest-run-2.json
           actual_assets="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true;" | xargs)"
+          echo "INGESTION_REGISTRY actual_assets=$actual_assets"
           test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
           usdt_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where asset_id='usdt' and symbol='USDT';" | tr -d '[:space:]')"
+          echo "INGESTION_USDT count=$usdt_count"
           test "$usdt_count" = "1"
           pair_identity_errors="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(split_part(mp.symbol,'/',1)) <> upper(ba.symbol) or upper(split_part(mp.symbol,'/',2)) <> upper(qa.symbol);" | tr -d '[:space:]')"
+          echo "INGESTION_PAIR_IDENTITY errors=$pair_identity_errors"
           test "$pair_identity_errors" = "0"
           for asset in btc dash eth sol cake bch ltc xrp trx; do
             count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset';" | tr -d '[:space:]')"
-            test "$count" -ge 2
+            fresh="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset' and candle_open_at >= current_date - interval '2 days';" | tr -d '[:space:]')"
+            echo "INGESTION_ASSET asset=$asset total=$count fresh_2d=$fresh"
+            test "$fresh" -ge 1
           done
           duplicate_keys="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at,count(*) from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;" | tr -d '[:space:]')"
+          echo "INGESTION_DUPLICATES count=$duplicate_keys"
           test "$duplicate_keys" = "0"
-          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 runs=2 duplicate_keys=0"
+          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 fresh_2d=1 runs=2 duplicate_keys=0"
 
       - name: Verify deployed Engine contract directly in Neon
         if: ${{ always() }}
