@@ -2,7 +2,7 @@
 
 Дата: 2026-10-07
 Репозиторий: olegsh247-stack/Crypto
-Статус: FULL REPOSITORY AUDIT — BATCH 1+2 + E2E/UI REPAIR VERIFIED
+Статус: FULL REPOSITORY AUDIT — CORE GREEN / VPS PREPARATION
 
 > Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level Cloudflare/Neon состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
 
@@ -67,7 +67,7 @@
 | CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
-| SEC-03 | 11 Security | secrets | YELLOW | P1 | env-based secrets; account-level inventory still unavailable | GitHub tree cannot prove provider-side inventory/rotation | **Decision:** defer account-level inventory and rotation to VPS/infra migration; require explicit secret inventory + rotation before cutover | Infra |
+| SEC-03 | 11 Security | secrets | YELLOW | P1 | `docs/SECRET-INVENTORY.md` records all currently known GitHub Actions/runtime secret dependencies; provider-side values are intentionally not stored | Account-level inventory/rotation requires provider access and actual VPS credentials | **Decision:** mandatory pre-cutover secret inventory + rotation; no destructive migration before completion | Infra |
 | SEC-04 | 11 Security | Next.js dependency | GREEN | P1 | Gate #50 GREEN on patched `next@15.5.27`; build + live API + UI runtime E2E passed | `15.5.0` was security-vulnerable | Keep on supported patched maintenance LTS | Web/CI |
 | DATA-01 | 12 Data | canonical 9 assets | GREEN | P2 | migrations + CI expected set | Live DB not directly checked here | Add live inventory test | DB |
 | DATA-02 | 12 Data | USDT system asset | GREEN | P2 | canonical USDT migration | — | Keep separate from research targets | Registry |
@@ -76,7 +76,7 @@
 | LEG-02 | 13 Legacy | duplicate contracts | GREEN | P1 | Worker `research-status.ts` and Web research-status consume the shared `shared/research-status-contract.ts`; Gate #50 GREEN | No remaining duplicate lifecycle algorithm found in current tree | Keep shared contract as sole lifecycle authority | API/UI/CI |
 | LEG-03 | 13 Legacy | hardcoded symbols | YELLOW | P2 | canonical pair migration contains explicit 9-asset seed | Seed is acceptable; runtime hardcoding must be checked | Separate canonical seed from runtime resolver | API/Worker |
 | DOC-01 | 14 Docs | README | GREEN | P3 | current README matches Research v2 | — | Update after final architecture | — |
-| DOC-02 | 14 Docs | infrastructure docs | GREEN | P2 | INFRASTRUCTURE-PLAN-FINAL created | — | Update after migration decision | Infra |
+| DOC-02 | 14 Docs | infrastructure docs | GREEN | P2 | `docs/INFRASTRUCTURE-PLAN-FINAL.md` + `docs/INFRA-BATCH-1.md` | — | Keep execution plan synchronized with actual VPS implementation | Infra |
 | DOC-03 | 14 Docs | API/Pair contracts | GREEN | P2 | `docs/API-CONTRACTS.md` + `shared/api-contract.ts` + Release Gate #50 | Canonical endpoint, MarketPair, history, lifecycle and security-boundary contracts are documented | Keep document synchronized with shared contracts | API |
 | E2E-01 | 15 E2E | Asset→Market→History | GREEN | P1 | pieces exist | full runtime chain not proven | Execute E2E on ETH + BTC | DB/API/Worker |
 | E2E-02 | 15 E2E | Research→Monitoring | GREEN | P1 | ETH schema/seed + lifecycle | live trigger/update path not fully proven | Execute monitoring E2E | Worker |
@@ -365,10 +365,10 @@ Execute exactly:
 
 Before VPS migration:
 
-- [ ] Market Pair contract GREEN
-- [ ] Asset Registry POST contract GREEN
-- [ ] Market Identity resolver GREEN
-- [ ] clean DB bootstrap GREEN
+- [x] Market Pair contract GREEN
+- [x] Asset Registry POST contract GREEN
+- [x] Market Identity resolver GREEN
+- [x] clean DB bootstrap GREEN
 - [x] API live contract/E2E GREEN
 - [x] Worker contract/deployment GREEN
 - [x] UI contract GREEN
@@ -378,7 +378,7 @@ Before VPS migration:
 - [x] no P0
 - [x] no unresolved P1 without decision — SEC-03 has an explicit infra-migration decision; LEG-02 is closed by the shared lifecycle contract
 
-**Only after these checks should INFRA-BATCH-1 begin.**
+**These gates are now satisfied. INFRA-BATCH-1 preparation is open; production cutover remains blocked on SEC-03 secret inventory/rotation and actual VPS/account credentials.**
 
 
 ### MON-03 repair — 2026-10-07
@@ -446,3 +446,4 @@ Gate #50: **GREEN** after upgrading Web dependency `next@15.5.0` → `15.5.27`. 
 
 - **LEG-02 closed:** current Worker and Web lifecycle code both consume `shared/research-status-contract.ts`; Gate #50 is GREEN.
 - **SEC-03 decision recorded:** provider account-level secret inventory/rotation cannot be proven from the repository. It is a mandatory pre-cutover task for VPS/infra migration, not an unresolved design question.
+\n\n### VPS preparation — 2026-10-07\n\n`docs/INFRA-BATCH-1.md` defines the executable pre-cutover gates for VPS foundation, PostgreSQL restore, Node API runtime, worker, backup/restore, Caddy, secrets, CI/CD, cutover and decommission. `docs/SECRET-INVENTORY.md` records the currently proven GitHub Actions/runtime secret dependencies without storing secret values. No destructive infrastructure action is authorized by these documents.\n
