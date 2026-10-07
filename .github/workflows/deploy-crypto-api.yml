@@ -119,7 +119,12 @@ jobs:
           duplicate_keys="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at,count(*) from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;" | tr -d '[:space:]')"
           echo "INGESTION_DUPLICATES count=$duplicate_keys"
           test "$duplicate_keys" = "0"
-          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 fresh_2d=1 runs=2 duplicate_keys=0"
+          monitoring_fresh="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled' and last_updated_at >= now() - interval '3 minutes';" | tr -d '[:space:]')"
+          research_status_rows="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from research_status where status in ('current','update_recommended','outdated');" | tr -d '[:space:]')"
+          echo "MONITORING_REFRESH fresh_signals=$monitoring_fresh status_rows=$research_status_rows"
+          test "$monitoring_fresh" -ge 6
+          test "$research_status_rows" -ge 1
+          echo "INGESTION_E2E_OK assets=9 exact_registry=1 usdt=1 pair_identity=1 fresh_2d=1 runs=2 duplicate_keys=0 monitoring_refresh=1"
 
       - name: Verify deployed Engine contract directly in Neon
         if: ${{ always() }}
