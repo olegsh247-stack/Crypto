@@ -8,7 +8,7 @@ export default async function DeepResearchPage({ params }: { params: Promise<{ a
   const { assetId } = await params;
   let data: any;
   try { data = await getAsset(assetId); } catch (e) { return <main className="shell"><MarketTabs /><div className="error section">Unable to load research: {e instanceof Error ? e.message : "unknown error"}</div></main>; }
-  const asset=data.asset, blocks=normalizeResearchBlocks(data.research_blocks), progress=getResearchProgress(blocks), status=getResearchStatus(blocks), snapshot=data.research_snapshot, scenarios=data.scenario_states??data.scenarios??[], factors=data.critical_factors??[], blockMap=new Map(blocks.map(b=>[b.number,b]));
+  const asset=data.asset, blocks=normalizeResearchBlocks(data.research_blocks), progress=getResearchProgress(blocks), status=asset.research_status ?? "not_started", snapshot=data.research_snapshot, scenarios=data.scenario_states??data.scenarios??[], factors=data.critical_factors??[], blockMap=new Map(blocks.map(b=>[b.number,b]));
   return <main className="shell">
     <MarketTabs />
     <header className="section"><Link href={`/assets/${assetId}`}>← {asset.symbol} overview</Link><p className="muted">Deep reading mode</p><div className="row"><div><h1>{asset.symbol} — Full Research</h1><p className="muted">Structure 1 · {progress.completed}/{progress.total} blocks · {status}</p></div><span className="pill">{progress.percent}%</span></div></header>
