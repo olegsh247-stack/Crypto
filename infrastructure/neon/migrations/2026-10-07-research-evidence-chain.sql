@@ -38,11 +38,11 @@ WITH x(metric_id,source_id,value_text) AS (VALUES
 ('eth_research_monitoring','ethereum_org_roadmap','Monitoring chain connects data, metrics, signals, assessment, confidence, thesis impact and status.')
 )
 INSERT INTO observations(metric_id,asset_id,value_text,observed_at,source_id,source_url,methodology)
-SELECT x.metric_id,'ETH',x.value_text,now(),x.source_id,
+SELECT x.metric_id,'eth',x.value_text,now(),x.source_id,
 CASE x.source_id WHEN 'ethereum_org_roadmap' THEN 'https://ethereum.org/roadmap/' WHEN 'ethereum_org_glamsterdam' THEN 'https://ethereum.org/roadmap/glamsterdam/' ELSE 'https://ethereum.foundation/' END,
 'CryptoResearch v2 / Structure 1 qualitative baseline'
 FROM x
-WHERE NOT EXISTS (SELECT 1 FROM observations o WHERE o.asset_id='ETH' AND o.metric_id=x.metric_id AND o.source_id=x.source_id);
+WHERE NOT EXISTS (SELECT 1 FROM observations o WHERE o.asset_id='eth' AND o.metric_id=x.metric_id AND o.source_id=x.source_id);
 
 WITH e(block_number,metric_id,source_id,claim,signal,assessment,impact,status) AS (VALUES
 (1,'eth_research_role','ethereum_org_roadmap','Ethereum is a general-purpose settlement and smart-contract network with ETH serving core network roles.','stable','Strong strategic role.','positive','strong'),
@@ -65,7 +65,7 @@ SELECT 'ETH-2026-10-04-v1',rb.research_block_id,rd.research_domain_id,o.observat
 CASE e.status WHEN 'strong' THEN .90 WHEN 'watch' THEN .75 ELSE .60 END,e.impact,e.status,o.observed_at
 FROM e JOIN research_blocks rb ON rb.snapshot_id='ETH-2026-10-04-v1' AND rb.block_number=e.block_number
 LEFT JOIN research_block_domains rd ON rd.research_block_id=rb.research_block_id
-JOIN observations o ON o.asset_id='ETH' AND o.metric_id=e.metric_id AND o.source_id=e.source_id
+JOIN observations o ON o.asset_id='eth' AND o.metric_id=e.metric_id AND o.source_id=e.source_id
 WHERE NOT EXISTS (SELECT 1 FROM evidence z WHERE z.snapshot_id='ETH-2026-10-04-v1' AND z.research_block_id=rb.research_block_id);
 
 INSERT INTO schema_migrations(version) VALUES ('2026-10-07-research-evidence-chain') ON CONFLICT (version) DO NOTHING;
