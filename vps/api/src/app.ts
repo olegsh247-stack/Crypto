@@ -113,7 +113,7 @@ export default {
       const geckoQuote=quoteIsStable?[]:await coingeckoUsdKlines(quoteAsset,geckoDays);
       if(quoteIsStable&&geckoBase.length){pair=geckoBase.map((r:any)=>({time:r.time,close:r.close}));base=geckoBase;}
       else if(baseIsStable&&geckoQuote.length){pair=geckoQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=geckoQuote;}
-      else if(geckoBase.length&&geckoQuote.length){const qMap=new Map(geckoQuote.map((r:any)=>[r.time,r.close]));pair=geckoBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=geckoBase;quote=geckoQuote;}
+      else if(geckoBase.length&&geckoQuote.length){const qMap=new Map<string, number>(geckoQuote.map((r:any)=>[String(r.time), Number(r.close)]));pair=geckoBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=geckoBase;quote=geckoQuote;}
       if(pair)historySource="CoinGecko";
     }catch{}
   }
@@ -124,7 +124,7 @@ export default {
     ]);
     if(quoteIsStable && storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
     else if(baseIsStable && storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
-    else if(storedBase.length&&storedQuote.length){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
+    else if(storedBase.length&&storedQuote.length){const qMap=new Map<string, number>(storedQuote.map((r:any)=>[String(r.time), Number(r.close)]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
     if(pair)historySource="stored_market_history";
   }
   if(!pair){
