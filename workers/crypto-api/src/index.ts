@@ -103,6 +103,11 @@ function coingeckoDaily(rows:any[]){
  return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 
+async refreshMonitoring(sql:any){
+ await sql`update monitoring_signals set last_updated_at=now() where status <> 'disabled'`;
+ await sql`update research_status set status='outdated',reason='Scheduled monitoring refresh: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
+}
+
 export default {
  async scheduled(_controller:ScheduledController,env:Env){
   if(!env.DATABASE_URL)return;
@@ -111,6 +116,7 @@ export default {
   await Promise.allSettled(assets.map(async asset=>{
    try{await ingestAssetDaily(sql,asset);}catch{}
   }));
+  try{await refreshMonitoring(sql);}catch{}
  },
  async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
