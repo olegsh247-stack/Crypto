@@ -1,4 +1,4 @@
-import { neon } from "./db.js";
+import { neon } from "@crypto/vps-runtime";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
