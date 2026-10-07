@@ -108,9 +108,9 @@ export default {
   if(!env.DATABASE_URL)return;
   const sql=neon(env.DATABASE_URL);
   const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
-  for(const asset of assets){
+  await Promise.allSettled(assets.map(async asset=>{
    try{await ingestAssetDaily(sql,asset);}catch{}
-  }
+  }));
  },
  async fetch(request:Request,env:Env):Promise<Response>{
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
