@@ -92,9 +92,9 @@ export default {
   const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
   const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
   const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
-  let pair=results[0].status==="fulfilled"?results[0].value:null;
-  let base=results[1].status==="fulfilled"?results[1].value:null;
-  let quote=results[2].status==="fulfilled"?results[2].value:null;
+  let pair:any[]|null=results[0].status==="fulfilled"?results[0].value:null;
+  let base:any[]|null=results[1].status==="fulfilled"?results[1].value:null;
+  let quote:any[]|null=results[2].status==="fulfilled"?results[2].value:null;
   let historySource="Binance";
   if(!pair){
     try{
