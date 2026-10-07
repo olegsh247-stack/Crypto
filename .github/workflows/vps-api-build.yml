@@ -25,6 +25,9 @@ jobs:
       - name: Install VPS API dependencies
         working-directory: vps/api
         run: npm install
+      - name: Build VPS worker
+        working-directory: vps/worker
+        run: npm install && npm run build
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
