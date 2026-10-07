@@ -1,4 +1,4 @@
-import { neon } from "./db.js";
+import { neon } from "@crypto/vps-runtime";
 import { calculateResearchStatus } from "./research-status.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
