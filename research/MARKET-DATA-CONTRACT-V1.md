@@ -39,9 +39,11 @@ Response exposes `status`, `pair`, `price`, `timestamp`, and `source`.
 
 Default source: **Binance**.
 
-Fallback order may use the existing registered market-data fallback chain when Binance is unavailable.
+For the live ticker, the canonical fallback chain is the registered asset fallback symbols: **Binance → OKX → Bybit → MEXC**. This keeps the quote in the registered `USDT` pair and avoids inventing a separate ticker mapping.
 
 The API must expose the source used for the returned value. A fallback value must never be presented as Binance data.
+
+Current price is read-only temporary market state. It is not written to the database. If automatic UI refresh is introduced, the product default is **60 seconds**; this affects request cadence only and does not create stored ticker history.
 
 ## 4. Pair identity
 
@@ -101,11 +103,9 @@ Daily rows are upserted idempotently by the worker.
 
 ## 9. Source fallback
 
-Existing source priority:
-1. Binance
-2. Kraken
-3. CoinGecko
-4. stored market history where applicable to a read fallback
+Source priority depends on the market-data operation:
+- live ticker: Binance → registered OKX → Bybit → MEXC;
+- daily history ingestion/read: Binance → Kraken → CoinGecko → stored market history where applicable to a read fallback.
 
 Fallback rules:
 - source changes must be visible in the API response;
@@ -187,7 +187,8 @@ For BTC and ETH:
 ### Current price
 - canonical pair resolves;
 - Binance is used when available;
-- fallback source is explicit when used.
+- registered exchange fallback is explicit when used;
+- current price is not persisted.
 
 ### 1h
 - response interval = `1h`;
