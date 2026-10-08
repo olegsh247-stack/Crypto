@@ -58,6 +58,11 @@ jobs:
           check "eth_identity" 'ETH' /tmp/ui-eth.html
           check "eth_dashboard" 'ASSET DASHBOARD' /tmp/ui-eth.html
           check "eth_monitoring" 'Monitoring' /tmp/ui-eth.html
+          check "eth_monitoring_dashboard" 'Monitoring Dashboard' /tmp/ui-eth.html
+          check "eth_current_signals" 'Current Signals' /tmp/ui-eth.html
+          check "eth_recent_events" 'Recent Events' /tmp/ui-eth.html
+          check "eth_evidence" 'Evidence & Sources' /tmp/ui-eth.html
+          check "eth_evidence_chain" 'Trace the research claim' /tmp/ui-eth.html
           if grep -Fq -- '>Current<' /tmp/ui-eth.html || \
              grep -Fq -- '>Update recommended<' /tmp/ui-eth.html || \
              grep -Fq -- '>Outdated<' /tmp/ui-eth.html; then
