@@ -4,6 +4,28 @@ import MarketTabs from "../../components/MarketTabs";
 import { getResearchProgress, getResearchStatusLabel, getResearchBlockStatusLabel, normalizeResearchBlocks, normalizeResearchFreshness, getResearchFreshnessLabel } from "../../../lib/research-status";
 
 function scoreByType(scores: any[], terms: string[]) { return scores.find(s => terms.some(t => String(s.score_type ?? "").toLowerCase().includes(t))); }
+function scorePercent(score: any) {
+  if (score?.value == null) return null;
+  const value = Number(score.value);
+  if (!Number.isFinite(value)) return null;
+  const min = Number(score.scale_min ?? 0);
+  const max = Number(score.scale_max ?? 100);
+  if (max <= 1 && min >= 0) return value * 100;
+  return value;
+}
+function confidencePercent(value: unknown) {
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? (n <= 1 ? n * 100 : n) : null;
+}
+function scoreLabel(score: any) {
+  const value = scorePercent(score);
+  return value == null ? "—" : `${value.toFixed(0)}/100`;
+}
+function confidenceLabel(value: unknown) {
+  const n = confidencePercent(value);
+  return n == null ? "—" : `${n.toFixed(0)}%`;
+}
 function monitoringValueLabel(value: unknown) {
   return value && typeof value === "object" && "description" in value ? "Baseline" : "Current value";
 }
@@ -35,7 +57,9 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const health = scoreByType(scores, ["health"]);
   const thesis = scoreByType(scores, ["thesis"]);
   const valueAccrual = scoreByType(scores, ["value", "accrual"]);
-  const confidence = scores.reduce((best: any, s: any) => (s.confidence ?? -1) > (best?.confidence ?? -1) ? s : best, null);
+  const thesisPercent = scorePercent(thesis);
+  const confidenceValue = thesis?.confidence ?? confidence?.value ?? null;
+  const confidencePercentValue = confidencePercent(confidenceValue);
   const currentScenarioState = (data.scenario_states ?? [])[0] ?? null;
   const currentScenarioDefinition = currentScenarioState ? scenarios.find((s: any) => s.research_scenario_id === currentScenarioState.scenario_id) : null;
   const currentScenario = currentScenarioState ? { ...currentScenarioDefinition, ...currentScenarioState } : null;
@@ -66,8 +90,8 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const mixedFactors = factors.filter((f: any) => f.thesis_impact === "mixed").length;
   const improvingSignals = monitoring.filter((m: any) => m.direction === "improving").length;
   const deterioratingSignals = monitoring.filter((m: any) => m.direction === "deteriorating").length;
-  const thesisState = thesis?.value != null
-    ? Number(thesis.value) >= 70 ? "Positive" : Number(thesis.value) <= 40 ? "Negative" : "Neutral"
+  const thesisState = thesisPercent != null
+    ? thesisPercent >= 70 ? "Positive" : thesisPercent <= 40 ? "Negative" : "Neutral"
     : positiveFactors > negativeFactors ? "Positive" : negativeFactors > positiveFactors ? "Negative" : "Mixed";
   const marketDirection = weekChange == null ? "Unknown" : weekChange > 0.5 ? "Improving" : weekChange < -0.5 ? "Deteriorating" : "Stable";
   const researchDirection = improvingSignals > deterioratingSignals ? "Improving" : deterioratingSignals > improvingSignals ? "Deteriorating" : mixedFactors > 0 ? "Mixed" : "Stable";
@@ -76,6 +100,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
     : thesisState === "Negative"
       ? "The thesis currently has more pressure than support."
       : "The thesis is currently balanced or insufficiently resolved.";
+  const invalidation = currentScenario?.invalidation_conditions ?? scenarios.find((s: any) => s.scenario_type === "base")?.invalidation_conditions ?? null;
   const decisionDrivers = [
     mainCatalyst?.name ? { label: "Catalyst", value: mainCatalyst.name } : null,
     mainRisk?.name ? { label: "Risk", value: mainRisk.name } : null,
@@ -133,13 +158,17 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
       </div>
       <div className="decision-lead">
         <div><span className="muted">Thesis state</span><div className="metric">{thesisState}</div><p>{decisionHeadline}</p></div>
-        <div><span className="muted">Market direction</span><div className="metric">{marketDirection}</div><p>{chartChange != null ? `${chartChange >= 0 ? "+" : ""}${chartChange.toFixed(2)}% over selected market window` : "Market change is not available."}</p></div>
+        <div><span className="muted">Market direction</span><div className="metric">{marketDirection}</div><p>{weekChange != null ? `${weekChange >= 0 ? "+" : ""}${weekChange.toFixed(2)}% over 7d` : "7d market change is not available."}</p></div>
         <div><span className="muted">Research direction</span><div className="metric">{researchDirection}</div><p>{improvingSignals} improving · {deterioratingSignals} deteriorating signals</p></div>
       </div>
       <div className="decision-drivers">
         {decisionDrivers.length ? decisionDrivers.map((driver) => <div className="row table-row" key={driver.label}><span className="muted">{driver.label}</span><strong>{driver.value}</strong></div>) : <p className="muted">No current catalyst, risk or scenario has been recorded yet.</p>}
       </div>
       <p>{summary ?? "The research is still being assembled. The dashboard will become richer as the Asset Card fills."}</p>
+      <div className="decision-guardrails">
+        <div><span className="muted">Thesis confidence</span><strong>{confidenceLabel(confidenceValue)}</strong></div>
+        <div><span className="muted">What would change the thesis?</span><strong>{invalidation ?? mainRisk?.current_state ?? "No invalidation condition is recorded yet."}</strong></div>
+      </div>
       <div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div>
       <div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div>
     </section>
