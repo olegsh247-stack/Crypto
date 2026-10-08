@@ -138,7 +138,7 @@ Implementation adds an explicit `storage_mode` field:
 
 `1h`/`4h` return `temporary`; `1d` returns `persisted` when serving stored daily candles.
 
-The ticker endpoint is live temporary market state and is not persisted as a daily candle.
+The ticker endpoint is live temporary market state and is not persisted as a daily candle. To avoid repeated upstream calls without creating market-history accumulation, the API may serve a short in-memory/edge cache of about 60 seconds; this cache is not a database persistence layer.
 
 ## 11. Asset Dashboard contract
 
