@@ -34,6 +34,17 @@ export default async function AssetPage({ params }: { params: Promise<{ assetId:
   const mainCatalyst = factors.filter((f: any) => f.thesis_impact === "positive").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
+  const history = Array.isArray(data.history) ? data.history : [];
+  const marketRows = history.map((row: any) => ({
+    time: row.candle_open_at ?? row.candle_close_at ?? null,
+    close: row.close_price != null ? Number(row.close_price) : null,
+    source: row.source_id ?? row.source_symbol ?? null,
+  })).filter((row: any) => row.time && Number.isFinite(row.close));
+  const latestMarket = marketRows.at(-1) ?? null;
+  const weekRows = marketRows.slice(-7);
+  const weekStart = weekRows[0]?.close ?? null;
+  const weekEnd = weekRows.at(-1)?.close ?? null;
+  const weekChange = weekStart && weekEnd ? ((weekEnd / weekStart) - 1) * 100 : null;
 
   return <main className="shell">
     <MarketTabs />
@@ -42,6 +53,36 @@ export default async function AssetPage({ params }: { params: Promise<{ assetId:
 
     <section id="overview" className="section card"><div className="row"><div><p className="eyebrow">DECISION VIEW</p><h2>What is the current thesis?</h2></div><Link className="button" href={`/assets/${assetId}/research`}>Open Deep Research · 01–15</Link></div><p>{summary ?? "The research is still being assembled. The dashboard will become richer as the Asset Card fills."}</p><div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div><div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div></section>
 
+    <section id="market" className="section card" aria-label="Market snapshot">
+      <div className="row">
+        <div>
+          <p className="eyebrow">MARKET SNAPSHOT</p>
+          <h2>Market context</h2>
+          <p className="muted">Latest stored daily market data. This is separate from the research thesis.</p>
+        </div>
+        <span className="pill">{latestMarket?.source ?? "Stored market history"}</span>
+      </div>
+      <div className="grid">
+        <div className="card">
+          <span className="muted">Latest stored close</span>
+          <div className="metric">{latestMarket ? latestMarket.close.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</div>
+          <span className="muted">{latestMarket?.time ? new Date(latestMarket.time).toLocaleString() : "No market history"}</span>
+        </div>
+        <div className="card">
+          <span className="muted">7d change</span>
+          <div className="metric">{weekChange != null ? (weekChange >= 0 ? "+" : "") + weekChange.toFixed(2) + "%" : "—"}</div>
+          <span className="muted">{weekRows.length ? weekRows.length + " daily observations" : "No 7d history"}</span>
+        </div>
+      </div>
+      {weekRows.length > 1 ? (
+        <div className="table-list" aria-label="Recent daily market history">
+          {weekRows.map((row: any) => <div className="row table-row" key={row.time}>
+            <span className="muted">{new Date(row.time).toLocaleDateString()}</span>
+            <strong>{row.close.toLocaleString(undefined, { maximumFractionDigits: 8 })}</strong>
+          </div>)}
+        </div>
+      ) : <p className="muted">Market history is not available for this asset yet.</p>}
+    </section>
     <section className="grid section" aria-label="Decision scores">
       <div className="card"><span className="muted">Health Score</span><div className="metric">{health?.value ?? "—"}</div><span className="muted">{health?.confidence != null ? `Confidence ${health.confidence}` : "Not scored"}</span></div>
       <div className="card"><span className="muted">Thesis Score</span><div className="metric">{thesis?.value ?? "—"}</div><span className="muted">{thesis?.confidence != null ? `Confidence ${thesis.confidence}` : "Not scored"}</span></div>
