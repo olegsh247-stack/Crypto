@@ -57,9 +57,9 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const health = scoreByType(scores, ["health"]);
   const thesis = scoreByType(scores, ["thesis"]);
   const valueAccrual = scoreByType(scores, ["value", "accrual"]);
+  const confidenceScore = scoreByType(scores, ["confidence"]);
   const thesisPercent = scorePercent(thesis);
-  const confidenceValue = thesis?.confidence ?? confidence?.value ?? null;
-  const confidencePercentValue = confidencePercent(confidenceValue);
+  const confidenceValue = thesis?.confidence ?? confidenceScore?.value ?? null;
   const currentScenarioState = (data.scenario_states ?? [])[0] ?? null;
   const currentScenarioDefinition = currentScenarioState ? scenarios.find((s: any) => s.research_scenario_id === currentScenarioState.scenario_id) : null;
   const currentScenario = currentScenarioState ? { ...currentScenarioDefinition, ...currentScenarioState } : null;
