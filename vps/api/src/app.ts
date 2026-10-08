@@ -8,7 +8,7 @@ async function body(request:Request){try{return await request.json() as Record<s
 function text(value:unknown){return typeof value==="string"?value.trim():""}
 function getAssetId(pathname:string){const m=pathname.match(/^\/api\/assets\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]).toLowerCase():null}
 function getPairId(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
-function getPairHistorySymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/history\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
+function getPairHistorySymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/history\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}\nfunction getPairTickerSymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/ticker\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
 function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
 function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.headers.get("Authorization")===`Bearer ${env.ADMIN_TOKEN}`}
 function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
@@ -169,7 +169,7 @@ export default {
   }
   return json({status:"error",error:"market_ticker_unavailable",pair},503);
  }
- const pairTicker=getPairHistorySymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
+ const pairTicker=getPairTickerSymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
   const parts=pairTicker.split("/");
   if(parts.length!==2||!parts[0]||!parts[1])return tickerJson({status:"error",error:"invalid_pair_symbol"},400,env);
   const [baseAsset,quoteAsset]=parts;
