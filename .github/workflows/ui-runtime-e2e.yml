@@ -58,6 +58,11 @@ jobs:
           check "eth_identity" 'ETH' /tmp/ui-eth.html
           check "eth_dashboard" 'ASSET DASHBOARD' /tmp/ui-eth.html
           check "eth_monitoring" 'Monitoring' /tmp/ui-eth.html
+          check "eth_domains" 'Research Domains' /tmp/ui-eth.html
+          check "eth_factors" 'Critical Factors' /tmp/ui-eth.html
+          check "eth_scores" 'Research Scores' /tmp/ui-eth.html
+          check "eth_scenarios" 'Scenario States' /tmp/ui-eth.html
+          check "eth_current_price" 'Current price' /tmp/ui-eth.html
           check "eth_monitoring_dashboard" 'Monitoring Dashboard' /tmp/ui-eth.html
           check "eth_current_signals" 'Current Signals' /tmp/ui-eth.html
           check "eth_recent_events" 'Recent Events' /tmp/ui-eth.html
@@ -75,6 +80,21 @@ jobs:
           check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
           check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
           check "eth_structure1" 'Structure 1' /tmp/ui-eth-research.html
+          check "eth_chapter_01" '01 · Essence' /tmp/ui-eth-research.html
+          check "eth_chapter_02" '02 · Technology' /tmp/ui-eth-research.html
+          check "eth_chapter_03" '03 · Tokenomics' /tmp/ui-eth-research.html
+          check "eth_chapter_04" '04 · Network' /tmp/ui-eth-research.html
+          check "eth_chapter_05" '05 · Ecosystem' /tmp/ui-eth-research.html
+          check "eth_chapter_06" '06 · Users' /tmp/ui-eth-research.html
+          check "eth_chapter_07" '07 · Institutions' /tmp/ui-eth-research.html
+          check "eth_chapter_08" '08 · Development' /tmp/ui-eth-research.html
+          check "eth_chapter_09" '09 · Macro' /tmp/ui-eth-research.html
+          check "eth_chapter_10" '10 · Competition' /tmp/ui-eth-research.html
+          check "eth_chapter_11" '11 · Risks' /tmp/ui-eth-research.html
+          check "eth_chapter_12" '12 · Catalysts' /tmp/ui-eth-research.html
+          check "eth_chapter_13" '13 · Scenarios' /tmp/ui-eth-research.html
+          check "eth_chapter_14" '14 · Conclusion' /tmp/ui-eth-research.html
+          check "eth_chapter_15" '15 · Monitoring' /tmp/ui-eth-research.html
           check "btc_identity" 'BTC' /tmp/ui-btc.html
           check "btc_dashboard" 'ASSET DASHBOARD' /tmp/ui-btc.html
           check "btc_research_chapters" 'Research chapters' /tmp/ui-btc-research.html
