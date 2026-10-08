@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { calculateResearchStatus } from "./research-status";
 
-interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
+interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; FORCE_SCHEDULED_INGESTION?: string; }
 const corsHeaders={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization"};
 function json(data:unknown,status=200):Response{return Response.json(data,{status,headers:{"Cache-Control":"no-store",...corsHeaders}})}
 async function body(request:Request){try{return await request.json() as Record<string,unknown>}catch{return null}}
@@ -29,13 +29,39 @@ async function binanceKlines(symbol:string,interval:string,limit:number){
  }
  throw new Error(`Binance ${symbol}: ${statuses.join(",")}`);
 }
+async function binanceTicker(symbol:string){
+ const endpoints=[
+  `https://data-api.binance.vision/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,
+  `https://api-gcp.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,
+  `https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`
+ ];
+ for(const endpoint of endpoints){
+  try{const response=await fetch(endpoint,{headers:{Accept:"application/json"}});if(response.ok){const data=await response.json() as any;const price=Number(data?.price);if(Number.isFinite(price)&&price>0)return {price,timestamp:new Date().toISOString(),source:"Binance"};}}catch{}
+ }
+ throw new Error(`Binance ticker unavailable: ${symbol}`);
+}
+async function krakenUsdTicker(asset:string){
+ const pair=KRAKEN_USD_PAIRS[asset];if(!pair)return null;
+ const response=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`Kraken ticker ${asset}: ${response.status}`);
+ const data=await response.json() as any;const key=Object.keys(data?.result??{})[0];const price=Number(data?.result?.[key]?.c?.[0]);
+ return Number.isFinite(price)&&price>0?{price,timestamp:new Date().toISOString(),source:"Kraken"}:null;
+}
+async function coingeckoUsdTicker(asset:string){
+ const id=COINGECKO_IDS[asset];if(!id)return null;
+ const response=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`CoinGecko ticker ${asset}: ${response.status}`);
+ const data=await response.json() as any;const price=Number(data?.[id]?.usd);
+ return Number.isFinite(price)&&price>0?{price,timestamp:new Date().toISOString(),source:"CoinGecko"}:null;
+}
+
 async function usdKlines(asset:string,interval:string,limit:number){
  if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
  return binanceKlines(asset+"USDT",interval,limit);
 }
 async function storedAssetKlines(sql:any,assetId:string,limit:number){
- const rows=await sql`select candle_open_at as time,close_price as close from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit ${limit}`;
- return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close)})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
+ const rows=await sql`select candle_open_at as time,close_price as close,source_id from market_daily_candles where asset_id=${assetId} order by candle_open_at desc limit ${limit}`;
+ return rows.reverse().map((r:any)=>({time:new Date(r.time).toISOString(),close:Number(r.close),source_id:r.source_id})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);
 }
 const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
 const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
@@ -111,6 +137,8 @@ async function refreshMonitoring(sql:any){
 export default {
  async scheduled(_controller:ScheduledController,env:Env){
   if(!env.DATABASE_URL)return;
+  const londonHour=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",hour:"2-digit",hour12:false}).formatToParts(new Date()).find(p=>p.type==="hour")?.value;
+  if(env.FORCE_SCHEDULED_INGESTION!=="1" && londonHour!=="00")return;
   const sql=neon(env.DATABASE_URL);
   const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
   const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
@@ -124,7 +152,31 @@ export default {
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
- const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
+ const pairTicker=getPairHistorySymbol(url.pathname.replace(/\\/history\\/?$/,"/ticker"));if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
+  const parts=pairTicker.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
+  const [baseAsset,quoteAsset]=parts;
+  const pairRegistry=await sql`select mp.symbol,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairTicker} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
+  if(!pairRegistry[0])return json({status:"error",error:"market_pair_not_registered",pair:pairTicker},404);
+  const registered=pairRegistry[0];if(String(registered.base_symbol).toUpperCase()!==baseAsset||String(registered.quote_symbol).toUpperCase()!==quoteAsset)return json({status:"error",error:"market_pair_identity_mismatch",pair:pairTicker},409);
+  try{
+   if(String(registered.exchange).toLowerCase()==="binance"&&quoteAsset==="USDT"){
+    const value=await binanceTicker(baseAsset+quoteAsset);return json({status:"ok",pair:pairTicker,...value});
+   }
+  }catch{}
+  try{
+   if(quoteAsset==="USDT"){
+    const value=await krakenUsdTicker(baseAsset);if(value)return json({status:"ok",pair:pairTicker,...value});
+   }
+  }catch{}
+  try{
+   if(quoteAsset==="USDT"){
+    const value=await coingeckoUsdTicker(baseAsset);if(value)return json({status:"ok",pair:pairTicker,...value});
+   }
+  }catch{}
+  return json({status:"error",error:"market_ticker_unavailable",pair:pairTicker},503);
+}
+
+const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
   const days=Math.min(Math.max(Number(url.searchParams.get("days")??30),1),90),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);
   const parts=pairHistory.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
   const [baseAsset,quoteAsset]=parts;
@@ -135,7 +187,17 @@ export default {
   if(String(registered.exchange).toLowerCase()!=="binance")return json({status:"error",error:"exchange_not_supported",exchange:registered.exchange,pair:pairHistory},501);
   const limit=Math.min(days*(interval==="1d"?1:interval==="4h"?6:24)+1,1000);
   const pairSymbol=baseAsset+quoteAsset;
-  const pairPromise=binanceKlines(pairSymbol,interval,limit);
+  let persistedPair:any[]|null=null;
+  if(interval==="1d"){
+   const [storedBase,storedQuote]=await Promise.all([
+    storedAssetKlines(sql,String(registered.base_asset_id),limit),
+    storedAssetKlines(sql,String(registered.quote_asset_id),limit)
+   ]);
+   if(quoteIsStable && storedBase.length>=2) persistedPair=storedBase.map((r:any)=>({time:r.time,close:r.close}));
+   else if(baseIsStable && storedQuote.length>=2) persistedPair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));
+   else if(storedBase.length>=2&&storedQuote.length>=2){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));persistedPair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);}
+  }
+  const pairPromise=persistedPair?Promise.resolve(persistedPair):binanceKlines(pairSymbol,interval,limit);
   const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
   const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
   const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
@@ -144,7 +206,7 @@ export default {
   let pair=results[0].status==="fulfilled"?results[0].value:null;
   let base=results[1].status==="fulfilled"?results[1].value:null;
   let quote=results[2].status==="fulfilled"?results[2].value:null;
-  let historySource="Binance";
+  let historySource=persistedPair?"stored_market_history":"Binance";
   if(!pair){
     try{
       const krakenBase=baseIsStable?[]:await krakenUsdKlines(baseAsset);
@@ -185,7 +247,7 @@ export default {
   const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
   if(!rows.length)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
   const normalize=(key:"pair"|"baseUsd"|"quoteUsd")=>{const first=rows[0]?.[key];return rows.map((r:any)=>({time:r.time,value:first?Number(((r[key]/first)*100).toFixed(3)):null})).filter((r:any)=>r.value!==null)};
-  return json({status:"ok",source:historySource,pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
+  return json({status:"ok",source:historySource,storage_mode:historySource==="stored_market_history"?"persisted":"temporary",pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
  }
  if(url.pathname==="/api/assets"||url.pathname==="/api/assets/"){
   if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),category=text(d?.category)||"core",tier=text(d?.research_tier)||"C",primaryAssetTypeId=text(d?.primary_asset_type_id),requestedEnabled=d?.enabled===undefined?null:Boolean(d?.enabled);if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);if(!["A","B","C"].includes(tier))return json({status:"error",error:"invalid_research_tier"},400);if(!["core","defi","l1_infrastructure","bitcoin_ecosystem","stablecoin_payments"].includes(category))return json({status:"error",error:"invalid_category"},400);if(requestedEnabled===true&&!primaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);try{if(primaryAssetTypeId){const type=await sql`select asset_type_id from asset_types where asset_type_id=${primaryAssetTypeId} and is_active=true limit 1`;if(!type[0])return json({status:"error",error:"invalid_primary_asset_type"},400)}const existing=await sql`select enabled,primary_asset_type_id from assets where asset_id=${symbol.toLowerCase()} limit 1`;const enabled=requestedEnabled===null?(existing[0]?.enabled??false):requestedEnabled;const resolvedPrimaryAssetTypeId=primaryAssetTypeId||existing[0]?.primary_asset_type_id||null;if(enabled&&!resolvedPrimaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);const r=await sql`insert into assets(asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id,research_reason) values(${symbol.toLowerCase()},${symbol},${name},${category},${tier},${enabled},${resolvedPrimaryAssetTypeId},'Added through Dynamic Asset Engine') on conflict(asset_id) do update set symbol=excluded.symbol,name=excluded.name,category=excluded.category,research_tier=excluded.research_tier,enabled=excluded.enabled,primary_asset_type_id=excluded.primary_asset_type_id,updated_at=now() returning asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"asset_persistence_failed"},503)}}
