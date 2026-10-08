@@ -108,8 +108,8 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
 
     <section id="market" className="section card" aria-label="Market chart">
       <div className="row">
-        <div><p className="eyebrow">MARKET</p><h2>{asset.symbol}/USDT</h2><p className="muted">Stored market history. 1h and 4h remain temporary market data; daily history is persisted.</p></div>
-        <span className="pill">{chartData?.source ?? "No source"}</span>
+        <div><p className="eyebrow">MARKET</p><h2>{asset.symbol}/USDT</h2><p className="muted">{chartData?.storage_mode === "temporary" ? "Live temporary market data. It is not persisted as intraday history." : "Persisted daily market history. Daily candles are stored on the canonical London-day boundary."}</p></div>
+        <span className="pill">{chartData?.storage_mode ?? "unavailable"} · {chartData?.source ?? "No source"}</span>
       </div>
       <div className="row">
         <div className="chart-tabs" aria-label="Chart interval">
@@ -122,7 +122,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
           <polyline fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" points={chartPoints} />
         </svg>
       </div> : <p className="muted">No market history is available for this interval yet.</p>}
-      <p className="muted">{chartRows.length} observations · {chartPreset.interval} interval · {chartPreset.days} day window · {chartData?.source ?? "unavailable"}</p>
+      <p className="muted">{chartRows.length} observations · {chartPreset.interval} interval · {chartPreset.days} day window · {chartData?.storage_mode ?? "unavailable"} · {chartData?.source ?? "unavailable"}</p>
     </section>
     <section id="overview" className="section card">
       <div className="row">
