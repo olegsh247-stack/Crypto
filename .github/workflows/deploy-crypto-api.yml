@@ -90,7 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$DATABASE_URL"
-          printf 'DATABASE_URL=%s\n' "$DATABASE_URL" > .dev.vars
+          printf 'DATABASE_URL=%s\nFORCE_SCHEDULED_INGESTION=1\n' "$DATABASE_URL" > .dev.vars
           npx wrangler dev --test-scheduled --local --port 8787 > /tmp/crypto-worker.log 2>&1 &
           worker_pid=$!
           trap 'kill "$worker_pid" 2>/dev/null || true; rm -f .dev.vars' EXIT
