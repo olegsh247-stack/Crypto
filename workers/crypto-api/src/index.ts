@@ -9,6 +9,7 @@ function text(value:unknown){return typeof value==="string"?value.trim():""}
 function getAssetId(pathname:string){const m=pathname.match(/^\/api\/assets\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]).toLowerCase():null}
 function getPairId(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
 function getPairHistorySymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/history\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
+function getPairTickerSymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/ticker\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
 function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
 function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.headers.get("Authorization")===`Bearer ${env.ADMIN_TOKEN}`}
 function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
@@ -152,7 +153,7 @@ export default {
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
- const pairTicker=getPairHistorySymbol(url.pathname.replace(/\\/history\\/?$/,"/ticker"));if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
+ const pairTicker=getPairTickerSymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
   const parts=pairTicker.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
   const [baseAsset,quoteAsset]=parts;
   const pairRegistry=await sql`select mp.symbol,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairTicker} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
@@ -187,6 +188,8 @@ const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.met
   if(String(registered.exchange).toLowerCase()!=="binance")return json({status:"error",error:"exchange_not_supported",exchange:registered.exchange,pair:pairHistory},501);
   const limit=Math.min(days*(interval==="1d"?1:interval==="4h"?6:24)+1,1000);
   const pairSymbol=baseAsset+quoteAsset;
+  const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
+  const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
   let persistedPair:any[]|null=null;
   if(interval==="1d"){
    const [storedBase,storedQuote]=await Promise.all([
@@ -198,8 +201,6 @@ const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.met
    else if(storedBase.length>=2&&storedQuote.length>=2){const qMap=new Map(storedQuote.map((r:any)=>[r.time,r.close]));persistedPair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);}
   }
   const pairPromise=persistedPair?Promise.resolve(persistedPair):binanceKlines(pairSymbol,interval,limit);
-  const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
-  const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
   const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
   const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
   const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
