@@ -39,6 +39,12 @@ assert(["current","update_recommended","outdated"].includes(eth.asset?.research_
 assert(eth.asset?.research?.freshness === eth.asset?.research_freshness?.status, "ETH freshness consistency");
 assert(eth.research_snapshot?.status === "PUBLISHED", "ETH published research snapshot");
 assert(Array.isArray(eth.research_blocks) && eth.research_blocks.length === 15, "ETH has 15 research blocks");
+assert(Array.isArray(eth.research_domains) && eth.research_domains.length === 6, "ETH has six research domains");
+assert(Array.isArray(eth.critical_factors), "ETH critical factors exposed");
+assert(Array.isArray(eth.scores), "ETH scores exposed");
+assert(Array.isArray(eth.research_scenarios) && eth.research_scenarios.length >= 3, "ETH scenarios exposed");
+assert(Array.isArray(eth.monitoring_signals), "ETH monitoring signals exposed");
+assert(Array.isArray(eth.monitoring_events), "ETH monitoring events exposed");
 assert(eth.research_blocks.every(b => ["complete", "n_a"].includes(b.status)), "ETH blocks resolved");
 assert(Array.isArray(eth.evidence) && eth.evidence.length > 0, "ETH evidence chain exposed");
 assert(eth.evidence.every(e => e.claim && e.source_id && e.observation_id && e.metric_id && e.thesis_impact && e.status), "ETH evidence traceability fields");
