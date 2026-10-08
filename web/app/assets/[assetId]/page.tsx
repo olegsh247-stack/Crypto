@@ -117,7 +117,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
         <div className="chart-tabs" aria-label="Chart interval">
           {Object.entries(chartPresets).map(([key, preset]) => <Link key={key} className={`button ${key === chartKey ? "active" : ""}`} href={`/assets/${assetId}?chart=${key}#market`}>{preset.label}</Link>)}
         </div>
-        <div><strong>{tickerData?.price != null ? Number(tickerData.price).toLocaleString(undefined, { maximumFractionDigits: 8 }) : chartLast != null ? chartLast.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong>{chartChange != null && <span className="muted"> {chartChange >= 0 ? "+" : ""}{chartChange.toFixed(2)}%</span>}<div className="muted">{tickerData?.source ?? chartData?.source ?? "No source"}</div></div>
+        <div><strong>{tickerData?.price != null ? Number(tickerData.price).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong>{chartChange != null && <span className="muted"> {chartChange >= 0 ? "+" : ""}{chartChange.toFixed(2)}%</span>}<div className="muted">{tickerData?.source ? `Current price · ${tickerData.source}` : "Current price unavailable"}</div>{tickerData?.timestamp && <div className="muted">Updated {new Date(tickerData.timestamp).toLocaleTimeString()}</div>}</div>
       </div>
       {chartRows.length > 1 ? <div className="chart-wrap" aria-label={`${asset.symbol} ${chartPreset.label} price chart`}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${asset.symbol} ${chartPreset.label} market history`}>
