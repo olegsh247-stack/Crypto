@@ -51,8 +51,8 @@ async function ingestAssetDaily(sql:any, asset:any){
  let written=0;
  const sourceSymbol=sourceId==="market_kraken"?(KRAKEN_USD_PAIRS[assetSymbol]??binanceSymbol):sourceId==="market_coingecko"?COINGECKO_IDS[assetSymbol]??binanceSymbol:binanceSymbol;
  for(const row of rows.slice(-8)){
-  const openAt=new Date(row.time);
-  const closeAt=new Date(openAt.getTime()+24*60*60*1000);
+  const openAt=londonDayBoundary(new Date(row.time));
+  const closeAt=londonDayBoundary(new Date(openAt.getTime()+36*60*60*1000));
   const openPrice=Number(row.open??row.close),high=Number(row.high??row.close),low=Number(row.low??row.close),close=Number(row.close),volume=Number(row.volume??0);
   if(![openAt.getTime(),closeAt.getTime(),openPrice,high,low,close].every(Number.isFinite))continue;
   await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
@@ -74,6 +74,18 @@ async function coingeckoUsdKlines(asset:string,days:number){
  if(!response.ok)throw new Error(`CoinGecko ${asset}: ${response.status}`);
  const data=await response.json() as any;
  return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
+}
+
+function londonDayBoundary(input:Date){
+ const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(input);
+ const get=(type:string)=>Number(parts.find(p=>p.type===type)?.value);
+ const year=get("year"),month=get("month"),day=get("day");
+ const utcMidnight=Date.UTC(year,month-1,day,0,0,0);
+ const offsetParts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",timeZoneName:"longOffset",hour:"2-digit"}).formatToParts(new Date(utcMidnight+12*60*60*1000));
+ const offset=offsetParts.find(p=>p.type==="timeZoneName")?.value??"GMT";
+ const match=offset.match(/^GMT([+-])(\\d{2}):(\\d{2})$/);
+ const offsetMinutes=match?(Number(match[2])*60+Number(match[3]))*(match[1]==="-"?-1:1):0;
+ return new Date(utcMidnight-offsetMinutes*60*1000);
 }
 
 function coingeckoDaily(rows:any[]){
