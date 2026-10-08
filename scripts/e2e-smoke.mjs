@@ -59,6 +59,11 @@ for (const symbol of ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","
   assert(symbols.has(symbol), "pair " + symbol);
 }
 
+const btcTicker = await get("/api/pairs/BTC%2FUSDT/ticker");
+assert(btcTicker.pair === "BTC/USDT", "BTC ticker identity");
+assert(Number.isFinite(Number(btcTicker.price)) && Number(btcTicker.price) > 0, "BTC ticker price");
+assert(btcTicker.timestamp && btcTicker.source, "BTC ticker provenance");
+
 const canonicalSymbols = ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","BCH/USDT","LTC/USDT","XRP/USDT","TRX/USDT"];
 const historyResults = [];
 for (const symbol of canonicalSymbols) {
@@ -69,8 +74,17 @@ for (const symbol of canonicalSymbols) {
   assert(history.source === "stored_market_history", symbol + " daily history must read persisted storage");
   assert(Array.isArray(history.rows) && history.rows.length >= 2, symbol + " history rows");
   assert(Array.isArray(history.normalized?.relative) && history.normalized.relative.length >= 2, symbol + " normalized history");
+  assert(history.storage_mode === "persisted", symbol + " daily storage mode");
   historyResults.push({symbol,source:history.source,rows:history.rows.length});
 }
+for (const interval of ["1h","4h"]) {
+  const intraday = await get("/api/pairs/BTC%2FUSDT/history?days=7&interval=" + interval);
+  assert(intraday.pair === "BTC/USDT", interval + " identity");
+  assert(intraday.interval === interval, interval + " interval");
+  assert(intraday.storage_mode === "temporary", interval + " temporary storage mode");
+  assert(Array.isArray(intraday.rows) && intraday.rows.length >= 2, interval + " rows");
+}
+
 for (const symbol of ["BTC/USDT","ETH/USDT"]) {
   for (const interval of ["1h","4h"]) {
     const intraday = await get("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=7&interval=" + interval);
