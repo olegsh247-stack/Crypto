@@ -4,3 +4,5 @@ export type MarketPair = { id: string; symbol: string; base_asset_id: string; ba
 export type PairsResponse = { items: MarketPair[]; pairs: MarketPair[]; count: number };
 export type PairHistoryRow = { time: string; pair: number; baseUsd: number; quoteUsd: number };
 export type PairHistoryResponse = { status: "ok"; source: string; storage_mode: "temporary" | "persisted"; pair: string; interval: string; days: number; rows: PairHistoryRow[]; normalized?: { relative: Array<{value:number}>; base: Array<{value:number}>; quote: Array<{value:number}> }; interpretation?: { relative_strength?: string } };
+
+export type PairTickerResponse = { status: "ok"; pair: string; price: number; timestamp: string; source: string; };
