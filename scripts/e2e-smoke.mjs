@@ -40,6 +40,8 @@ assert(eth.asset?.research?.freshness === eth.asset?.research_freshness?.status,
 assert(eth.research_snapshot?.status === "PUBLISHED", "ETH published research snapshot");
 assert(Array.isArray(eth.research_blocks) && eth.research_blocks.length === 15, "ETH has 15 research blocks");
 assert(eth.research_blocks.every(b => ["complete", "n_a"].includes(b.status)), "ETH blocks resolved");
+assert(Array.isArray(eth.evidence) && eth.evidence.length > 0, "ETH evidence chain exposed");
+assert(eth.evidence.every(e => e.claim && e.source_id && e.observation_id && e.metric_id && e.thesis_impact && e.status), "ETH evidence traceability fields");
 
 const btc = await get("/api/assets/btc");
 assert(btc.asset?.asset_id === "btc", "BTC canonical detail");
