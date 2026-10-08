@@ -36,6 +36,18 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
 
+  const history = Array.isArray(data.history) ? data.history : [];
+  const marketRows = history.map((row: any) => ({
+    time: row.candle_open_at ?? row.candle_close_at ?? null,
+    close: row.close_price != null ? Number(row.close_price) : null,
+    source: row.source_id ?? row.source_symbol ?? null,
+  })).filter((row: any) => row.time && Number.isFinite(row.close));
+  const latestMarket = marketRows.at(-1) ?? null;
+  const weekRows = marketRows.slice(-7);
+  const weekStart = weekRows[0]?.close ?? null;
+  const weekEnd = weekRows.at(-1)?.close ?? null;
+  const weekChange = weekStart && weekEnd ? ((weekEnd / weekStart) - 1) * 100 : null;
+
   const positiveFactors = factors.filter((f: any) => f.thesis_impact === "positive").length;
   const negativeFactors = factors.filter((f: any) => f.thesis_impact === "negative").length;
   const mixedFactors = factors.filter((f: any) => f.thesis_impact === "mixed").length;
@@ -76,18 +88,6 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const chartFirst = chartValues[0] ?? null;
   const chartLast = chartValues.at(-1) ?? null;
   const chartChange = chartFirst && chartLast ? ((chartLast / chartFirst) - 1) * 100 : null;
-  const history = Array.isArray(data.history) ? data.history : [];
-  const marketRows = history.map((row: any) => ({
-    time: row.candle_open_at ?? row.candle_close_at ?? null,
-    close: row.close_price != null ? Number(row.close_price) : null,
-    source: row.source_id ?? row.source_symbol ?? null,
-  })).filter((row: any) => row.time && Number.isFinite(row.close));
-  const latestMarket = marketRows.at(-1) ?? null;
-  const weekRows = marketRows.slice(-7);
-  const weekStart = weekRows[0]?.close ?? null;
-  const weekEnd = weekRows.at(-1)?.close ?? null;
-  const weekChange = weekStart && weekEnd ? ((weekEnd / weekStart) - 1) * 100 : null;
-
   return <main className="shell">
     <MarketTabs />
     <div className="section"><Link href="/">← Assets</Link><div className="row asset-heading"><div><p className="eyebrow">02 · ASSET DASHBOARD</p><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div><div className="hero-actions"><span className="pill">{getResearchStatusLabel(status)}</span>{freshness && <span className="pill">{getResearchFreshnessLabel(freshness)}</span>}</div></div></div>
