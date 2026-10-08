@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { getAsset } from "../../../lib/api";
+import { getAsset, getPairHistory } from "../../../lib/api";
 import MarketTabs from "../../components/MarketTabs";
 import { getResearchProgress, getResearchStatusLabel, normalizeResearchBlocks, normalizeResearchFreshness, getResearchFreshnessLabel } from "../../../lib/research-status";
 
 function scoreByType(scores: any[], terms: string[]) { return scores.find(s => terms.some(t => String(s.score_type ?? "").toLowerCase().includes(t))); }
 
-export default async function AssetPage({ params }: { params: Promise<{ assetId: string }> }) {
+export default async function AssetPage({ params, searchParams }: { params: Promise<{ assetId: string }>; searchParams: Promise<{ chart?: string }> }) {
   const { assetId } = await params;
+  const { chart = "1d" } = await searchParams;
   let data: any;
   try { data = await getAsset(assetId); } catch (e) { return <main className="shell"><MarketTabs /><Link href="/">← Home</Link><div className="error section">Unable to load asset: {e instanceof Error ? e.message : "unknown error"}</div></main>; }
   const asset = data.asset;
@@ -34,6 +35,25 @@ export default async function AssetPage({ params }: { params: Promise<{ assetId:
   const mainCatalyst = factors.filter((f: any) => f.thesis_impact === "positive").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
+  const chartPresets: Record<string, { label: string; interval: string; days: number }> = {
+    "1h": { label: "1 hour", interval: "1h", days: 7 },
+    "4h": { label: "4 hours", interval: "4h", days: 7 },
+    "1d": { label: "1 day", interval: "1d", days: 30 },
+    "7d": { label: "7 days", interval: "1d", days: 7 },
+  };
+  const chartKey = chartPresets[chart] ? chart : "1d";
+  const chartPreset = chartPresets[chartKey];
+  let chartData: any = null;
+  try { chartData = await getPairHistory(`${asset.symbol}/USDT`, chartPreset.days, chartPreset.interval); } catch { chartData = null; }
+  const chartRows = (chartData?.rows ?? []).filter((row: any) => Number.isFinite(Number(row.pair)) && row.time);
+  const chartValues = chartRows.map((row: any) => Number(row.pair));
+  const chartMin = chartValues.length ? Math.min(...chartValues) : 0;
+  const chartMax = chartValues.length ? Math.max(...chartValues) : 1;
+  const chartRange = chartMax - chartMin || 1;
+  const chartPoints = chartRows.map((row: any, i: number) => `${(i / Math.max(chartRows.length - 1, 1)) * 100},${92 - ((Number(row.pair) - chartMin) / chartRange) * 84}`).join(" ");
+  const chartFirst = chartValues[0] ?? null;
+  const chartLast = chartValues.at(-1) ?? null;
+  const chartChange = chartFirst && chartLast ? ((chartLast / chartFirst) - 1) * 100 : null;
   const history = Array.isArray(data.history) ? data.history : [];
   const marketRows = history.map((row: any) => ({
     time: row.candle_open_at ?? row.candle_close_at ?? null,
@@ -51,6 +71,24 @@ export default async function AssetPage({ params }: { params: Promise<{ assetId:
     <div className="section"><Link href="/">← Assets</Link><div className="row asset-heading"><div><p className="eyebrow">02 · ASSET DASHBOARD</p><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div><div className="hero-actions"><span className="pill">{getResearchStatusLabel(status)}</span>{freshness && <span className="pill">{getResearchFreshnessLabel(freshness)}</span>}</div></div></div>
     <nav className="dashboard-nav" aria-label="Asset dashboard sections"><a href="#overview">Overview</a><a href="#domains">Domains</a><a href="#factors">Factors</a><a href="#scores">Scores</a><a href="#scenarios">Scenarios</a><a href="#monitoring">Monitoring</a><a href="#evidence">Evidence</a></nav>
 
+    <section id="market" className="section card" aria-label="Market chart">
+      <div className="row">
+        <div><p className="eyebrow">MARKET</p><h2>{asset.symbol}/USDT</h2><p className="muted">Stored market history. 1h and 4h remain temporary market data; daily history is persisted.</p></div>
+        <span className="pill">{chartData?.source ?? "No source"}</span>
+      </div>
+      <div className="row">
+        <div className="chart-tabs" aria-label="Chart interval">
+          {Object.entries(chartPresets).map(([key, preset]) => <Link key={key} className={`button ${key === chartKey ? "active" : ""}`} href={`/assets/${assetId}?chart=${key}#market`}>{preset.label}</Link>)}
+        </div>
+        <div><strong>{chartLast != null ? chartLast.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong>{chartChange != null && <span className="muted"> {chartChange >= 0 ? "+" : ""}{chartChange.toFixed(2)}%</span>}</div>
+      </div>
+      {chartRows.length > 1 ? <div className="chart-wrap" aria-label={`${asset.symbol} ${chartPreset.label} price chart`}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${asset.symbol} ${chartPreset.label} market history`}>
+          <polyline fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" points={chartPoints} />
+        </svg>
+      </div> : <p className="muted">No market history is available for this interval yet.</p>}
+      <p className="muted">{chartRows.length} observations · {chartPreset.interval} interval · {chartPreset.days} day window · {chartData?.source ?? "unavailable"}</p>
+    </section>
     <section id="overview" className="section card"><div className="row"><div><p className="eyebrow">DECISION VIEW</p><h2>What is the current thesis?</h2></div><Link className="button" href={`/assets/${assetId}/research`}>Open Deep Research · 01–15</Link></div><p>{summary ?? "The research is still being assembled. The dashboard will become richer as the Asset Card fills."}</p><div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div><div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div></section>
 
     <section id="market" className="section card" aria-label="Market snapshot">
