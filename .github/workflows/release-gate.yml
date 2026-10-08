@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: crypto-production-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   migrate:
