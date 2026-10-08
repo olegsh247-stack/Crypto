@@ -76,7 +76,7 @@ export default {
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
  const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
-  const days=Math.min(Math.max(Number(url.searchParams.get("days")??30),1),90),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);
+  const requestedDays=Math.max(Number(url.searchParams.get("days")??(url.searchParams.get("interval")==="1d"?30:7)),1),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);const maxDays=interval==="1d"?30:7;const days=Math.min(requestedDays,maxDays);
   const parts=pairHistory.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
   const [baseAsset,quoteAsset]=parts;
   const pairRegistry=await sql`select mp.symbol,mp.base_asset_id,mp.quote_asset_id,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairHistory} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
@@ -86,57 +86,40 @@ export default {
   if(String(registered.exchange).toLowerCase()!=="binance")return json({status:"error",error:"exchange_not_supported",exchange:registered.exchange,pair:pairHistory},501);
   const limit=Math.min(days*(interval==="1d"?1:interval==="4h"?6:24)+1,1000);
   const pairSymbol=baseAsset+quoteAsset;
-  const pairPromise=binanceKlines(pairSymbol,interval,limit);
   const baseIsStable=baseAsset==="USD"||baseAsset==="USDT"||baseAsset==="USDC";
   const quoteIsStable=quoteAsset==="USD"||quoteAsset==="USDT"||quoteAsset==="USDC";
-  const basePromise=quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit);
-  const quotePromise=baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit);
-  const results=await Promise.allSettled([pairPromise,basePromise,quotePromise]);
-  let pair:any[]|null=results[0].status==="fulfilled"?results[0].value:null;
-  let base:any[]|null=results[1].status==="fulfilled"?results[1].value:null;
-  let quote:any[]|null=results[2].status==="fulfilled"?results[2].value:null;
+  let pair:any[]|null=null;
+  let base:any[]|null=null;
+  let quote:any[]|null=null;
   let historySource="Binance";
-  if(!pair){
-    try{
-      const krakenBase=baseIsStable?[]:await krakenUsdKlines(baseAsset);
-      const krakenQuote=quoteIsStable?[]:await krakenUsdKlines(quoteAsset);
-      if(quoteIsStable&&krakenBase.length){pair=krakenBase.map((r:any)=>({time:r.time,close:r.close}));base=krakenBase;}
-      else if(baseIsStable&&krakenQuote.length){pair=krakenQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=krakenQuote;}
-      else if(krakenBase.length&&krakenQuote.length){const qMap=new Map(krakenQuote.map((r:any)=>[r.time,r.close]));pair=krakenBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=krakenBase;quote=krakenQuote;}
-      if(pair)historySource="Kraken";
-    }catch{}
-  }
-  if(!pair){
-    const geckoDays=Math.max(1,Math.ceil(days));
-    try{
-      const geckoBase=baseIsStable?[]:await coingeckoUsdKlines(baseAsset,geckoDays);
-      const geckoQuote=quoteIsStable?[]:await coingeckoUsdKlines(quoteAsset,geckoDays);
-      if(quoteIsStable&&geckoBase.length){pair=geckoBase.map((r:any)=>({time:r.time,close:r.close}));base=geckoBase;}
-      else if(baseIsStable&&geckoQuote.length){pair=geckoQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=geckoQuote;}
-      else if(geckoBase.length&&geckoQuote.length){const qMap=new Map<string, number>(geckoQuote.map((r:any)=>[String(r.time), Number(r.close)]));pair=geckoBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=geckoBase;quote=geckoQuote;}
-      if(pair)historySource="CoinGecko";
-    }catch{}
-  }
-  if(!pair){
+  let storageMode:"temporary"|"persisted"=interval==="1d"?"persisted":"temporary";
+  if(interval==="1d"){
     const [storedBase,storedQuote]=await Promise.all([
       storedAssetKlines(sql,String(registered.base_asset_id),limit),
       storedAssetKlines(sql,String(registered.quote_asset_id),limit)
     ]);
-    if(quoteIsStable && storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
-    else if(baseIsStable && storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
-    else if(storedBase.length&&storedQuote.length){const qMap=new Map<string, number>(storedQuote.map((r:any)=>[String(r.time), Number(r.close)]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
-    if(pair)historySource="stored_market_history";
+    if(quoteIsStable&&storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
+    else if(baseIsStable&&storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
+    else if(storedBase.length&&storedQuote.length){const qMap=new Map<string, number>(storedQuote.map((r:any)=>[String(r.time),Number(r.close)]));pair=storedBase.map((r:any)=>({time:r.time,close:r.close/(qMap.get(r.time)??0)})).filter((r:any)=>r.close>0);base=storedBase;quote=storedQuote;}
+    historySource="stored_market_history";
+  }else{
+    try{
+      pair=await binanceKlines(pairSymbol,interval,limit);
+      const [baseResult,quoteResult]=await Promise.allSettled([
+        quoteIsStable?Promise.resolve(null):usdKlines(baseAsset,interval,limit),
+        baseIsStable?Promise.resolve(null):usdKlines(quoteAsset,interval,limit)
+      ]);
+      base=baseResult.status==="fulfilled"?baseResult.value:null;
+      quote=quoteResult.status==="fulfilled"?quoteResult.value:null;
+    }catch{}
   }
-  if(!pair){
-    const providerErrors=results.filter((r:any)=>r.status==="rejected").map((r:any)=>String(r.reason?.message??"provider_error"));
-    return json({status:"error",error:"market_history_unavailable",pair:pairHistory,provider_errors:providerErrors},503);
-  }
+  if(!pair){ return json({status:"error",error:interval==="1d"?"persisted_market_history_unavailable":"temporary_market_history_unavailable",pair:pairHistory,interval,storage_mode:storageMode},503); }
   const baseMap=base?new Map(base.map((x:any)=>[x.time,x.close])):null;
   const quoteMap=quote?new Map(quote.map((x:any)=>[x.time,x.close])):null;
   const rows=pair.map((p:any)=>{const b=baseIsStable?1:quoteIsStable?p.close:baseMap?.get(p.time)??null;const q=quoteIsStable?1:quoteMap?.get(p.time)??null;return {time:p.time,pair:p.close,baseUsd:b,quoteUsd:q}}).filter((r:any)=>r.baseUsd!==null&&r.quoteUsd!==null);
   if(!rows.length)return json({status:"error",error:"binance_history_unavailable",pair:pairHistory},503);
   const normalize=(key:"pair"|"baseUsd"|"quoteUsd")=>{const first=rows[0]?.[key];return rows.map((r:any)=>({time:r.time,value:first?Number(((r[key]/first)*100).toFixed(3)):null})).filter((r:any)=>r.value!==null)};
-  return json({status:"ok",source:historySource,pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
+  return json({status:"ok",source:historySource,storage_mode:storageMode,pair:pairHistory,interval,days,rows,normalized:{relative:normalize("pair"),base:normalize("baseUsd"),quote:normalize("quoteUsd")},interpretation:{relative_strength:`${pairHistory} rising means the base asset is outperforming the quote asset; falling means the quote asset is outperforming the base asset.`}});
  }
  if(url.pathname==="/api/assets"||url.pathname==="/api/assets/"){
   if(request.method==="POST"){const auth=requireAdmin(request,env);if(auth)return auth;const d=await body(request),symbol=text(d?.symbol).toUpperCase(),name=text(d?.name),category=text(d?.category)||"core",tier=text(d?.research_tier)||"C",primaryAssetTypeId=text(d?.primary_asset_type_id),requestedEnabled=d?.enabled===undefined?null:Boolean(d?.enabled);if(!symbol||!name)return json({status:"error",error:"symbol_and_name_required"},400);if(!["A","B","C"].includes(tier))return json({status:"error",error:"invalid_research_tier"},400);if(!["core","defi","l1_infrastructure","bitcoin_ecosystem","stablecoin_payments"].includes(category))return json({status:"error",error:"invalid_category"},400);if(requestedEnabled===true&&!primaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);try{if(primaryAssetTypeId){const type=await sql`select asset_type_id from asset_types where asset_type_id=${primaryAssetTypeId} and is_active=true limit 1`;if(!type[0])return json({status:"error",error:"invalid_primary_asset_type"},400)}const existing=await sql`select enabled,primary_asset_type_id from assets where asset_id=${symbol.toLowerCase()} limit 1`;const enabled=requestedEnabled===null?(existing[0]?.enabled??false):requestedEnabled;const resolvedPrimaryAssetTypeId=primaryAssetTypeId||existing[0]?.primary_asset_type_id||null;if(enabled&&!resolvedPrimaryAssetTypeId)return json({status:"error",error:"primary_asset_type_required_for_enabled_asset"},400);const r=await sql`insert into assets(asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id,research_reason) values(${symbol.toLowerCase()},${symbol},${name},${category},${tier},${enabled},${resolvedPrimaryAssetTypeId},'Added through Dynamic Asset Engine') on conflict(asset_id) do update set symbol=excluded.symbol,name=excluded.name,category=excluded.category,research_tier=excluded.research_tier,enabled=excluded.enabled,primary_asset_type_id=excluded.primary_asset_type_id,updated_at=now() returning asset_id,symbol,name,category,research_tier,enabled,primary_asset_type_id`;return json({status:"ok",item:r[0]},201)}catch(error){return json({status:"error",error:"asset_persistence_failed"},503)}}
