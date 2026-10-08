@@ -17,7 +17,7 @@ export function normalizeResearchBlocks(input: any[] | undefined | null): Resear
   const source = Array.isArray(input) ? input : [];
   return STRUCTURE_1_BLOCKS.map((definition) => {
     const found = source.find((b) => Number(b?.block_number) === definition.number || b?.code === definition.code || Number(b?.number) === definition.number);
-    return { ...definition, status: normalizeResearchBlockStatus(found?.status), summary: found?.summary ?? null, analysis: found?.analysis ?? null };
+    return { ...definition, status: normalizeResearchBlockStatus(found?.status), summary: found?.summary ?? null, analysis: found?.analysis ?? null, confidence: found?.confidence ?? null, domains: Array.isArray(found?.domains) ? found.domains : [] };
   });
 }
 
