@@ -31,7 +31,7 @@ async function binanceTicker(symbol:string){
  throw new Error(`Binance ticker unavailable: ${symbol}`);
 }
 async function krakenTicker(base:string,quote:string){
- const pair=`${base===\"BTC\"?\"XBT\":base}${quote===\"USDT\"?\"USDT\":quote}`;
+ const pair=`${base==="BTC"?"XBT":base}${quote==="USDT"?"USDT":quote}`;
  const response=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(pair)}&assetVersion=1`,{headers:{Accept:"application/json"}});
  if(!response.ok)throw new Error(`Kraken ticker ${pair}: ${response.status}`);
  const data=await response.json() as any;
