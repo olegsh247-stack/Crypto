@@ -58,7 +58,14 @@ jobs:
           check "eth_identity" 'ETH' /tmp/ui-eth.html
           check "eth_dashboard" 'ASSET DASHBOARD' /tmp/ui-eth.html
           check "eth_monitoring" 'Monitoring' /tmp/ui-eth.html
-          check "eth_freshness" 'Freshness' /tmp/ui-eth.html
+          if grep -Fq -- '>Current<' /tmp/ui-eth.html || \
+             grep -Fq -- '>Update recommended<' /tmp/ui-eth.html || \
+             grep -Fq -- '>Outdated<' /tmp/ui-eth.html; then
+            echo "UI_CHECK_OK eth_freshness"
+          else
+            echo "UI_CHECK_FAIL eth_freshness expected Current|Update recommended|Outdated file=/tmp/ui-eth.html"
+            exit 1
+          fi
           check "eth_deep_research_link" 'Open Deep Research' /tmp/ui-eth.html
           check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
           check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
