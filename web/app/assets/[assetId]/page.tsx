@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAsset, getPairHistory } from "../../../lib/api";
+import { getAsset, getPairHistory, getPairTicker } from "../../../lib/api";
 import MarketTabs from "../../components/MarketTabs";
 import { getResearchProgress, getResearchStatusLabel, getResearchBlockStatusLabel, normalizeResearchBlocks, normalizeResearchFreshness, getResearchFreshnessLabel } from "../../../lib/research-status";
 
