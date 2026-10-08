@@ -59,10 +59,13 @@ for (const symbol of ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","
   assert(symbols.has(symbol), "pair " + symbol);
 }
 
-const btcTicker = await get("/api/pairs/BTC%2FUSDT/ticker");
-assert(btcTicker.pair === "BTC/USDT", "BTC ticker identity");
-assert(Number.isFinite(Number(btcTicker.price)) && Number(btcTicker.price) > 0, "BTC ticker price");
-assert(btcTicker.timestamp && btcTicker.source, "BTC ticker provenance");
+for (const symbol of ["BTC/USDT","ETH/USDT"]) {
+  const ticker = await get("/api/pairs/" + encodeURIComponent(symbol) + "/ticker");
+  assert(ticker.pair === symbol, symbol + " ticker identity");
+  assert(Number.isFinite(Number(ticker.price)) && Number(ticker.price) > 0, symbol + " ticker price");
+  assert(ticker.timestamp && ticker.source, symbol + " ticker provenance");
+  assert(["Binance","OKX","Bybit","MEXC"].includes(ticker.source), symbol + " ticker source");
+}
 
 const canonicalSymbols = ["BTC/USDT","DASH/USDT","ETH/USDT","SOL/USDT","CAKE/USDT","BCH/USDT","LTC/USDT","XRP/USDT","TRX/USDT"];
 const historyResults = [];
