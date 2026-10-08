@@ -13,6 +13,44 @@ function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodi
 function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.headers.get("Authorization")===`Bearer ${env.ADMIN_TOKEN}`}
 function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
 
+const tickerCache=new Map<string,{expiresAt:number;value:{price:number;timestamp:string;source:string}}>();
+const TICKER_CACHE_TTL_MS=60_000;
+function tickerJson(data:unknown,status=200,env?:Env):Response{return Response.json(data,{status,headers:{"Cache-Control":"public, max-age=30, s-maxage=60",...corsHeaders(env??{DATABASE_URL:""})}})}
+async function binanceTicker(symbol:string){
+ const endpoints=[`https://data-api.binance.vision/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api-gcp.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`];
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+   if(!response.ok)continue;
+   const data=await response.json() as any;
+   const price=Number(data?.price);
+   if(Number.isFinite(price)&&price>0)return {price,timestamp:new Date().toISOString(),source:"Binance"};
+  }catch{}
+ }
+ throw new Error(`Binance ticker unavailable: ${symbol}`);
+}
+async function krakenTicker(base:string,quote:string){
+ const pair=`${base===\"BTC\"?\"XBT\":base}${quote===\"USDT\"?\"USDT\":quote}`;
+ const response=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(pair)}&assetVersion=1`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`Kraken ticker ${pair}: ${response.status}`);
+ const data=await response.json() as any;
+ const key=Object.keys(data?.result??{})[0];
+ const price=Number(data?.result?.[key]?.c?.[0]);
+ if(!Number.isFinite(price)||price<=0)throw new Error(`Kraken ticker unavailable: ${pair}`);
+ return {price,timestamp:new Date().toISOString(),source:"Kraken"};
+}
+async function coingeckoTicker(base:string,quote:string){
+ const id=COINGECKO_IDS[base];
+ const vs=quote==="USDT"||quote==="USDC"||quote==="USD"?"usd":quote.toLowerCase();
+ if(!id)return null;
+ const response=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=${encodeURIComponent(vs)}`,{headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error(`CoinGecko ticker ${base}: ${response.status}`);
+ const data=await response.json() as any;
+ const price=Number(data?.[id]?.[vs]);
+ if(!Number.isFinite(price)||price<=0)throw new Error(`CoinGecko ticker unavailable: ${base}/${quote}`);
+ return {price,timestamp:new Date().toISOString(),source:"CoinGecko"};
+}
+
 async function binanceKlines(symbol:string,interval:string,limit:number){
  const query=`symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
  const endpoints=[`https://data-api.binance.vision/api/v3/klines?${query}`,`https://api-gcp.binance.com/api/v3/klines?${query}`,`https://api.binance.com/api/v3/klines?${query}`];
@@ -130,6 +168,32 @@ export default {
    if(fallback)return json({status:"ok",pair,price:fallback.price,timestamp:fallback.timestamp,source:fallback.source});
   }
   return json({status:"error",error:"market_ticker_unavailable",pair},503);
+ }
+ const pairTicker=getPairHistorySymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
+  const parts=pairTicker.split("/");
+  if(parts.length!==2||!parts[0]||!parts[1])return tickerJson({status:"error",error:"invalid_pair_symbol"},400,env);
+  const [baseAsset,quoteAsset]=parts;
+  const pairRegistry=await sql`select mp.symbol,mp.base_asset_id,mp.quote_asset_id,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairTicker} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
+  if(!pairRegistry[0])return tickerJson({status:"error",error:"market_pair_not_registered",pair:pairTicker},404,env);
+  const registered=pairRegistry[0];
+  if(String(registered.base_symbol).toUpperCase()!==baseAsset||String(registered.quote_symbol).toUpperCase()!==quoteAsset)return tickerJson({status:"error",error:"market_pair_identity_mismatch",pair:pairTicker},409,env);
+  const cacheKey=String(registered.id??pairTicker).toLowerCase();
+  const cached=tickerCache.get(cacheKey);
+  if(cached&&cached.expiresAt>Date.now())return tickerJson({status:"ok",pair:pairTicker,...cached.value},200,env);
+  const providers=[()=>binanceTicker(baseAsset+quoteAsset),()=>krakenTicker(baseAsset,quoteAsset),()=>coingeckoTicker(baseAsset,quoteAsset)];
+  for(const provider of providers){
+   try{
+    const value=await provider();
+    if(!value)continue;
+    tickerCache.set(cacheKey,{expiresAt:Date.now()+TICKER_CACHE_TTL_MS,value});
+    if(tickerCache.size>64){
+      const first=tickerCache.keys().next().value;
+      if(first)tickerCache.delete(first);
+    }
+    return tickerJson({status:"ok",pair:pairTicker,...value},200,env);
+   }catch{}
+  }
+  return tickerJson({status:"error",error:"current_price_unavailable",pair:pairTicker},503,env);
  }
  const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
   const requestedDays=Math.max(Number(url.searchParams.get("days")??(url.searchParams.get("interval")==="1d"?30:7)),1),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);const maxDays=interval==="1d"?30:7;const days=Math.min(requestedDays,maxDays);
