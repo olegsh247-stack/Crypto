@@ -32,14 +32,24 @@ jobs:
             sleep 2
           done
           curl -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
-          curl -fsS "http://127.0.0.1:3000/pairs" >/tmp/ui-pairs.html
           curl -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
-          curl -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-research.html
-          grep -q 'href="/pairs"' /tmp/ui-home.html
-          grep -q '/pairs/' /tmp/ui-pairs.html
+          curl -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-eth-research.html
+          curl -fsS "http://127.0.0.1:3000/assets/btc" >/tmp/ui-btc.html
+          curl -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
+
+          # Product Contour v1: Home → Assets → Asset Dashboard → Deep Research.
+          grep -q 'href="#assets"' /tmp/ui-home.html
+          grep -q 'href="/research"' /tmp/ui-home.html
+          grep -q '>Assets<' /tmp/ui-home.html
           grep -q 'ETH' /tmp/ui-eth.html
+          grep -q 'ASSET DASHBOARD' /tmp/ui-eth.html
           grep -q 'Monitoring' /tmp/ui-eth.html
-          grep -q 'Freshness:' /tmp/ui-eth.html
-          grep -q '15 blocks' /tmp/ui-eth.html
-          grep -q 'Research chapters' /tmp/ui-research.html
-          echo "UI_RUNTIME_E2E_OK home=1 pairs=1 eth=1 lifecycle=1 freshness=1 research=1"
+          grep -q 'Freshness' /tmp/ui-eth.html
+          grep -q 'Open Deep Research' /tmp/ui-eth.html
+          grep -q 'Research chapters' /tmp/ui-eth-research.html
+          grep -q '15 chapters' /tmp/ui-eth-research.html
+          grep -q 'Structure 1' /tmp/ui-eth-research.html
+          grep -q 'BTC' /tmp/ui-btc.html
+          grep -q 'ASSET DASHBOARD' /tmp/ui-btc.html
+          grep -q 'Research chapters' /tmp/ui-btc-research.html
+          echo "UI_RUNTIME_E2E_OK contour=1 home=1 assets=1 eth=1 btc=1 dashboard=1 research=1 structure1=1"
