@@ -1,4 +1,4 @@
-import type { AdminMutationResponse, MarketPair, PairHistoryResponse, PairsResponse } from "../../shared/api-contract";
+import type { AdminMutationResponse, MarketPair, PairHistoryResponse, PairTickerResponse, PairsResponse } from "../../shared/api-contract";
 export type { MarketPair } from "../../shared/api-contract";
 
 export type Asset = {
@@ -65,6 +65,7 @@ export async function getPairs(): Promise<PairsResponse> { return api<PairsRespo
 export async function createPair(input: { base: string; quote: string; exchange?: string }): Promise<AdminMutationResponse<MarketPair>> { return api<AdminMutationResponse<MarketPair>>("/api/admin/pairs", { method: "POST", body: JSON.stringify({ symbol: input.base + "/" + input.quote, exchange: input.exchange }) }); }
 export async function disablePair(id: string): Promise<AdminMutationResponse<MarketPair>> { return api<AdminMutationResponse<MarketPair>>("/api/admin/pairs/" + encodeURIComponent(id), { method: "DELETE" }); }
 export async function getPairHistory(symbol: string, days = 30, interval = "1d"): Promise<PairHistoryResponse> { return api<PairHistoryResponse>("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=" + days + "&interval=" + encodeURIComponent(interval)); }
+export async function getPairTicker(symbol: string): Promise<PairTickerResponse> { return api<PairTickerResponse>("/api/pairs/" + encodeURIComponent(symbol) + "/ticker"); }
 export async function getCommodities() { return api<any>("/api/commodities"); }
 export async function createCommodity(input: { symbol: string; name: string; unit?: string }) { return api<any>("/api/admin/commodities", { method: "POST", body: JSON.stringify(input) }); }
 export async function disableCommodity(id: string) { return api<any>("/api/admin/commodities/" + encodeURIComponent(id), { method: "DELETE" }); }
