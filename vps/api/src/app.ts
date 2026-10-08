@@ -29,6 +29,39 @@ async function binanceKlines(symbol:string,interval:string,limit:number){
  }
  throw new Error(`Binance ${symbol}: ${statuses.join(",")}`);
 }
+async function binanceTicker(symbol:string){
+ const endpoints=[`https://data-api.binance.vision/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api-gcp.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`];
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+   if(!response.ok)continue;
+   const data=await response.json() as any;
+   const price=Number(data?.price);
+   if(Number.isFinite(price)&&price>0)return {price,timestamp:new Date().toISOString(),source:"Binance"};
+  }catch{}
+ }
+ return null;
+}
+async function fallbackTicker(exchange:string,symbol:string){
+ const endpoints:Record<string,string>={
+  okx:`https://www.okx.com/api/v5/market/ticker?instId=${encodeURIComponent(symbol.replace("/", "-"))}`,
+  bybit:`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${encodeURIComponent(symbol.replace("/", ""))}`,
+  mexc:`https://api.mexc.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol.replace("/", ""))}`
+ };
+ const endpoint=endpoints[exchange];
+ if(!endpoint)return null;
+ try{
+  const response=await fetch(endpoint,{headers:{Accept:"application/json"}});
+  if(!response.ok)return null;
+  const data=await response.json() as any;
+  const raw=exchange==="okx"?data?.data?.[0]?.last:exchange==="bybit"?data?.result?.list?.[0]?.lastPrice:data?.price;
+  const price=Number(raw);
+  if(!Number.isFinite(price)||price<=0)return null;
+  const ts=exchange==="okx"?Number(data?.data?.[0]?.ts):Date.now();
+  return {price,timestamp:Number.isFinite(ts)&&ts>0?new Date(ts).toISOString():new Date().toISOString(),source:exchange==="okx"?"OKX":exchange==="bybit"?"Bybit":"MEXC"};
+ }catch{return null}
+}
+
 async function usdKlines(asset:string,interval:string,limit:number){
  if(asset==="USD"||asset==="USDT"||asset==="USDC")return null;
  return binanceKlines(asset+"USDT",interval,limit);
@@ -75,6 +108,29 @@ export default {
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
+ if(url.pathname.endsWith("/ticker")&&request.method==="GET"){
+  const m=url.pathname.match(/^\\/api\\/pairs\\/([^/]+)\\/ticker\\/?$/);
+  const pair=m?decodeURIComponent(m[1]).toUpperCase():null;
+  if(!pair)return json({status:"error",error:"invalid_pair_symbol"},400);
+  const parts=pair.split("/");
+  if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
+  const [baseAsset,quoteAsset]=parts;
+  const pairRegistry=await sql`select mp.symbol,mp.base_asset_id,mp.quote_asset_id,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol,a.fallback_symbols from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id join assets a on a.asset_id=mp.base_asset_id where upper(mp.symbol)=${pair} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
+  if(!pairRegistry[0])return json({status:"error",error:"market_pair_not_registered",pair},404);
+  const registered=pairRegistry[0];
+  if(String(registered.base_symbol).toUpperCase()!==baseAsset||String(registered.quote_symbol).toUpperCase()!==quoteAsset)return json({status:"error",error:"market_pair_identity_mismatch",pair},409);
+  if(String(registered.quote_symbol).toUpperCase()!=="USDT")return json({status:"error",error:"unsupported_ticker_quote",pair},501);
+  const primary=await binanceTicker(baseAsset+quoteAsset);
+  if(primary)return json({status:"ok",pair,price:primary.price,timestamp:primary.timestamp,source:primary.source});
+  const fallbackSymbols=registered.fallback_symbols&&typeof registered.fallback_symbols==="object"?registered.fallback_symbols:{};
+  for(const exchange of ["okx","bybit","mexc"]){
+   const configured=String(fallbackSymbols[exchange]??"");
+   const symbol=configured||((exchange==="okx"?baseAsset+"-USDT":baseAsset+"USDT"));
+   const fallback=await fallbackTicker(exchange,symbol);
+   if(fallback)return json({status:"ok",pair,price:fallback.price,timestamp:fallback.timestamp,source:fallback.source});
+  }
+  return json({status:"error",error:"market_ticker_unavailable",pair},503);
+ }
  const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
   const requestedDays=Math.max(Number(url.searchParams.get("days")??(url.searchParams.get("interval")==="1d"?30:7)),1),interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);const maxDays=interval==="1d"?30:7;const days=Math.min(requestedDays,maxDays);
   const parts=pairHistory.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
