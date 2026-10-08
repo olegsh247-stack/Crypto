@@ -91,7 +91,9 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const chartKey = chartPresets[chart] ? chart : "1d";
   const chartPreset = chartPresets[chartKey];
   let chartData: any = null;
+  let tickerData: any = null;
   try { chartData = await getPairHistory(`${asset.symbol}/USDT`, chartPreset.days, chartPreset.interval); } catch { chartData = null; }
+  try { tickerData = await getPairTicker(`${asset.symbol}/USDT`); } catch { tickerData = null; }
   const chartRows = (chartData?.rows ?? []).filter((row: any) => Number.isFinite(Number(row.pair)) && row.time);
   const chartValues = chartRows.map((row: any) => Number(row.pair));
   const chartMin = chartValues.length ? Math.min(...chartValues) : 0;
@@ -115,7 +117,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
         <div className="chart-tabs" aria-label="Chart interval">
           {Object.entries(chartPresets).map(([key, preset]) => <Link key={key} className={`button ${key === chartKey ? "active" : ""}`} href={`/assets/${assetId}?chart=${key}#market`}>{preset.label}</Link>)}
         </div>
-        <div><strong>{chartLast != null ? chartLast.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong>{chartChange != null && <span className="muted"> {chartChange >= 0 ? "+" : ""}{chartChange.toFixed(2)}%</span>}</div>
+        <div><strong>{tickerData?.price != null ? Number(tickerData.price).toLocaleString(undefined, { maximumFractionDigits: 8 }) : chartLast != null ? chartLast.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"}</strong>{chartChange != null && <span className="muted"> {chartChange >= 0 ? "+" : ""}{chartChange.toFixed(2)}%</span>}<div className="muted">{tickerData?.source ?? chartData?.source ?? "No source"}</div></div>
       </div>
       {chartRows.length > 1 ? <div className="chart-wrap" aria-label={`${asset.symbol} ${chartPreset.label} price chart`}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${asset.symbol} ${chartPreset.label} market history`}>
