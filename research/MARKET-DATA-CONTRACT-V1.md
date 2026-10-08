@@ -33,6 +33,10 @@ Market data does not become the Asset identity. Research remains attached to the
 
 Current price is the latest available market price for the canonical Asset's primary registered pair.
 
+API endpoint: `GET /api/pairs/:symbol/ticker`.
+
+Response exposes `status`, `pair`, `price`, `timestamp`, and `source`.
+
 Default source: **Binance**.
 
 Fallback order may use the existing registered market-data fallback chain when Binance is unavailable.
@@ -81,6 +85,8 @@ The product requirement is one daily observation per calendar day using the prod
 
 Canonical boundary: **00:00 Europe/London**.
 
+The scheduled worker may wake hourly, but performs the daily market snapshot only during the London 00:00 hour. The persisted daily row is the idempotency boundary, and DST is handled through `Europe/London` rather than a fixed UTC offset.
+
 Provider timestamps must be normalized to this product boundary before persistence or comparison.
 
 ## 8. Persistence model
@@ -126,11 +132,13 @@ Response remains compatible with:
 
 A market-data response must make it possible for the UI to distinguish live temporary data from persisted daily history.
 
-Implementation may add an explicit `storage_mode` field:
+Implementation adds an explicit `storage_mode` field:
 - `temporary`
 - `persisted`
 
-This is preferred because the distinction is a product contract.
+`1h`/`4h` return `temporary`; `1d` returns `persisted` when serving stored daily candles.
+
+The ticker endpoint is live temporary market state and is not persisted as a daily candle.
 
 ## 11. Asset Dashboard contract
 
