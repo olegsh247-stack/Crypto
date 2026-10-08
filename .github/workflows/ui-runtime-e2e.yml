@@ -42,12 +42,22 @@ jobs:
             local name="$1"
             local pattern="$2"
             local file="$3"
-            if grep -q "$pattern" "$file"; then
+            if grep -Fq -- "$pattern" "$file"; then
               echo "UI_CHECK_OK $name"
             else
               echo "UI_CHECK_FAIL $name pattern=$pattern file=$file"
-              echo "---- matching context ----"
-              grep -o ".\{0,80\}$pattern.\{0,120\}" "$file" | head -n 3 || true
+              echo "---- nearby HTML text ----"
+              python - "$file" "$pattern" <<'PY'
+import sys
+from pathlib import Path
+html = Path(sys.argv[1]).read_text(errors="replace")
+needle = sys.argv[2]
+i = html.find(needle)
+if i >= 0:
+    print(html[max(0, i-240):i+len(needle)+360])
+else:
+    print(html[:1200])
+PY
               exit 1
             fi
           }
