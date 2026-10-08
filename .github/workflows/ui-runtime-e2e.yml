@@ -47,17 +47,7 @@ jobs:
             else
               echo "UI_CHECK_FAIL $name pattern=$pattern file=$file"
               echo "---- nearby HTML text ----"
-              python - "$file" "$pattern" <<'PY'
-import sys
-from pathlib import Path
-html = Path(sys.argv[1]).read_text(errors="replace")
-needle = sys.argv[2]
-i = html.find(needle)
-if i >= 0:
-    print(html[max(0, i-240):i+len(needle)+360])
-else:
-    print(html[:1200])
-PY
+              grep -F -C 2 -- "$pattern" "$file" || true
               exit 1
             fi
           }
