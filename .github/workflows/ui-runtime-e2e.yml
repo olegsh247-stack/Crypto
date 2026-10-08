@@ -38,18 +38,32 @@ jobs:
           curl -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
 
           # Product Contour v1: Home → Assets → Asset Dashboard → Deep Research.
-          grep -q 'href="#assets"' /tmp/ui-home.html
-          grep -q 'href="/research"' /tmp/ui-home.html
-          grep -q '>Assets<' /tmp/ui-home.html
-          grep -q 'ETH' /tmp/ui-eth.html
-          grep -q 'ASSET DASHBOARD' /tmp/ui-eth.html
-          grep -q 'Monitoring' /tmp/ui-eth.html
-          grep -q 'Freshness' /tmp/ui-eth.html
-          grep -q 'Open Deep Research' /tmp/ui-eth.html
-          grep -q 'Research chapters' /tmp/ui-eth-research.html
-          grep -q '15 chapters' /tmp/ui-eth-research.html
-          grep -q 'Structure 1' /tmp/ui-eth-research.html
-          grep -q 'BTC' /tmp/ui-btc.html
-          grep -q 'ASSET DASHBOARD' /tmp/ui-btc.html
-          grep -q 'Research chapters' /tmp/ui-btc-research.html
+          check() {
+            local name="$1"
+            local pattern="$2"
+            local file="$3"
+            if grep -q "$pattern" "$file"; then
+              echo "UI_CHECK_OK $name"
+            else
+              echo "UI_CHECK_FAIL $name pattern=$pattern file=$file"
+              echo "---- matching context ----"
+              grep -o ".\{0,80\}$pattern.\{0,120\}" "$file" | head -n 3 || true
+              exit 1
+            fi
+          }
+
+          check "home_assets_anchor" 'href="#assets"' /tmp/ui-home.html
+          check "home_research_link" 'href="/research"' /tmp/ui-home.html
+          check "home_assets_label" '>Assets<' /tmp/ui-home.html
+          check "eth_identity" 'ETH' /tmp/ui-eth.html
+          check "eth_dashboard" 'ASSET DASHBOARD' /tmp/ui-eth.html
+          check "eth_monitoring" 'Monitoring' /tmp/ui-eth.html
+          check "eth_freshness" 'Freshness' /tmp/ui-eth.html
+          check "eth_deep_research_link" 'Open Deep Research' /tmp/ui-eth.html
+          check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
+          check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
+          check "eth_structure1" 'Structure 1' /tmp/ui-eth-research.html
+          check "btc_identity" 'BTC' /tmp/ui-btc.html
+          check "btc_dashboard" 'ASSET DASHBOARD' /tmp/ui-btc.html
+          check "btc_research_chapters" 'Research chapters' /tmp/ui-btc-research.html
           echo "UI_RUNTIME_E2E_OK contour=1 home=1 assets=1 eth=1 btc=1 dashboard=1 research=1 structure1=1"
