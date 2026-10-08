@@ -35,6 +35,28 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const mainCatalyst = factors.filter((f: any) => f.thesis_impact === "positive").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
+
+  const positiveFactors = factors.filter((f: any) => f.thesis_impact === "positive").length;
+  const negativeFactors = factors.filter((f: any) => f.thesis_impact === "negative").length;
+  const mixedFactors = factors.filter((f: any) => f.thesis_impact === "mixed").length;
+  const improvingSignals = monitoring.filter((m: any) => m.direction === "improving").length;
+  const deterioratingSignals = monitoring.filter((m: any) => m.direction === "deteriorating").length;
+  const thesisState = thesis?.value != null
+    ? Number(thesis.value) >= 70 ? "Positive" : Number(thesis.value) <= 40 ? "Negative" : "Neutral"
+    : positiveFactors > negativeFactors ? "Positive" : negativeFactors > positiveFactors ? "Negative" : "Mixed";
+  const marketDirection = weekChange == null ? "Unknown" : weekChange > 0.5 ? "Improving" : weekChange < -0.5 ? "Deteriorating" : "Stable";
+  const researchDirection = improvingSignals > deterioratingSignals ? "Improving" : deterioratingSignals > improvingSignals ? "Deteriorating" : mixedFactors > 0 ? "Mixed" : "Stable";
+  const decisionHeadline = thesisState === "Positive"
+    ? "The thesis currently has more support than pressure."
+    : thesisState === "Negative"
+      ? "The thesis currently has more pressure than support."
+      : "The thesis is currently balanced or insufficiently resolved.";
+  const decisionDrivers = [
+    mainCatalyst?.name ? { label: "Catalyst", value: mainCatalyst.name } : null,
+    mainRisk?.name ? { label: "Risk", value: mainRisk.name } : null,
+    currentScenario?.scenario_type ? { label: "Scenario", value: currentScenario.scenario_type } : null,
+  ].filter(Boolean) as Array<{ label: string; value: string }>;
+
   const chartPresets: Record<string, { label: string; interval: string; days: number }> = {
     "1h": { label: "1 hour", interval: "1h", days: 7 },
     "4h": { label: "4 hours", interval: "4h", days: 7 },
@@ -89,9 +111,25 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
       </div> : <p className="muted">No market history is available for this interval yet.</p>}
       <p className="muted">{chartRows.length} observations · {chartPreset.interval} interval · {chartPreset.days} day window · {chartData?.source ?? "unavailable"}</p>
     </section>
-    <section id="overview" className="section card"><div className="row"><div><p className="eyebrow">DECISION VIEW</p><h2>What is the current thesis?</h2></div><Link className="button" href={`/assets/${assetId}/research`}>Open Deep Research · 01–15</Link></div><p>{summary ?? "The research is still being assembled. The dashboard will become richer as the Asset Card fills."}</p><div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div><div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div></section>
+    <section id="overview" className="section card">
+      <div className="row">
+        <div><p className="eyebrow">DECISION VIEW</p><h2>What is happening — and what does it mean?</h2></div>
+        <Link className="button" href={`/assets/${assetId}/research`}>Open Deep Research · 01–15</Link>
+      </div>
+      <div className="decision-lead">
+        <div><span className="muted">Thesis state</span><div className="metric">{thesisState}</div><p>{decisionHeadline}</p></div>
+        <div><span className="muted">Market direction</span><div className="metric">{marketDirection}</div><p>{chartChange != null ? `${chartChange >= 0 ? "+" : ""}${chartChange.toFixed(2)}% over selected market window` : "Market change is not available."}</p></div>
+        <div><span className="muted">Research direction</span><div className="metric">{researchDirection}</div><p>{improvingSignals} improving · {deterioratingSignals} deteriorating signals</p></div>
+      </div>
+      <div className="decision-drivers">
+        {decisionDrivers.length ? decisionDrivers.map((driver) => <div className="row table-row" key={driver.label}><span className="muted">{driver.label}</span><strong>{driver.value}</strong></div>) : <p className="muted">No current catalyst, risk or scenario has been recorded yet.</p>}
+      </div>
+      <p>{summary ?? "The research is still being assembled. The dashboard will become richer as the Asset Card fills."}</p>
+      <div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div>
+      <div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div>
+    </section>
 
-    <section id="market" className="section card" aria-label="Market snapshot">
+    <section id="market-snapshot" className="section card" aria-label="Market snapshot">
       <div className="row">
         <div>
           <p className="eyebrow">MARKET SNAPSHOT</p>
