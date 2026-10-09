@@ -68,6 +68,12 @@ With PostgreSQL startup working again, the rehearsal passed registry and pair pa
 
 The parity contract now compares the common scenario-definition fields between live Worker and VPS, while requiring the VPS API's scenario definitions and any scenario states to carry the latest published `snapshot_id`. If the live Worker supplies a lineage value, it must still match its own latest published snapshot. This keeps the compatibility comparison honest and validates the new VPS lineage contract without deploying to production.
 
+### Follow-up finding from run #85 — history parity ordering
+
+Run #85 passed health, registry, pair and ETH/BTC detail parity, including the revised scenario-lineage contract. It then failed when the parity script called persisted ETH market history: the disposable VPS database had not yet received candle rows, so its history endpoint correctly returned HTTP 503.
+
+The VPS rehearsal now runs market-data ingestion before Worker/VPS parity. The existing worker E2E remains responsible for proving that ingestion added fresh rows, and its history assertion checks the endpoint after that ingestion. This keeps the history comparison meaningful without seeding fabricated market data into the database migrations.
+
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
