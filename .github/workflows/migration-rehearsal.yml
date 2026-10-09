@@ -26,7 +26,7 @@ jobs:
       - name: Run all migrations twice on disposable PostgreSQL
         run: |
           set -euo pipefail
-          docker run -d --name crypto-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
+          docker run -d --name crypto-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 public.ecr.aws/docker/library/postgres:16
           trap 'docker rm -f crypto-postgres >/dev/null 2>&1 || true' EXIT
           ready=0
           for i in $(seq 1 30); do
