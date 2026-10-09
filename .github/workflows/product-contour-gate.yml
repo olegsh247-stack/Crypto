@@ -16,10 +16,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: product-contour-gate-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   runtime-contract:
     name: Build + read-only UI/API contract
