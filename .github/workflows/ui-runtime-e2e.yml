@@ -61,13 +61,13 @@ jobs:
           check "eth_domains" 'Research Domains' /tmp/ui-eth.html
           check "eth_factors" 'Critical Factors' /tmp/ui-eth.html
           check "eth_scores" 'Research Scores' /tmp/ui-eth.html
-          check "eth_scenarios" 'Scenario States' /tmp/ui-eth.html
+          check "eth_scenarios" 'Scenarios' /tmp/ui-eth.html
           check "eth_current_price" 'Current price' /tmp/ui-eth.html
-          check "eth_monitoring_dashboard" 'Monitoring Dashboard' /tmp/ui-eth.html
-          check "eth_current_signals" 'Current Signals' /tmp/ui-eth.html
-          check "eth_recent_events" 'Recent Events' /tmp/ui-eth.html
+          check "eth_monitoring_dashboard" 'MONITORING DASHBOARD' /tmp/ui-eth.html
+          check "eth_current_signals" 'CURRENT SIGNALS' /tmp/ui-eth.html
+          check "eth_recent_events" 'RECENT EVENTS' /tmp/ui-eth.html
           check "eth_evidence" 'Evidence & Sources' /tmp/ui-eth.html
-          check "eth_evidence_chain" 'Trace the research claim' /tmp/ui-eth.html
+          check "eth_evidence_chain" 'provenance layer' /tmp/ui-eth.html
           if grep -Fq -- '>Current<' /tmp/ui-eth.html || \
              grep -Fq -- '>Update recommended<' /tmp/ui-eth.html || \
              grep -Fq -- '>Outdated<' /tmp/ui-eth.html; then
