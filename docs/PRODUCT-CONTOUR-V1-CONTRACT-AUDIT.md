@@ -154,3 +154,48 @@ This audit is documentation-only. It does not authorize:
 - Cloudflare Worker branch build: passed; this is a preview build, not a production deployment.
 - GitHub Web build job did not execute any steps; its job record contains no steps and the known account billing/spending-limit blocker remains unresolved. This is not evidence of a TypeScript build failure.
 - Live API, Neon data, and runtime E2E validation remain outstanding. Do not merge or run migration workflows until those checks are available and safe.
+
+
+## Final Product Contour v1 acceptance review — 2026-10-09
+
+**Review type:** source-level acceptance only. No GitHub Actions run, TypeScript/Web build, live API request, Neon query, migration, or deployment was performed.
+
+### Acceptance matrix
+
+| Product block | Source-level result | Acceptance note |
+|---|---|---|
+| Home | Present | Loads assets from the API and presents the product overview plus lifecycle counts. |
+| Assets | Present as Home section | The navigation points to `/#assets`; there is no separate `/assets` listing route. This works as an in-page listing, but remains a product/navigation decision if a dedicated Assets screen is required. |
+| Asset Dashboard | Present | Asset detail route consumes the Engine response and exposes market context plus the decision view. |
+| Deep Research | Present | Both the research index and per-asset research route exist; per-asset research normalizes to the canonical 15-block structure. |
+| Domains | Present | Dashboard renders domain records and mapped Structure 1 blocks; real data coverage is not runtime-verified. |
+| Factors | Present | Dashboard and Deep Research render critical factors; current-snapshot scoping is implemented in the API source, pending runtime verification. |
+| Scores | Present | Dashboard renders scores and decision-score cards; current-snapshot scoping is implemented in the API source, pending runtime verification. |
+| Scenarios | Present with safe separation | Published definitions and observed state are kept separate where lineage cannot be proven; runtime data semantics remain unverified. |
+| Monitoring | Present | Signals, event history, direction counts and research baseline are rendered; freshness and data quality are not runtime-verified. |
+| Evidence | Present | Evidence rows and source links are rendered; source URL fallback and evidence-linked source collection are implemented in API source, pending runtime verification. |
+
+### Final static checks
+
+A fresh read of the current PR branch confirmed **10/10 source-level acceptance assertions**:
+1. Home loads the asset registry.
+2. Assets navigation resolves to the Home `#assets` section.
+3. Dashboard links to per-asset Deep Research.
+4. Dashboard contains Domains, Factors, Scores, Scenarios, Monitoring and Evidence sections.
+5. Per-asset Deep Research normalizes its content against the canonical 15-block structure.
+6. Web progress counts N/A blocks as resolved.
+7. Shared lifecycle contract defines resolved as complete + N/A.
+8. API lifecycle logic checks resolved blocks and requires completed block 15 for Monitoring.
+9. The Dashboard no longer references the invalid local `currentScenario.invalidation_conditions` field.
+10. Evidence rendering supports source URLs.
+
+These checks establish that the expected source patterns exist; they do **not** establish compilation, API compatibility at runtime, correctness of live records, or end-to-end product readiness.
+
+### Acceptance decision
+
+- **Source structure:** provisionally accepted for the defined v1 contour.
+- **Known scope clarification:** Assets is currently a Home section, not a standalone route.
+- **Build/runtime acceptance:** blocked pending a permitted Web build and read-only live API/data checks.
+- **Release acceptance:** not granted. PR remains unmerged; no production deployment or database changes are authorized by this review.
+- **Operational constraint:** GitHub Actions spending/billing limit remains the known blocker. Do not repeatedly retry Actions or use a migration workflow as a substitute for safe read-only validation.
+- **Next validation batch when available:** run Web typecheck/build, then read-only contract checks for BTC, ETH, SOL and CAKE covering list/detail lifecycle parity, latest snapshot IDs, block counts, factor/score counts, scenario lineage, monitoring signals/events, evidence counts and source URLs. Record actual outputs in this audit before changing the acceptance decision.
