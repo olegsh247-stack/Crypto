@@ -131,9 +131,17 @@ This audit is documentation-only. It does not authorize:
 |---|---|---|
 | Progress counts differ between Web and server | Web now exposes separate completed/resolved counts and calculates progress from resolved blocks (complete + N/A). | Compare against live API payloads and representative asset records. |
 | Factors/scores may mix snapshots | Queries are restricted to the latest published snapshot. | Confirm live row counts and snapshot IDs for BTC, ETH, SOL and CAKE. |
-| Scenario state may belong to another baseline | Scenario states are filtered to the latest published snapshot and include `snapshot_id` in the response. | Verify real rows have matching snapshot IDs and confirm the UI mapping from `scenario_id` to `research_scenario_id`. |
+| Scenario state may belong to another baseline | Scenario states are filtered to the latest published snapshot and include `snapshot_id` in the response. Dashboard no longer joins legacy `scenario_id` to `research_scenario_id`; published scenario definitions and observed state are displayed separately. | Live scenario-state rows remain empty for BTC/ETH; no database rows were changed or synthesized. |
 | Evidence-linked sources omitted from source registry | Source query includes sources referenced by observations or evidence and deduplicates them. | Confirm live payload completeness and source URL availability. |
-| Freshness contract differs between list/detail | Not changed in this PR. | Define a shared list/detail freshness type after inspecting actual payloads. |
+| Freshness contract differs between list/detail | Web freshness types now preserve optional `last_research_at`, `last_major_update_at`, and `next_review_at` fields returned by the API. | Confirm list/detail semantics and UI labels with live payloads; no freshness policy or server behavior changed. |
+
+### Follow-up implementation — 2026-10-09
+
+- Dashboard and Deep Research now render `research_scenarios` as published Bull/Base/Bear definitions, not as a fallback list of `scenario_states`.
+- Dashboard no longer treats the legacy text `scenario_states.scenario_id` as a guaranteed foreign key to `research_scenarios.research_scenario_id`.
+- Web API freshness types preserve optional review timestamps returned by the detail endpoint.
+- No database schema, Neon data, production deployment, VPS, or visual design was changed.
+- Static file-content checks confirmed the unsafe scenario join was removed and the freshness fields are present. A new GitHub Actions run has not yet been observed for these latest commits; a successful Web build is not claimed.
 
 ### Validation status
 
