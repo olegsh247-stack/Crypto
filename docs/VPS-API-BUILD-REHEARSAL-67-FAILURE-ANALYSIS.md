@@ -48,7 +48,7 @@ This is an ordering defect in the rehearsal: persisted history is correctly unav
 
 The registry and ETH-detail checks now pass. The moved history assertion is positioned after worker ingestion, but run #73 stopped earlier at `VPS API parity against live Worker` on `/api/pairs`.
 
-The parity projection included each pair's database-generated `id`. The disposable PostgreSQL database and the live database create independent surrogate IDs, so those IDs are not expected to match even when the pair's public identity and behavior do. The parity projection now compares the stable contract fields — symbol, base/quote asset identity, exchange and enabled status — and omits the generated row ID. This does not change either API or any database data.
+The parity projection initially included each pair's database-generated `id`, which cannot be expected to match between the live database and a clean disposable database. That field has been removed from the comparison. However, run #75 still failed at `/api/pairs`, proving that the generated ID was not the only difference. The parity script now prints the normalized live and VPS pair payloads when an assertion fails, so the next run can identify the actual remaining mismatch rather than guessing.
 
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
