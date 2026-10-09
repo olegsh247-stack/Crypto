@@ -97,7 +97,7 @@ The current PR head is `4fca3266261552a559eb97a46746791ee6de8a84`. PR #3 remains
 
 ## Next product step
 
-With the disposable VPS path and current Worker compatibility checks green, return to the ETH product slice: perform a fresh **read-only** check of the published ETH snapshot and its related scenario definitions, states, evidence, factors, scores and monitoring signals; then validate a candidate state transactionally against disposable PostgreSQL with rollback. Keep any candidate state unpublished and require explicit approval before a production write.
+The next PR run now performs two checks automatically: a fresh read-only ETH snapshot/collection-count preflight against both live Worker and VPS Node API, and a disposable-PostgreSQL candidate-state insert/rollback test. The preflight requires the same published snapshot and Base/Bear/Bull definitions, checks scenario-state lineage on the VPS response, and compares counts for blocks, domains, factors, scores, evidence, signals and events. The rollback test verifies that an evidence-linked candidate row can be inserted within a transaction and leaves no persistent row after `ROLLBACK`. Neither check writes to production or publishes a scenario state.
 
 ## Safety / scope
 

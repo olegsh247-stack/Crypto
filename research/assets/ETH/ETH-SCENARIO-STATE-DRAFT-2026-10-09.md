@@ -143,14 +143,8 @@ Static source inspection confirms the following implementation behavior on branc
 
 ## Verification boundary
 
-A live read-only request to the Worker endpoint and an executable disposable-PostgreSQL run were not completed in this continuation. The public Worker endpoint was not accessible through the available read-only web retrieval path, and this environment cannot clone the repository directly for local execution. Consequently, the production snapshot ID, actual live scenario-state row count, and a test-database insert/rollback have **not** been independently re-verified here. The earlier audit's counts remain historical evidence, not a fresh query.
+The VPS API Build Rehearsal #98 and Product Contour Gate #72 passed on commit `4fca3266261552a559eb97a46746791ee6de8a84`. The rehearsal verified clean PostgreSQL bootstrap, asset/pair registry, ETH detail, mutation contracts, 9-asset worker ingestion (72 candle rows), persisted ETH history, 7-endpoint Worker/VPS parity including scenario lineage, and admin auth boundary.
 
-## Next implementation batch
-
-1. Add scenario definitions and state to the VPS-vs-Worker parity projection, including snapshot lineage and ordering.
-2. Add an isolated integration test that inserts a candidate state inside a transaction and rolls it back, then verifies the API/UI contract without leaving a row behind.
-3. Extend the scenario UI to show observation date and baseline snapshot lineage, and make the indicators/evidence details inspectable. Do not redesign the overall visual system.
-4. Run the VPS rehearsal against a fresh PostgreSQL 16 database and the parity workflow; require all these assertions before the ETH scenario can be accepted.
-5. Re-run the live read-only check for canonical `eth`, published snapshot identity and current state rows before preparing any production write request.
+The published ETH snapshot and scenario counts have not yet been emitted as a dedicated fresh preflight record, and a scenario-state insert/rollback transaction has not yet been exercised. The next workflow revision adds those checks against live Worker (read-only) and disposable PostgreSQL (transaction rolled back). Historical audit counts are not treated as a substitute for this fresh verification.
 
 Until those checks are executed successfully, keep the state unpublished and the UI's “State not recorded” behavior intact.

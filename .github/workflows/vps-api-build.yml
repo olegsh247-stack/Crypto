@@ -70,6 +70,11 @@ jobs:
           test "$count" -gt 0
           test "$duplicates" = "0"
           echo "VPS_DB_BOOTSTRAP_OK migrations=$count duplicate_markers=0 rerun=1"
+      - name: Scenario-state transaction rollback rehearsal (disposable PostgreSQL)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+        run: psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --file=scripts/scenario-state-rollback-rehearsal.sql
+
       - name: Start VPS API
         working-directory: vps/api
         env:
@@ -213,6 +218,12 @@ jobs:
           LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
           VPS_API_URL: http://127.0.0.1:8080
         run: node scripts/vps-api-parity.mjs
+
+      - name: ETH scenario snapshot preflight (read-only)
+        env:
+          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
+          VPS_API_URL: http://127.0.0.1:8080
+        run: node scripts/eth-scenario-preflight.mjs
 
       - name: VPS admin boundary E2E
         run: |
