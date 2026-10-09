@@ -8,6 +8,15 @@ on:
       - "shared/**"
       - "infrastructure/neon/**"
       - "scripts/migrate-neon.sh"
+      - "scripts/vps-api-parity.mjs"
+      - ".github/workflows/vps-api-build.yml"
+  pull_request:
+    paths:
+      - "vps/**"
+      - "shared/**"
+      - "infrastructure/neon/**"
+      - "scripts/migrate-neon.sh"
+      - "scripts/vps-api-parity.mjs"
       - ".github/workflows/vps-api-build.yml"
   workflow_dispatch:
 
