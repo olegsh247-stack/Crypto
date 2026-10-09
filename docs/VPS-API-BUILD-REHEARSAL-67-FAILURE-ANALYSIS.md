@@ -56,6 +56,12 @@ After fixing the pair projection symmetrically, the registry and pair parity che
 
 The Node API query now includes `snapshot_id` in scenario definitions and filters runtime states to the latest published snapshot. This restores the intended lineage contract; it does not write or change database rows. The next rehearsal must verify the correction and may reveal further parity gaps.
 
+### Follow-up finding from run #83 — external image-pull limit
+
+Run #83 did not reach the API tests. The PostgreSQL container startup failed with Docker Hub's unauthenticated pull-rate-limit response (`toomanyrequests`). This is a CI image-fetch limitation, not a migration or application failure.
+
+Both the VPS rehearsal and reusable migration rehearsal now pull the PostgreSQL 16 image from the public Amazon ECR mirror (`public.ecr.aws/docker/library/postgres:16`) instead of Docker Hub. The image remains PostgreSQL 16; this change avoids consuming the same Docker Hub unauthenticated pull quota across concurrent gates. The next run must validate that the mirror is accessible and that clean bootstrap still passes.
+
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
