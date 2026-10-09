@@ -129,3 +129,28 @@ This is a hypothesis, not a published assessment. The available evidence is enou
 3. Add at least one reproducible trend series for net issuance/burn, staking queues and L2/settlement demand, not just one cross-sectional point.
 4. Validate the candidate state payload against a disposable PostgreSQL instance and the existing UI contract.
 5. Keep the current product label “State not recorded” until an authorized write is explicitly approved.
+
+
+## Repository contract verification — 2026-10-09
+
+Static source inspection confirms the following implementation behavior on branch `fix/product-contour-v1-contracts`:
+
+- `workers/crypto-api/src/index.ts` returns `research_scenarios` separately from `scenario_states`. Both are queried against the latest `PUBLISHED` research snapshot for the requested asset; scenario states are ordered newest first.
+- The API normalizes the asset ID from the URL to lowercase. The canonical identity migration maps ETH to `asset_id='eth'`. The earlier historical seed used uppercase `ETH`, so a clean bootstrap must include the canonicalization migrations; a test against only the older ETH seed would not represent the current contract.
+- `web/app/assets/[assetId]/page.tsx` derives the observed state separately from scenario definitions and correctly falls back to “State not recorded” when no state exists.
+- The current UI does not visibly expose the state's `observed_at`, `snapshot_id`, or the `indicators` evidence payload in the scenario summary. These should be included in the acceptance criteria before publishing a state; otherwise the user cannot readily audit when and on what baseline it was assessed.
+- `scripts/vps-api-parity.mjs` currently normalizes only asset identity, research lifecycle/freshness, snapshot status and research-block count for asset details. It does **not** compare `research_scenarios`, `scenario_states`, factors, scores, evidence, monitoring signals or events between Worker and Node API. A green parity result therefore would not yet prove the scenario workflow is portable.
+
+## Verification boundary
+
+A live read-only request to the Worker endpoint and an executable disposable-PostgreSQL run were not completed in this continuation. The public Worker endpoint was not accessible through the available read-only web retrieval path, and this environment cannot clone the repository directly for local execution. Consequently, the production snapshot ID, actual live scenario-state row count, and a test-database insert/rollback have **not** been independently re-verified here. The earlier audit's counts remain historical evidence, not a fresh query.
+
+## Next implementation batch
+
+1. Add scenario definitions and state to the VPS-vs-Worker parity projection, including snapshot lineage and ordering.
+2. Add an isolated integration test that inserts a candidate state inside a transaction and rolls it back, then verifies the API/UI contract without leaving a row behind.
+3. Extend the scenario UI to show observation date and baseline snapshot lineage, and make the indicators/evidence details inspectable. Do not redesign the overall visual system.
+4. Run the VPS rehearsal against a fresh PostgreSQL 16 database and the parity workflow; require all these assertions before the ETH scenario can be accepted.
+5. Re-run the live read-only check for canonical `eth`, published snapshot identity and current state rows before preparing any production write request.
+
+Until those checks are executed successfully, keep the state unpublished and the UI's “State not recorded” behavior intact.
