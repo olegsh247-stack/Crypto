@@ -62,6 +62,12 @@ Run #83 did not reach the API tests. The PostgreSQL container startup failed wit
 
 Both the VPS rehearsal and reusable migration rehearsal now pull the PostgreSQL 16 image from the public Amazon ECR mirror (`public.ecr.aws/docker/library/postgres:16`) instead of Docker Hub. The image remains PostgreSQL 16; this change avoids consuming the same Docker Hub unauthenticated pull quota across concurrent gates. The next run must validate that the mirror is accessible and that clean bootstrap still passes.
 
+### Follow-up finding from run #84 — live Worker rollout boundary
+
+With PostgreSQL startup working again, the rehearsal passed registry and pair parity, then reported that the live Worker response's ETH scenario definition did not contain `snapshot_id`. The branch's Worker source includes this field, but the currently deployed Worker endpoint still serves the older response shape. Production deployment is not authorized in this task, so the test must not require a production rollout just to validate the Node target.
+
+The parity contract now compares the common scenario-definition fields between live Worker and VPS, while requiring the VPS API's scenario definitions and any scenario states to carry the latest published `snapshot_id`. If the live Worker supplies a lineage value, it must still match its own latest published snapshot. This keeps the compatibility comparison honest and validates the new VPS lineage contract without deploying to production.
+
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
