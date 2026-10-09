@@ -217,3 +217,20 @@ These checks establish that the expected source patterns exist; they do **not** 
 - Updated only the UI E2E assertions to check the current source-backed labels: `Scenarios`, `MONITORING DASHBOARD`, `CURRENT SIGNALS`, `RECENT EVENTS`, and `provenance layer`. No product UI, design, API, or database code was changed.
 - Re-fetched the workflow file from the PR branch and confirmed the five updated assertions are present.
 - The workflow was **not run** because the GitHub Actions billing/spending blocker remains. This is a test-contract correction, not evidence that build/runtime validation now passes. Release gate remains blocked; do not merge until an authorized build and safe runtime checks succeed.
+
+
+### Superseding live validation — 2026-10-09
+
+This section supersedes earlier statements in this audit that the Web build/runtime checks were unavailable due to a GitHub Actions billing/spending blocker.
+
+- Web build passed on commit `53004ef154d1fd239a48a5552d5d3deba6884e62`: [Build Crypto Web run #104](https://github.com/olegsh247-stack/Crypto/actions/runs/37972878788).
+- UI Runtime Contract E2E passed on the same commit: [run #5](https://github.com/olegsh247-stack/Crypto/actions/runs/37972879565).
+- The runtime workflow checks Home and dashboard/Deep Research routes for BTC, ETH, SOL and CAKE, then makes GET-only requests to the public API to compare list/detail lifecycle, resolved-block counts, payload arrays and snapshot lineage.
+- BTC: published snapshot `BTC-2026-10-07-v1`; 15/15 blocks resolved; 6 factors; 5 scores; 3 scenarios; 0 scenario states; 7 signals; 0 events; 15 evidence rows with 15 source URLs; 9 sources.
+- ETH: published snapshot `ETH-2026-10-04-v1`; 15/15 blocks resolved; 6 factors; 5 scores; 3 scenarios; 0 scenario states; 6 signals; 0 events; 15 evidence rows with 15 source URLs; 3 sources.
+- SOL: API contract passed, but lifecycle is `not_started`; no published snapshot, blocks, factors, scores, scenarios, scenario states, signals, events, evidence or sources were returned.
+- CAKE: API contract passed, but lifecycle is `not_started`; no published snapshot, blocks, factors, scores, scenarios, scenario states, signals, events, evidence or sources were returned.
+- The SOL/CAKE result is a data-coverage gap, not an API-shape failure. The validation did not write or synthesize data.
+- The branch-divergence conflict was resolved by merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; the merged `.gitignore` preserves the rules from both branches. GitHub now reports the PR as mergeable.
+
+**Updated gate:** Web build PASS; UI/runtime API contract PASS; live data parity checks PASS; research coverage PARTIAL (published research exists for BTC/ETH but not SOL/CAKE); scenario-state and monitoring-event tables are empty for BTC/ETH and need confirmation as expected product behavior or separate follow-up. No production deployment, Neon write, migration, VPS operation, or design change was performed. The detailed current results are in [PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md](./PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md).
