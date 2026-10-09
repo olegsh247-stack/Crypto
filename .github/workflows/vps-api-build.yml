@@ -110,12 +110,6 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
-      - name: VPS API parity against live Worker
-        env:
-          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
-          VPS_API_URL: http://127.0.0.1:8080
-        run: node scripts/vps-api-parity.mjs
-
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
@@ -203,6 +197,12 @@ jobs:
             monitoring_refresh=0
           fi
           echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
+      - name: VPS API parity against live Worker
+        env:
+          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
+          VPS_API_URL: http://127.0.0.1:8080
+        run: node scripts/vps-api-parity.mjs
+
       - name: VPS admin boundary E2E
         run: |
           set -euo pipefail
