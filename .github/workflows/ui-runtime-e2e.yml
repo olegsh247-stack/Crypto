@@ -86,16 +86,16 @@ jobs:
           check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
           check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
           check "eth_structure1" 'Structure 1' /tmp/ui-eth-research.html
-          check "eth_chapter_01" '01 · Essence' /tmp/ui-eth-research.html
+          check "eth_chapter_01" '01 · Essence and current role' /tmp/ui-eth-research.html
           check "eth_chapter_02" '02 · Technology' /tmp/ui-eth-research.html
           check "eth_chapter_03" '03 · Tokenomics' /tmp/ui-eth-research.html
-          check "eth_chapter_04" '04 · Network' /tmp/ui-eth-research.html
+          check "eth_chapter_04" '04 · Network and on-chain state' /tmp/ui-eth-research.html
           check "eth_chapter_05" '05 · Ecosystem' /tmp/ui-eth-research.html
-          check "eth_chapter_06" '06 · Users' /tmp/ui-eth-research.html
-          check "eth_chapter_07" '07 · Institutions' /tmp/ui-eth-research.html
-          check "eth_chapter_08" '08 · Development' /tmp/ui-eth-research.html
-          check "eth_chapter_09" '09 · Macro' /tmp/ui-eth-research.html
-          check "eth_chapter_10" '10 · Competition' /tmp/ui-eth-research.html
+          check "eth_chapter_06" '06 · Users and activity' /tmp/ui-eth-research.html
+          check "eth_chapter_07" '07 · Institutional use and capital' /tmp/ui-eth-research.html
+          check "eth_chapter_08" '08 · Development and adoption' /tmp/ui-eth-research.html
+          check "eth_chapter_09" '09 · Macroeconomic context' /tmp/ui-eth-research.html
+          check "eth_chapter_10" '10 · Competitors and positioning' /tmp/ui-eth-research.html
           check "eth_chapter_11" '11 · Risks' /tmp/ui-eth-research.html
           check "eth_chapter_12" '12 · Catalysts' /tmp/ui-eth-research.html
           check "eth_chapter_13" '13 · Scenarios' /tmp/ui-eth-research.html
