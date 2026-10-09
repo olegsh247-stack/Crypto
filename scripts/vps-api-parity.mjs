@@ -80,7 +80,7 @@ for (const path of paths) {
     right = (v.assets || []).map(x => pick(x, ["asset_id","symbol","name","enabled","research_status"])).sort((a,b)=>a.asset_id.localeCompare(b.asset_id));
   } else if (path === "/api/pairs") {
     left = (l.pairs || l.items || []).map(x => pick(x, ["symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
-    right = (v.pairs || v.items || []).map(x => pick(x, ["id","symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+    right = (v.pairs || v.items || []).map(x => pick(x, ["symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
   }
   if (JSON.stringify(left) !== JSON.stringify(right)) {
     console.error("PARITY_DIFF", path, JSON.stringify({ live: left, vps: right }));
