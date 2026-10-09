@@ -1,28 +1,42 @@
 name: Crypto Release Gate
 
+# Production release is deliberately manual. This workflow applies migrations to
+# Neon and deploys the API; it must never run as a side effect of a normal push.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "workers/**"
-      - "shared/**"
-      - "web/**"
-      - "infrastructure/neon/**"
-      - "scripts/**"
-      - "wrangler.toml"
-      - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      confirm_production_release:
+        description: "Confirm that Neon migrations and Crypto API deployment to production are approved"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  approval:
+    name: 0. Confirm production release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit production confirmation
+        env:
+          CONFIRM_PRODUCTION_RELEASE: ${{ inputs.confirm_production_release }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_RELEASE" = "true" || {
+            echo "::error::Production release was not confirmed. No migration or deployment jobs may run."
+            exit 1
+          }
+          echo "PRODUCTION_RELEASE_CONFIRMED"
+
   migrate:
     name: 1. Database migration and contract gate
+    needs: approval
     uses: ./.github/workflows/apply-neon-v2.yml
     secrets: inherit
 
