@@ -3,16 +3,16 @@
 Date: 2026-10-09
 Branch: `fix/product-contour-v1-contracts`
 PR: https://github.com/olegsh247-stack/Crypto/pull/3
-Validated head: `53004ef154d1fd239a48a5552d5d3deba6884e62`
+Current branch head at this update: `2852fd362a9cb072dcf9f6ebaf4730e44d7d908b`
 
-## Verified
+## Verified runtime baseline
 
-- Web build passed on the validated head: [Build Crypto Web run #104](https://github.com/olegsh247-stack/Crypto/actions/runs/37972878788). Dependency installation, `npm run build`, TypeScript/type validation and static generation completed successfully.
-- UI Runtime Contract E2E passed on the same head: [UI Runtime E2E run #5](https://github.com/olegsh247-stack/Crypto/actions/runs/37972879565).
-- UI E2E exercised Home, ETH/BTC/SOL/CAKE dashboards and their Deep Research routes. The canonical 15 chapter checks passed for ETH.
-- Read-only GET-only API contract checks passed for BTC, ETH, SOL and CAKE: all four are listed, each detail payload has the expected response arrays, list/detail lifecycle agrees, resolved-block counts agree, and snapshot-bound factor/score/scenario records do not cross snapshot lineage.
-- The `.gitignore` conflict was resolved with merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; rules from both sides were preserved. Current branch is ahead of `main` and no longer behind it.
-- PR #3 is currently reported by GitHub as mergeable, but remains a draft.
+- Web build passed on commit `53004ef154d1fd239a48a5552d5d3deba6884e62`: [Build Crypto Web run #104](https://github.com/olegsh247-stack/Crypto/actions/runs/37972878788).
+- UI Runtime Contract E2E passed on the same commit: [run #5](https://github.com/olegsh247-stack/Crypto/actions/runs/37972879565).
+- A later runtime E2E passed on commit `d98b3017384ba6d2b315befbc573deac444a8278`: [UI Runtime E2E](https://github.com/olegsh247-stack/Crypto/actions/runs/37973984413).
+- The runtime workflow exercises Home, BTC/ETH/SOL/CAKE dashboards and Deep Research routes, validates the canonical 15 ETH chapter headings, and uses GET-only API requests for list/detail lifecycle parity, resolved-block counts, response-array shape and snapshot lineage.
+- The Product Contour Gate workflow has been added to consolidate PR validation. Its run on the newest branch head is pending/queued at the time of this update; do not treat that latest run as passed until its result is green.
+- The `.gitignore` conflict was resolved with merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; current branch is ahead of `main` and no longer behind it. GitHub reports PR #3 as mergeable, but it remains a draft.
 
 ## Live API findings
 
@@ -23,17 +23,32 @@ Validated head: `53004ef154d1fd239a48a5552d5d3deba6884e62`
 | SOL | not_started | none | 0 / 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | CAKE | not_started | none | 0 / 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
-The SOL and CAKE endpoints are healthy and structurally compatible, but neither currently has a published research snapshot or research/monitoring/evidence records. The API checks deliberately did not create or synthesize data. This is a **product-data coverage gap**, not a failed API contract.
+The SOL and CAKE endpoints are healthy and structurally compatible, but neither has a published research snapshot or research/monitoring/evidence records. This is a **data coverage gap**, not an API-shape failure.
 
-BTC and ETH have complete 15-block published research snapshots and consistent snapshot-bound factors, scores and scenarios. Both currently return zero scenario-state rows and zero monitoring-event rows; that is reported as observed data, not filled in artificially.
+## Research artifacts prepared
 
-## Remaining decisions / gates
+Draft Structure 1 research artifacts have been added:
+- [SOL Deep Research 01–15](../research/assets/SOL/SOL-RESEARCH-01-15.md)
+- [CAKE Deep Research 01–15](../research/assets/CAKE/CAKE-RESEARCH-01-15.md)
 
-- Code/runtime contract: **PASS** for the checks in this workflow.
-- Research coverage: **PARTIAL** — BTC and ETH have published snapshots; SOL and CAKE still need a product decision and research data if they are intended to be first-class researched assets in v1.
-- Full data semantics: scenario-state/event emptiness for BTC/ETH should be confirmed as expected or tracked as a separate ingestion/product task.
-- PR merge: no longer blocked by branch divergence; keep draft until the product-data coverage decision and remaining acceptance review are recorded.
+They contain no fabricated numeric scores or live metrics and are **not published database snapshots**. They must be reviewed, refreshed with dated primary data, and converted into immutable snapshots through an explicitly approved publication process.
+
+Tracking task: [Issue #4 — publish SOL/CAKE snapshots and define scenario baseline](https://github.com/olegsh247-stack/Crypto/issues/4).
+
+## Scenario-state and monitoring-event semantics
+
+- BTC and ETH each have three published scenario definitions but zero rows in `scenario_states`.
+- Both have monitoring signals but zero `monitoring_events`.
+- An empty event history is valid until a configured trigger actually occurs; do not manufacture monitoring events to populate the interface.
+- Scenario states are a separate runtime assessment from scenario definitions. Issue #4 records the open product decision: define whether a baseline state is created at snapshot publication or only after evidence-backed evaluation.
+
+## Actions and Gate status
+
+- **Build/runtime Actions:** verified passing on the validated commits linked above. Earlier UI E2E failures from brittle text assertions were corrected. The Actions spending/billing blocker is superseded by successful runs.
+- **Product Contour Gate:** a single PR gate now orchestrates build plus read-only UI/API runtime checks, reducing duplicate CI runs. The current-head run still needs to finish green.
+- **Production Release Gate:** its previous runs include failures at the first database migration/contract job, which caused downstream build/deploy jobs to be skipped. One earlier complete run succeeded. The available failed-run log endpoint now returns 404, so the precise cause of the latest migration-stage failure is **not yet proven fixed**.
+- The Release Gate was changed on this branch from automatic main-push execution to manual dispatch with an explicit boolean confirmation before Neon migrations and API deployment. This prevents an ordinary push from triggering production writes/deployments, but it does **not** prove the migration failure itself is resolved.
 
 ## Safety boundary
 
-The validation workflow used only HTTP GET requests against the public Crypto API and local Web routes. No Neon writes, schema migrations, production deployment, VPS operation, or visual-design changes were performed. Do not run the Release Gate as a substitute for read-only validation because it may apply migrations to live Neon.
+No production deployment, Neon write, schema migration, VPS operation, or visual-design change was performed in this work. The live API audit was read-only. Do not run the production Release Gate merely to test it; its first stage applies migrations to live Neon. Diagnose and rehearse migration behavior on a disposable database before any explicitly approved production release.
