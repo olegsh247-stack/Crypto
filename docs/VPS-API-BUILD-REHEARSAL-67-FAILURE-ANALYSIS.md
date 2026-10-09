@@ -38,6 +38,12 @@ The first parser correction exposed a second stale expectation: the actual canon
 
 Run #70 therefore failed with `AssertionError: assets=10` after correctly reading the `assets` property. The workflow contract now expects 10 and asserts the exact canonical asset-ID set; the existing pair count remains 9. This preserves the distinction between the registry and the research/ingestion universe instead of excluding USDT from the API response.
 
+### Follow-up finding from run #71
+
+After correcting the registry count, run #71 passed the registry checks (`assets=10`, `pairs=9`) and the ETH detail/lifecycle/freshness checks. It then failed because the history endpoint returned HTTP 503 on the clean database before the scheduled worker had ingested market candles.
+
+This is an ordering defect in the rehearsal: persisted history is correctly unavailable on a newly bootstrapped empty database, but the test demanded history before running the worker. The workflow now checks the persisted history endpoint **after the first successful worker ingestion** and its assertion that market-candle rows increased. This tests the intended end-to-end lifecycle without adding fake market rows to migrations or weakening the history assertion.
+
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
 
 ## Safety / scope
