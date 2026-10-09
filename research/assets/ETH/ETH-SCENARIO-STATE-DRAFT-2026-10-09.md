@@ -145,6 +145,6 @@ Static source inspection confirms the following implementation behavior on branc
 
 The VPS API Build Rehearsal #98 and Product Contour Gate #72 passed on commit `4fca3266261552a559eb97a46746791ee6de8a84`. The rehearsal verified clean PostgreSQL bootstrap, asset/pair registry, ETH detail, mutation contracts, 9-asset worker ingestion (72 candle rows), persisted ETH history, 7-endpoint Worker/VPS parity including scenario lineage, and admin auth boundary.
 
-The published ETH snapshot and scenario counts have not yet been emitted as a dedicated fresh preflight record, and a scenario-state insert/rollback transaction has not yet been exercised. The next workflow revision adds those checks against live Worker (read-only) and disposable PostgreSQL (transaction rolled back). Historical audit counts are not treated as a substitute for this fresh verification.
+The first fresh ETH preflight ran on the PR head and detected that the VPS Node API omitted the `evidence` collection from its response even though it queried the rows. The disposable PostgreSQL insert/rollback test passed. The Node API response now includes `evidence`; the next rehearsal must confirm the preflight passes and record current snapshot/collection counts. Historical audit counts are not treated as a substitute for this fresh verification.
 
 Until those checks are executed successfully, keep the state unpublished and the UI's “State not recorded” behavior intact.
