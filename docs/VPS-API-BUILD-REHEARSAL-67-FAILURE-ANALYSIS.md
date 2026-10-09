@@ -48,7 +48,7 @@ This is an ordering defect in the rehearsal: persisted history is correctly unav
 
 The registry and ETH-detail checks now pass. The moved history assertion is positioned after worker ingestion, but run #73 stopped earlier at `VPS API parity against live Worker` on `/api/pairs`.
 
-The parity projection initially included each pair's database-generated `id`, which cannot be expected to match between the live database and a clean disposable database. That field has been removed from the comparison. However, run #75 still failed at `/api/pairs`, proving that the generated ID was not the only difference. The parity script now prints the normalized live and VPS pair payloads when an assertion fails, so the next run can identify the actual remaining mismatch rather than guessing.
+The parity projection initially included each pair's database-generated `id`, which cannot be expected to match between the live database and a clean disposable database. Diagnostic output from run #77 exposed the concrete patch defect: the ID field had been removed from the live projection but accidentally remained in the VPS projection because the source contained two separate projections on one line and the first replacement changed only one occurrence. The parity script now omits the generated ID on both sides, while retaining all stable pair identity fields. The diagnostic payload remains enabled for future mismatches.
 
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
