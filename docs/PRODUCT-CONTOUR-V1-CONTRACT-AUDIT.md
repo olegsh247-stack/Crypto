@@ -199,3 +199,13 @@ These checks establish that the expected source patterns exist; they do **not** 
 - **Release acceptance:** not granted. PR remains unmerged; no production deployment or database changes are authorized by this review.
 - **Operational constraint:** GitHub Actions spending/billing limit remains the known blocker. Do not repeatedly retry Actions or use a migration workflow as a substitute for safe read-only validation.
 - **Next validation batch when available:** run Web typecheck/build, then read-only contract checks for BTC, ETH, SOL and CAKE covering list/detail lifecycle parity, latest snapshot IDs, block counts, factor/score counts, scenario lineage, monitoring signals/events, evidence counts and source URLs. Record actual outputs in this audit before changing the acceptance decision.
+
+
+### Follow-up validation attempt — 2026-10-09
+
+- Read-only GitHub status lookup for audit commit `b96a602c86732def05e9d2bad62d13cb5afaad7f` returned no combined commit statuses.
+- GitHub reports a `Build Crypto Web` workflow run (`37916647478`) as failed, but its only job has no step summaries and the log endpoint returns `BlobNotFound`. Therefore the failure does not identify a source/build error and cannot be treated as a completed build attempt.
+- Read-only Vercel project search for repository `olegsh247-stack/Crypto` returned no linked project. No project was created and no deployment was triggered.
+- As a result, there is currently no trustworthy Web build result or safe, known preview environment for live API checks. No Actions retry, Vercel deployment, database request, migration, or production operation was performed.
+
+**Current gate:** source-level contour checks passed; build/runtime gate remains blocked by unavailable CI evidence and no linked Vercel project. The next valid path is to restore/enable an authorized build runner or provide an existing non-production preview with a confirmed read-only database binding, then execute the acceptance batch. Do not merge until that gate is green.
