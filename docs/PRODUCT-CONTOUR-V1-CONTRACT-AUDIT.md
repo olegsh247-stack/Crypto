@@ -139,10 +139,11 @@ This audit is documentation-only. It does not authorize:
 
 - Dashboard and Deep Research now render `research_scenarios` as published Bull/Base/Bear definitions, not as a fallback list of `scenario_states`.
 - Dashboard no longer treats the legacy text `scenario_states.scenario_id` as a guaranteed foreign key to `research_scenarios.research_scenario_id`.
-- Web API freshness types preserve optional review timestamps returned by the detail endpoint.
+- Web API freshness types preserve optional review-timestamp fields, but the current list/detail payloads only populate `last_research_at`; `last_major_update_at` and `next_review_at` are selected by the detail query but are not currently included in `freshnessPayload`.
 - No database schema, Neon data, production deployment, VPS, or visual design was changed.
 - Static file-content checks confirmed the unsafe scenario join was removed and the freshness fields are present. A new GitHub Actions run has not yet been observed for these latest commits; a successful Web build is not claimed.
 - Follow-up static review found two additional Dashboard references inconsistent with their local object shapes: `currentScenario.invalidation_conditions` and an undeclared `confidence` variable. The first now reads invalidation conditions from the published Base scenario; the second now references the declared `confidenceScore` value. These are source-level fixes only; no Web build is claimed.
+- Follow-up API audit found the `/api/assets` list route used a different lifecycle rule from the detail route: it counted only `complete` blocks and could mark an asset `monitoring` before all 15 blocks were resolved. The list query now counts distinct resolved block numbers (`complete` + `n_a`) and applies `monitoring` only when all 15 are resolved and block 15 is complete. Static source correction only; runtime/build verification remains outstanding.
 
 ### Validation status
 
