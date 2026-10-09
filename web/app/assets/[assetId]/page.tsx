@@ -46,7 +46,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const factors = data.critical_factors ?? [];
   const scores = data.scores ?? [];
   const monitoring = data.monitoring_signals ?? [];
-  const scenarios = data.research_scenarios ?? data.scenario_states ?? [];
+  const scenarios = data.research_scenarios ?? [];
   const sources = data.sources ?? [];
   const evidence = data.evidence ?? [];
   const progress = getResearchProgress(blocks);
