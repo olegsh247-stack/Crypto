@@ -44,6 +44,14 @@ After correcting the registry count, run #71 passed the registry checks (`assets
 
 This is an ordering defect in the rehearsal: persisted history is correctly unavailable on a newly bootstrapped empty database, but the test demanded history before running the worker. The workflow now checks the persisted history endpoint **after the first successful worker ingestion** and its assertion that market-candle rows increased. This tests the intended end-to-end lifecycle without adding fake market rows to migrations or weakening the history assertion.
 
+### Follow-up finding from run #73
+
+The registry and ETH-detail checks now pass. The moved history assertion is positioned after worker ingestion, but run #73 stopped earlier at `VPS API parity against live Worker` on `/api/pairs`.
+
+The parity projection included each pair's database-generated `id`. The disposable PostgreSQL database and the live database create independent surrogate IDs, so those IDs are not expected to match even when the pair's public identity and behavior do. The parity projection now compares the stable contract fields — symbol, base/quote asset identity, exchange and enabled status — and omits the generated row ID. This does not change either API or any database data.
+
+Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
+
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
 
 ## Safety / scope
