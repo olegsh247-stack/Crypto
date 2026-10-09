@@ -60,7 +60,7 @@ The Node API query now includes `snapshot_id` in scenario definitions and filter
 
 Run #83 did not reach the API tests. The PostgreSQL container startup failed with Docker Hub's unauthenticated pull-rate-limit response (`toomanyrequests`). This is a CI image-fetch limitation, not a migration or application failure.
 
-Both the VPS rehearsal and reusable migration rehearsal were first switched to the public Amazon ECR mirror, but run #90 showed that ECR also returned `toomanyrequests: Rate exceeded` under concurrent workflow pulls. Both workflows now use `ghcr.io/pgvector/pgvector:pg16`, a PostgreSQL 16 image that retains the standard PostgreSQL initialization environment. The next run must validate the GHCR pull, clean bootstrap and idempotency end-to-end.
+Both workflows use the public Amazon ECR mirror for the standard PostgreSQL 16 image. Run #90 showed that concurrent pulls can be throttled (`toomanyrequests: Rate exceeded`), so each workflow now explicitly pulls the image with bounded backoff (10, 20 and 30 seconds) before starting the disposable database. The next run must validate the retry path, clean bootstrap and migration idempotency end-to-end.
 
 ### Follow-up finding from run #84 — live Worker rollout boundary
 
