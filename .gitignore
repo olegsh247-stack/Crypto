@@ -1,12 +1,24 @@
-# Environment variables and local secrets
+# Dependencies and generated build output
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+**/coverage/
+**/.wrangler/
+.wrangler/
+
+# Local environment and credentials (keep example templates trackable)
 .env
 .env.*
 !.env.example
 !.env.*.example
+**/.dev.vars
+**/.dev.vars.*
 .dev.vars
 .dev.vars.*
+!**/.dev.vars.example
 !.dev.vars.example
-.wrangler/
 
 # Private keys and certificates
 *.pem
@@ -41,6 +53,10 @@ service-account*.json
 *.backup
 *.bak
 
-# Local tooling artifacts
+# Logs and local OS files
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 .DS_Store
 Thumbs.db
