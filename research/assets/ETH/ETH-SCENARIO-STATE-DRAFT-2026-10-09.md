@@ -81,8 +81,8 @@ This section adds public-source evidence to the draft. It does **not** turn the 
 
 ### Market regime
 
-- CoinGecko's ETH page showed approximately **$2,499** and a **6.4% decline over seven days** in the 9 October 2026 indexed snapshot: https://www.coingecko.com/en/coins/ethereum. This is a secondary market-data source; capture time and the precise calculation window should be stored with the observation.
-- YCharts' ETH/USD series reported **$2,472.73 for 9 October**, down **3.91% from the prior daily observation** and **45.39% year over year**: https://ycharts.com/indicators/ethereum_price. The daily series is not an intraday quote and differs from CoinGecko because of source, window and capture timing. Do not treat the two prices as contradictory point-in-time values without normalizing timestamps.
+- CoinGecko's live ETH page showed **$2,479.21** and a **7.10% decline over seven days** in the page snapshot opened during this refresh: https://www.coingecko.com/en/coins/ethereum. The same page showed a 24-hour range of $2,466.01–$2,512.13 and a circulating supply near 122.119M ETH. Treat these as source-capture values, not a timeless quote.
+- YCharts' ETH/USD series reported **$2,472.73 for 9 October**, down **3.91% from the prior daily observation** and **45.39% year over year**: https://ycharts.com/indicators/ethereum_price. The daily series is not an intraday quote; its value is broadly consistent with the CoinGecko spot range, while the daily return and 7-day return use different windows.
 
 **Implication:** near-term market context is negative / volatile and should not be described as a bullish price regime. This alone does not determine the fundamental scenario.
 
