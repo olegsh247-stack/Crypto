@@ -169,7 +169,12 @@ jobs:
           test "$successful" = "9"
           test "$written" -gt 0
           test "$after" -gt "$before"
-          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          history_code=$(curl -sS --max-time 15 -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' || true)
+          if [ "$history_code" != "200" ]; then
+            echo "VPS_API_HISTORY_FAILED status=$history_code"
+            cat /tmp/history.json 2>/dev/null || true
+            exit 1
+          fi
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/history.json'))
