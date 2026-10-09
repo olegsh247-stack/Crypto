@@ -209,3 +209,11 @@ These checks establish that the expected source patterns exist; they do **not** 
 - As a result, there is currently no trustworthy Web build result or safe, known preview environment for live API checks. No Actions retry, Vercel deployment, database request, migration, or production operation was performed.
 
 **Current gate:** source-level contour checks passed; build/runtime gate remains blocked by unavailable CI evidence and no linked Vercel project. The next valid path is to restore/enable an authorized build runner or provide an existing non-production preview with a confirmed read-only database binding, then execute the acceptance batch. Do not merge until that gate is green.
+
+
+### UI E2E contract alignment — 2026-10-09
+
+- Read the current Dashboard source alongside `.github/workflows/ui-runtime-e2e.yml` and found five stale text expectations: `Scenario States`, title-cased `Monitoring Dashboard`, `Current Signals`, `Recent Events`, and `Trace the research claim` did not match the current rendered copy.
+- Updated only the UI E2E assertions to check the current source-backed labels: `Scenarios`, `MONITORING DASHBOARD`, `CURRENT SIGNALS`, `RECENT EVENTS`, and `provenance layer`. No product UI, design, API, or database code was changed.
+- Re-fetched the workflow file from the PR branch and confirmed the five updated assertions are present.
+- The workflow was **not run** because the GitHub Actions billing/spending blocker remains. This is a test-contract correction, not evidence that build/runtime validation now passes. Release gate remains blocked; do not merge until an authorized build and safe runtime checks succeed.
