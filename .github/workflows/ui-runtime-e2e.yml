@@ -157,6 +157,13 @@ jobs:
                 if (snapshotId && row.snapshot_id && row.snapshot_id !== snapshotId) fail(`snapshot_lineage_mismatch_${symbol}_${key}`);
               }
             }
+            for (const state of payload.scenario_states) {
+              if (!state.scenario_id || !state.state) fail(`scenario_state_identity_missing_${symbol}`);
+              if (!state.observed_at) fail(`scenario_state_observed_at_missing_${symbol}`);
+              if (!state.snapshot_id || state.snapshot_id !== snapshotId) fail(`scenario_state_snapshot_lineage_missing_${symbol}`);
+              if (!state.rationale) fail(`scenario_state_rationale_missing_${symbol}`);
+              if (!state.indicators || typeof state.indicators !== "object" || Array.isArray(state.indicators)) fail(`scenario_state_indicators_invalid_${symbol}`);
+            }
             const sourceUrls = payload.evidence.filter((row) => Boolean(row.source_url)).length;
             console.log(`API_CHECK_OK ${symbol} lifecycle=${payload.asset.research_status} snapshot=${snapshotId ?? "none"} blocks=${blocks.length} resolved=${progress.resolved}/15 factors=${payload.critical_factors.length} scores=${payload.scores.length} scenarios=${payload.research_scenarios.length} scenario_states=${payload.scenario_states.length} signals=${payload.monitoring_signals.length} events=${payload.monitoring_events.length} evidence=${payload.evidence.length} evidence_source_urls=${sourceUrls} sources=${payload.sources.length}`);
           }
