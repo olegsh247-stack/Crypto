@@ -45,7 +45,7 @@ jobs:
         run: npm run build
       - name: Start PostgreSQL rehearsal
         run: |
-          docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 public.ecr.aws/docker/library/postgres:16
+          docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 ghcr.io/pgvector/pgvector:pg16
           for i in $(seq 1 30); do
             pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1 && break
             sleep 2
