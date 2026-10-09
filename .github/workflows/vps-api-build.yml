@@ -110,14 +110,6 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
-          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/history.json'))
-          assert d.get('status')=='ok', d
-          assert len(d.get('rows',[]))>0, d
-          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
-          PY
       - name: VPS API parity against live Worker
         env:
           LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
@@ -183,6 +175,14 @@ jobs:
           test "$successful" = "9"
           test "$written" -gt 0
           test "$after" -gt "$before"
+          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/history.json'))
+          assert d.get('status')=='ok', d
+          assert len(d.get('rows',[]))>0, d
+          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
+          PY
           actual_assets=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true and asset_id <> 'usdt';" | xargs)
           test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
           for asset in btc dash eth sol cake bch ltc xrp trx; do
