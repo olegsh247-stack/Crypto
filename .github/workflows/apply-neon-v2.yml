@@ -3,7 +3,18 @@ name: Apply Neon Research Engine v2
 
 on:
   workflow_call:
+    inputs:
+      confirm_production_migration:
+        description: "Explicit approval to apply migrations to production Neon"
+        required: true
+        type: boolean
   workflow_dispatch:
+    inputs:
+      confirm_production_migration:
+        description: "Explicit approval to apply migrations to production Neon"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,14 +36,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Apply schema and versioned migrations
-        env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-        run: |
-          test -n "$DATABASE_URL"
-          chmod +x scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
-
       - name: Clean database bootstrap rehearsal
         run: |
           set -euo pipefail
@@ -53,6 +56,25 @@ jobs:
           test "$migration_count" -gt 0
           test "$duplicate_markers" = "0"
           echo "CLEAN_BOOTSTRAP_OK migrations=$migration_count duplicate_markers=0 rerun=1"
+
+      - name: Require explicit production migration confirmation
+        env:
+          CONFIRM_PRODUCTION_MIGRATION: ${{ inputs.confirm_production_migration }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_MIGRATION" = "true" || {
+            echo "::error::Production migration was not explicitly confirmed. Live Neon will not be changed."
+            exit 1
+          }
+          echo "PRODUCTION_MIGRATION_CONFIRMED"
+
+      - name: Apply schema and versioned migrations
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL"
+          chmod +x scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
 
       - name: Verify required Engine tables
         run: |
