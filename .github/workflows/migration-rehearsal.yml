@@ -1,6 +1,7 @@
 name: Migration Rehearsal (Disposable PostgreSQL)
 
 on:
+  workflow_call:
   pull_request:
     paths:
       - "infrastructure/neon/**"
