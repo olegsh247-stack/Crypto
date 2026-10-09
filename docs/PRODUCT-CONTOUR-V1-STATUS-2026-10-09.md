@@ -3,7 +3,7 @@
 Date: 2026-10-09
 Branch: `fix/product-contour-v1-contracts`
 PR: https://github.com/olegsh247-stack/Crypto/pull/3
-Latest fully verified Product Contour Gate commit: `66d0593794b4388e8ddfc4ae86cd8b48c206588a`; subsequent research commits are awaiting their own Gate result.
+Latest fully verified Product Contour Gate commit: `a2a49b9bc640d808ccc6b60790a5ea2ed5ce27e7`; [run #37978540004](https://github.com/olegsh247-stack/Crypto/actions/runs/37978540004) passed on 9 October 2026 after the research-evidence and read-only API-test reliability updates.
 
 ## Verified runtime baseline
 
@@ -32,7 +32,7 @@ Draft Structure 1 research artifacts have been added:
 - [SOL Deep Research 01–15](../research/assets/SOL/SOL-RESEARCH-01-15.md)
 - [CAKE Deep Research 01–15](../research/assets/CAKE/CAKE-RESEARCH-01-15.md)
 
-They contain no fabricated numeric scores and are **not published database snapshots**. The 9 October source refresh records a secondary DefiLlama cross-check for CAKE protocol fees, revenue, volume, TVL, chain concentration and supply, plus an official Solana Explorer operational snapshot with dated slot, block, slot-time and TPS counters. The SOL and CAKE draft files now contain these dated observations with explicit limits. These additions do not close SOL supply/validator/adoption gaps or CAKE on-chain supply, incentives, liquidity and retention gaps. See [SOL/CAKE source refresh](../research/assets/SOL-CAKE-SOURCE-REFRESH-2026-10-09.md).
+They contain no fabricated numeric scores and are **not published database snapshots**. The 9 October source refresh records a secondary DefiLlama cross-check for CAKE protocol fees, revenue, volume, TVL, chain concentration and supply; an official Solana Explorer operational snapshot; and an independent Solana validator-stake snapshot (439.6M SOL active stake, 18-validator superminority at 33.8%, Nakamoto coefficient 18, largest validator stake 4.1%, dated 19 September 2026). The CAKE draft also records PancakeSwap's official September 2026 net supply reduction of 2,311,003 CAKE, published 7 October. All observations retain provenance and explicit evidence-quality caveats. These additions do not close SOL supply/client-diversity/adoption gaps or CAKE on-chain supply, incentives, liquidity and retention gaps. See [SOL/CAKE source refresh](../research/assets/SOL-CAKE-SOURCE-REFRESH-2026-10-09.md).
 
 Tracking task: [Issue #4 — publish SOL/CAKE snapshots and define scenario baseline](https://github.com/olegsh247-stack/Crypto/issues/4).
 
@@ -46,7 +46,8 @@ Tracking task: [Issue #4 — publish SOL/CAKE snapshots and define scenario base
 ## Actions and Gate status
 
 - **Build/runtime Actions:** verified passing on the validated commits linked above. Earlier UI E2E failures from brittle text assertions were corrected. The Actions spending/billing blocker is superseded by successful runs.
-- **Product Contour Gate:** run #37976597901 passed on commit `66d0593794b4388e8ddfc4ae86cd8b48c206588a`. Build, read-only UI/API runtime E2E and disposable PostgreSQL 16 migration rehearsal all passed. Later research-document changes trigger a new run and must pass independently.
+- **Product Contour Gate:** latest run #37978540004 passed on commit `a2a49b9bc640d808ccc6b60790a5ea2ed5ce27e7`. Build, read-only UI/API runtime E2E and disposable PostgreSQL 16 migration rehearsal (all migrations twice on a clean database) passed. [Run #37978540004](https://github.com/olegsh247-stack/Crypto/actions/runs/37978540004).
+- Run #37977095822 had build and disposable migration rehearsal pass but its read-only API audit hit a fixed 15-second timeout on an external asset-detail request after all UI assertions passed. The test now retries transient network/timeouts and HTTP 5xx with bounded attempts and a 30-second timeout; the latest Gate passed. This was a test reliability issue, not evidence of a schema/data-contract mismatch.
 - **Production Release Gate:** its previous runs include failures at the first database migration/contract job, which caused downstream build/deploy jobs to be skipped. One earlier complete run succeeded. The available failed-run log endpoint now returns 404, so the precise cause of the latest migration-stage failure is **not yet proven fixed**.
 - The Release Gate was changed on this branch from automatic main-push execution to manual dispatch with an explicit boolean confirmation before Neon migrations and API deployment. The reusable migration workflow now runs the clean-DB rehearsal before any live migration and independently requires explicit production-migration confirmation. This prevents ordinary pushes or an unconfirmed direct workflow dispatch from writing to production. It does **not** prove the historical live-Neon migration failure itself is resolved.
 

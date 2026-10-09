@@ -48,6 +48,19 @@ Source: https://defillama.com/protocol/pancakeswap
 
 **Interpretation:** BSC concentration is a material dependency to monitor. Fees are not the same as protocol revenue, and neither is equivalent to value accruing to CAKE holders. Supply estimates require reconciliation with the official token contract and burn methodology. Refresh these metrics before publication and preserve the exact retrieval timestamp when capturing underlying evidence.
 
+### Official September 2026 net-supply update — published 2026-10-07
+
+PancakeSwap's official September Kitchen Report reports:
+- CAKE minted: **652,564**
+- CAKE burned: **2,963,567**
+- Net supply change: **−2,311,003 CAKE** (a reported **−0.700%** of total supply for the month)
+- Consecutive months of reported net supply reduction: **37**
+- Cumulative net supply reduction since peak supply: **61,644,839 CAKE**
+
+Source: https://blog.pancakeswap.finance/articles/kitchen-report-september-2026
+
+**Interpretation:** this is positive evidence for realized monthly net supply reduction, but it is issuer-reported and does not establish future deflation, current circulating supply, or price appreciation. The monthly net reduction must be considered alongside current supply methodology, chain/product revenue, incentives and the mechanisms through which benefits accrue to CAKE holders. Reconcile with token-contract data before publication; do not derive a numeric score from this single factor.
+
 ## 04 — Protocol / On-chain State
 
 Monitor swap volume and fees by chain and product, liquidity depth, slippage, protocol revenue, incentives paid, CAKE emissions, buybacks/burns and the net change in circulating and total supply. Distinguish protocol-level volume from revenue retained by the protocol and distinguish gross burns from net supply change. Product metrics should be captured with consistent time windows and chain attribution.
@@ -173,5 +186,6 @@ Preserve the chain:
 - PancakeSwap — January 2026 Kitchen Report (max supply change): https://blog.pancakeswap.finance/articles/kitchen-report-january-2026
 - PancakeSwap — governance: https://docs.pancakeswap.finance/protocol/voting
 - PancakeSwap — official documentation: https://docs.pancakeswap.finance/
+- PancakeSwap — September 2026 Kitchen Report (published 7 October 2026): https://blog.pancakeswap.finance/articles/kitchen-report-september-2026
 - PancakeSwap — official burn dashboard: https://pancakeswap.finance/burn
 - BscScan — CAKE token contract explorer: https://bscscan.com/token/0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82
