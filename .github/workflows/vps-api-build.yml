@@ -92,7 +92,10 @@ jobs:
           pairs=json.load(open('/tmp/pairs.json'))
           items=assets.get('assets',assets.get('items',assets if isinstance(assets,list) else []))
           pitems=pairs.get('items',pairs.get('pairs',[]))
-          assert len(items)==9, f"assets={len(items)}"
+          assert len(items)==10, f"assets={len(items)}"
+          expected_assets={"btc","dash","eth","sol","cake","bch","ltc","xrp","trx","usdt"}
+          actual_assets={item.get("asset_id") for item in items}
+          assert actual_assets==expected_assets, f"asset_ids={sorted(str(x) for x in actual_assets)}"
           assert len(pitems)==9, f"pairs={len(pitems)}"
           assert all(p.get('enabled') is True for p in pitems)
           print(f"VPS_API_REGISTRY_OK assets={len(items)} pairs={len(pitems)}")
