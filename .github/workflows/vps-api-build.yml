@@ -162,7 +162,7 @@ jobs:
           monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
-          result=$(grep -Eo '\\{"status":"ok","service":"crypto-worker-vps"[^}]*\\}' /tmp/crypto-vps-worker-1.log | tail -1)
+          result=$(grep -Eo '\{"status":"ok","service":"crypto-worker-vps"[^}]*\}' /tmp/crypto-vps-worker-1.log | tail -1)
           test -n "$result"
           successful=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["successful"])' "$result")
           written=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["written"])' "$result")
