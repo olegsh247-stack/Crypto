@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "web/**"
-      - "workers/crypto-api/**"
+      - "workers/**"
       - "shared/**"
       - "research/**"
       - "docs/PRODUCT-CONTOUR-V1*"
@@ -19,11 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  web-build:
-    name: Web build
-    uses: ./.github/workflows/web-build.yml
-
-  ui-runtime-e2e:
-    name: Read-only runtime/API contract
-    needs: web-build
+  runtime-contract:
+    name: Build + read-only UI/API contract
     uses: ./.github/workflows/ui-runtime-e2e.yml
