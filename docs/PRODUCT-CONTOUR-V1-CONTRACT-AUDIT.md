@@ -148,6 +148,7 @@ This audit is documentation-only. It does not authorize:
 ### Validation status
 
 - Static contract assertions on the PR branch: 10/10 passed.
+- Latest post-change source assertions: 8/8 passed for list/detail snapshot alignment, resolved-block lifecycle rules, scenario invalidation source, Confidence card value binding, and corresponding audit-document entries. These are text/source assertions, not a TypeScript build or runtime test.
 - Cloudflare Worker branch build: passed; this is a preview build, not a production deployment.
 - GitHub Web build job did not execute any steps; its job record contains no steps and the known account billing/spending-limit blocker remains unresolved. This is not evidence of a TypeScript build failure.
 - Live API, Neon data, and runtime E2E validation remain outstanding. Do not merge or run migration workflows until those checks are available and safe.
