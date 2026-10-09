@@ -72,7 +72,7 @@ jobs:
           check "eth_monitoring_dashboard" 'MONITORING DASHBOARD' /tmp/ui-eth.html
           check "eth_current_signals" 'CURRENT SIGNALS' /tmp/ui-eth.html
           check "eth_recent_events" 'RECENT EVENTS' /tmp/ui-eth.html
-          check "eth_evidence" 'Evidence & Sources' /tmp/ui-eth.html
+          check "eth_evidence" 'Evidence &amp; Sources' /tmp/ui-eth.html
           check "eth_evidence_chain" 'provenance layer' /tmp/ui-eth.html
           if grep -Fq -- '>Current<' /tmp/ui-eth.html || \
              grep -Fq -- '>Update recommended<' /tmp/ui-eth.html || \
