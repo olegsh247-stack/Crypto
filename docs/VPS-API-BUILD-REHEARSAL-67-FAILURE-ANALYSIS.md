@@ -50,6 +50,12 @@ The registry and ETH-detail checks now pass. The moved history assertion is posi
 
 The parity projection initially included each pair's database-generated `id`, which cannot be expected to match between the live database and a clean disposable database. Diagnostic output from run #77 exposed the concrete patch defect: the ID field had been removed from the live projection but accidentally remained in the VPS projection because the source contained two separate projections on one line and the first replacement changed only one occurrence. The parity script now omits the generated ID on both sides, while retaining all stable pair identity fields. The diagnostic payload remains enabled for future mismatches.
 
+### Follow-up finding from run #79 — real VPS API contract defect
+
+After fixing the pair projection symmetrically, the registry and pair parity checks passed. The next assertion found a real discrepancy: VPS scenario definitions were queried without selecting `snapshot_id`, so the API response could not prove which published baseline each definition belonged to. In addition, VPS `scenario_states` were queried by asset only, rather than being scoped to the latest published snapshot as the Worker API does.
+
+The Node API query now includes `snapshot_id` in scenario definitions and filters runtime states to the latest published snapshot. This restores the intended lineage contract; it does not write or change database rows. The next rehearsal must verify the correction and may reveal further parity gaps.
+
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
