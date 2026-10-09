@@ -104,7 +104,7 @@ The provider says its supply data is sourced from ethsupply.fyi. These are delay
 
 ### Scaling and roadmap
 
-- Ethereum Foundation's 28 September 2026 announcement scheduled Glamsterdam for Sepolia at epoch 353,024 / slot 11,296,768 on **6 October 2026, 13:53:36 UTC**. It explicitly said Hoodi and mainnet dates were TBD: https://blog.ethereum.org/2026/09/28/glamsterdam-testnet-announcement
+- Ethereum Foundation's 28 September 2026 announcement scheduled Glamsterdam for Sepolia at epoch 353,024 / slot 11,296,768 on **6 October 2026, 13:53:36 UTC**. It explicitly said Hoodi and mainnet dates were TBD: https://blog.ethereum.org/2026/09/17/glamsterdam-testnet-announcement
 - The official roadmap continues to describe Glamsterdam as testing on devnets and mainnet timing as unconfirmed: https://ethereum.org/roadmap/glamsterdam/
 - L2BEAT's current indexed overview reports about **$33.20B total value secured** and **2.06K UOPS** for Layer 2s, and says **99.4% of blob data** is posted by L2s: https://l2beat.com/. These are changing dashboard figures; record the actual capture timestamp and methodology before using them as a trend. They are evidence of ecosystem scale, not direct proof of value accruing to ETH.
 
