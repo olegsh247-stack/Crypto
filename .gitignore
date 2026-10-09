@@ -1,0 +1,46 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.p7b
+*.p7c
+*.p8
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.ppk
+
+# Credentials and local configuration
+credentials.json
+**/credentials.json
+secrets.json
+**/secrets.json
+service-account*.json
+**/service-account*.json
+
+# Local databases, dumps, and backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+*.backup
+*.bak
+
+# Local tooling artifacts
+.DS_Store
+Thumbs.db
