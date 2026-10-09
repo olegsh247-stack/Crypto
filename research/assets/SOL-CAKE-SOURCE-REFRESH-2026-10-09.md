@@ -110,3 +110,16 @@ The official [Solana Explorer Mainnet Beta view](https://explorer.solana.com/?cl
 ## Evidence-quality note
 
 The CAKE DefiLlama figures in this file are secondary rolling-window estimates, not an audited month-end statement. In particular, protocol fees are not protocol revenue, and neither necessarily accrues to CAKE holders. The reported ~96.7% BSC share of TVL is a concentration indicator that should be verified from the underlying chain-level data. Refresh both SOL live counters and CAKE dashboard metrics before publication and preserve the actual retrieval timestamp in the evidence record.
+
+
+## Direct on-chain capture — 2026-10-09 19:44 UTC
+
+A successful read-only GitHub Actions capture now provides primary RPC evidence for SOL and CAKE: https://github.com/olegsh247-stack/Crypto/actions/runs/37982243766
+
+- **SOL:** `getSupply` context slot 454,979,264; circulating 588.768305M SOL; non-circulating 46.768738M SOL; derived total 635.537043M SOL. Epoch 1053; RPC inflation parameter 3.6097079%; 674 current / 6 delinquent vote accounts. Summed activated stake: 437.858116M SOL current, 9,610.856 SOL delinquent. Each RPC method has its own retrieval time; the response is not a single atomic cross-method snapshot.
+- **CAKE:** all EVM contract calls were pinned to BNB Smart Chain block 126,693,951. Cumulative `totalSupply()` 5,543.693M CAKE; dead-address balance 5,168.552M; net after dead-address subtraction 375.141M. Subtracting candidate permanently locked balances (token-contract self balance + `0x…0001` + `0x…0002`, total 158,290.832 CAKE) yields a provisional 374.982M estimate.
+
+CAKE supply remains a **reconciliation gap**, not a settled canonical value: the block-pinned estimate differs by about 56.66M CAKE from the earlier untimestamped DefiLlama supply view (318.32M circulating / 329.92M total). Keep the raw on-chain and dashboard observations separate until the supply definition and all irretrievable balances are reconciled. Official CAKE guidance: https://docs.pancakeswap.finance/protocol/cake-tokenomics; third-party methodology cross-check: https://cryptoburntracker.com/burns/pancakeswap/
+
+The first capture attempt failed only because `getInflationRate` was called with an unsupported parameter; the script was corrected to call it with no parameters, then the capture completed successfully. The latest script pins all CAKE `eth_call` requests to the block number captured at the start of the EVM section.
+

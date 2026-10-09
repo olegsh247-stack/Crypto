@@ -78,6 +78,29 @@ Source: https://investors.defillama.com/protocol/pancakeswap?events=false&revenu
 
 **Interpretation:** the two retrieved views are not interchangeable evidence records; the second view's exact capture timestamp is not exposed in the indexed result. Retain both observations and do not average them or choose a canonical snapshot. The repeated ~96.7% BSC TVL share is a concentration signal. Fees/revenue must be refreshed from a timestamped source, and supply reconciled on-chain before publication.
 
+### Direct CAKE contract capture — BNB Smart Chain block 126,693,951
+
+A read-only capture completed in GitHub Actions run https://github.com/olegsh247-stack/Crypto/actions/runs/37982243766. Chain ID is **56**. The script first queried block number **126,693,951** and pinned every subsequent `eth_call` to that same block tag (`0x78d323f`), so the supply and balance values below are block-consistent.
+
+CAKE token contract: `0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82`; decimals: **18**.
+
+| Contract read | CAKE |
+|---|---:|
+| `totalSupply()` (cumulative minted supply; not circulating supply) | 5,543,692,995.751051201610995531 |
+| `balanceOf(0x…dEaD)` | 5,168,552,286.608597070001506838 |
+| Total supply minus dead-address balance | 375,140,709.142454131609488693 |
+| Token-contract self balance | 156,166.560807245683434045 |
+| `balanceOf(0x…0001)` | 2,080.632173163135706288 |
+| `balanceOf(0x…0002)` | 43.638654286051842170 |
+| Sum of the three locked-supply candidates above | 158,290.831634694870982503 |
+| Derived supply after also subtracting those candidates | 374,982,418.310819436738506190 |
+
+The zero-address CAKE balance returned **0**. The candidate locked balances are recorded separately and are not treated as official circulating-supply accounting without methodology review. PancakeSwap's official tokenomics guidance says to subtract the dead-address balance and treat CAKE locked forever in the legacy pool as burned; a third-party burn methodology also identifies the token contract and precompile addresses as permanently locked. References: https://docs.pancakeswap.finance/protocol/cake-tokenomics and https://cryptoburntracker.com/burns/pancakeswap/
+
+**Reconciliation result:** the block-pinned on-chain calculation gives a provisional net available-supply estimate of **~374.982M CAKE** after subtracting the dead address and the three candidate locked balances. This is below the official 400M hard cap, but it does **not** fully reconcile with DefiLlama's previously indexed **318.32M circulating / 329.92M total** dashboard figures (about **56.66M CAKE** difference from the derived estimate). Because the dashboard capture timestamp and supply methodology are not exposed, retain both as separate evidence and do not silently declare either canonical. Resolve the definition/source discrepancy before publication.
+
+No transaction, signature, chain write, database write or migration was performed.
+
 ## 04 — Protocol / On-chain State
 
 Monitor swap volume and fees by chain and product, liquidity depth, slippage, protocol revenue, incentives paid, CAKE emissions, buybacks/burns and the net change in circulating and total supply. Distinguish protocol-level volume from revenue retained by the protocol and distinguish gross burns from net supply change. Product metrics should be captured with consistent time windows and chain attribution.

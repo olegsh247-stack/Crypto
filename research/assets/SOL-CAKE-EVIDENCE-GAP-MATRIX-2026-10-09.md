@@ -10,7 +10,7 @@ Status meanings: **Partial** = useful thesis description or some evidence exists
 |---:|---|---|---|
 | 01 | Essence & Role | Partial | Primary evidence connecting fee demand/staking utility to asset economics |
 | 02 | Technology & Architecture | Partial | Dated client adoption by stake share and comparable performance evidence |
-| 03 | Tokenomics | Incomplete | Exact-timestamp supply, net issuance after burns, stake participation and rewards |
+| 03 | Tokenomics | Partial | Direct RPC supply and epoch inflation captured; reconcile net issuance after burns and reward/stake definitions |
 | 04 | Network / On-chain State | Partial | Successful non-vote activity, failures, fee distribution and reliability window |
 | 05 | Ecosystem | Incomplete | Dated application/stablecoin metrics and concentration |
 | 06 | Users & Activity | Incomplete | Fee-paying accounts, retention cohorts and transaction quality |
@@ -43,6 +43,10 @@ Status meanings: **Partial** = useful thesis description or some evidence exists
 | 13 | Scenarios | Incomplete | Measurable criteria tied to dated evidence and confidence |
 | 14 | Conclusion | Incomplete | Synthesis after supply, value-accrual and retention gaps close |
 | 15 | Monitoring | Partial | Baselines, thresholds, refresh cadence and configured triggers |
+
+## New evidence captured — 2026-10-09 19:44 UTC
+
+A read-only RPC capture is now available at https://github.com/olegsh247-stack/Crypto/actions/runs/37982243766. SOL's exact-time supply, epoch inflation parameter and vote-account stake totals are captured, so Block 03 moves from Incomplete to Partial; client-share concentration, net issuance and user-quality evidence remain open. CAKE's contract reads are pinned to BSC block 126,693,951 and produce a provisional ~374.982M available-supply estimate after dead-address and candidate locked-balance subtraction. The estimate still differs materially from the earlier DefiLlama supply fields, so CAKE's supply is not marked verified.
 
 ## Publication decision
 

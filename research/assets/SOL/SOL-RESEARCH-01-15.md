@@ -72,6 +72,22 @@ Solana's official 1 October 2026 changelog lists Agave v4.4.0-beta.0 and Firedan
 
 These sources confirm client development and deployment activity, but the retrieved tracker output did not provide a reliable network-wide stake denominator or client-share percentage. Client diversity remains **incomplete** for scoring; do not infer adoption share from the displayed validator list alone.
 
+### Direct mainnet RPC capture — 2026-10-09 19:44 UTC
+
+A read-only capture completed in GitHub Actions run https://github.com/olegsh247-stack/Crypto/actions/runs/37982243766. Solana JSON-RPC methods were queried against `https://api.mainnet-beta.solana.com`; each method records its own UTC request timestamps.
+
+- `getSupply` context slot: **454,979,264**
+- Circulating supply: **588,768,304.987148293 SOL**
+- Non-circulating supply: **46,768,738.054202758 SOL**
+- Derived total (sum of those two returned fields): **635,537,043.041351051 SOL**
+- `getSlot`: **454,979,262**; `getEpochInfo`: epoch **1053**, block height **433,016,512**, cumulative transaction count **558,032,279,242**
+- `getInflationRate` for epoch 1053: total **3.6097079076%** (RPC value 0.036097079076420034)
+- `getVoteAccounts`: **674 current** and **6 delinquent** vote accounts; sum of `activatedStake` for current accounts **437,858,115.649943790 SOL**, delinquent accounts **9,610.856193640 SOL**
+
+**Interpretation:** these are direct RPC observations with a slot and retrieval times, materially stronger than an indexed explorer page. They are not an atomic cross-method snapshot: calls completed at slightly different times/slots. The `getVoteAccounts` stake totals are sums of the returned vote-account fields, not a client-diversity or validator-operator concentration measure. The inflation endpoint is an epoch parameter, not a forecast of net supply change after burns. The transaction counter is cumulative chain activity, not a unique-user or successful-economic-transaction count.
+
+Sources: https://solana.com/docs/rpc/http and https://github.com/olegsh247-stack/Crypto/actions/runs/37982243766
+
 ## 05 — Ecosystem
 
 Solana supports DeFi, stablecoins, payments, consumer applications, trading, NFTs and infrastructure. Ecosystem breadth can increase blockspace demand and utility, but activity concentrated in speculative or incentive-driven applications may be cyclical. Separate organic recurring usage from subsidized activity and assess whether application success generates durable demand for SOL.
