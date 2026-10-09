@@ -41,7 +41,7 @@ export type ResearchSnapshot = { snapshot_id: string; research_version: string; 
 
 export type AssetDetailResponse = {
   api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: { status: "current" | "update_recommended" | "outdated"; reason?: string | null } | null };
-  research_progress: { status: string; completed: number; total: number; percent: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
+  research_progress: { status: "not_started" | "in_progress" | "complete" | "monitoring"; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
