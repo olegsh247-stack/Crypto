@@ -74,9 +74,30 @@ Run #85 passed health, registry, pair and ETH/BTC detail parity, including the r
 
 The VPS rehearsal now runs market-data ingestion before Worker/VPS parity. The existing worker E2E remains responsible for proving that ingestion added fresh rows. Runs #86/#87 failed before reaching the history check: the worker emitted a valid success result (`successful=9`, `written=72`), but the workflow's `grep -Eo` pattern over-escaped JSON braces, so the result variable was empty and `test -n` terminated the step. The regex now uses a single escape for each brace. The explicit HTTP-status/body diagnostic remains in place for the history check, and Worker/VPS parity remains after ingestion to independently validate the history endpoint. This avoids seeding fabricated market data into the database migrations.
 
-Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
+### Resolution — successful rehearsal on the PR head
 
-Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
+The corrected workflow completed successfully on commit `4fca3266261552a559eb97a46746791ee6de8a84`:
+
+- [VPS API Build Rehearsal #98 — success](https://github.com/olegsh247-stack/Crypto/actions/runs/37990933093)
+- [Product Contour Gate #72 — success](https://github.com/olegsh247-stack/Crypto/actions/runs/37990933420)
+
+Verified in the VPS rehearsal:
+
+- Node API and Worker builds passed.
+- PostgreSQL 16 clean bootstrap and migration rerun/idempotency passed.
+- Canonical registry contract passed: 10 enabled assets (including USDT quote asset), 9 enabled market pairs.
+- ETH lifecycle/freshness API contract passed.
+- Mutation E2E passed for asset create/delete, pair upsert and commodity create/delete.
+- Worker ingestion passed for 9 research assets, wrote 72 candle rows, confirmed fresh rows for all 9 assets, completed two runs without duplicate candle keys, and refreshed monitoring metadata.
+- Persisted ETH history returned 8 rows after ingestion.
+- Worker/VPS parity passed across 7 endpoints, including scenario definitions/states and snapshot-lineage checks.
+- Admin boundary passed: unauthenticated request returned 401; authorized local test request returned 200.
+
+The current PR head is `4fca3266261552a559eb97a46746791ee6de8a84`. PR #3 remains Draft/open/unmerged. No production deployment, production database write, schema migration against production, VPS provisioning or scenario-state publication was performed.
+
+## Next product step
+
+With the disposable VPS path and current Worker compatibility checks green, return to the ETH product slice: perform a fresh **read-only** check of the published ETH snapshot and its related scenario definitions, states, evidence, factors, scores and monitoring signals; then validate a candidate state transactionally against disposable PostgreSQL with rollback. Keep any candidate state unpublished and require explicit approval before a production write.
 
 ## Safety / scope
 
