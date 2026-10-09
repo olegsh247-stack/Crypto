@@ -120,3 +120,24 @@ This audit is documentation-only. It does not authorize:
 - changes to billing or GitHub Actions settings;
 - changes to visual design;
 - production deployment.
+
+## Implementation status — Product Contour v1 contract PR
+
+**Branch:** `fix/product-contour-v1-contracts`  
+**PR:** https://github.com/olegsh247-stack/Crypto/pull/3  
+**Scope:** Static/read-only corrections only; no database migration or Neon write.
+
+| Finding | Static correction in PR | Remaining verification |
+|---|---|---|
+| Progress counts differ between Web and server | Web now exposes separate completed/resolved counts and calculates progress from resolved blocks (complete + N/A). | Compare against live API payloads and representative asset records. |
+| Factors/scores may mix snapshots | Queries are restricted to the latest published snapshot. | Confirm live row counts and snapshot IDs for BTC, ETH, SOL and CAKE. |
+| Scenario state may belong to another baseline | Scenario states are filtered to the latest published snapshot and include `snapshot_id` in the response. | Verify real rows have matching snapshot IDs and confirm the UI mapping from `scenario_id` to `research_scenario_id`. |
+| Evidence-linked sources omitted from source registry | Source query includes sources referenced by observations or evidence and deduplicates them. | Confirm live payload completeness and source URL availability. |
+| Freshness contract differs between list/detail | Not changed in this PR. | Define a shared list/detail freshness type after inspecting actual payloads. |
+
+### Validation status
+
+- Static contract assertions on the PR branch: 10/10 passed.
+- Cloudflare Worker branch build: passed; this is a preview build, not a production deployment.
+- GitHub Web build job did not execute any steps; its job record contains no steps and the known account billing/spending-limit blocker remains unresolved. This is not evidence of a TypeScript build failure.
+- Live API, Neon data, and runtime E2E validation remain outstanding. Do not merge or run migration workflows until those checks are available and safe.
