@@ -142,6 +142,7 @@ This audit is documentation-only. It does not authorize:
 - Web API freshness types preserve optional review timestamps returned by the detail endpoint.
 - No database schema, Neon data, production deployment, VPS, or visual design was changed.
 - Static file-content checks confirmed the unsafe scenario join was removed and the freshness fields are present. A new GitHub Actions run has not yet been observed for these latest commits; a successful Web build is not claimed.
+- Follow-up static review found two additional Dashboard references inconsistent with their local object shapes: `currentScenario.invalidation_conditions` and an undeclared `confidence` variable. The first now reads invalidation conditions from the published Base scenario; the second now references the declared `confidenceScore` value. These are source-level fixes only; no Web build is claimed.
 
 ### Validation status
 
