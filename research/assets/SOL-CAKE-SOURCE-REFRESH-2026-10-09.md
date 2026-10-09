@@ -81,3 +81,12 @@ Before a publication operation is approved, assemble and review a per-asset mani
 6. Explicit snapshot lineage and a runtime-evaluation plan for scenario states.
 
 No production database writes, migrations, numeric scores, scenario states or monitoring events were created by this note.
+
+
+## Official Solana Explorer operational snapshot — 2026-10-09 07:44:06 UTC
+
+The official [Solana Explorer Mainnet Beta view](https://explorer.solana.com/?cluster=mainnet-beta) displayed slot **454,802,678**, block height **432,840,011**, 1-minute average slot time **263 ms**, 1-hour average slot time **267 ms**, live TPS **3,989**, and cumulative transaction count **557,831,544,713**. Supply was unavailable in that view. These live counters are a dated operational snapshot only; TPS and cumulative transactions are not equivalent to unique users or successful economic transactions. They do not close the supply, validator distribution, client diversity, fee-paying activity or value-accrual evidence gaps.
+
+## Evidence-quality note
+
+The CAKE DefiLlama figures in this file are secondary rolling-window estimates, not an audited month-end statement. In particular, protocol fees are not protocol revenue, and neither necessarily accrues to CAKE holders. The reported ~96.7% BSC share of TVL is a concentration indicator that should be verified from the underlying chain-level data. Refresh both SOL live counters and CAKE dashboard metrics before publication and preserve the actual retrieval timestamp in the evidence record.
