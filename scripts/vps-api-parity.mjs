@@ -82,6 +82,9 @@ for (const path of paths) {
     left = (l.pairs || l.items || []).map(x => pick(x, ["symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
     right = (v.pairs || v.items || []).map(x => pick(x, ["id","symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
   }
+  if (JSON.stringify(left) !== JSON.stringify(right)) {
+    console.error("PARITY_DIFF", path, JSON.stringify({ live: left, vps: right }));
+  }
   assert(JSON.stringify(left) === JSON.stringify(right), path);
   console.log("PARITY_OK", path);
 }
