@@ -1,0 +1,42 @@
+name: Research On-chain Capture
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/capture_sol_cake_rpc.py"
+      - ".github/workflows/research-onchain-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-onchain-capture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Read-only SOL + CAKE RPC capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: python -m py_compile scripts/research/capture_sol_cake_rpc.py
+      - name: Capture public on-chain state (read-only)
+        run: |
+          mkdir -p research-capture
+          python scripts/research/capture_sol_cake_rpc.py --output research-capture/sol-cake-rpc-capture.json
+      - name: Upload raw evidence artifact
+        if: ${{ always() && hashFiles('research-capture/sol-cake-rpc-capture.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sol-cake-rpc-capture-${{ github.run_id }}
+          path: research-capture/sol-cake-rpc-capture.json
+          if-no-files-found: error
+          retention-days: 7
