@@ -1,0 +1,53 @@
+name: Migration Rehearsal (Disposable PostgreSQL)
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/neon/**"
+      - "scripts/**"
+      - ".github/workflows/apply-neon-v2.yml"
+      - ".github/workflows/release-gate.yml"
+      - ".github/workflows/migration-rehearsal.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-rehearsal-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clean-bootstrap:
+    name: Clean DB bootstrap + idempotency
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run all migrations twice on disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          docker run -d --name crypto-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
+          trap 'docker rm -f crypto-postgres >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for i in $(seq 1 30); do
+            if pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1; then ready=1; break; fi
+            sleep 2
+          done
+          test "$ready" = "1"
+          export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
+          chmod +x scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          ./scripts/migrate-neon.sh
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='assets';" | grep -qx '1'
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='market_daily_candles';" | grep -qx '1'
+          migration_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;" | tr -d '[:space:]')"
+          duplicate_markers="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select version,count(*) from schema_migrations group by version having count(*) > 1) d;" | tr -d '[:space:]')"
+          test "$migration_count" -gt 0
+          test "$duplicate_markers" = "0"
+          echo "CLEAN_BOOTSTRAP_OK migrations=$migration_count duplicate_markers=0 rerun=1"
