@@ -8,7 +8,11 @@ on:
       - 'web/**'
       - 'shared/**'
       - 'workers/crypto-api/**'
+      - 'research/**'
+      - 'docs/PRODUCT-CONTOUR-V1*'
       - '.github/workflows/ui-runtime-e2e.yml'
+      - '.github/workflows/product-contour-gate.yml'
+      - '.github/workflows/release-gate.yml'
 
 jobs:
   runtime:
