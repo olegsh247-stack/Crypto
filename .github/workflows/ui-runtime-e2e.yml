@@ -86,21 +86,21 @@ jobs:
           check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
           check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
           check "eth_structure1" 'Structure 1' /tmp/ui-eth-research.html
-          check "eth_chapter_01" '01 · Essence and current role' /tmp/ui-eth-research.html
-          check "eth_chapter_02" '02 · Technology' /tmp/ui-eth-research.html
-          check "eth_chapter_03" '03 · Tokenomics' /tmp/ui-eth-research.html
-          check "eth_chapter_04" '04 · Network and on-chain state' /tmp/ui-eth-research.html
-          check "eth_chapter_05" '05 · Ecosystem' /tmp/ui-eth-research.html
-          check "eth_chapter_06" '06 · Users and activity' /tmp/ui-eth-research.html
-          check "eth_chapter_07" '07 · Institutional use and capital' /tmp/ui-eth-research.html
-          check "eth_chapter_08" '08 · Development and adoption' /tmp/ui-eth-research.html
-          check "eth_chapter_09" '09 · Macroeconomic context' /tmp/ui-eth-research.html
-          check "eth_chapter_10" '10 · Competitors and positioning' /tmp/ui-eth-research.html
-          check "eth_chapter_11" '11 · Risks' /tmp/ui-eth-research.html
-          check "eth_chapter_12" '12 · Catalysts' /tmp/ui-eth-research.html
-          check "eth_chapter_13" '13 · Scenarios' /tmp/ui-eth-research.html
-          check "eth_chapter_14" '14 · Conclusion' /tmp/ui-eth-research.html
-          check "eth_chapter_15" '15 · Monitoring' /tmp/ui-eth-research.html
+          check "eth_chapter_01" 'Essence and current role' /tmp/ui-eth-research.html
+          check "eth_chapter_02" 'Technology' /tmp/ui-eth-research.html
+          check "eth_chapter_03" 'Tokenomics' /tmp/ui-eth-research.html
+          check "eth_chapter_04" 'Network and on-chain state' /tmp/ui-eth-research.html
+          check "eth_chapter_05" 'Ecosystem' /tmp/ui-eth-research.html
+          check "eth_chapter_06" 'Users and activity' /tmp/ui-eth-research.html
+          check "eth_chapter_07" 'Institutional use and capital' /tmp/ui-eth-research.html
+          check "eth_chapter_08" 'Development and adoption' /tmp/ui-eth-research.html
+          check "eth_chapter_09" 'Macroeconomic context' /tmp/ui-eth-research.html
+          check "eth_chapter_10" 'Competitors and positioning' /tmp/ui-eth-research.html
+          check "eth_chapter_11" 'Risks' /tmp/ui-eth-research.html
+          check "eth_chapter_12" 'Catalysts' /tmp/ui-eth-research.html
+          check "eth_chapter_13" 'Scenarios' /tmp/ui-eth-research.html
+          check "eth_chapter_14" 'Conclusion' /tmp/ui-eth-research.html
+          check "eth_chapter_15" 'Monitoring' /tmp/ui-eth-research.html
           check "btc_identity" 'BTC' /tmp/ui-btc.html
           check "btc_dashboard" 'ASSET DASHBOARD' /tmp/ui-btc.html
           check "btc_research_chapters" 'Research chapters' /tmp/ui-btc-research.html
