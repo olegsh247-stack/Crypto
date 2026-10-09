@@ -52,6 +52,26 @@ Source: https://explorer.solana.com/?cluster=mainnet-beta
 
 **Analytical use:** this supports a dated network-performance observation only. It does not establish unique-user adoption, successful non-vote transactions, fee-paying demand, decentralization or SOL value accrual. Do not compare this TPS figure directly with another chain without aligned transaction definitions and time windows.
 
+### Supply and stake cross-check — secondary explorer snapshot (epoch 1050; timestamp not exposed)
+
+Solscan's indexed Mainnet page showed:
+- Total SOL supply: **635.305M SOL**
+- Circulating supply: **588.386M SOL (92.61%)**
+- Non-circulating supply: **46.920M SOL (7.39%)**
+- Total stake: **441.739M SOL**
+- Current stake: **441.044M SOL**
+- Delinquent stake: **0.694M SOL (0.157%)**
+
+Source: https://solscan.io/?cluster=Main
+
+**Evidence quality / freshness:** this is a secondary explorer snapshot labelled epoch 1050, without a reliable observation timestamp. It is older than the official Explorer snapshot of 9 October (epoch 1052), so it is a provisional cross-check only, not a current publication metric. Re-query an authoritative supply endpoint and record exact UTC time, method and supply definition. Do not combine this snapshot with validator concentration data from 19 September as if contemporaneous.
+
+### Validator-client diversity — evidence boundary
+
+Solana's official 1 October 2026 changelog lists Agave v4.4.0-beta.0 and Firedancer Mainnet Release v26.09.5: https://solana.com/news/solana-changelog-october-1-2026. Wen Firedancer's tracker reports validator entries and labels its data last updated 9 October 2026 at 01:00 GMT+2: https://www.wenfiredancer.com/.
+
+These sources confirm client development and deployment activity, but the retrieved tracker output did not provide a reliable network-wide stake denominator or client-share percentage. Client diversity remains **incomplete** for scoring; do not infer adoption share from the displayed validator list alone.
+
 ## 05 — Ecosystem
 
 Solana supports DeFi, stablecoins, payments, consumer applications, trading, NFTs and infrastructure. Ecosystem breadth can increase blockspace demand and utility, but activity concentrated in speculative or incentive-driven applications may be cyclical. Separate organic recurring usage from subsidized activity and assess whether application success generates durable demand for SOL.

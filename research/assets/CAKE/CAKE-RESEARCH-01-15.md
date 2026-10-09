@@ -61,6 +61,23 @@ Source: https://blog.pancakeswap.finance/articles/kitchen-report-september-2026
 
 **Interpretation:** this is positive evidence for realized monthly net supply reduction, but it is issuer-reported and does not establish future deflation, current circulating supply, or price appreciation. The monthly net reduction must be considered alongside current supply methodology, chain/product revenue, incentives and the mechanisms through which benefits accrue to CAKE holders. Reconcile with token-contract data before publication; do not derive a numeric score from this single factor.
 
+### Dashboard volatility check — second indexed retrieval on 2026-10-09
+
+A second DefiLlama PancakeSwap dashboard retrieval indexed on 9 October reported a different rolling snapshot from the earlier capture in this document:
+
+| Metric | Earlier 9 Oct capture | Second indexed retrieval |
+|---|---:|---:|
+| TVL | $2.176B | $2.212B |
+| Fees, trailing 30d | $18.0M | $16.86M |
+| Protocol revenue, trailing 30d | $5.92M | $5.55M |
+| DEX volume, trailing 30d | $26.37B | $26.37B |
+| BSC share of TVL | ~96.7% | ~96.7% |
+| Circulating / total supply | 318.32M / 329.92M CAKE | 318.32M / 329.92M CAKE |
+
+Source: https://investors.defillama.com/protocol/pancakeswap?events=false&revenue=true&tvl=false
+
+**Interpretation:** the two retrieved views are not interchangeable evidence records; the second view's exact capture timestamp is not exposed in the indexed result. Retain both observations and do not average them or choose a canonical snapshot. The repeated ~96.7% BSC TVL share is a concentration signal. Fees/revenue must be refreshed from a timestamped source, and supply reconciled on-chain before publication.
+
 ## 04 — Protocol / On-chain State
 
 Monitor swap volume and fees by chain and product, liquidity depth, slippage, protocol revenue, incentives paid, CAKE emissions, buybacks/burns and the net change in circulating and total supply. Distinguish protocol-level volume from revenue retained by the protocol and distinguish gross burns from net supply change. Product metrics should be captured with consistent time windows and chain attribution.

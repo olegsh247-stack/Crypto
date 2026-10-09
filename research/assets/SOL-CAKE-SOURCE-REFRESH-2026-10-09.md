@@ -76,6 +76,18 @@ A current DefiLlama protocol dashboard snapshot was indexed on 9 October 2026. T
 
 **Interpretation:** these figures give a useful current cross-check for protocol activity and concentration. They are dashboard observations with rolling windows, not a month-end financial statement. Fees are not identical to protocol revenue, and neither should be treated as fully accruing to CAKE holders. The 96.7% BSC TVL share is a material concentration signal even though the protocol supports multiple chains. Record retrieval time and refresh the dashboard before any future publication; cross-check supply against the official CAKE contract and the project's burn methodology.
 
+### SOL supply and client-diversity cross-checks — reviewed 9 October
+
+Solscan's indexed Mainnet page showed total supply **635.305M SOL**, circulating **588.386M (92.61%)**, non-circulating **46.920M (7.39%)**, total stake **441.739M**, current stake **441.044M**, and delinquent stake **0.694M (0.157%)**. Source: https://solscan.io/?cluster=Main. The page labels the snapshot epoch 1050 but exposes no reliable observation timestamp; the official Explorer snapshot on 9 October was at epoch 1052. Keep these figures as an older secondary cross-check, not publication-ready current metrics.
+
+Solana's official 1 October changelog lists Agave v4.4.0-beta.0 and Firedancer Mainnet Release v26.09.5: https://solana.com/news/solana-changelog-october-1-2026. Wen Firedancer's tracker labels its data last updated 9 October 2026 at 01:00 GMT+2: https://www.wenfiredancer.com/. The retrieved tracker output did not expose a network-wide stake denominator or client-share percentage. Client diversity therefore remains incomplete; do not infer adoption from the displayed validator list.
+
+### CAKE dashboard volatility cross-check — second indexed retrieval on 9 October
+
+A second indexed DefiLlama view reported TVL **$2.212B**, trailing-30-day fees **$16.86M**, protocol revenue **$5.55M**, DEX volume **$26.37B**, BSC TVL share **~96.7%**, circulating supply **318.32M CAKE**, total supply **329.92M CAKE**, and maximum supply **400M CAKE**. Source: https://investors.defillama.com/protocol/pancakeswap?events=false&revenue=true&tvl=false.
+
+The earlier same-day capture in this file reported $2.176B TVL, $18.0M fees and $5.92M revenue. The discrepancy is preserved rather than silently overwritten: these are dynamic rolling dashboard values, and the second view's exact capture time is not exposed. Do not average the values or choose a canonical figure until a timestamped retrieval is captured. The repeated BSC concentration signal is consistent, but dashboard data remain secondary and supply requires contract reconciliation.
+
 ## Publication readiness
 
 **Status: not ready to publish as a database snapshot.** This refresh adds dated primary-source observations, but it does not satisfy all required metrics or the full evidence chain for either asset. The existing SOL and CAKE Structure 1 documents remain research drafts.
