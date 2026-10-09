@@ -129,6 +129,18 @@ The SOL thesis is that a fast, low-friction execution network can attract recurr
 **Thesis:** Conditional; no numeric score assigned in this draft.  
 **Confidence:** Medium-Low until current metrics and evidence are captured.
 
+## Validator stake distribution — dated independent cross-check (2026-09-19)
+
+Validators Solutions' Solana validator decentralization report, sourced from Solana Gossip and vote accounts, reported on 19 September 2026:
+- Active stake: **439.6M SOL**
+- Superminority threshold: **18 validators**, representing **33.8%** of active stake
+- Nakamoto coefficient: **18**
+- Largest single validator stake: **4.1%** (Figment)
+
+Source: https://validators.solutions/en/validators/decentralization/
+
+**Evidence quality:** independent secondary network analytics, not a Solana Foundation publication. Treat the values as a dated snapshot with the provider's definitions; validator identities and stake can change. The result gives a concrete decentralization baseline but does not replace current official stake data, validator-client diversity, operator/cloud concentration, or a fresh retrieval at snapshot publication time. Do not assign a numeric score from this one source alone.
+
 ## 15 — Monitoring
 
 ### Critical Factors

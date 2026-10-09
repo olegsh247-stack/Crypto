@@ -29,6 +29,14 @@ Likewise, keep `monitoring_events` empty until a real configured trigger is obse
 - Stablecoin transfers/supply, application activity and competitor comparisons over aligned time windows.
 - For each of the 15 blocks: reviewed status (complete, incomplete or justified N/A), claim, source URL, observation date, confidence and thesis impact.
 
+### SOL validator stake / consensus concentration — independent dated cross-check
+
+Validators Solutions' report, based on Solana Gossip and vote accounts, was updated **19 September 2026, 08:03 UTC**. It reported **439.6M SOL active stake**, a **18-validator superminority at 33.8%**, **Nakamoto coefficient 18**, and **4.1%** for the largest validator stake (Figment).
+
+Source: https://validators.solutions/en/validators/decentralization/
+
+This is a secondary network-analytics source, not an official Solana Foundation metric. Its definitions and dated snapshot must be preserved. It narrows the SOL decentralization evidence gap, but does not close current validator-client diversity, operator/cloud concentration, supply/net issuance, or fee-paying adoption gaps. Re-fetch the underlying data and definitions before any publication; do not turn these figures directly into a numeric score.
+
 ## CAKE — latest primary-source observations found
 
 | Observation | Publisher's observation date | Value | Source |
