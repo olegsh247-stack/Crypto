@@ -52,8 +52,8 @@ def rpc_post(endpoint: str, method: str, params: list[Any]) -> dict[str, Any]:
         return {"method": method, "started_at_utc": started, "finished_at_utc": utc_now(), "ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
-def eth_call(endpoint: str, method: str, data: str) -> dict[str, Any]:
-    result = rpc_post(endpoint, "eth_call", [{"to": CAKE_TOKEN, "data": data}, "latest"])
+def eth_call(endpoint: str, method: str, data: str, block_tag: str) -> dict[str, Any]:
+    result = rpc_post(endpoint, "eth_call", [{"to": CAKE_TOKEN, "data": data}, block_tag])
     result["field"] = method
     if result.get("ok") and result.get("result"):
         try:
@@ -63,10 +63,10 @@ def eth_call(endpoint: str, method: str, data: str) -> dict[str, Any]:
     return result
 
 
-def cake_balance_call(endpoint: str, label: str, address: str) -> dict[str, Any]:
+def cake_balance_call(endpoint: str, label: str, address: str, block_tag: str) -> dict[str, Any]:
     selector = "70a08231"
     data = "0x" + selector + address.lower().removeprefix("0x").rjust(64, "0")
-    result = eth_call(endpoint, f"balanceOf({label})", data)
+    result = eth_call(endpoint, f"balanceOf({label})", data, block_tag)
     result["address"] = address
     return result
 
@@ -82,15 +82,20 @@ def capture() -> dict[str, Any]:
     ]
     sol = {name: rpc_post(SOLANA_RPC, name, params) for name, params in sol_methods}
 
+    bsc_chain_id = rpc_post(BSC_RPC, "eth_chainId", [])
+    bsc_block_number = rpc_post(BSC_RPC, "eth_blockNumber", [])
+    # Pin every eth_call to the same block so supply and balances are comparable.
+    block_tag = bsc_block_number.get("result") if bsc_block_number.get("ok") else "latest"
     bsc = {
-        "eth_chainId": rpc_post(BSC_RPC, "eth_chainId", []),
-        "eth_blockNumber": rpc_post(BSC_RPC, "eth_blockNumber", []),
-        "totalSupply": eth_call(BSC_RPC, "totalSupply", "0x18160ddd"),
-        "decimals": eth_call(BSC_RPC, "decimals", "0x313ce567"),
+        "eth_chainId": bsc_chain_id,
+        "eth_blockNumber": bsc_block_number,
+        "eth_call_block_tag": block_tag,
+        "totalSupply": eth_call(BSC_RPC, "totalSupply", "0x18160ddd", block_tag),
+        "decimals": eth_call(BSC_RPC, "decimals", "0x313ce567", block_tag),
         "balances": {
-            "burn_address": cake_balance_call(BSC_RPC, "burn_address", BURN_ADDRESS),
-            "zero_address": cake_balance_call(BSC_RPC, "zero_address", ZERO_ADDRESS),
-            **{label: cake_balance_call(BSC_RPC, label, address) for label, address in LOCKED_CANDIDATES.items()},
+            "burn_address": cake_balance_call(BSC_RPC, "burn_address", BURN_ADDRESS, block_tag),
+            "zero_address": cake_balance_call(BSC_RPC, "zero_address", ZERO_ADDRESS, block_tag),
+            **{label: cake_balance_call(BSC_RPC, label, address, block_tag) for label, address in LOCKED_CANDIDATES.items()},
         },
     }
 
