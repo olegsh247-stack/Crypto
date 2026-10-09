@@ -7,6 +7,8 @@ on:
       - "workers/**"
       - "shared/**"
       - "research/**"
+      - "infrastructure/neon/**"
+      - "scripts/**"
       - "docs/PRODUCT-CONTOUR-V1*"
       - ".github/workflows/**"
   workflow_dispatch:
@@ -22,3 +24,7 @@ jobs:
   runtime-contract:
     name: Build + read-only UI/API contract
     uses: ./.github/workflows/ui-runtime-e2e.yml
+
+  migration-rehearsal:
+    name: Disposable DB migration rehearsal
+    uses: ./.github/workflows/migration-rehearsal.yml
