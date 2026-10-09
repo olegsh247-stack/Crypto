@@ -72,7 +72,7 @@ The parity contract now compares the common scenario-definition fields between l
 
 Run #85 passed health, registry, pair and ETH/BTC detail parity, including the revised scenario-lineage contract. It then failed when the parity script called persisted ETH market history: the disposable VPS database had not yet received candle rows, so its history endpoint correctly returned HTTP 503.
 
-The VPS rehearsal now runs market-data ingestion before Worker/VPS parity. The existing worker E2E remains responsible for proving that ingestion added fresh rows, and its history assertion checks the endpoint after that ingestion. This keeps the history comparison meaningful without seeding fabricated market data into the database migrations.
+The VPS rehearsal now runs market-data ingestion before Worker/VPS parity. The existing worker E2E remains responsible for proving that ingestion added fresh rows. Its additional history assertion failed in run #86, but the previous `curl | grep` pipeline did not preserve the HTTP response/body in the Actions output. The assertion now captures the status and prints the response body on failure (with a bounded request timeout), so the next run will distinguish an API/data defect from a brittle shell assertion. Worker/VPS parity remains after ingestion and independently checks the history endpoint. This avoids seeding fabricated market data into migrations.
 
 Because parity failed before the remaining steps, mutation, worker-ingestion/history and admin-boundary E2E are still pending verification.
 
