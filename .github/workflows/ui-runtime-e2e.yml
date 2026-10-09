@@ -3,6 +3,12 @@ name: UI Runtime Contract E2E
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - 'workers/crypto-api/**'
+      - '.github/workflows/ui-runtime-e2e.yml'
 
 jobs:
   runtime:
