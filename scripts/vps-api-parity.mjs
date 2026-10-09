@@ -22,7 +22,7 @@ function normalizeDetail(d) {
   assert(Array.isArray(d.scenario_states), "scenario_states array missing");
   for (const scenario of scenarios) {
     assert(!snapshotId || scenario.snapshot_id === snapshotId,
-      "scenario definition is not scoped to latest published snapshot");
+      "scenario definition is not scoped to latest published snapshot; baseline=" + snapshotId + "; row=" + JSON.stringify(scenario));
   }
   for (const state of states) {
     assert(!snapshotId || state.snapshot_id === snapshotId,
