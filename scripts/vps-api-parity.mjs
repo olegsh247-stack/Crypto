@@ -14,12 +14,35 @@ function pick(obj, keys) {
   return Object.fromEntries(keys.filter(k => Object.prototype.hasOwnProperty.call(obj ?? {}, k)).map(k => [k, obj[k]]));
 }
 function normalizeDetail(d) {
+  const snapshotId = d.research_snapshot?.snapshot_id ?? null;
+  const scenarios = Array.isArray(d.research_scenarios) ? d.research_scenarios : [];
+  const states = Array.isArray(d.scenario_states) ? d.scenario_states : [];
+
+  assert(Array.isArray(d.research_scenarios), "research_scenarios array missing");
+  assert(Array.isArray(d.scenario_states), "scenario_states array missing");
+  for (const scenario of scenarios) {
+    assert(!snapshotId || scenario.snapshot_id === snapshotId,
+      "scenario definition is not scoped to latest published snapshot");
+  }
+  for (const state of states) {
+    assert(!snapshotId || state.snapshot_id === snapshotId,
+      "scenario state is not scoped to latest published snapshot");
+  }
+
   return {
     asset: pick(d.asset, ["asset_id","symbol","name","enabled","research_status","research_status_source"]),
     research: pick(d.research, ["lifecycle","freshness"]),
     research_freshness: pick(d.research_freshness, ["status"]),
+    snapshot_id: snapshotId,
     snapshot_status: d.research_snapshot?.status ?? null,
-    block_count: Array.isArray(d.research_blocks) ? d.research_blocks.length : null
+    block_count: Array.isArray(d.research_blocks) ? d.research_blocks.length : null,
+    scenario_definitions: scenarios.map(s => pick(s, [
+      "snapshot_id","scenario_type","probability","assumptions",
+      "supporting_evidence","invalidation_conditions","thesis_impact","confidence"
+    ])).sort((a,b) => String(a.scenario_type).localeCompare(String(b.scenario_type))),
+    scenario_states: states.map(s => pick(s, [
+      "scenario_id","state","confidence","rationale","indicators","observed_at","snapshot_id"
+    ])).sort((a,b) => String(b.observed_at).localeCompare(String(a.observed_at)))
   };
 }
 function normalizeHistory(d) {
@@ -62,4 +85,4 @@ for (const path of paths) {
   assert(JSON.stringify(left) === JSON.stringify(right), path);
   console.log("PARITY_OK", path);
 }
-console.log("VPS_API_PARITY_OK endpoints=7 volatile_fields_normalized=1");
+console.log("VPS_API_PARITY_OK endpoints=7 volatile_fields_normalized=1 scenario_definitions=compared scenario_states=compared snapshot_lineage=checked");
