@@ -32,6 +32,12 @@ Because the registry assertion failed, the ETH detail/history checks, live Worke
 
 Update the workflow contract test to read the documented `assets` property first, while retaining compatible handling for `items` or a bare array only where those shapes are actually returned. Keep the exact expected registry count and enabled-pair assertions so this fix does not weaken validation.
 
+### Follow-up finding from run #70
+
+The first parser correction exposed a second stale expectation: the actual canonical registry contains **10 enabled assets**, not 9. This is intentional: the registry includes `usdt` as the system quote asset, while the worker's market-data ingestion set remains the nine non-USDT research assets. The canonical registry finalization migration explicitly seeds BTC, DASH, ETH, SOL, CAKE, BCH, LTC, XRP, TRX and USDT.
+
+Run #70 therefore failed with `AssertionError: assets=10` after correctly reading the `assets` property. The workflow contract now expects 10 and asserts the exact canonical asset-ID set; the existing pair count remains 9. This preserves the distinction between the registry and the research/ingestion universe instead of excluding USDT from the API response.
+
 Then rerun the VPS rehearsal on the PR head. A pass must be observed in GitHub Actions; changing the test alone is not evidence of success.
 
 ## Safety / scope
