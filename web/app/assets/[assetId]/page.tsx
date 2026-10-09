@@ -108,7 +108,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
     : thesisState === "Negative"
       ? "The thesis currently has more pressure than support."
       : "The thesis is currently balanced or insufficiently resolved.";
-  const invalidation = currentScenario?.invalidation_conditions ?? scenarios.find((s: any) => s.scenario_type === "base")?.invalidation_conditions ?? null;
+  const invalidation = scenarios.find((s: any) => s.scenario_type === "base")?.invalidation_conditions ?? null;
   const decisionDrivers = [
     mainCatalyst?.name ? { label: "Catalyst", value: mainCatalyst.name } : null,
     mainRisk?.name ? { label: "Risk", value: mainRisk.name } : null,
