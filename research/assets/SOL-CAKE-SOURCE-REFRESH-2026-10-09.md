@@ -51,6 +51,23 @@ Likewise, keep `monitoring_events` empty until a real configured trigger is obse
 - Current governance/tokenomics parameters and implementation status; do not reuse legacy veCAKE assumptions as current.
 - For each of the 15 blocks: reviewed status (complete, incomplete or justified N/A), claim, source URL, observation date, confidence and thesis impact.
 
+## Additional CAKE protocol-economics snapshot — 2026-10-09
+
+A current DefiLlama protocol dashboard snapshot was indexed on 9 October 2026. This is a secondary analytics source and should be retained as a cross-check, not substituted for primary on-chain evidence:
+
+| Metric | Dashboard value | Window / qualification | Source |
+|---|---:|---|---|
+| Total value locked | $2.176B | Current dashboard snapshot; all tracked chains | https://defillama.com/protocol/pancakeswap |
+| Fees | $18.0M | Trailing 30 days; protocol-wide dashboard measure | https://defillama.com/protocol/pancakeswap |
+| Protocol revenue | $5.92M | Trailing 30 days; DefiLlama definition | https://defillama.com/protocol/pancakeswap |
+| DEX volume | $26.37B | Trailing 30 days | https://defillama.com/protocol/pancakeswap |
+| BSC share of TVL | 96.7% | Approximate share in dashboard snapshot | https://defillama.com/protocol/pancakeswap |
+| Circulating supply | 318.32M CAKE | Dashboard estimate; verify against token contract and burn-address methodology | https://defillama.com/protocol/pancakeswap |
+| Total supply | 329.92M CAKE | Dashboard estimate; verify against token contract | https://defillama.com/protocol/pancakeswap |
+| Maximum supply | 400M CAKE | Matches PancakeSwap's official Tokenomics 3.0 policy | https://docs.pancakeswap.finance/protocol/cake-tokenomics |
+
+**Interpretation:** these figures give a useful current cross-check for protocol activity and concentration. They are dashboard observations with rolling windows, not a month-end financial statement. Fees are not identical to protocol revenue, and neither should be treated as fully accruing to CAKE holders. The 96.7% BSC TVL share is a material concentration signal even though the protocol supports multiple chains. Record retrieval time and refresh the dashboard before any future publication; cross-check supply against the official CAKE contract and the project's burn methodology.
+
 ## Publication readiness
 
 **Status: not ready to publish as a database snapshot.** This refresh adds dated primary-source observations, but it does not satisfy all required metrics or the full evidence chain for either asset. The existing SOL and CAKE Structure 1 documents remain research drafts.
