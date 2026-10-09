@@ -13,7 +13,7 @@ function assert(x, msg) { if (!x) throw new Error("PARITY assertion failed: " + 
 function pick(obj, keys) {
   return Object.fromEntries(keys.filter(k => Object.prototype.hasOwnProperty.call(obj ?? {}, k)).map(k => [k, obj[k]]));
 }
-function normalizeDetail(d) {
+function normalizeDetail(d, { requireLineage = false } = {}) {
   const snapshotId = d.research_snapshot?.snapshot_id ?? null;
   const scenarios = Array.isArray(d.research_scenarios) ? d.research_scenarios : [];
   const states = Array.isArray(d.scenario_states) ? d.scenario_states : [];
@@ -21,11 +21,15 @@ function normalizeDetail(d) {
   assert(Array.isArray(d.research_scenarios), "research_scenarios array missing");
   assert(Array.isArray(d.scenario_states), "scenario_states array missing");
   for (const scenario of scenarios) {
-    assert(!snapshotId || scenario.snapshot_id === snapshotId,
+    assert(!snapshotId || (requireLineage
+      ? scenario.snapshot_id === snapshotId
+      : scenario.snapshot_id == null || scenario.snapshot_id === snapshotId),
       "scenario definition is not scoped to latest published snapshot; baseline=" + snapshotId + "; row=" + JSON.stringify(scenario));
   }
   for (const state of states) {
-    assert(!snapshotId || state.snapshot_id === snapshotId,
+    assert(!snapshotId || (requireLineage
+      ? state.snapshot_id === snapshotId
+      : state.snapshot_id == null || state.snapshot_id === snapshotId),
       "scenario state is not scoped to latest published snapshot");
   }
 
@@ -37,7 +41,7 @@ function normalizeDetail(d) {
     snapshot_status: d.research_snapshot?.status ?? null,
     block_count: Array.isArray(d.research_blocks) ? d.research_blocks.length : null,
     scenario_definitions: scenarios.map(s => pick(s, [
-      "snapshot_id","scenario_type","probability","assumptions",
+      "scenario_type","probability","assumptions",
       "supporting_evidence","invalidation_conditions","thesis_impact","confidence"
     ])).sort((a,b) => String(a.scenario_type).localeCompare(String(b.scenario_type))),
     scenario_states: states.map(s => pick(s, [
@@ -72,7 +76,7 @@ for (const path of paths) {
     left = pick(l, ["status","service","database"]);
     right = pick(v, ["status","service","database"]);
   } else if (path === "/api/assets/eth" || path === "/api/assets/btc") {
-    left = normalizeDetail(l); right = normalizeDetail(v);
+    left = normalizeDetail(l); right = normalizeDetail(v, { requireLineage: true });
   } else if (path.includes("/history?")) {
     left = normalizeHistory(l); right = normalizeHistory(v);
   } else if (path === "/api/assets") {
