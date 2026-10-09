@@ -28,6 +28,26 @@ PancakeSwap's Tokenomics 3.0 documentation describes a buy-back-and-burn approac
 
 **Assessment:** More explicit supply-management framework, but it must be validated against realized data. **Confidence:** Medium.
 
+
+
+### Dated protocol-economics cross-check — 2026-10-09
+
+The DefiLlama PancakeSwap dashboard was captured as a secondary analytics cross-check on 9 October 2026. Values are dashboard estimates and rolling-window aggregates, not an audited month-end statement.
+
+| Metric | Dashboard value | Window / qualification |
+|---|---:|---|
+| Total value locked | $2.176B | Current dashboard snapshot; all tracked chains |
+| Fees | $18.0M | Trailing 30 days; protocol-wide dashboard measure |
+| Protocol revenue | $5.92M | Trailing 30 days; DefiLlama definition |
+| DEX volume | $26.37B | Trailing 30 days |
+| BSC share of TVL | ~96.7% | Approximate share in this snapshot |
+| Circulating supply | 318.32M CAKE | Dashboard estimate; verify on-chain methodology |
+| Total supply | 329.92M CAKE | Dashboard estimate; verify against token contract |
+
+Source: https://defillama.com/protocol/pancakeswap
+
+**Interpretation:** BSC concentration is a material dependency to monitor. Fees are not the same as protocol revenue, and neither is equivalent to value accruing to CAKE holders. Supply estimates require reconciliation with the official token contract and burn methodology. Refresh these metrics before publication and preserve the exact retrieval timestamp when capturing underlying evidence.
+
 ## 04 — Protocol / On-chain State
 
 Monitor swap volume and fees by chain and product, liquidity depth, slippage, protocol revenue, incentives paid, CAKE emissions, buybacks/burns and the net change in circulating and total supply. Distinguish protocol-level volume from revenue retained by the protocol and distinguish gross burns from net supply change. Product metrics should be captured with consistent time windows and chain attribution.
