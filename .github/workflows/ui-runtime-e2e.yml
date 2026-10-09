@@ -6,6 +6,7 @@ on:
 jobs:
   runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: web
@@ -27,18 +28,18 @@ jobs:
           web_pid=$!
           trap 'kill "$web_pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
-            if curl -fsS "http://127.0.0.1:3000/" >/dev/null 2>&1; then break; fi
+            if curl --max-time 20 -fsS "http://127.0.0.1:3000/" >/dev/null 2>&1; then break; fi
             sleep 2
           done
-          curl -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
-          curl -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
-          curl -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-eth-research.html
-          curl -fsS "http://127.0.0.1:3000/assets/btc" >/tmp/ui-btc.html
-          curl -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
-          curl -fsS "http://127.0.0.1:3000/assets/sol" >/tmp/ui-sol.html
-          curl -fsS "http://127.0.0.1:3000/assets/sol/research" >/tmp/ui-sol-research.html
-          curl -fsS "http://127.0.0.1:3000/assets/cake" >/tmp/ui-cake.html
-          curl -fsS "http://127.0.0.1:3000/assets/cake/research" >/tmp/ui-cake-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-eth-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/btc" >/tmp/ui-btc.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/sol" >/tmp/ui-sol.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/sol/research" >/tmp/ui-sol-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/cake" >/tmp/ui-cake.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/cake/research" >/tmp/ui-cake-research.html
 
           # Product Contour v1: Home → Assets → Asset Dashboard → Deep Research.
           check() {
@@ -112,14 +113,14 @@ jobs:
           node --input-type=module <<'NODE'
           const base = process.env.CRYPTO_API_URL;
           const fail = (message) => { console.error("API_CHECK_FAIL", message); process.exit(1); };
-          const listResponse = await fetch(`${base}/api/assets`);
+          const listResponse = await fetch(`${base}/api/assets`, { signal: AbortSignal.timeout(15000) });
           if (!listResponse.ok) fail(`assets_list_http_${listResponse.status}`);
           const listPayload = await listResponse.json();
           if (!Array.isArray(listPayload.assets)) fail("assets_list_missing_array");
           for (const symbol of ["BTC", "ETH", "SOL", "CAKE"]) {
             const listed = listPayload.assets.find((item) => String(item.symbol).toUpperCase() === symbol);
             if (!listed) fail(`asset_missing_from_list_${symbol}`);
-            const response = await fetch(`${base}/api/assets/${encodeURIComponent(listed.asset_id)}`);
+            const response = await fetch(`${base}/api/assets/${encodeURIComponent(listed.asset_id)}`, { signal: AbortSignal.timeout(15000) });
             if (!response.ok) fail(`asset_detail_http_${symbol}_${response.status}`);
             const payload = await response.json();
             if (String(payload.asset?.symbol).toUpperCase() !== symbol) fail(`asset_identity_mismatch_${symbol}`);
