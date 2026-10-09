@@ -1,0 +1,29 @@
+name: Product Contour Gate
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - "workers/crypto-api/**"
+      - "shared/**"
+      - "research/**"
+      - "docs/PRODUCT-CONTOUR-V1*"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-contour-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-build:
+    name: Web build
+    uses: ./.github/workflows/web-build.yml
+
+  ui-runtime-e2e:
+    name: Read-only runtime/API contract
+    needs: web-build
+    uses: ./.github/workflows/ui-runtime-e2e.yml
