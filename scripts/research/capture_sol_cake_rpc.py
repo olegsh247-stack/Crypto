@@ -78,7 +78,7 @@ def capture() -> dict[str, Any]:
         ("getEpochInfo", [{"commitment": "finalized"}]),
         ("getSupply", [{"commitment": "finalized"}]),
         ("getVoteAccounts", [{"commitment": "finalized"}]),
-        ("getInflationRate", [{"commitment": "finalized"}]),
+        ("getInflationRate", []),
     ]
     sol = {name: rpc_post(SOLANA_RPC, name, params) for name, params in sol_methods}
 
