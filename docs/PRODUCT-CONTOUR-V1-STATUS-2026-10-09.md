@@ -3,7 +3,7 @@
 Date: 2026-10-09
 Branch: `fix/product-contour-v1-contracts`
 PR: https://github.com/olegsh247-stack/Crypto/pull/3
-Current branch head at this update: `2852fd362a9cb072dcf9f6ebaf4730e44d7d908b`
+Current branch head at this update: `1a92a6dfdedcacb1456b2321a085c8b0fcfac06e`
 
 ## Verified runtime baseline
 
@@ -11,7 +11,8 @@ Current branch head at this update: `2852fd362a9cb072dcf9f6ebaf4730e44d7d908b`
 - UI Runtime Contract E2E passed on the same commit: [run #5](https://github.com/olegsh247-stack/Crypto/actions/runs/37972879565).
 - A later runtime E2E passed on commit `d98b3017384ba6d2b315befbc573deac444a8278`: [UI Runtime E2E](https://github.com/olegsh247-stack/Crypto/actions/runs/37973984413).
 - The runtime workflow exercises Home, BTC/ETH/SOL/CAKE dashboards and Deep Research routes, validates the canonical 15 ETH chapter headings, and uses GET-only API requests for list/detail lifecycle parity, resolved-block counts, response-array shape and snapshot lineage.
-- The Product Contour Gate workflow has been added to consolidate PR validation. Its run on the newest branch head is pending/queued at the time of this update; do not treat that latest run as passed until its result is green.
+- The Product Contour Gate workflow now orchestrates the Web build + read-only UI/API runtime check and a disposable-PostgreSQL migration rehearsal. The current consolidated run is still in progress; do not treat the latest run as passed until GitHub reports success.
+- The disposable migration rehearsal has completed successfully in an earlier attempt: all migrations ran twice against a fresh PostgreSQL 16 database, and the schema-migration marker table had no duplicate versions. The overall workflow was then cancelled by a newer commit before runtime E2E completed, so this is migration-rehearsal evidence, not a green overall Gate.
 - The `.gitignore` conflict was resolved with merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; current branch is ahead of `main` and no longer behind it. GitHub reports PR #3 as mergeable, but it remains a draft.
 
 ## Live API findings
@@ -45,9 +46,9 @@ Tracking task: [Issue #4 — publish SOL/CAKE snapshots and define scenario base
 ## Actions and Gate status
 
 - **Build/runtime Actions:** verified passing on the validated commits linked above. Earlier UI E2E failures from brittle text assertions were corrected. The Actions spending/billing blocker is superseded by successful runs.
-- **Product Contour Gate:** a single PR gate now orchestrates build plus read-only UI/API runtime checks, reducing duplicate CI runs. The current-head run still needs to finish green.
+- **Product Contour Gate:** a single PR gate now orchestrates build + read-only UI/API runtime checks and a disposable PostgreSQL migration rehearsal, reducing duplicate CI runs and avoiding Neon credentials in migration validation. The current-head run still needs to finish green.
 - **Production Release Gate:** its previous runs include failures at the first database migration/contract job, which caused downstream build/deploy jobs to be skipped. One earlier complete run succeeded. The available failed-run log endpoint now returns 404, so the precise cause of the latest migration-stage failure is **not yet proven fixed**.
-- The Release Gate was changed on this branch from automatic main-push execution to manual dispatch with an explicit boolean confirmation before Neon migrations and API deployment. This prevents an ordinary push from triggering production writes/deployments, but it does **not** prove the migration failure itself is resolved.
+- The Release Gate was changed on this branch from automatic main-push execution to manual dispatch with an explicit boolean confirmation before Neon migrations and API deployment. The reusable migration workflow now runs the clean-DB rehearsal before any live migration and independently requires explicit production-migration confirmation. This prevents ordinary pushes or an unconfirmed direct workflow dispatch from writing to production. It does **not** prove the historical live-Neon migration failure itself is resolved.
 
 ## Safety boundary
 
