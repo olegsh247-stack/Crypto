@@ -73,7 +73,7 @@ The first successful read-only capture run is available as [ETH Observation Capt
 Observed source behavior:
 - Binance ticker endpoint returned a positive price, but its response does not carry a provider observation timestamp. The record therefore labels the timestamp as capture-time proxy and keeps the unit as `USDT/ETH`.
 - Ethereum public JSON-RPC returned a latest block and fields needed for a single-block base-fee burn calculation. This is not total fees and is not a daily series.
-- The documented L2BEAT TVS request failed in the first capture. The payload was not mapped into a numeric observation. The endpoint/query/response contract must be corrected and verified before using it.
+- The documented L2BEAT TVS request returned an error in the first capture. Review of the official OpenAPI specification established that this API requires an API key in the query string. The capture now skips it explicitly when no approved credential is configured; no key is logged or written to an artifact. Do not add an API key to ordinary CI until a reviewed secret-handling approach is approved.
 - Net supply flow and separate staking entry/exit queues remain unmeasured gaps.
 
 Additional repository inventory:
@@ -83,3 +83,8 @@ Additional repository inventory:
 - The base observations schema has no visible natural-key uniqueness constraint for idempotent insertion. Do not implement upserts against a guessed key. First define the revision semantics and rehearse the exact constraint/index on disposable PostgreSQL.
 
 The capture workflow's successful status validates script syntax, artifact structure and safety assertions; it does not mean all five metric families have been sourced or that the artifact is ready for database ingestion.
+
+
+### L2BEAT access clarification
+
+Official OpenAPI: https://api.l2beat.com/openapi. The `/v1/tvs` endpoint requires `apiKey` as a query parameter. The current capture intentionally does not attempt unauthenticated requests or add credentials to CI. L2 scale remains a source gap until access is authorized or a verified public alternative is selected.
