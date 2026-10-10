@@ -56,6 +56,11 @@ jobs:
               assert "payload" not in probe, "raw provider payload must not be copied into the artifact"
               shape = probe["schema_probe"]
               print(f"{key}: status={shape.get('status')} stale_over_one_hour={shape.get('stale_over_one_hour')} generated_at={shape.get('generated_at_utc')}")
+              if key == "ethsupply_live":
+                  print(f"ethsupply_live: head={shape.get('head')} supply_as_of={shape.get('supply_as_of')} data_value_shapes={shape.get('data_value_shapes')}")
+              else:
+                  print(f"ethsupply_history_30d: range={shape.get('range')} interval={shape.get('interval')} coverage={shape.get('coverage')} point_counts={shape.get('point_counts')}")
+                  print(f"ethsupply_history_30d: slot_sample_fields={shape.get('sample_field_names', {}).get('slot')} slot_sample_value_types={shape.get('slot_sample_value_types')} summary_keys={shape.get('summary_keys')} summary_value_types={shape.get('summary_value_types')}")
           print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps; ethsupply API schema probes recorded")
           PY
       - name: Upload raw capture artifact
