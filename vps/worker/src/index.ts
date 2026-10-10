@@ -44,7 +44,6 @@ function scheduleNextRun() {
     await run();
     scheduleNextRun();
   }, delay);
-  timer.unref();
 }
 
 if (oneShot) {
