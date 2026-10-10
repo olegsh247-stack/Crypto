@@ -166,3 +166,10 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - Extended normalization with separate pool-state observations and added fixture assertions to preserve the distinction between CAKE balances and pool-share units. No pool getter is automatically treated as burned supply.
 - Added a normalizer unit-test step to the Research On-chain Capture workflow. **Pending:** this code has not yet been validated by the next GitHub Actions run; the actual capture and test results still need to be checked before accepting the new fields.
 - The current CAKE methodology remains unresolved until a successful same-block capture and event/lock-state reconciliation are reviewed.
+
+
+## CI verification checkpoint — 2026-10-10 18:10 UTC
+
+- The Research On-chain Capture workflow is now triggered by commits to its unit-test files as well as the capture/normalizer scripts. This was committed as `87401ed5c0f5535b617239c6a661906caaddc9ca`.
+- GitHub Actions run [#38074692658](https://github.com/olegsh247-stack/Crypto/actions/runs/38074692658) started on that commit. At the latest check, Python setup, syntax check, and the evidence-normalizer unit tests had all passed. The live read-only SOL + CAKE RPC capture step was still running; normalization, envelope validation, and artifact upload had not yet completed.
+- **No pass is declared yet.** Do not accept the new CakePool getter values until the capture step finishes, the evidence envelope validates, and the artifact is inspected. If the public RPC calls hang/fail, review the job log and distinguish endpoint reliability from code/schema errors.
