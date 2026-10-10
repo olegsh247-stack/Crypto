@@ -4,6 +4,17 @@
 **Canonical branch:** `fix/product-contour-v1-contracts`  
 **Purpose:** One ordered plan from the current evidence-closure stage to a verifiably complete Crypto product. This document supersedes scattered informal continuation plans; detailed technical specs and task issues remain authoritative for their own domains.
 
+## Authoritative execution order — agreed 2026-10-11
+
+This order supersedes earlier continuation prompts or workstream numbering in this document. Workstream sections below define scope and exit criteria; their numeric labels are not a command to execute them in that order.
+
+1. **Hosting architecture and runtime portability.** Audit actual Cloudflare/Neon dependencies, remove unnecessary provider coupling from code where safe, and define the self-hosted target/compatibility contract. Architecture work is active now; provisioning, production migration, traffic cutover, and decommissioning remain separately gated and are not authorized.
+2. **Full Product Contour v1 readiness audit.** Verify the real Domains → Factors → Scores → Scenarios → Monitoring → Evidence contracts, snapshot lineage, source quality, freshness semantics, API payloads, and UI behavior. Do not call a check green without evidence on the exact candidate revision.
+3. **One complete product scenario on BTC.** Trace one published snapshot through evidence, factors, scores, scenarios and monitoring interpretation; explicitly label qualitative baselines and unresolved quantitative rules. Do not fabricate measurements, thresholds, events, or scenario states.
+4. **Only then expand data and research.** Resume broader ETH evaluator/threshold work and SOL/CAKE research/publication only after the BTC scenario and reusable Product Contour contract are accepted.
+
+Until step 3 is accepted, do not promote ETH numeric expansion, SOL/CAKE publication, or other asset research to the active priority merely because an older workstream section lists it first. Read-only compatibility checks for multiple assets may still be used where necessary to audit shared contracts.
+
 ## 1. Current position — do not restart completed work
 
 ### Architecture
@@ -32,7 +43,7 @@
 - Read-only RPC capture run [#38038663458](https://github.com/olegsh247-stack/Crypto/actions/runs/38038663458) succeeded and captured SOL supply at finalized slot 455,192,578 and CAKE at BSC block 126,797,363; see [Verified RPC Capture](../research/assets/SOL-CAKE-VERIFIED-RPC-CAPTURE-2026-10-10.md). A follow-up capture [#38063027247](https://github.com/olegsh247-stack/Crypto/actions/runs/38063027247) and evidence-envelope tests [#38063038809](https://github.com/olegsh247-stack/Crypto/actions/runs/38063038809) passed after adding a same-block legacy CAKE Pool balance read. At BSC block 126,850,417, raw `totalSupply()` was 5,543,692,995.751051, burn-address balance 5,168,552,286.608597, subtraction 375,140,709.142454, and legacy pool balance 13,393,669.234197 CAKE. See [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md). The large raw `totalSupply()` is not an error by itself; the unresolved question is which legacy-pool balance is permanently irrecoverable under the canonical circulating-supply methodology. Do not subtract the entire pool balance by assumption.
 - SOL and CAKE remain unpublished research drafts. Do not fabricate scores, factors, scenarios, signals or evidence.
 
-## 2. Ordered roadmap and exit criteria
+## 2. Workstreams and exit criteria (not execution order)
 
 ### Stage 0 — Plan and execution control (active)
 - [x] Record current state and non-negotiable constraints.
@@ -111,7 +122,7 @@ Use [Product Contour v1](PRODUCT-CONTOUR-V1.md) and [API/UI contract audit](PROD
 **Exit:** all required checks pass on the exact candidate commit; no unresolved P0/P1 correctness or security issue; documented release decision exists. Passing a gate is necessary but does not authorize production publication or deployment by itself.
 
 ### Stage 8 — Hosting migration readiness and cutover (separate authorization)
-The target is documented, but this stage is **not active until the product gates are met and the user explicitly authorizes server provisioning/cutover**.
+The target architecture is documented. **Architecture and portability analysis are active under execution priority 1 above.** Only provisioning, production migration, traffic cutover, and decommissioning are inactive until product gates are met and the user explicitly authorizes them.
 1. Complete account-level Cloudflare and Neon inventory; repository inspection alone cannot prove account settings.
 2. Provision VPS only after approval; configure Docker Compose, PostgreSQL 16, Node API, separate worker, Caddy, admin auth and backups.
 3. Prove backup/restore, migration rehearsal, schema/row-count/registry/history/research/observation/signal/API parity.
@@ -148,7 +159,7 @@ Crypto is considered **product-ready** only when all of the following are eviden
 
 ## 5. Reusable continuation prompt
 
-> Continue the Crypto project from the current state in `docs/PROJECT-READINESS-ROADMAP-2026-10-10.md` on branch `fix/product-contour-v1-contracts`. First inspect the latest commit, open PR/issues, relevant source contracts, and latest GitHub Actions runs; do not assume this document's run status is still current. Follow the roadmap in order. The immediate work is Stage 1 (ETH evidence gaps) and Stages 2–3 (SOL historical activity and CAKE on-chain reconciliation), using Issues #5 and #7. Before code changes, read the relevant docs and inspect existing scripts/workflows to avoid duplicate tooling. Use read-only captures and disposable PostgreSQL for rehearsals. Record source, timestamps/windows, hashes, methodology, independent checks and unresolved gaps. Update the roadmap and linked issue with commit/run/artifact evidence after each coherent block. Do not fabricate data or scores; do not write production DB, run production migrations, deploy, merge to main, publish scenario states, provision VPS or decommission Cloudflare/Neon without explicit authorization. When evidence stages close, continue through product-contract audit, browser verification, release gate and only then hosting cutover readiness. Work in complete blocks and report verified outcomes plus the next action.
+> Continue the Crypto project from the current state in `docs/PROJECT-READINESS-ROADMAP-2026-10-10.md` on branch `fix/product-contour-v1-contracts`. First inspect the latest commit, open PRs/issues, relevant source contracts, and current GitHub Actions runs; do not assume older run status applies to the current HEAD. Follow the authoritative execution order at the top of the roadmap: (1) hosting architecture/runtime portability and removal of unnecessary provider coupling; (2) full Product Contour v1 readiness audit; (3) one complete BTC scenario; (4) only then broader ETH/SOL/CAKE data and research expansion. Architecture analysis is active, but production migrations, deploys, DNS/secret changes, VPS provisioning, merges to main, scenario publication, and Cloudflare/Neon decommissioning require separate explicit authorization. Before code changes, read the relevant docs and inspect existing scripts/workflows to avoid duplicate tooling. Use read-only audits and disposable PostgreSQL rehearsals. Record source, timestamps/windows, hashes, methodology, independent checks, exact commit SHA, run links and unresolved gaps. Update roadmap and relevant issue after each coherent block. Do not fabricate data, scores, thresholds, monitoring events, or scenario states.ntract audit, browser verification, release gate and only then hosting cutover readiness. Work in complete blocks and report verified outcomes plus the next action.
 
 
 ## Progress update — CAKE legacy pool contract-state investigation (2026-10-10)
@@ -256,11 +267,12 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - A deployment request explicitly targeting Preview unexpectedly returned `target: production`. The deployment was immediately canceled; its final state is `CANCELED` (deployment ID `dpl_APJ9bxaPK9qiFD7zFLweGHgwizKL`). No successful Web deployment or usable preview URL has been established.
 - Do not retry until the deployment target behavior is understood and Preview is confirmed before build/publication. No production alias, custom domain, DNS change, database write/migration, VPS provisioning, or Cloudflare/Neon decommissioning was performed as part of this preview attempt.
 
-### Next actions (priority order)
+### Next actions (priority order — aligned 2026-10-11)
 
-1. Continue the BTC vertical slice using the existing published snapshot: inspect the actual Domains → Factors → Scores → Scenarios → Monitoring → Evidence records and validate their lineage, definitions, timestamps, and signal meaning. Do not create or publish synthetic records.
-2. Establish and verify a genuinely Preview-only Web deployment, then test the dashboard in a browser. Treat the Vercel target anomaly as a blocker until resolved.
-3. Keep the VPS migration as a separately gated hosting cutover; no purchase/provisioning or production migration is authorized by these checks.
+1. Continue the hosting/runtime portability audit: document provider-specific dependencies, API/worker parity gaps, scheduler behavior, migration/deployment boundaries, and the smallest safe self-hosting implementation sequence. No VPS provisioning or production cutover.
+2. Complete the Product Contour v1 readiness audit against the actual contracts and live read-only payloads; keep unverified CI/data claims open.
+3. Complete the BTC-only end-to-end scenario acceptance matrix and close the evidence/score/scenario/monitoring interpretation gaps without synthesizing records.
+4. Only after BTC acceptance, resume broader ETH numeric evaluation and SOL/CAKE evidence/publication. Browser verification remains part of Product Contour acceptance, not a reason to skip the architecture stage.
 
 ## BTC product-scenario readiness check — 2026-10-11
 
