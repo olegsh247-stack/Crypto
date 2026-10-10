@@ -313,3 +313,35 @@ Run a bounded design spike only; no production code/evaluator yet:
 4. In parallel, only if useful, ask for/inspect a hosted provider's documented sample schema and exact-window coverage without sharing secrets. No plan purchase or secret creation is authorized.
 
 **Go/no-go:** If one-epoch replay cannot produce a transparent category ledger and known-answer reconciliation without building a large custom consensus implementation, pause replay and return to provider discovery. Do not implement signal thresholds, publish ETH net-supply-flow observations as verified, or emit monitoring/scenario states until this gate passes.
+
+## 16. One-epoch replay feasibility spike — 2026-10-10
+
+### Question tested
+
+Can an existing maintained consensus implementation or official test harness be used as a small, reproducible route to calculate a complete mainnet issuance/penalty ledger for one historical epoch, without implementing a custom consensus engine?
+
+### Official implementation/test assets inspected
+
+- [Ethereum consensus specifications](https://github.com/ethereum/consensus-specs) provide the executable protocol specification, fork-specific rules, and test generators.
+- [Consensus test-vector repository](https://github.com/ethereum/consensus-spec-tests) describes cross-client conformance fixtures intended for beacon-node client testing. Its repository is archived read-only; it is not a hosted historical-mainnet accounting API.
+- The [consensus test format](https://github.com/ethereum/consensus-specs/blob/master/tests/formats/README.md) defines fixtures with pre-state, operations/blocks and expected post-state. This is useful for deterministic conformance tests, but the fixture format itself does not provide a selected mainnet epoch's complete historical pre-state and canonical block sequence.
+- Maintained consensus clients such as [Lighthouse](https://github.com/sigp/lighthouse) and [Prysm](https://github.com/OffchainLabs/prysm) consume consensus-spec test vectors. Their existence demonstrates that maintained transition implementations are available, but does not by itself establish a supported, small public interface for exporting a complete category-level issuance/penalty ledger from arbitrary historical mainnet state.
+
+### Result
+
+**Bounded replay feasibility is not yet demonstrated; no-go for implementation.**
+
+The official materials supply fork-correct transition logic and conformance tests, but not the missing input package needed for this product task: a reproducible pre-window mainnet BeaconState, every intervening canonical block/slot transition, pinned fork/config context, and a supported way to export all required accounting categories. The previously tested public Beacon API routes also failed to provide historical finalized-state access from GitHub Actions (403/TLS failures; see §12). No known-answer mainnet epoch ledger was produced in this spike.
+
+A proper replay PoC would therefore still require selecting and pinning a consensus-client implementation, obtaining a trusted historical pre-state and contiguous canonical data, handling the post-Fulu rules applicable to the sampled epochs, extracting category-level balance deltas, and reconciling them independently. That is materially larger than a one-script spike unless an existing client interface or provider supplies these inputs.
+
+### Decision and next action
+
+1. Do **not** build a custom consensus engine or add a consensus client service to the product/API/Worker at this stage.
+2. Do **not** treat official test vectors, a single validator reward endpoint, or an aggregate APR/rewards response as proof of complete network-wide issuance and penalty accounting.
+3. Keep gross issuance, consensus penalties, and net supply flow as candidate-only; do not enable thresholds, evaluators, or publish monitoring/scenario states based on them.
+4. The lower-cost next route is **provider schema/coverage verification without credentials**: inspect published documentation and examples for a machine-readable network-wide dataset that explicitly covers gross issuance plus every required penalty category on exact finalized epoch/slot boundaries. Record fields, temporal limits, fork handling, and plan restrictions. No plan purchase, secret creation, or credentialed request is authorized.
+5. Re-open the replay route only if a maintained client provides a documented reproducible historical-state/replay path and category-level output without a large custom implementation. Acceptance still requires a deterministic one-epoch rerun, state/block roots, fork/config pinning, a complete category ledger, and independent known-answer reconciliation.
+
+**Scope:** read-only documentation/research only. No source code, database schema, production data, Worker, VPS, or signal behavior was changed by this spike.
+
