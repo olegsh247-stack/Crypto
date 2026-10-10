@@ -196,7 +196,10 @@ jobs:
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable fixture gross issuance for exact wei reconciliation.",
-              "quality": "candidate_needs_independent_cross_check"
+              "quality": "candidate_needs_independent_cross_check",
+              "source_interval_blocks": 800,
+              "source_from_slot": 1000000,
+              "source_to_slot": 1000959
             }, {
               "metric_id": "eth.execution_fee_burn_per_interval",
               "asset_id": "ETH",
@@ -208,7 +211,10 @@ jobs:
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable fixture execution fee burn for exact wei reconciliation.",
-              "quality": "candidate_needs_independent_cross_check"
+              "quality": "candidate_needs_independent_cross_check",
+              "source_interval_blocks": 800,
+              "source_from_slot": 1000000,
+              "source_to_slot": 1000959
             }, {
               "metric_id": "eth.consensus_penalties_per_interval",
               "asset_id": "ETH",
@@ -220,7 +226,10 @@ jobs:
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable fixture consensus penalties for exact wei reconciliation.",
-              "quality": "candidate_needs_independent_cross_check"
+              "quality": "candidate_needs_independent_cross_check",
+              "source_interval_blocks": 800,
+              "source_from_slot": 1000000,
+              "source_to_slot": 1000959
             }, {
               "metric_id": "eth.other_execution_burn_per_interval",
               "asset_id": "ETH",
@@ -232,7 +241,10 @@ jobs:
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable fixture other execution burn for exact wei reconciliation.",
-              "quality": "candidate_needs_independent_cross_check"
+              "quality": "candidate_needs_independent_cross_check",
+              "source_interval_blocks": 800,
+              "source_from_slot": 1000000,
+              "source_to_slot": 1000959
             }, {
               "metric_id": "eth.net_supply_flow_per_interval",
               "asset_id": "ETH",
@@ -244,7 +256,10 @@ jobs:
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable interval fixture; net flow equals issuance minus execution fee burn, consensus penalties and other execution burn.",
-              "quality": "candidate_needs_independent_cross_check"
+              "quality": "candidate_needs_independent_cross_check",
+              "source_interval_blocks": 800,
+              "source_from_slot": 1000000,
+              "source_to_slot": 1000959
             }, {
               "metric_id": "eth.entry_queue_wait_seconds",
               "asset_id": "ETH",
