@@ -134,10 +134,24 @@ The P1 progress mismatch identified above has been corrected in the Web layer:
 
 This change does not alter the canonical 15-block structure, database schema, research content, or lifecycle rules.
 
+### Follow-up fixes staged in draft PR #6
+
+The following contract fixes are now staged on branch `fix/asset-dashboard-confidence-score-build`:
+
+- Critical factors and research scores are restricted to the latest published snapshot for the requested asset.
+- Scenario states are restricted to that same published snapshot. The Dashboard only combines a state with a current scenario definition when the stable scenario identifier matches; unmatched state is not presented as if it belonged to the current definition.
+- The top-level source registry includes sources referenced either by observations for the asset or by evidence in the latest published snapshot, deduplicated by source ID.
+- The Dashboard's Confidence card now references the existing `confidenceScore` variable rather than an undefined identifier.
+
+No database schema or research content was changed.
+
 ### Remaining audit items
 
-The other findings remain open: snapshot scoping for factors/scores, scenario-state lineage, evidence-linked source completeness, freshness contract consistency, and representative live-payload checks. They require a read-only contract/data audit before any further code changes.
+Freshness contract consistency and read-only live-payload completeness checks for BTC, ETH, SOL and CAKE remain open. No live payload or direct Neon read-only query was performed during this patch, so the runtime row counts and lineage across representative assets are not yet verified.
 
 ### Verification status
 
-The change was committed through GitHub's contents API. A full Web build and runtime check have **not** been run in this environment; verify the GitHub Actions result before treating this fix as build-validated. No migration, deployment, billing change, or visual redesign was performed.
+- The first PR build, validating the undefined Confidence-card identifier fix, passed: [Build Crypto Web #111](https://github.com/olegsh247-stack/Crypto/actions/runs/38054871738).
+- The combined patch's build is pending: check [latest branch Actions runs](https://github.com/olegsh247-stack/Crypto/actions).
+- Main-branch Release Gate #121 failed in the Web build because of the undefined `confidence` identifier. Its earlier database job succeeded, including a successful clean-database bootstrap rehearsal; the migration log also records `2026-09-28-engine-items` as applied on Neon. Therefore the database must not be described as untouched.
+- No deployment, new schema migration, billing change, or visual redesign was performed.
