@@ -10,13 +10,14 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
 
-BEACON_URL = "https://ethereum-beacon-api.publicnode.com"
+BEACON_URL = os.environ.get("BEACON_API_BASE_URL", "https://ethereum-beacon-api.publicnode.com").rstrip("/")
 USER_AGENT = "Crypto-ETH-consensus-source-probe/1.0"
 
 
@@ -159,7 +160,7 @@ def main() -> int:
                          and item.get("attestation_rewards", {}).get("execution_optimistic") is False)
         result = {
             "status": "historical_partial_source_accessible" if accessible == len(slots) else "not_evaluable",
-            "provider": "PublicNode Ethereum Beacon API",
+            "provider": os.environ.get("BEACON_API_PROVIDER", "PublicNode Ethereum Beacon API"),
             "base_url": BEACON_URL,
             "captured_at": now,
             "intervals_requested": args.interval_count,
