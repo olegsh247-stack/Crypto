@@ -298,6 +298,7 @@ def crosscheck(artifact: dict[str, Any], interval_offset: int = 0) -> dict[str, 
     exact = count_match and base_match and blob_match
     return {
         "status": "matched" if exact else "mismatch",
+        "interval_offset": interval_offset,
         "method": "Ethereum JSON-RPC block headers; exact interval bounds; EIP-1559 baseFeePerGas*gasUsed; EIP-4844 fake_exponential using active eth_config blob schedule",
         "provider": "ethsupply.fyi",
         "independent_source": RPC_URL,
