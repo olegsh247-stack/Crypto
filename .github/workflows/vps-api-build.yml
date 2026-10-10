@@ -484,8 +484,8 @@ jobs:
           test -s /tmp/crypto-vps-rehearsal.dump
           pg_restore --list /tmp/crypto-vps-rehearsal.dump >/dev/null
           restore_db="crypto_restore_check_${GITHUB_RUN_ID}"
-          createdb "postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db"
-          cleanup_restore() { dropdb --if-exists "postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db" >/dev/null 2>&1 || true; }
+          createdb --maintenance-db="postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db"
+          cleanup_restore() { dropdb --if-exists --maintenance-db="postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db" >/dev/null 2>&1 || true; }
           trap cleanup_restore EXIT
           pg_restore --format=custom --no-owner --no-privileges --dbname="postgresql://postgres:postgres@127.0.0.1:55432/$restore_db" /tmp/crypto-vps-rehearsal.dump
           table_count=$(psql "postgresql://postgres:postgres@127.0.0.1:55432/$restore_db" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE';")
