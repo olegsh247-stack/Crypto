@@ -142,3 +142,43 @@ The key identity from the verified CakePool source is now independently checked 
 1. Capture aligned month-end values for `totalSupply()`, dead-address balance, pool token balance, `available()`, `totalBoostDebt()`, `totalLockedAmount()`, `totalShares()`, and pool events.
 2. Inspect relevant `userInfo(address)` records and lock/unlock/withdraw history; avoid trying to enumerate all users through guessed lists.
 3. Reconcile official PancakeSwap's locked/burn treatment against the on-chain pool accounting and the independent tracker on matched dates. Publish no final circulating-supply number until this is reproducible.
+
+
+## 10. Historical month-boundary capture — successful archive-state run
+
+**Workflow:** [Research CAKE Historical Month-boundary Capture #38075610742](https://github.com/olegsh247-stack/Crypto/actions/runs/38075610742) — success. The capture used `https://rpc-bnb.blockmachine.io`, a public BSC RPC endpoint, with a 1.05-second inter-request pacing interval to avoid public endpoint throttling. The separate current-state capture [#38075606119](https://github.com/olegsh247-stack/Crypto/actions/runs/38075606119) and evidence-envelope tests [#38075557661](https://github.com/olegsh247-stack/Crypto/actions/runs/38075557661) also passed.
+
+- **Raw historical capture SHA-256:** `bc1a4a271f3b66d6bd1cd8ff9599795c9594b8ee36580e307359ac868980a2c6`.
+- **Workflow artifact digest:** `sha256:704b07e385c701cb6b5be6f936a99eb1728e1d67fddc688c21d7aa63ef058ff8`.
+- **Errors:** none. Every selected block hash and exact UTC timestamp was verified; all calls use that same pinned block for each snapshot.
+- The month boundary block numbers/hashes were first located by binary search and preserved in the script; the historical run re-verified them against the alternate endpoint before reading state.
+
+| UTC boundary | BSC block | Total supply (CAKE) | Burn-address balance (CAKE) | Supply minus burn (CAKE) | Tracker-style candidate (CAKE) | CakePool token balance (CAKE) | `totalLockedAmount()` (CAKE) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2026-06-01 | 101,590,093 | 4,382,329,363.751051 | 4,038,491,951.275378 | 343,837,412.475673 | 343,680,606.393274 | 13,513,420.066182 | 10,730,956.399635 |
+| 2026-07-01 | 107,345,138 | 4,677,241,871.751051 | 4,335,516,079.161436 | 341,725,792.589615 | 341,568,970.785227 | 13,472,550.741602 | 10,697,609.071108 |
+| 2026-08-01 | 113,293,990 | 4,913,530,935.751051 | 4,572,916,172.198446 | 340,614,763.552605 | 340,457,938.765211 | 13,462,257.167809 | 10,688,450.400891 |
+| 2026-09-01 | 119,243,647 | 5,209,477,531.751051 | 4,871,091,805.381706 | 338,385,726.369346 | 338,228,757.779641 | 13,445,597.387106 | 10,677,375.781769 |
+| 2026-10-01 | 125,000,756 | 5,458,821,527.751051 | 5,110,604,012.337011 | 348,217,515.414041 | 348,059,224.582406 | 13,402,580.295356 | 10,650,860.940877 |
+
+**Tracker-style candidate definition used only for comparison:** `totalSupply - burn address - CAKE token-contract self-balance - 0x…0001 balance - 0x…0002 balance`. It reproduces the independent tracker's described exclusions, but is not yet approved as Crypto's canonical circulating-supply formula. The full CakePool balance is not subtracted in this candidate.
+
+| Boundary interval | Δ total supply (CAKE) | Δ burn address (CAKE) | Δ supply-minus-burn (CAKE) | Δ tracker-style candidate (CAKE) | Δ CakePool token balance (CAKE) |
+|---|---:|---:|---:|---:|---:|
+| Jun 1 → Jul 1 | +294,912,508.000000 | +297,024,127.886058 | −2,111,619.886058 | −2,111,635.608047 | −40,869.324580 |
+| Jul 1 → Aug 1 | +236,289,064.000000 | +237,400,093.037010 | −1,111,029.037010 | −1,111,032.020016 | −10,293.573793 |
+| Aug 1 → Sep 1 | +295,946,596.000000 | +298,175,633.183260 | −2,229,037.183260 | −2,229,180.985570 | −16,659.780703 |
+| Sep 1 → Oct 1 | +249,343,996.000000 | +239,512,206.955305 | +9,831,789.044695 | +9,830,466.802765 | −43,017.091751 |
+
+At all five snapshots, `available()` equals the BEP-20 token balance of the CakePool address, and `balanceOf() = available() + totalBoostDebt()` reconciles exactly (zero raw-unit difference). `totalLockedAmount()` declines from 10.731M to 10.651M CAKE over this window; this is pool accounting, not proof that the same amount is permanently burned.
+
+### What the historical series says — and does not say
+
+1. The on-chain candidate excluding the dead address and the three small tracker-listed balances fell through September, then increased by about 9.830M CAKE from the September 1 to October 1 boundary.
+2. The earlier issuer-reported June–September monthly net-mint arithmetic totals **−7,402,733 CAKE**. That differs materially from the boundary-to-boundary candidate series (approximately **+4.379M CAKE** from June 1 to October 1). This is a real reconciliation gap to investigate, not evidence that either number should be overwritten.
+3. Before comparing the issuer figure with this series, align the issuer's exact reporting periods, the source's burn-recognition dates, and the UTC block boundaries. Then reconcile token Transfer/mint/burn events and the weekly-burn proration described in the official methodology.
+4. The sensitivity calculation subtracting the entire CakePool token balance would be about 13.4M CAKE lower at each boundary; it remains **unapproved**, because the pool has user withdrawals, lock state, and a large boost-debt accounting component.
+
+### Next step
+
+Reconstruct the exact June–September mint/burn transfer event totals and match them to issuer-reported monthly periods; verify the official methodology's weekly-burn proration. Only after this does the circulating-supply definition become eligible for Product Contour review. Do not publish a final circulating-supply value or derive scores from this candidate series yet.
