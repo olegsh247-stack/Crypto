@@ -222,3 +222,18 @@ The official reports and their notes are source evidence, not permission to publ
 - Added workflow `.github/workflows/cake-transfer-log-reconciliation.yml`, which uses the previously successful historical RPC endpoint, paces requests at 1.05 seconds, and uploads the raw artifact for review. The workflow is read-only: it does not sign transactions, write to the chain, modify a database, publish research, or deploy.
 - **Implementation is committed; event capture is not yet accepted as evidence until the workflow completes and the artifact is inspected.** Required checks: no RPC errors/truncated ranges; no duplicate transaction/log IDs; `Δ dead-address balance = sum(to dead) − sum(from dead)` for each interval; and `Δ totalSupply − mint-to-dead` reported separately from issuer-reported mint because issuer periods and weekly-burn proration differ.
 - No circulating-supply formula, factor, score, scenario, monitoring signal, or research publication is approved by this implementation.
+
+
+## 13. Historical log-provider limitation — 2026-10-10
+
+The first automated Transfer-log attempts did **not** produce a raw artifact. These are provider-access failures, not a zero-event result:
+
+- [Run #38084310906](https://github.com/olegsh247-stack/Crypto/actions/runs/38084310906): the Blockmachine endpoint rejected a 50,000-block range; the RPC error specified a 10,000-block maximum.
+- [Run #38084347072](https://github.com/olegsh247-stack/Crypto/actions/runs/38084347072): after reducing the range to 10,000 blocks and reducing each chunk to two log queries, Blockmachine returned HTTP 429.
+- [Run #38084395742](https://github.com/olegsh247-stack/Crypto/actions/runs/38084395742): official BSC dataseed returned `-32005 limit exceeded`; Blockmachine fallback returned HTTP 429. BNB Chain's public endpoint documentation says `eth_getLogs` is disabled on its listed public mainnet dataseed endpoints.
+- [Run #38084435788](https://github.com/olegsh247-stack/Crypto/actions/runs/38084435788): dRPC returned HTTP 400; Blockmachine returned HTTP 429.
+- [Run #38084473703](https://github.com/olegsh247-stack/Crypto/actions/runs/38084473703): PublicNode returned HTTP 403; Blockmachine returned HTTP 429.
+
+The independent CAKE burn tracker describes its historical burn series as coming from an authenticated NodeReal archive node, which confirms that a provider with historical log access is a real dependency for this reconciliation. Public evidence: https://cryptoburntracker.com/burns/pancakeswap/ . BNB Chain endpoint documentation: https://docs.bnbchain.org/bnb-smart-chain/developers/json_rpc/json-rpc-endpoint/.
+
+**Decision:** keep the capture script and workflow, but change the workflow to manual-only so a known provider limitation does not create repeated failing runs on every code push. Do not infer missing events, extrapolate a series, or mark the event bridge complete. Resume this capture when a valid authenticated archive/indexer endpoint is available; in the meantime, proceed with the roadmap's ETH evidence workstream rather than spending more iterations guessing public RPC endpoints.
