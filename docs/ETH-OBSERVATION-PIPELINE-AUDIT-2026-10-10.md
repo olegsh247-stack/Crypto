@@ -112,19 +112,19 @@ This is read access only. Controlled ingestion, source artifact validation, natu
 Added POST /api/admin/observations to both API runtimes. The route is protected by the existing Bearer ADMIN_TOKEN boundary and accepts the capture artifact format produced by scripts/research/capture_eth_observations.py.
 
 Fail-closed checks before persistence:
-- Maximum request body 256 KiB and at most 20 metrics per artifact.
+- Maximum request body 1 MiB and at most 500 metrics per artifact.
 - Exact schema version/artifact type and both no-write guard flags must be false.
-- Only the two registered ETH metric IDs are accepted, with fixed source IDs, exact approved source URLs and exact units.
-- Numeric values must be finite and meet the metric-specific lower bound; timestamp and interval semantics are validated, including point-price versus single-block observations.
+- Only 12 explicitly registered ETH metric IDs are accepted, each with fixed source ID, exact approved source URL and exact unit.
+- Numeric values must be finite; only the net-flow metric permits negative values. Timestamps must include a timezone and cannot be more than five minutes in the future. Point metrics and interval metrics must have the appropriate window semantics.
 - The block metric requires a valid block number/hash; block lineage and quality caveats are retained in methodology because the current schema has no dedicated provider-reference field.
 - Unknown metrics, mismatched source/unit, duplicate natural keys inside one artifact, malformed values, or missing registry entries fail before insert.
 - Writes are performed by one INSERT ... SELECT statement with ON CONFLICT DO NOTHING against the rehearsed natural-key index. Replaying the same artifact therefore does not duplicate a stored observation; revision 1 is assigned by this endpoint.
 
-The VPS Build Rehearsal now exercises missing authentication, rejected write-flag artifacts, one successful insert, replay idempotency and the resulting row count against disposable PostgreSQL. The numeric value in this workflow fixture is synthetic test data, not a market observation.
+The VPS Build Rehearsal exercises missing authentication, rejected write-flag artifacts, synthetic one-row ingestion/replay, and ingestion of a fresh public capture artifact against disposable PostgreSQL. A recent eligible capture produced 482 candidate rows; all were inserted on first submission and all 482 were treated as duplicates on replay. The storage-count assertion now keys off database insertion time, not observation time, so valid historical points are not excluded by an arbitrary recency window. These results prove the ingestion contract on a disposable database, not provider accounting correctness or production readiness.
 
 The endpoint is not called by ordinary capture CI and has not been used against production. The new migration remains unexecuted against production. This implementation intentionally does not evaluate monitoring signals, create monitoring events, publish scenario states, or treat the capture-time ETH/USDT price as sufficient evidence for a thesis transition.
 ## 10. Monitoring mapping and threshold boundary
 
-The six ETH thesis signals have now been mapped to the observations required to evaluate them in [ETH Monitoring Signal Mapping](ETH-MONITORING-SIGNAL-MAPPING-2026-10-10.md). No numeric thresholds have been invented or approved. The current two capture metrics are insufficient to evaluate all six signals: spot price is contextual only, and single-block base-fee burn is not a daily fee series or net issuance.
+The six ETH thesis signals are mapped in [ETH Monitoring Signal Mapping](ETH-MONITORING-SIGNAL-MAPPING-2026-10-10.md). The capture now provides 12 metric families and recent runs have demonstrated idempotent ingestion of 482 candidate rows into disposable PostgreSQL. This improves evidence coverage for provider-reported issuance/burn components and staking queues, but it does not close the six-signal evaluation problem: ethsupply.fyi accounting has not yet been independently cross-checked; the interval series is not a daily fee/activity aggregate; L2 activity/TVS, validator concentration, comparable alternative-L1 share and official milestone status remain gaps. The spot-price timestamp remains a capture-time proxy, and one-block base-fee burn remains a point observation.
 
-Next implementation work must first resolve metric/source gaps and define defensible windows, comparison baselines, missing-data behavior and threshold rationale. The evaluator must leave signal state and last_updated_at unchanged on any failed or incomplete evaluation. No monitoring events or scenario state should be created from observation arrival alone.
+No numeric thresholds have been approved. Next work is source validation and window/threshold design, not a fabricated evaluator. Any evaluator must leave signal state and last_updated_at unchanged on failed or incomplete evaluation. No monitoring events or scenario state should be created from observation arrival alone.
