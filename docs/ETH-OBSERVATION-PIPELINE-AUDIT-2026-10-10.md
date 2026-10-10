@@ -64,3 +64,22 @@ These are candidate definitions, not current measured values. A metric should be
 ## 6. Acceptance
 
 This audit is complete only as a planning artifact. Issue #5 remains open until capture validation, idempotent controlled ingestion, reproducible signal evaluation, API contract tests, and both Product Contour Gate and VPS API Build Rehearsal pass on the resulting code.
+
+
+## 7. Capture rehearsal and additional implementation findings — 2026-10-10
+
+The first successful read-only capture run is available as [ETH Observation Capture #2](https://github.com/olegsh247-stack/Crypto/actions/runs/38035169834), with artifact `eth-observation-capture-38035169834` (7-day retention). It produced two numeric candidate records (ETH/USDT spot price and one block's base-fee burn), recorded four explicit metric gaps, and performed no database or blockchain writes.
+
+Observed source behavior:
+- Binance ticker endpoint returned a positive price, but its response does not carry a provider observation timestamp. The record therefore labels the timestamp as capture-time proxy and keeps the unit as `USDT/ETH`.
+- Ethereum public JSON-RPC returned a latest block and fields needed for a single-block base-fee burn calculation. This is not total fees and is not a daily series.
+- The documented L2BEAT TVS request failed in the first capture. The payload was not mapped into a numeric observation. The endpoint/query/response contract must be corrected and verified before using it.
+- Net supply flow and separate staking entry/exit queues remain unmeasured gaps.
+
+Additional repository inventory:
+- The canonical seed registry is BTC-centric. Existing `market.spot_price` is described as BTC and defaults to `USD/BTC`; ETH measurements must not reuse that metric ID. The capture script now uses separate `eth.*` metric IDs.
+- `market_binance` exists in the market-data source migration. `ethereum_public_rpc` is a proposed source ID and is not yet registered; the future ingestion package must add only verified source/metric definitions through a reviewed migration/seed path.
+- The current Worker and VPS API source files do not expose a dedicated read-only observations endpoint. This is an API contract gap to address after metric/source definitions and the observation idempotency key are agreed.
+- The base observations schema has no visible natural-key uniqueness constraint for idempotent insertion. Do not implement upserts against a guessed key. First define the revision semantics and rehearse the exact constraint/index on disposable PostgreSQL.
+
+The capture workflow's successful status validates script syntax, artifact structure and safety assertions; it does not mean all five metric families have been sourced or that the artifact is ready for database ingestion.
