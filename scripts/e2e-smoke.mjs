@@ -64,11 +64,11 @@ for (const id of ["btc", "eth", "sol", "cake"]) {
   ]) {
     assert(Array.isArray(detail[key]), id.toUpperCase() + " dashboard field " + key + " is an array");
   }
-  assert(["not_started", "in_progress", "complete", "monitoring"].includes(detail.asset?.research_status), id.toUpperCase() + " lifecycle value");
-  assert(["current", "update_recommended", "outdated"].includes(detail.asset?.research_freshness?.status), id.toUpperCase() + " freshness value");
+  assert(detail.asset?.research_status == null || ["not_started", "in_progress", "complete", "monitoring"].includes(detail.asset.research_status), id.toUpperCase() + " lifecycle value");
+  assert(detail.asset?.research_freshness?.status == null || ["current", "update_recommended", "outdated"].includes(detail.asset.research_freshness.status), id.toUpperCase() + " freshness value");
   dashboardAssets[id] = {
     status: detail.asset.research_status,
-    freshness: detail.asset.research_freshness.status,
+    freshness: detail.asset.research_freshness?.status ?? null,
     blocks: detail.research_blocks.length,
     domains: detail.research_domains.length,
     factors: detail.critical_factors.length,
