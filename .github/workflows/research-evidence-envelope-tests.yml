@@ -1,0 +1,34 @@
+name: Research Evidence Envelope Tests
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/validate_evidence_envelope.py"
+      - "scripts/research/tests/**"
+      - ".github/workflows/research-evidence-envelope-tests.yml"
+  push:
+    branches:
+      - "fix/product-contour-v1-contracts"
+    paths:
+      - "scripts/research/validate_evidence_envelope.py"
+      - "scripts/research/tests/**"
+      - ".github/workflows/research-evidence-envelope-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate evidence envelope and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/research/validate_evidence_envelope.py scripts/research/tests/test_validate_evidence_envelope.py
+      - name: Run unit tests
+        working-directory: scripts/research
+        run: python -m unittest discover -s tests -v
