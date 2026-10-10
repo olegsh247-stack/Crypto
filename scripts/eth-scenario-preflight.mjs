@@ -95,6 +95,17 @@ for (const key of Object.keys(liveResult.counts)) {
 }
 
 const decisionInputs = {
+  metrics: (liveBody.metrics || []).map(row => ({
+    metric_id: row.metric_id, value: row.value, unit: row.unit,
+    observed_at: row.observed_at, source_url: row.source_url,
+    status: row.status, freshness: row.freshness
+  })),
+  monitoring_signals: (liveBody.monitoring_signals || []).map(row => ({
+    name: row.name, current_value: row.current_value, previous_value: row.previous_value,
+    direction: row.direction, threshold: row.threshold, threshold_type: row.threshold_type,
+    thesis_impact: row.thesis_impact, status: row.status, confidence: row.confidence,
+    last_updated_at: row.last_updated_at
+  })),
   critical_factors: (liveBody.critical_factors || []).map(row => ({
     name: row.name, current_state: row.current_state, trend: row.trend,
     confidence: row.confidence, thesis_impact: row.thesis_impact,
