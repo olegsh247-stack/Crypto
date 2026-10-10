@@ -202,6 +202,10 @@ export default {
    if(!contract.point&&item.metric_id!=="eth.base_fee_burned_per_block"&&(!item.period_start||!item.period_end||Date.parse(item.period_end)<=Date.parse(item.period_start)||Date.parse(item.period_end)!==Date.parse(item.observed_at)))return json({status:"error",error:"interval_observation_window_mismatch",metric_id:item.metric_id},400);
    if(typeof item.methodology!=="string"||item.methodology.trim().length<10||item.methodology.length>2000||typeof item.quality!=="string"||item.quality.length>120)return json({status:"error",error:"invalid_methodology_or_quality",metric_id:item.metric_id},400);
    let methodology=item.methodology.trim()+" Quality caveat: "+item.quality.trim()+".";
+   if(item.source_id==="ethsupply_fyi"&&!contract.point){
+    if(!Number.isSafeInteger(item.source_interval_blocks)||item.source_interval_blocks<0||!Number.isSafeInteger(item.source_from_slot)||item.source_from_slot<0||!Number.isSafeInteger(item.source_to_slot)||item.source_to_slot<item.source_from_slot)return json({status:"error",error:"missing_provider_interval_lineage",metric_id:item.metric_id},400);
+    methodology+=" Provider interval slots="+item.source_from_slot+".."+item.source_to_slot+"; provider blocks="+item.source_interval_blocks+".";
+   }
    if(item.metric_id==="eth.base_fee_burned_per_block"){
     if(!Number.isSafeInteger(item.source_block_number)||item.source_block_number<0||typeof item.source_block_hash!=="string"||!/^0x[0-9a-fA-F]{64}$/.test(item.source_block_hash))return json({status:"error",error:"missing_block_lineage",metric_id:item.metric_id},400);
     methodology+=" Source block number="+item.source_block_number+"; block hash="+item.source_block_hash+".";
