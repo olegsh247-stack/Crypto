@@ -1,0 +1,62 @@
+name: ETH Observation Capture
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/capture_eth_observations.py"
+      - ".github/workflows/eth-observation-capture.yml"
+      - "docs/ETH-OBSERVATION-PIPELINE-AUDIT-2026-10-10.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eth-observation-capture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Read-only ETH source capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: python -m py_compile scripts/research/capture_eth_observations.py
+      - name: Capture public source responses (read-only)
+        run: |
+          mkdir -p research-capture
+          python scripts/research/capture_eth_observations.py --output research-capture/eth-observation-capture.json
+      - name: Validate artifact guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("research-capture/eth-observation-capture.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data["database_write_performed"] is False
+          assert data["blockchain_write_performed"] is False
+          assert isinstance(data["metrics"], list)
+          assert len(data["unresolved_metric_gaps"]) >= 1
+          for metric in data["metrics"]:
+              assert metric["asset_id"] == "ETH"
+              assert metric["source_id"] and metric["source_url"]
+              assert metric["unit"] and metric["observed_at"]
+              assert isinstance(metric["value_numeric"], (int, float))
+              assert metric["value_numeric"] == metric["value_numeric"]
+          print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps")
+          PY
+      - name: Upload raw capture artifact
+        if: ${{ always() && hashFiles('research-capture/eth-observation-capture.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eth-observation-capture-${{ github.run_id }}
+          path: research-capture/eth-observation-capture.json
+          if-no-files-found: error
+          retention-days: 7
