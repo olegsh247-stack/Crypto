@@ -182,3 +182,12 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - The verified CakePool source defines `available()` as direct CAKE held by the pool and `balanceOf()` as direct CAKE plus `totalBoostDebt`. Therefore the apparent 190.357M CAKE difference is pool accounting debt, not a second wallet balance. Added a follow-up capture of `totalBoostDebt()` (selector `0xe73008bc`) with tests so the identity can be reconciled directly.
 - SOL `getSupply` at finalized context slot 455,349,175 returned circulating 588,848,618.770245 SOL and non-circulating 46,750,203.227394 SOL; combined 635,598,821.997639 SOL. These are point-in-time values only.
 - **Still open:** canonical CAKE circulating-supply treatment and historical mint/burn reconciliation; SOL historical activity series; Product Contour v1 full readiness audit. No production writes, migration, publication, merge or VPS cutover.
+
+
+## CakePool accounting identity verified — 2026-10-10
+
+- Latest read-only capture [#38075073697](https://github.com/olegsh247-stack/Crypto/actions/runs/38075073697) and paired evidence-envelope test run [#38075073757](https://github.com/olegsh247-stack/Crypto/actions/runs/38075073757) both passed.
+- At pinned BSC block 126,874,122: `available()` = 13,393,658.357722 CAKE; `totalBoostDebt()` = 190,357,444.623712 CAKE; `balanceOf()` = 203,751,102.981434 CAKE. The identity `balanceOf() = available() + totalBoostDebt()` reconciles exactly (difference 0). `totalLockedAmount()` = 10,643,456.465049 CAKE; `totalShares()` = 190,019,229.888360 shares.
+- Raw capture SHA-256: `8f1cad22f097456c76b59ef20ba47f6ffc70d70011d377a685167887ebc1d9f3`; normalized envelope SHA-256: `09c1a3734b1adf6473ace77b5162d23d15e2e5ac809bd06eb2981707b344f58a`.
+- Added a normalizer invariant and negative test: inconsistent pool accounting is rejected. Full details are in [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md).
+- **Closed:** read-only capture of current CakePool accounting getters and the source-backed balance identity. **Still open:** determining which, if any, pool-related amount belongs excluded from circulating supply; historical month-boundary supply/lock/event reconciliation; SOL historical activity; Product Contour v1 readiness.
