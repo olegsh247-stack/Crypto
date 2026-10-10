@@ -576,6 +576,7 @@ def main() -> int:
         "database_write_performed": result["database_write_performed"],
         "blockchain_write_performed": result["blockchain_write_performed"],
         "unresolved_metric_gaps": len(result["unresolved_metric_gaps"]),
+        "accounting_reconciliation": result["requests"].get("ethsupply_history_30d", {}).get("accounting_reconciliation"),
         "request_statuses": {name: data.get("ok", False) for name, data in result["requests"].items()},
     }, indent=2))
     # Partial captures are useful for diagnosis and must still upload their artifact.
