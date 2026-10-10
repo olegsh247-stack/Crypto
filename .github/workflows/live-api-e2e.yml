@@ -35,5 +35,5 @@ jobs:
           node-version: "22"
       - name: Verify existing live API and Dashboard payload contracts
         env:
-          CRYPTO_API_URL: ${{ inputs.api_url }}
+          CRYPTO_API_URL: ${{ inputs.api_url || 'https://crypto-api.olegsh247.workers.dev' }}
         run: node scripts/e2e-smoke.mjs
