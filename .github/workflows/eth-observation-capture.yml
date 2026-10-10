@@ -50,7 +50,13 @@ jobs:
               assert metric["unit"] and metric["observed_at"]
               assert isinstance(metric["value_numeric"], (int, float))
               assert metric["value_numeric"] == metric["value_numeric"]
-          print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps")
+          for key in ("ethsupply_live", "ethsupply_history_30d"):
+              probe = data["requests"][key]
+              assert isinstance(probe.get("schema_probe"), dict), (key, probe)
+              assert "payload" not in probe, "raw provider payload must not be copied into the artifact"
+              shape = probe["schema_probe"]
+              print(f"{key}: status={shape.get('status')} stale_over_one_hour={shape.get('stale_over_one_hour')} generated_at={shape.get('generated_at_utc')}")
+          print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps; ethsupply API schema probes recorded")
           PY
       - name: Upload raw capture artifact
         if: ${{ always() && hashFiles('research-capture/eth-observation-capture.json') != '' }}
