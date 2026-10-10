@@ -1,4 +1,4 @@
-export { neon, closePool } from "./db.js";
+export { postgresSql, closePool } from "./db.js";
 export type { Sql } from "./db.js";
 export {
   RESEARCH_BLOCK_STATUSES,
