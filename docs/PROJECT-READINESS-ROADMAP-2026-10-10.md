@@ -29,7 +29,7 @@
 - Work is tracked in [Issue #7](https://github.com/olegsh247-stack/Crypto/issues/7).
 - CAKE issuer reports for June–September 2026 sum to **-7,402,733 CAKE** in reported net-mint arithmetic. This is not yet a verified on-chain `totalSupply()` delta or independently confirmed circulating-supply change.
 - SDA is identified as a candidate SOL data path, but provider access/terms and credentials are not established; no historical SOL daily series has yet been captured.
-- A read-only RPC capture succeeded on 2026-10-10. SOL supply was captured at finalized slot 455,192,578; CAKE reads were pinned to BSC block 126,797,363. The raw artifact is documented in [Verified RPC Capture](../research/assets/SOL-CAKE-VERIFIED-RPC-CAPTURE-2026-10-10.md). CAKE raw `totalSupply()` was 5,543,692,995.751051 and burn-address balance 5,168,552,286.608597, yielding 375,140,709.142454 CAKE before legacy-pool methodology. The large raw totalSupply is not an error by itself; circulating-supply interpretation must include the burn address and verified legacy-pool treatment.
+- Read-only RPC capture run [#38038663458](https://github.com/olegsh247-stack/Crypto/actions/runs/38038663458) succeeded and captured SOL supply at finalized slot 455,192,578 and CAKE at BSC block 126,797,363; see [Verified RPC Capture](../research/assets/SOL-CAKE-VERIFIED-RPC-CAPTURE-2026-10-10.md). A follow-up capture [#38063027247](https://github.com/olegsh247-stack/Crypto/actions/runs/38063027247) and evidence-envelope tests [#38063038809](https://github.com/olegsh247-stack/Crypto/actions/runs/38063038809) passed after adding a same-block legacy CAKE Pool balance read. At BSC block 126,850,417, raw `totalSupply()` was 5,543,692,995.751051, burn-address balance 5,168,552,286.608597, subtraction 375,140,709.142454, and legacy pool balance 13,393,669.234197 CAKE. See [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md). The large raw `totalSupply()` is not an error by itself; the unresolved question is which legacy-pool balance is permanently irrecoverable under the canonical circulating-supply methodology. Do not subtract the entire pool balance by assumption.
 - SOL and CAKE remain unpublished research drafts. Do not fabricate scores, factors, scenarios, signals or evidence.
 
 ## 2. Ordered roadmap and exit criteria
@@ -64,11 +64,12 @@
 **Exit:** complete or explicitly qualified historical series, reproducible parser, independent reconciliation and reviewed source terms. No claims of unique human users or validator-client diversity from unsuitable proxies.
 
 ### Stage 3 — Reconcile CAKE on-chain supply and issuer reports (Issue #7)
-1. Confirm current CAKE contract and tokenomics methodology, including hard cap, burn address and legacy CAKE Pool treatment.
-2. Select explicit start/end blocks for June–September reporting windows; preserve block number/hash and UTC timestamp.
-3. Capture `totalSupply()`, relevant balances and `Transfer` mint/burn events at pinned blocks; inspect pool migration history and avoid double-counting.
-4. Reconcile monthly issuer-reported mint/burn arithmetic to on-chain event data, documenting timing prorations and differences in definitions.
-5. Compare independent sources and clearly separate contract total supply, burned/locked amounts and estimated circulating supply.
+1. Confirm current CAKE contract and tokenomics methodology, including the 400M policy hard cap, dead address, and legacy CAKE Pool address `0x45c54210128a065de780C4B0Df3d16664f7f859e`.
+2. Resolve the methodology difference: official docs say permanently locked legacy-pool CAKE is burned, while the observed pool balance is 13.394M and the official 2025 article cites about 5.29M delegated/locked at that time. Do not treat the entire current pool balance as irrecoverable without contract-state/transaction evidence.
+3. Select explicit start/end blocks for June–September reporting windows; preserve block number/hash and UTC timestamp.
+4. Capture `totalSupply()`, dead-address balance, verified locked balances, legacy pool state and relevant `Transfer` mint/burn events at both pinned blocks; inspect pool migration/withdrawal history and avoid double-counting.
+5. Reconcile monthly issuer-reported mint/burn arithmetic to on-chain event data, documenting weekly-burn prorations and definition differences.
+6. Compare independent sources and clearly separate contract total supply, burned/locked amounts and estimated circulating supply.
 
 **Exit:** a reproducible month-by-month reconciliation with explained residuals. The -7,402,733 figure remains issuer-reported arithmetic unless block-pinned contract data independently supports a stronger claim.
 
