@@ -164,6 +164,8 @@ export default {
   const limit=Number(rawLimit);
   if(!Number.isInteger(limit)||limit<1||limit>100)return json({status:"error",error:"limit_out_of_range",min:1,max:100},400);
   try{
+   const activeAsset=await sql`select asset_id from assets where asset_id=${rawAssetId} and enabled=true limit 1`;
+   if(!activeAsset[0])return json({status:"error",error:"asset_not_found"},404);
    const rows=await sql`select o.observation_id,o.metric_id,md.name as metric_name,o.asset_id,
      o.value_numeric,o.value_integer,o.value_boolean,o.value_text,o.value_json,o.unit,
      o.observed_at,o.period_start,o.period_end,o.source_id,s.name as source_name,
