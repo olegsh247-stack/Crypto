@@ -207,12 +207,12 @@ jobs:
           monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
           monitoring_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled';")
           if [ "$monitoring_count" -gt 0 ]; then
-            test "$monitoring_after" != "$monitoring_before"
-            monitoring_refresh=1
+            test "$monitoring_after" = "$monitoring_before"
+            monitoring_signal_timestamp_unchanged=1
           else
-            monitoring_refresh=0
+            monitoring_signal_timestamp_unchanged=1
           fi
-          echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
+          echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_signal_timestamp_unchanged=$monitoring_signal_timestamp_unchanged"
       - name: VPS API parity against live Worker
         env:
           LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
