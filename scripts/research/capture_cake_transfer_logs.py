@@ -51,7 +51,6 @@ def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[st
     zero_topic = topic_address(ZERO_ADDRESS)
     transfers_to_dead: list[dict[str, Any]] = []
     transfers_from_dead: list[dict[str, Any]] = []
-    mints_to_dead: list[dict[str, Any]] = []
     chunks: list[dict[str, int]] = []
 
     for chunk_start in range(start, end + 1, chunk_size):
@@ -62,9 +61,6 @@ def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[st
         ))
         transfers_from_dead.extend(get_logs(
             endpoint, chunk_start, chunk_end, [TRANSFER_TOPIC, dead_topic, None]
-        ))
-        mints_to_dead.extend(get_logs(
-            endpoint, chunk_start, chunk_end, [TRANSFER_TOPIC, zero_topic, dead_topic]
         ))
 
     def sum_raw(logs: list[dict[str, Any]]) -> int:
@@ -87,7 +83,14 @@ def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[st
 
     transfers_to_dead = dedupe(transfers_to_dead)
     transfers_from_dead = dedupe(transfers_from_dead)
-    mints_to_dead = dedupe(mints_to_dead)
+    # Mint-to-dead events are a subset of the already captured to-dead logs.
+    # Filter locally to avoid a third historical eth_getLogs request per chunk.
+    mints_to_dead = [
+        log for log in transfers_to_dead
+        if isinstance(log.get("topics"), list)
+        and len(log["topics"]) > 1
+        and str(log["topics"][1]).lower() == zero_topic.lower()
+    ]
 
     return {
         "from_block_exclusive_boundary_plus_one": start,
