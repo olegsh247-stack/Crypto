@@ -52,10 +52,20 @@ def post_json(payload: Any, timeout: int = 30) -> Any:
 
 
 def rpc_call(method: str, params: list[Any]) -> Any:
-    response = post_json({"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
-    if not isinstance(response, dict) or response.get("error") or "result" not in response:
-        raise RpcError(f"RPC method failed: {method}")
-    return response["result"]
+    for attempt in range(4):
+        response = post_json({"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
+        if isinstance(response, dict) and response.get("error"):
+            error = response["error"]
+            message = str(error.get("message", "unknown RPC error")).lower() if isinstance(error, dict) else str(error).lower()
+            code = error.get("code") if isinstance(error, dict) else None
+            if any(token in message for token in ("rate limit", "too many requests", "quota")) and attempt < 3:
+                time.sleep(1.0 * (attempt + 1))
+                continue
+            raise RpcError(f"RPC method failed: {method} code={code} message={message[:180]}")
+        if not isinstance(response, dict) or "result" not in response:
+            raise RpcError(f"Malformed RPC response: {method}")
+        return response["result"]
+    raise RpcError(f"RPC method exhausted retries: {method}")
 
 
 def hex_int(value: Any, field: str) -> int:
@@ -102,8 +112,23 @@ def eth_decimal_to_wei(value: Any) -> int:
     return int(scaled)
 
 
+def search_low_bound(target: int, latest: int, cache: dict[int, dict[str, Any]]) -> int:
+    # The provider only exposes recent intervals; start with a bounded recent
+    # block window to avoid unnecessary archive RPC calls, expanding if needed.
+    span = 5000
+    low = max(0, latest - span)
+    while low > 0:
+        if low not in cache:
+            cache[low] = block_by_number(low)
+        if hex_int(cache[low].get("timestamp"), "timestamp") <= target:
+            return low
+        span *= 2
+        low = max(0, latest - span)
+    return low
+
+
 def first_block_at_or_after(target: int, latest: int, cache: dict[int, dict[str, Any]]) -> int:
-    low, high = 0, latest
+    low, high = search_low_bound(target, latest, cache), latest
     while low < high:
         mid = (low + high) // 2
         if mid not in cache:
@@ -117,7 +142,7 @@ def first_block_at_or_after(target: int, latest: int, cache: dict[int, dict[str,
 
 
 def last_block_at_or_before(target: int, latest: int, cache: dict[int, dict[str, Any]]) -> int:
-    low, high = 0, latest
+    low, high = search_low_bound(target, latest, cache), latest
     while low < high:
         mid = (low + high + 1) // 2
         if mid not in cache:
@@ -149,7 +174,7 @@ def batch_blocks(numbers: list[int]) -> list[dict[str, Any]]:
         except RpcError as exc:
             # Some public RPC gateways disable batch requests; fall back to bounded
             # concurrency only for a batch-shape/unsupported response, not HTTP 429.
-            if "HTTP 429" in str(exc) or "after retries" in str(exc):
+            if any(token in str(exc).lower() for token in ("http 429", "after retries", "rate limit", "quota")):
                 raise
             with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
                 futures = {pool.submit(block_by_number, number): number for number in chunk}
