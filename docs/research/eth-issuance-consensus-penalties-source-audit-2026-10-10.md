@@ -48,6 +48,32 @@ Likewise, a public API can be free to read but still have limited retention, rat
 5. Reconcile component sums to the published consensus-penalty total and supply-change equation at identical chain positions. Record rounding/precision and any known splice or methodology change.
 6. If the historical API lacks component-level coverage, retain the source for the fields it does support and mark only the unsupported fields as unavailable. Do not start another open-ended provider search.
 
+
+## Bounded endpoint/schema/coverage check — 2026-10-10
+
+### Confirmed from the published methodology/schema
+
+- The API documents `GET /api/live`, `GET /api/history?range=…`, and `GET /api/trackedRetained`.
+- `range=retained` is a documented history range; the schema describes `coverage` with `fromSlot`, `toSlot`, `slots`, `blocks`, `missedSlots`, and `complete`.
+- Historical epoch/slot point schemas include separate fields for issuance, execution burn, aggregate consensus penalties, and penalty components: source, target, inactivity, sync committee, initial slashing, and correlation slashing.
+- Exact quantities are decimal strings in Wei/Gwei. Documented response metadata includes revision, generation timestamp, ETag, and a SHA-256 header.
+
+### Not confirmed in this run
+
+The web retrieval layer exposed the methodology and identified the live endpoint as JSON, but did not return the endpoint body for inspection. A direct HTTP fetch from the available execution environment also failed before connecting because DNS resolution was unavailable. Therefore we have **not** recorded a raw response, HTTP status/headers, actual `coverage` values, first/last retained slot, null counts, field-by-field retention, or independently recalculated sums.
+
+This is an access limitation of the current audit run, **not evidence that the source endpoint itself is down or that the API lacks history**. Do not mark the source failed based on this.
+
+### Bounded conclusion
+
+- **Public machine-readable candidate:** found.
+- **Documented component schema:** yes.
+- **Actual retained-history payload and range:** not independently inspected yet.
+- **All-history coverage for the six ETH signals:** not yet validated.
+- **Ready for production ingestion:** no, pending a real payload capture and cross-check.
+
+Do not expand the search to more providers. The next verification should be one reproducible capture from an environment that can reach the endpoint, followed by checks of `coverage`, null/missing components, component sums, and at least one slashing/correlation-penalty interval plus one ordinary missed-duty interval.
+
 ## Provisional status
 
 **Candidate found; full-history component validation pending.** The next task is a bounded endpoint/schema/coverage test, not another general search for APIs. If the test confirms that the complete penalty-component history is not publicly accessible, document that exact gap and continue the Product Contour v1 with already-validated metrics.
