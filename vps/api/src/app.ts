@@ -124,14 +124,16 @@ export default {
    if(new TextEncoder().encode(raw).byteLength>1048576)return json({status:"error",error:"artifact_too_large",max_bytes:1048576},413);
    artifact=JSON.parse(raw);
   }catch{return json({status:"error",error:"invalid_json"},400)}
-  if(!artifact||artifact.schema_version!=="1.0"||artifact.artifact_type!=="read_only_eth_observation_capture"||artifact.database_write_performed!==false||artifact.blockchain_write_performed!==false||!Array.isArray(artifact.metrics)||artifact.metrics.length<1||artifact.metrics.length>500){
+  if(!artifact||artifact.schema_version!=="1.0"||artifact.artifact_type!=="read_only_eth_observation_capture"||artifact.database_write_performed!==false||artifact.blockchain_write_performed!==false||!Array.isArray(artifact.metrics)||artifact.metrics.length<1||artifact.metrics.length>700){
    return json({status:"error",error:"invalid_capture_artifact"},400);
   }
   const contracts:Record<string,{unit:string;source_id:string;source_url:string;minimum:number;exclusive:boolean;point:boolean;allowNegative?:boolean}>={
    "eth.market_spot_price":{unit:"USDT/ETH",source_id:"market_binance",source_url:"https://data-api.binance.vision/api/v3/ticker/price?symbol=ETHUSDT",minimum:0,exclusive:true,point:true},
    "eth.base_fee_burned_per_block":{unit:"ETH/block",source_id:"ethereum_public_rpc",source_url:"https://ethereum-rpc.publicnode.com",minimum:0,exclusive:false,point:false},
    "eth.gross_issuance_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
-   "eth.total_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.execution_fee_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.consensus_penalties_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.other_execution_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
    "eth.net_supply_flow_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false,allowNegative:true},
    "eth.base_fee_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
    "eth.blob_fee_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
@@ -172,7 +174,7 @@ export default {
   try{
    const activeAsset=await sql`select asset_id from assets where asset_id='eth' and enabled=true limit 1`;
    if(!activeAsset[0])return json({status:"error",error:"asset_not_found"},404);
-   const registry=await sql`select metric_id from metric_definitions where metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.gross_issuance_per_interval','eth.total_burn_per_interval','eth.net_supply_flow_per_interval','eth.base_fee_burn_per_interval','eth.blob_fee_burn_per_interval','eth.pending_deposit_queue_eth','eth.scheduled_activation_queue_eth','eth.scheduled_exit_queue_eth','eth.entry_queue_wait_seconds','eth.exit_queue_wait_seconds')`;
+   const registry=await sql`select metric_id from metric_definitions where metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.gross_issuance_per_interval','eth.execution_fee_burn_per_interval','eth.consensus_penalties_per_interval','eth.other_execution_burn_per_interval','eth.net_supply_flow_per_interval','eth.base_fee_burn_per_interval','eth.blob_fee_burn_per_interval','eth.pending_deposit_queue_eth','eth.scheduled_activation_queue_eth','eth.scheduled_exit_queue_eth','eth.entry_queue_wait_seconds','eth.exit_queue_wait_seconds')`;
    const sources=await sql`select source_id from sources where source_id in ('market_binance','ethereum_public_rpc','ethsupply_fyi')`;
    const registeredMetrics=new Set(registry.map((row:any)=>row.metric_id));
    const registeredSources=new Set(sources.map((row:any)=>row.source_id));
