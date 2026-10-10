@@ -2,7 +2,7 @@
 
 **Issue:** [#5 — ETH vertical slice](https://github.com/olegsh247-stack/Crypto/issues/5)  
 **Branch:** `fix/product-contour-v1-contracts`  
-**Status:** Source-selection proposal. Endpoints listed here are candidates until payload, freshness and field semantics are tested in a read-only capture. No new metrics are ingested by this document.
+**Status:** Source-selection proposal. A read-only schema/freshness probe now records response metadata and field shapes for the live and 30-day endpoints. Candidate metrics remain unregistered until the probe artifact is inspected and exact field/window semantics are independently checked. No ethsupply.fyi values are ingested yet.
 
 ## 1. Preferred source candidate: ethsupply.fyi public API
 
@@ -71,6 +71,6 @@ The branch currently registers two capture candidates:
 - `eth.market_spot_price` — Binance ETH/USDT spot; capture timestamp is a proxy because the ticker response does not provide provider observation time.
 - `eth.base_fee_burned_per_block` — one block's base-fee burn from Ethereum JSON-RPC; excludes priority fees and is not a daily series.
 
-These two candidates do not yet supply the six-signal evaluator. The preferred next capture extension is a **read-only ethsupply.fyi schema probe** and payload-validation artifact. Only after exact response semantics are confirmed should daily/epoch metric IDs and source registry entries be added. Do not implement thresholds or update monitoring signals until the metric definitions and source windows are evidence-backed.
+These two candidates do not yet supply the six-signal evaluator. The **read-only ethsupply.fyi schema probe** is now part of the capture artifact. Inspect its results for availability, freshness, coverage, exact field names and types; then cross-check one interval against an independent source. Only after exact response semantics are confirmed should daily/epoch metric IDs and source registry entries be added. Do not implement thresholds or update monitoring signals until the metric definitions and source windows are evidence-backed.
 
 No production migration, observation write, Worker deployment, signal evaluation, scenario-state publication, or PR merge is authorized by this document.
