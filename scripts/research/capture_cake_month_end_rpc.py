@@ -13,6 +13,7 @@ from capture_sol_cake_rpc import (
     BURN_ADDRESS,
     CAKE_TOKEN,
     LEGACY_CAKE_POOL,
+    LOCKED_CANDIDATES,
     POOL_VIEW_SELECTORS,
     cake_balance_call,
     cake_pool_view_call,
@@ -92,7 +93,10 @@ def snapshot_at_block(endpoint: str, block: dict[str, Any]) -> dict[str, Any]:
         "decimals": eth_call(endpoint, "decimals", "0x313ce567", block_tag),
         "balances": {
             "burn_address": cake_balance_call(endpoint, "burn_address", BURN_ADDRESS, block_tag),
-            "legacy_cake_pool_balance": cake_balance_call(endpoint, "legacy_cake_pool_balance", LEGACY_CAKE_POOL, block_tag),
+            **{
+                label: cake_balance_call(endpoint, label, address, block_tag)
+                for label, address in LOCKED_CANDIDATES.items()
+            },
         },
         "cake_pool_state": {
             key: cake_pool_view_call(endpoint, signature, selector, block_tag)
@@ -100,6 +104,13 @@ def snapshot_at_block(endpoint: str, block: dict[str, Any]) -> dict[str, Any]:
         },
     }
     return state
+
+
+def pool_accounting_consistent(pool_state: dict[str, Any]) -> bool:
+    available = pool_state.get("available", {}).get("raw_integer")
+    balance_of = pool_state.get("balance_of", {}).get("raw_integer")
+    boost_debt = pool_state.get("total_boost_debt", {}).get("raw_integer")
+    return all(isinstance(value, int) for value in (available, balance_of, boost_debt)) and balance_of == available + boost_debt
 
 
 def capture(endpoint: str = BSC_RPC, boundaries: tuple[str, ...] = BOUNDARIES_UTC) -> dict[str, Any]:
@@ -133,6 +144,8 @@ def capture(endpoint: str = BSC_RPC, boundaries: tuple[str, ...] = BOUNDARIES_UT
         for key, value in snapshot["cake_pool_state"].items():
             if value.get("ok") is not True or not isinstance(value.get("raw_integer"), int):
                 errors.append(f"{boundary}.cake_pool_state.{key}")
+        if not pool_accounting_consistent(snapshot["cake_pool_state"]):
+            errors.append(f"{boundary}.cake_pool_state.accounting_identity")
     finished = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
     return {
         "schema_version": "1.0",
