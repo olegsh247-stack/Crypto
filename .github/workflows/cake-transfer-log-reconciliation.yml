@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - fix/product-contour-v1-contracts
+    paths:
+      - ".github/workflows/cake-transfer-log-reconciliation.yml"
+      - "scripts/research/capture_cake_transfer_logs.py"
+      - "scripts/research/capture_cake_month_end_rpc.py"
+      - "scripts/research/capture_sol_cake_rpc.py"
   workflow_dispatch:
 
 permissions:
