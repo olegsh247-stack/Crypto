@@ -93,13 +93,19 @@ def _unix_utc(value: Any) -> str | None:
 def _data_value_shape(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return {"present": value is not None, "object": False}
+    as_of = value.get("asOf")
+    age = None
+    if isinstance(as_of, (int, float)) and not isinstance(as_of, bool) and math.isfinite(float(as_of)):
+        age = int(dt.datetime.now(dt.timezone.utc).timestamp() - float(as_of))
     return {
         "present": True,
         "object": True,
         "has_value": value.get("value") is not None,
         "status": value.get("status"),
         "kind": value.get("kind"),
-        "as_of_utc": _unix_utc(value.get("asOf")),
+        "as_of_utc": _unix_utc(as_of),
+        "as_of_age_seconds": age,
+        "stale_over_one_hour": age is None or age > 3600,
         "sources_count": len(value.get("sources", [])) if isinstance(value.get("sources"), list) else None,
     }
 
@@ -177,8 +183,10 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
         queue_waits = payload.get("queueWaits") if isinstance(payload.get("queueWaits"), list) else []
         validator_types = payload.get("validatorTypes") if isinstance(payload.get("validatorTypes"), list) else []
         epoch_sample = epochs[0] if epochs and isinstance(epochs[0], dict) else {}
+        slot_sample = slots[0] if slots and isinstance(slots[0], dict) else {}
         staking_sample = staking[0] if staking and isinstance(staking[0], dict) else {}
         queue_sample = queue_waits[0] if queue_waits and isinstance(queue_waits[0], dict) else {}
+        summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
         probe.update({
             "range": payload.get("range"),
             "interval": payload.get("interval"),
@@ -199,14 +207,20 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
                 "queue_waits": len(queue_waits),
                 "validator_types": len(validator_types),
             },
+            "summary_keys": sorted(str(k) for k in summary.keys()),
             "sample_field_names": {
                 "epoch": sorted(str(k) for k in epoch_sample.keys()),
+                "slot": sorted(str(k) for k in slot_sample.keys()),
                 "staking": sorted(str(k) for k in staking_sample.keys()),
                 "queue_wait": sorted(str(k) for k in queue_sample.keys()),
             },
-            "sample_value_types": {
-                key: type(epoch_sample.get(key)).__name__ if key in epoch_sample else "missing"
-                for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blobsUsed")
+            "slot_sample_value_types": {
+                key: type(slot_sample.get(key)).__name__ if key in slot_sample else "missing"
+                for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blobsUsed", "fromTimestamp", "toTimestamp", "blocks")
+            },
+            "summary_value_types": {
+                key: type(summary.get(key)).__name__ if key in summary else "missing"
+                for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blocks", "fromTimestamp", "toTimestamp")
             },
         })
 
