@@ -179,7 +179,7 @@ export default {
    if(validated.some(item=>!registeredMetrics.has(item.metric_id)||!registeredSources.has(item.source_id)))return json({status:"error",error:"observation_registry_not_ready"},409);
    const inserted=await sql`insert into observations
     (metric_id,asset_id,value_numeric,unit,observed_at,period_start,period_end,source_id,source_url,methodology,status,freshness,revision)
-    select r.metric_id,r.asset_id,r.value_numeric,r.unit,r.observed_at::timestamptz,r.period_start::timestamptz,r.period_end::timestamptz,r.source_id,r.source_url,r.methodology,'NORMAL','CURRENT',1
+    select r.metric_id,r.asset_id,r.value_numeric,r.unit,r.observed_at::timestamptz,r.period_start::timestamptz,r.period_end::timestamptz,r.source_id,r.source_url,r.methodology,'NORMAL',case when r.observed_at::timestamptz >= now() - interval '6 hours' then 'CURRENT' else 'STALE' end,1
     from jsonb_to_recordset(${JSON.stringify(validated)}::jsonb) as r(metric_id text,asset_id text,value_numeric numeric,unit text,observed_at text,period_start text,period_end text,source_id text,source_url text,methodology text)
     on conflict do nothing
     returning observation_id,metric_id,asset_id,observed_at,revision`;
