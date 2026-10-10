@@ -198,3 +198,10 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - Added a separate read-only workflow/script to select the last BSC block at or before each UTC boundary (2026-06-01, 2026-07-01, 2026-08-01, 2026-09-01, 2026-10-01) using binary search over block timestamps.
 - Each selected block captures total supply, dead-address balance, legacy CakePool token balance, `available()`, `totalBoostDebt()`, `balanceOf()`, `totalLockedAmount()`, and `totalShares()`, preserving block number/hash/timestamp and boundary offset. No values are subtracted from circulating supply by this script.
 - Unit tests cover timestamp parsing and at-or-before block selection. The new workflow must pass before these historical snapshots are treated as evidence; the next work is to inspect the artifact, then add bounded event history if the public RPC supports it.
+
+
+## Historical CAKE snapshot blocker — 2026-10-10
+
+- First historical capture run [#38075181911](https://github.com/olegsh247-stack/Crypto/actions/runs/38075181911): unit tests and boundary search passed, but all historical contract-state reads failed with RPC `-32000 missing trie node`. The selected block numbers are usable only as timestamp locators; no historical supply/pool state was obtained.
+- The default `bsc-dataseed.binance.org` endpoint is therefore not archive-capable for these June–October 2026 state queries. Do not interpolate from current values or mark historical observations complete.
+- Switched only the historical-capture workflow to the public BSC endpoint `https://bsc-rpc.publicnode.com` for a second read-only attempt. Run [#38075243537](https://github.com/olegsh247-stack/Crypto/actions/runs/38075243537) is pending/in progress; its artifact must be inspected before accepting any historical result. The ordinary current-state capture workflow remains unchanged.
