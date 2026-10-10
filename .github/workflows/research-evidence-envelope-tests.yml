@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/research/validate_evidence_envelope.py"
+      - "scripts/research/normalize_sol_cake_rpc_capture.py"
       - "scripts/research/tests/**"
       - ".github/workflows/research-evidence-envelope-tests.yml"
   push:
