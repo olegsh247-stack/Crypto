@@ -36,15 +36,24 @@ jobs:
           python scripts/research/capture_eth_observations.py --output research-consensus-probe/eth-observation-capture.json
       - name: Probe historical finalized epochs (read-only)
         run: |
-          python scripts/research/probe_beacon_consensus_source.py --artifact research-consensus-probe/eth-observation-capture.json --output research-consensus-probe/eth-consensus-source-probe.json
+          BEACON_API_BASE_URL=https://ethereum-beacon-api.publicnode.com BEACON_API_PROVIDER="PublicNode Beacon API" python scripts/research/probe_beacon_consensus_source.py --artifact research-consensus-probe/eth-observation-capture.json --output research-consensus-probe/eth-consensus-source-publicnode.json
+          BEACON_API_BASE_URL=https://public-mainnet-node.ethereum.org BEACON_API_PROVIDER="Ethereum Beacon API spec example endpoint" python scripts/research/probe_beacon_consensus_source.py --artifact research-consensus-probe/eth-observation-capture.json --output research-consensus-probe/eth-consensus-source-spec-example.json
           python - <<'PY'
           import json
-          p = json.load(open("research-consensus-probe/eth-consensus-source-probe.json", encoding="utf-8"))
-          print("ETH_CONSENSUS_SOURCE_PROBE_STATUS=" + str(p.get("status")))
-          print("ETH_CONSENSUS_SOURCE_PROBE_FINALIZED=" + str(p.get("finalized_non_optimistic_probes")))
-          print("ETH_CONSENSUS_COMPLETE_ACCOUNTING_VERIFIED=" + str(p.get("complete_consensus_issuance_penalty_accounting_verified")))
-          if p.get("status") != "historical_partial_source_accessible":
-              print("::warning::Historical Beacon API feasibility was not confirmed; inspect the artifact.")
+          from pathlib import Path
+          paths = [
+              Path("research-consensus-probe/eth-consensus-source-publicnode.json"),
+              Path("research-consensus-probe/eth-consensus-source-spec-example.json"),
+          ]
+          results = [json.loads(p.read_text(encoding="utf-8")) for p in paths]
+          for p in results:
+              print("ETH_CONSENSUS_SOURCE_PROVIDER=" + str(p.get("provider")))
+              print("ETH_CONSENSUS_SOURCE_BASE_URL=" + str(p.get("base_url")))
+              print("ETH_CONSENSUS_SOURCE_STATUS=" + str(p.get("status")))
+              print("ETH_CONSENSUS_SOURCE_FINALIZED=" + str(p.get("finalized_non_optimistic_probes")))
+          print("ETH_CONSENSUS_COMPLETE_ACCOUNTING_VERIFIED=false")
+          if not any(p.get("status") == "historical_partial_source_accessible" for p in results):
+              print("::warning::No documented Beacon API candidate was confirmed; inspect both artifacts.")
           PY
       - name: Upload feasibility artifacts
         if: ${{ always() && hashFiles('research-consensus-probe/eth-observation-capture.json', 'research-consensus-probe/eth-consensus-source-probe.json') != '' }}
@@ -54,5 +63,7 @@ jobs:
           path: |
             research-consensus-probe/eth-observation-capture.json
             research-consensus-probe/eth-consensus-source-probe.json
+            research-consensus-probe/eth-consensus-source-publicnode.json
+            research-consensus-probe/eth-consensus-source-spec-example.json
           if-no-files-found: warn
           retention-days: 7
