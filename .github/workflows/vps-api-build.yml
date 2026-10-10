@@ -244,6 +244,58 @@ jobs:
           stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-09-01T00:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
           test "$stored" = "4"
           echo "VPS_API_OBSERVATION_STORAGE_OK unique_natural_key_rows=$stored"
+      - name: VPS live ETH capture ingestion E2E (disposable PostgreSQL)
+        run: |
+          set -euo pipefail
+          python3 scripts/research/capture_eth_observations.py --output /tmp/eth-real-capture-artifact.json
+          decision=$(python3 - <<'PY'
+          import json, os
+          d=json.load(open('/tmp/eth-real-capture-artifact.json'))
+          history=d.get('requests',{}).get('ethsupply_history_30d',{})
+          shape=history.get('schema_probe',{})
+          metrics=d.get('metrics',[])
+          eligible=(history.get('ok') is True and history.get('http_status')==200
+                    and shape.get('status')=='schema_probe_only'
+                    and shape.get('coverage',{}).get('complete') is True
+                    and shape.get('stale_over_one_hour') is False
+                    and len(metrics)>=400 and len(metrics)<=500
+                    and os.path.getsize('/tmp/eth-real-capture-artifact.json')<1048576)
+          if eligible:
+            assert d.get('database_write_performed') is False and d.get('blockchain_write_performed') is False
+            assert all(m.get('source_id') and m.get('source_url') and m.get('observed_at') for m in metrics)
+          print('ingest' if eligible else 'skip')
+          PY
+          )
+          if [ "$decision" = "ingest" ]; then
+            expected=$(python3 -c "import json; print(len(json.load(open('/tmp/eth-real-capture-artifact.json'))['metrics']))")
+            expected_provider=$(python3 -c "import json; print(sum(1 for m in json.load(open('/tmp/eth-real-capture-artifact.json'))['metrics'] if m['source_id']=='ethsupply_fyi'))")
+            auth=(-H 'Authorization: Bearer local-development-only' -H 'Content-Type: application/json')
+            first_code=$(curl -sS -o /tmp/eth-real-ingest-first.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-real-capture-artifact.json)
+            test "$first_code" = "200"
+            EXPECTED_CAPTURE_COUNT="$expected" python3 - <<'PY'
+            import json, os
+            d=json.load(open('/tmp/eth-real-ingest-first.json'))
+            expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
+            assert d.get('status')=='ok', d
+            assert d.get('received_count')==expected and d.get('inserted_count')==expected and d.get('duplicate_count')==0, d
+            print(f"VPS_API_REAL_CAPTURE_INGEST_OK inserted={expected}")
+            PY
+            replay_code=$(curl -sS -o /tmp/eth-real-ingest-replay.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-real-capture-artifact.json)
+            test "$replay_code" = "200"
+            EXPECTED_CAPTURE_COUNT="$expected" python3 - <<'PY'
+            import json, os
+            d=json.load(open('/tmp/eth-real-ingest-replay.json'))
+            expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
+            assert d.get('status')=='ok', d
+            assert d.get('received_count')==expected and d.get('inserted_count')==0 and d.get('duplicate_count')==expected, d
+            print(f"VPS_API_REAL_CAPTURE_IDEMPOTENCY_OK replay_inserted=0 duplicates={expected}")
+            PY
+            stored_provider=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where source_id='ethsupply_fyi';")
+            test "$stored_provider" = "$expected_provider"
+            echo "VPS_API_REAL_CAPTURE_STORAGE_OK provider_rows=$stored_provider"
+          else
+            echo "VPS_API_REAL_CAPTURE_INGEST_SKIPPED source unavailable/stale/incomplete; deterministic synthetic ingestion tests still required and run above"
+          fi
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
