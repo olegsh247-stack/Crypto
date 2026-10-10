@@ -27,7 +27,7 @@ REQUIRED = (
     "evidence_kind",
 )
 ALLOWED_KINDS = {"onchain_observation", "provider_metric", "issuer_report", "derived_metric"}
-DECIMAL_STRING = re.compile(r"^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$")
+DECIMAL_STRING = re.compile(r"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
 
 
 def parse_utc(value: Any, field: str) -> datetime:
