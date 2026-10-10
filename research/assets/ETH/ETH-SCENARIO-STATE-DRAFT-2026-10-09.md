@@ -122,6 +122,65 @@ Why Base remains the leading candidate to test:
 
 This is a hypothesis, not a published assessment. The available evidence is enough to reject the phrase “positive market regime” and to flag net issuance as a current concern, but it is **not enough to assert the full Bull/Base/Bear probabilities or create a durable production state**.
 
+### Dated trend evidence refresh — 2026-10-10
+
+This appendix adds a reproducible set of dated observations. These are **external research inputs**, not a write to the Crypto database and not a published scenario state.
+
+#### 1. Supply flow — negative for near-term supply scarcity
+
+InsideCrypto's delayed snapshot, captured 2026-10-09 12:12 UTC, reports:
+- 7-day gross issuance 20,905 ETH; burn 686.53 ETH; net issuance +20,219 ETH.
+- 30-day gross issuance 89,019 ETH; burn 2,698 ETH; net issuance +86,321 ETH (+0.07% of reported supply).
+- Coverage was reported as 99.99% for both windows.
+
+Source: https://insidecrypto.net/onchain/ethereum/supply/
+
+**Interpretation:** issuance materially exceeded fee burn over the reported windows. This weighs against a short-term “ultrasound / deflationary supply” thesis. Treat the values as a third-party delayed estimate; before production publication, reconcile the definitions and observations against the project's stored evidence and a second supply source.
+
+#### 2. Network fee activity — improving versus one year ago, highly volatile day to day
+
+YCharts' Etherscan-sourced daily “Ethereum Network Transaction Fees Per Day” series reports 186.44 ETH for 2026-10-08, +45.60% year over year versus 128.05 ETH. Its historical values for the recent 14-day window are:
+
+| Date | Transaction fees (ETH/day) |
+|---|---:|
+| 2026-09-25 | 130.41 |
+| 2026-09-26 | 100.68 |
+| 2026-09-27 | 292.60 |
+| 2026-09-28 | 295.51 |
+| 2026-09-29 | 251.06 |
+| 2026-09-30 | 135.97 |
+| 2026-10-01 | 152.42 |
+| 2026-10-02 | 130.11 |
+| 2026-10-03 | 78.76 |
+| 2026-10-04 | 117.15 |
+| 2026-10-05 | 170.57 |
+| 2026-10-06 | 153.62 |
+| 2026-10-07 | 179.18 |
+| 2026-10-08 | 186.44 |
+
+Source: https://ycharts.com/indicators/ethereum_network_transaction_fees_per_day
+
+**Interpretation:** fees recovered from the 2026-10-03 low and the latest observation is above the year-ago comparison, but the series is volatile. This is a network-fee activity proxy, not a direct substitute for net issuance or ETH value accrual. Keep it separate from the supply-flow series.
+
+#### 3. L2 scale — growing ecosystem, value-accrual question unresolved
+
+L2BEAT's TVS dashboard captured for the one-year window ending 2026-10-06 reports rollup total value secured of $34.39B and +34.1% year over year. Source: https://l2beat.com/layer2s/tvs
+
+**Interpretation:** the scaling ecosystem remains materially active and the reported TVS trend is positive. TVS is affected by asset prices and bridge/asset composition; it does not by itself prove that L2 growth translates into ETH demand, burn or holder value.
+
+#### 4. Staking queues — live cross-sectional observation, not yet a historical trend
+
+Beaconcha.in's validator-queue page captured 2026-10-10 showed approximately 1.40M ETH in the deposit queue, 434.5K ETH in the exit queue, and 43.75M ETH in active validator balance. Source: https://www.beaconcha.in/validators/queues
+
+**Interpretation:** both entry and exit queues are material; a single snapshot cannot establish whether staking demand is strengthening or weakening. Record dated daily/weekly captures before assigning a trend or treating queue size as a directional signal.
+
+#### Evidence-weighted scenario implications
+
+- **Base remains the leading candidate to test, not a confirmed state.** The combined picture is mixed: positive L2 TVS growth and a year-over-year fee improvement coexist with clearly positive net issuance and volatile daily fees.
+- **Bull is not established:** the evidence does not show sustained fee/burn acceleration or positive net issuance across comparable windows.
+- **Bear is not established:** this evidence set does not show a durable collapse in L2 ecosystem scale or network-fee activity.
+- **Confidence remains low-to-medium** because source methods differ, the staking observation is cross-sectional, and these external series have not yet been reconciled with the exact stored ETH observations/factors/scores for the published baseline.
+
 ### Remaining blockers before publication
 
 1. Reconcile these external observations with the project's actual `observations`, `monitoring_signals`, `critical_factors` and evidence rows for `ETH-2026-10-04-v1`, using read-only queries/API only.
