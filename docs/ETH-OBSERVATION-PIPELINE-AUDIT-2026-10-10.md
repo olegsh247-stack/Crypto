@@ -17,7 +17,7 @@ The existing `observations` table in `infrastructure/neon/schema-v1.sql` already
 
 The canonical `sources` and `metric_definitions` tables are present. The table has lookup indexes by metric/asset/time and source/time. The market-candle table is a separate instrument-history store and must not be treated as a substitute for metric observations.
 
-**Initial conclusion:** no new observation columns are justified yet. The existing model can represent the required data lineage without a schema migration.
+**Initial conclusion before idempotency review:** no new observation columns are justified. The existing model can represent the required data lineage; a separate additive migration is nevertheless needed to register ETH-specific metric/source definitions and enforce a natural key for safe replay.
 
 ## 2. Confirmed gaps
 
@@ -41,7 +41,7 @@ Keep these data series independent. Each capture record must carry the provider'
 
 These are candidate definitions, not current measured values. A metric should be omitted from the first capture if its authoritative endpoint, units, or time semantics cannot be validated. No values should be fabricated to fill a row.
 
-## 4. Implementation sequence
+## 4. Original implementation sequence (progress updated in sections 8–9)
 
 1. Finish the current-head Product Contour Gate, VPS Build Rehearsal, and on-chain capture workflow checks.
 2. Complete a repository-wide inventory of observation-related constraints, metric definitions, monitoring signal schema, admin route patterns, and Worker/VPS parity.
@@ -66,7 +66,7 @@ These are candidate definitions, not current measured values. A metric should be
 This audit is complete only as a planning artifact. Issue #5 remains open until capture validation, idempotent controlled ingestion, reproducible signal evaluation, API contract tests, and both Product Contour Gate and VPS API Build Rehearsal pass on the resulting code.
 
 
-## 7. Capture rehearsal and additional implementation findings — 2026-10-10
+## 7. Capture rehearsal and initial inventory findings — 2026-10-10 (historical; implementation status is updated in sections 8–9)
 
 The first successful read-only capture run is available as [ETH Observation Capture #2](https://github.com/olegsh247-stack/Crypto/actions/runs/38035169834), with artifact `eth-observation-capture-38035169834` (7-day retention). It produced two numeric candidate records (ETH/USDT spot price and one block's base-fee burn), recorded four explicit metric gaps, and performed no database or blockchain writes.
 
@@ -78,9 +78,9 @@ Observed source behavior:
 
 Additional repository inventory:
 - The canonical seed registry is BTC-centric. Existing `market.spot_price` is described as BTC and defaults to `USD/BTC`; ETH measurements must not reuse that metric ID. The capture script now uses separate `eth.*` metric IDs.
-- `market_binance` exists in the market-data source migration. `ethereum_public_rpc` is a proposed source ID and is not yet registered; the future ingestion package must add only verified source/metric definitions through a reviewed migration/seed path.
-- The current Worker and VPS API source files do not expose a dedicated read-only observations endpoint. This is an API contract gap to address after metric/source definitions and the observation idempotency key are agreed.
-- The base observations schema has no visible natural-key uniqueness constraint for idempotent insertion. Do not implement upserts against a guessed key. First define the revision semantics and rehearse the exact constraint/index on disposable PostgreSQL.
+- `market_binance` exists in the market-data source migration. `ethereum_public_rpc` and the two ETH metric definitions were absent from the prior base migrations; the additive migration draft now registers them. Production remains unmigrated.
+- At the time of the initial inventory, Worker and VPS API did not expose a dedicated read-only observations endpoint. This gap is now addressed by the contract documented in section 8.
+- The base observations schema has no natural-key uniqueness constraint. Section 9 now documents the revision-1 replay semantics and additive unique index, rehearsed against disposable PostgreSQL.
 
 The capture workflow's successful status validates script syntax, artifact structure and safety assertions; it does not mean all five metric families have been sourced or that the artifact is ready for database ingestion.
 
