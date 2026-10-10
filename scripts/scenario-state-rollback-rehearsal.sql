@@ -5,7 +5,7 @@
 BEGIN;
 
 WITH candidate AS (
-  SELECT rs.research_scenario_id::text AS scenario_id, rs.snapshot_id
+  SELECT rs.scenario_type AS scenario_id, rs.snapshot_id
   FROM research_scenarios rs
   JOIN research_snapshots s ON s.snapshot_id = rs.snapshot_id
   WHERE s.asset_id = 'eth'
@@ -34,6 +34,7 @@ BEGIN
   SELECT count(*) INTO rows_found
   FROM scenario_states
   WHERE asset_id = 'eth'
+    AND scenario_id = 'base'
     AND rationale = 'CI rollback rehearsal only'
     AND indicators->>'test_marker' = 'scenario-state-rollback-rehearsal';
 
@@ -51,6 +52,7 @@ BEGIN
   SELECT count(*) INTO rows_found
   FROM scenario_states
   WHERE asset_id = 'eth'
+    AND scenario_id = 'base'
     AND rationale = 'CI rollback rehearsal only'
     AND indicators->>'test_marker' = 'scenario-state-rollback-rehearsal';
 
