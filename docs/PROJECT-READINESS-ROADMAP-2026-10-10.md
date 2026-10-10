@@ -239,3 +239,25 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - The independent burn tracker states that its historical log series uses an authenticated NodeReal archive node. The next valid CAKE attempt therefore needs an authorized archive/indexer endpoint; do not keep cycling unauthenticated endpoints or treat failures as zero events.
 - The workflow is now manual-only until a suitable provider is configured, avoiding a repeated failing check on every push. CAKE event reconciliation and circulating-supply approval remain open.
 - **Priority handoff:** return to Stage 1, ETH numeric evidence, as ordered in this roadmap. Do not publish CAKE/SOL research or jump to broad data expansion.
+
+
+## Operational verification update — 2026-10-11
+
+### Live API contract E2E
+
+- [Live API E2E run #4](https://github.com/olegsh247-stack/Crypto/actions/runs/38061014765) passed on commit [06562d4bc96adcf824e44a8b296796984007ddaa](https://github.com/olegsh247-stack/Crypto/commit/06562d4bc96adcf824e44a8b296796984007ddaa).
+- Verified HTTP 200 for health, database health, asset registry, BTC/ETH/SOL/CAKE details, pair registry, tickers, and supported history intervals.
+- The run's dashboard summary reports BTC: monitoring/current, 15 research blocks, 6 domains, 6 factors, 5 scores, 3 scenarios, 7 signals and 15 evidence rows. ETH is also populated. SOL and CAKE remain `not_started` with no published research blocks/factors/scores/scenarios/signals/evidence.
+- This is an API/payload-contract verification, **not** browser verification of the deployed Web dashboard and not proof that every BTC observation is independently fresh or that the full BTC scenario assessment is decision-ready.
+
+### Temporary Web preview attempt
+
+- Created Vercel project `crypto-product-contour-preview` (project ID `prj_TOLwyyS5WebBhELXwp7wd7K90phr`) and configured the `web/` root, Node.js 22.x, shared files outside the root, and `CRYPTO_API_URL`.
+- A deployment request explicitly targeting Preview unexpectedly returned `target: production`. The deployment was immediately canceled; its final state is `CANCELED` (deployment ID `dpl_APJ9bxaPK9qiFD7zFLweGHgwizKL`). No successful Web deployment or usable preview URL has been established.
+- Do not retry until the deployment target behavior is understood and Preview is confirmed before build/publication. No production alias, custom domain, DNS change, database write/migration, VPS provisioning, or Cloudflare/Neon decommissioning was performed as part of this preview attempt.
+
+### Next actions (priority order)
+
+1. Continue the BTC vertical slice using the existing published snapshot: inspect the actual Domains → Factors → Scores → Scenarios → Monitoring → Evidence records and validate their lineage, definitions, timestamps, and signal meaning. Do not create or publish synthetic records.
+2. Establish and verify a genuinely Preview-only Web deployment, then test the dashboard in a browser. Treat the Vercel target anomaly as a blocker until resolved.
+3. Keep the VPS migration as a separately gated hosting cutover; no purchase/provisioning or production migration is authorized by these checks.
