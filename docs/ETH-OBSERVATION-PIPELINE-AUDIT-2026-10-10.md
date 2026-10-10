@@ -123,3 +123,8 @@ Fail-closed checks before persistence:
 The VPS Build Rehearsal now exercises missing authentication, rejected write-flag artifacts, one successful insert, replay idempotency and the resulting row count against disposable PostgreSQL. The numeric value in this workflow fixture is synthetic test data, not a market observation.
 
 The endpoint is not called by ordinary capture CI and has not been used against production. The new migration remains unexecuted against production. This implementation intentionally does not evaluate monitoring signals, create monitoring events, publish scenario states, or treat the capture-time ETH/USDT price as sufficient evidence for a thesis transition.
+## 10. Monitoring mapping and threshold boundary
+
+The six ETH thesis signals have now been mapped to the observations required to evaluate them in [ETH Monitoring Signal Mapping](ETH-MONITORING-SIGNAL-MAPPING-2026-10-10.md). No numeric thresholds have been invented or approved. The current two capture metrics are insufficient to evaluate all six signals: spot price is contextual only, and single-block base-fee burn is not a daily fee series or net issuance.
+
+Next implementation work must first resolve metric/source gaps and define defensible windows, comparison baselines, missing-data behavior and threshold rationale. The evaluator must leave signal state and last_updated_at unchanged on any failed or incomplete evaluation. No monitoring events or scenario state should be created from observation arrival alone.
