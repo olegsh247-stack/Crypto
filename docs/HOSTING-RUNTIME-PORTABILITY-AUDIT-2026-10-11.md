@@ -43,9 +43,9 @@ Cloudflare invokes the scheduled handler hourly and the handler allows the ordin
 
 ### H-03 — Candle ingestion must not imply signal evaluation
 
-At the audit baseline, both Worker and VPS scheduler code can update `monitoring_signals.last_updated_at` after candle ingestion without demonstrating that a signal evaluator ran. This makes the timestamp misleading.
+On the audited `main` baseline, both Worker and VPS scheduler code can update `monitoring_signals.last_updated_at` after candle ingestion without demonstrating that a signal evaluator ran. This makes the timestamp misleading. The current `fix/product-contour-v1-contracts` working branch now removes that timestamp update from both ingestion paths and documents why; that is a source-level correction, not yet proof that the exact latest branch has passed every relevant runtime test.
 
-**Required:** the hosting implementation must adopt the corrected product contract: ingestion freshness, research-review freshness and signal-evaluation freshness are distinct. Only a successful evaluation may advance the signal timestamp. This is a compatibility blocker, not a reason to invent monitoring events or thresholds.
+**Required before accepting portability:** verify the no-fake-freshness assertion on the exact candidate HEAD in disposable PostgreSQL and ensure the API/worker parity gate exercises it. Ingestion freshness, research-review freshness and signal-evaluation freshness are distinct. Only a successful evaluation may advance the signal timestamp. This is a compatibility requirement, not a reason to invent monitoring events or thresholds.
 
 ### H-04 — The self-hosting deployment shape is incomplete
 
