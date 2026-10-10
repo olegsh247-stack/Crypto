@@ -42,7 +42,7 @@ test("autumn DST transition produces a 25-hour London day", () => {
   const before = nextLondonDayBoundary(new Date("2026-10-24T12:00:00.000Z"));
   const after = nextLondonDayBoundary(new Date("2026-10-25T12:00:00.000Z"));
   assert.equal(before.toISOString(), "2026-10-24T23:00:00.000Z");
-  assert.equal(after.toISOString(), "2026-10-25T00:00:00.000Z");
+  assert.equal(after.toISOString(), "2026-10-26T00:00:00.000Z");
   assert.equal(after.getTime() - before.getTime(), 25 * 60 * 60 * 1000);
 });
 
