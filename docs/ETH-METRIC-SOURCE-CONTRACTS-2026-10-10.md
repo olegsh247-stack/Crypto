@@ -368,3 +368,59 @@ A proper replay PoC would therefore still require selecting and pinning a consen
 
 No credential is required to reach this decision: this was documentation-only research. Do not purchase a plan or create/use an API secret without explicit user approval. Continue provider discovery only for a source whose published contract explicitly covers network-wide issuance, all required penalty categories, fork-aware methodology, and exact finalized interval bounds; otherwise keep the metrics candidate-only.
 
+## 18. Expanded provider and open-source dataset discovery — 2026-10-10
+
+### Candidates reviewed
+
+#### 1. Cedar — strongest open-source accounting reference, but infrastructure-heavy
+
+Repository: https://github.com/pintail-xyz/cedar
+
+The README describes total ETH supply accounting, consensus-layer issuance, EIP-1559 burn, staking composition, validator income and a local DuckDB `daily_stats` table. It requires both an execution archive node (reth) and a consensus archive node (Lighthouse), fully synced for the target range. Its workflow processes execution blocks, consensus-layer deposits/withdrawals and daily validator/queue snapshots, and uses a supply anchor for absolute supply.
+
+**Assessment:** closest open-source project found to Crypto's broader accounting objective. However, it is a local data pipeline rather than a hosted query API, and its documented daily statistics are not proof of a category-complete exact-epoch gross-issuance/penalty ledger. It is a useful methodology/code reference, not an immediately adoptable source. Do not deploy its infrastructure or add it as a service to Crypto without a separate cost and architecture decision.
+
+#### 2. ETH.STORE — aggregate rewards reference, not full supply accounting
+
+Repository: https://github.com/gobitfly/eth.store  
+Published methodology: https://beaconcha.in/ethstore
+
+The open-source tool queries execution and consensus node APIs and calculates validator reward totals over reward days of 225 epochs. Its output includes aggregate consensus rewards, effective balances, validator counts and selected balance/deposit fields.
+
+**Assessment:** useful as a secondary aggregate rewards reference and methodology example. Its reward-day boundary is not our exact 30-epoch/960-slot window, and its stated purpose is a staking-reward reference rate. The published output does not prove a complete breakdown of every consensus penalty and supply-changing category. Not accepted as a full source.
+
+#### 3. GotEth — detailed validator indexer, but operationally expensive
+
+Repository: https://github.com/migalabs/goteth
+
+The README describes historical/finalized indexing of validator duties, rewards, balances and transactions, backed by ClickHouse and an archival consensus node. It requires Lighthouse archival state access (including the debug state endpoint); execution access is optional for some functionality. Its documentation reports approximately 68 GB for one month of validator reward summaries and approximately 405 GB for transaction data since the Merge in its May 2025 example, with additional free-space requirements for ClickHouse operations.
+
+**Assessment:** potential research implementation reference if a future self-hosted data platform is approved. It is not a low-cost dependency to add to Crypto and does not, from its documented purpose alone, establish a ready-to-query category-complete network supply ledger.
+
+#### 4. ETH.STORE-like daily dashboards / Beaconscan
+
+References:
+- https://beaconcha.in/ethstore
+- https://beaconscan.com/stat/validatortotaldailyincome
+
+These are useful independent comparison references for daily aggregate validator income. The series are daily/reward-day aggregates and combine concepts that may include consensus rewards and execution-layer income. They are not a replacement for exact-window gross issuance and separate penalty categories. Do not scrape dashboard HTML or relabel daily totals as exact epoch accounting.
+
+#### 5. Research dataset / paper
+
+Reference: https://www.nature.com/articles/s41597-025-04623-7
+
+The published research describes aggregation of validator rewards and cross-checks with daily total validator income, but also notes that per-validator API calls at the scale of over a million validators are not feasible under free-tier rate limits. This supports the operational conclusion that naive exhaustive per-validator API aggregation is not an appropriate default route. The paper is a research reference, not a current production feed or proof of full supply accounting.
+
+### Decision
+
+No discovered hosted/provider route currently satisfies all required gates at once: network-wide coverage, exact finalized epoch/slot bounds, fork-correct accounting, complete category-level gross issuance and penalties, transparent schema/lineage, and independent reconciliation.
+
+**Recommended route for Crypto now:**
+1. Keep the existing ethsupply.fyi candidate series as research-only, with the successful execution fee-burn cross-check limited to the tested components/windows.
+2. Do not add Cedar, ETH.STORE, or GotEth as product services and do not provision archive nodes or ClickHouse at this stage.
+3. Continue looking only for a documented machine-readable network-wide source with exact interval coverage, or a small reproducible public dataset with sufficient provenance to validate one epoch.
+4. If no such source is found without credentials/infrastructure, record the source gap and defer gross issuance/consensus penalties as unverified inputs rather than implement an approximate evaluator.
+5. Any proposal involving paid access, new hosted infrastructure, archive nodes, or API credentials requires a separate explicit approval before proceeding.
+
+No product code, schema, production data, Worker, VPS or monitoring/scenario behavior was changed during this research step.
+
