@@ -117,19 +117,29 @@ export default {
   if(request.method!=="POST")return json({status:"error",error:"method_not_allowed"},405);
   const auth=requireAdmin(request,env);if(auth)return auth;
   const declaredLength=Number(request.headers.get("content-length")??"0");
-  if(Number.isFinite(declaredLength)&&declaredLength>262144)return json({status:"error",error:"artifact_too_large",max_bytes:262144},413);
+  if(Number.isFinite(declaredLength)&&declaredLength>1048576)return json({status:"error",error:"artifact_too_large",max_bytes:1048576},413);
   let artifact:any;
   try{
    const raw=await request.text();
-   if(new TextEncoder().encode(raw).byteLength>262144)return json({status:"error",error:"artifact_too_large",max_bytes:262144},413);
+   if(new TextEncoder().encode(raw).byteLength>1048576)return json({status:"error",error:"artifact_too_large",max_bytes:1048576},413);
    artifact=JSON.parse(raw);
   }catch{return json({status:"error",error:"invalid_json"},400)}
-  if(!artifact||artifact.schema_version!=="1.0"||artifact.artifact_type!=="read_only_eth_observation_capture"||artifact.database_write_performed!==false||artifact.blockchain_write_performed!==false||!Array.isArray(artifact.metrics)||artifact.metrics.length<1||artifact.metrics.length>20){
+  if(!artifact||artifact.schema_version!=="1.0"||artifact.artifact_type!=="read_only_eth_observation_capture"||artifact.database_write_performed!==false||artifact.blockchain_write_performed!==false||!Array.isArray(artifact.metrics)||artifact.metrics.length<1||artifact.metrics.length>500){
    return json({status:"error",error:"invalid_capture_artifact"},400);
   }
-  const contracts:Record<string,{unit:string;source_id:string;source_url:string;minimum:number;exclusive:boolean;point:boolean}>={
+  const contracts:Record<string,{unit:string;source_id:string;source_url:string;minimum:number;exclusive:boolean;point:boolean;allowNegative?:boolean}>={
    "eth.market_spot_price":{unit:"USDT/ETH",source_id:"market_binance",source_url:"https://data-api.binance.vision/api/v3/ticker/price?symbol=ETHUSDT",minimum:0,exclusive:true,point:true},
-   "eth.base_fee_burned_per_block":{unit:"ETH/block",source_id:"ethereum_public_rpc",source_url:"https://ethereum-rpc.publicnode.com",minimum:0,exclusive:false,point:false}
+   "eth.base_fee_burned_per_block":{unit:"ETH/block",source_id:"ethereum_public_rpc",source_url:"https://ethereum-rpc.publicnode.com",minimum:0,exclusive:false,point:false},
+   "eth.gross_issuance_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.total_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.net_supply_flow_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false,allowNegative:true},
+   "eth.base_fee_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.blob_fee_burn_per_interval":{unit:"ETH/interval",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:false},
+   "eth.pending_deposit_queue_eth":{unit:"ETH",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:true},
+   "eth.scheduled_activation_queue_eth":{unit:"ETH",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:true},
+   "eth.scheduled_exit_queue_eth":{unit:"ETH",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:true},
+   "eth.entry_queue_wait_seconds":{unit:"seconds",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:true},
+   "eth.exit_queue_wait_seconds":{unit:"seconds",source_id:"ethsupply_fyi",source_url:"https://ethsupply.fyi/api/history?range=30d",minimum:0,exclusive:false,point:true}
   };
   const validated:any[]=[];
   const seen=new Set<string>();
@@ -138,13 +148,16 @@ export default {
    if(!item||typeof item!=="object"||!Object.prototype.hasOwnProperty.call(contracts,String(item.metric_id)))return json({status:"error",error:"unsupported_metric"},400);
    const contract=contracts[item.metric_id];
    if(!["ETH","eth"].includes(item.asset_id)||item.unit!==contract.unit||item.source_id!==contract.source_id||item.source_url!==contract.source_url)return json({status:"error",error:"metric_contract_mismatch",metric_id:item.metric_id},400);
-   if(typeof item.value_numeric!=="number"||!Number.isFinite(item.value_numeric)||(contract.exclusive?item.value_numeric<=contract.minimum:item.value_numeric<contract.minimum))return json({status:"error",error:"invalid_numeric_value",metric_id:item.metric_id},400);
+   const numericText=typeof item.value_numeric==="string"&&/^-?[0-9]+(?:\\.[0-9]+)?$/.test(item.value_numeric);
+   const numericValue=typeof item.value_numeric==="number"?item.value_numeric:numericText?Number(item.value_numeric):NaN;
+   if(!Number.isFinite(numericValue)||(!contract.allowNegative&&(contract.exclusive?numericValue<=contract.minimum:numericValue<contract.minimum)))return json({status:"error",error:"invalid_numeric_value",metric_id:item.metric_id},400);
    if(typeof item.observed_at!=="string"||!Number.isFinite(Date.parse(item.observed_at))||!/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(item.observed_at)||Date.parse(item.observed_at)>now+300000)return json({status:"error",error:"invalid_observed_at",metric_id:item.metric_id},400);
    const validOptionalTime=(value:unknown)=>value===null||(typeof value==="string"&&Number.isFinite(Date.parse(value))&&/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(value));
    if(!validOptionalTime(item.period_start)||!validOptionalTime(item.period_end))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
    if(item.period_start&&item.period_end&&Date.parse(item.period_end)<Date.parse(item.period_start))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
    if(contract.point&&(item.period_start!==null||item.period_end!==null))return json({status:"error",error:"point_observation_must_not_have_window",metric_id:item.metric_id},400);
-   if(!contract.point&&(!item.period_start||!item.period_end||Date.parse(item.period_start)!==Date.parse(item.observed_at)||Date.parse(item.period_end)!==Date.parse(item.observed_at)))return json({status:"error",error:"block_observation_window_mismatch",metric_id:item.metric_id},400);
+   if(item.metric_id==="eth.base_fee_burned_per_block"&&(!item.period_start||!item.period_end||Date.parse(item.period_start)!==Date.parse(item.observed_at)||Date.parse(item.period_end)!==Date.parse(item.observed_at)))return json({status:"error",error:"block_observation_window_mismatch",metric_id:item.metric_id},400);
+   if(!contract.point&&item.metric_id!=="eth.base_fee_burned_per_block"&&(!item.period_start||!item.period_end||Date.parse(item.period_end)<=Date.parse(item.period_start)||Date.parse(item.period_end)!==Date.parse(item.observed_at)))return json({status:"error",error:"interval_observation_window_mismatch",metric_id:item.metric_id},400);
    if(typeof item.methodology!=="string"||item.methodology.trim().length<10||item.methodology.length>2000||typeof item.quality!=="string"||item.quality.length>120)return json({status:"error",error:"invalid_methodology_or_quality",metric_id:item.metric_id},400);
    let methodology=item.methodology.trim()+" Quality caveat: "+item.quality.trim()+".";
    if(item.metric_id==="eth.base_fee_burned_per_block"){
@@ -159,8 +172,8 @@ export default {
   try{
    const activeAsset=await sql`select asset_id from assets where asset_id='eth' and enabled=true limit 1`;
    if(!activeAsset[0])return json({status:"error",error:"asset_not_found"},404);
-   const registry=await sql`select metric_id from metric_definitions where metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block')`;
-   const sources=await sql`select source_id from sources where source_id in ('market_binance','ethereum_public_rpc')`;
+   const registry=await sql`select metric_id from metric_definitions where metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.gross_issuance_per_interval','eth.total_burn_per_interval','eth.net_supply_flow_per_interval','eth.base_fee_burn_per_interval','eth.blob_fee_burn_per_interval','eth.pending_deposit_queue_eth','eth.scheduled_activation_queue_eth','eth.scheduled_exit_queue_eth','eth.entry_queue_wait_seconds','eth.exit_queue_wait_seconds')`;
+   const sources=await sql`select source_id from sources where source_id in ('market_binance','ethereum_public_rpc','ethsupply_fyi')`;
    const registeredMetrics=new Set(registry.map((row:any)=>row.metric_id));
    const registeredSources=new Set(sources.map((row:any)=>row.source_id));
    if(validated.some(item=>!registeredMetrics.has(item.metric_id)||!registeredSources.has(item.source_id)))return json({status:"error",error:"observation_registry_not_ready"},409);
