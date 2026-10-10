@@ -1,4 +1,4 @@
-import { neon } from "@crypto/vps-runtime";
+import { postgresSql } from "@crypto/vps-runtime";
 import { londonDayBoundary } from "./schedule.js";
 
 export interface WorkerEnv { DATABASE_URL: string; }
@@ -96,7 +96,7 @@ async function refreshResearchReviewStatus(sql:any){
 
 export async function runScheduledIngestion(env:WorkerEnv){
   if(!env.DATABASE_URL)return {assets:0,successful:0,written:0};
-  const sql=neon(env.DATABASE_URL);
+  const sql=postgresSql(env.DATABASE_URL);
   const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
   const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
   const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
