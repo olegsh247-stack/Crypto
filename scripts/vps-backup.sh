@@ -17,6 +17,6 @@ test -s "$TMP"
 "${COMPOSE[@]}" exec -T postgres pg_restore --list < "$TMP" >/dev/null
 mv "$TMP" "$OUT"
 chmod 600 "$OUT"
-sha256sum "$OUT" > "$OUT.sha256"
+(cd "$BACKUP_DIR" && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256")
 chmod 600 "$OUT.sha256"
 echo "Backup created and archive listing validated: $OUT"
