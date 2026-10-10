@@ -215,3 +215,16 @@ References:
 - Official Beacon API Swagger UI, which lists the example server `http://public-mainnet-node.ethereum.org/`: https://ethereum.github.io/beacon-APIs/?urls.primaryName=v2.3.0
 - Official API repository and public-exposure caveat: https://github.com/ethereum/beacon-APIs
 - PublicNode Ethereum gateway overview: https://ethereum.publicnode.com/
+
+
+### Results of the two-endpoint probe — workflow #4
+
+Run: https://github.com/olegsh247-stack/Crypto/actions/runs/38050502012  
+Artifact: `eth-consensus-source-feasibility-38050502012`
+
+- `https://ethereum-beacon-api.publicnode.com`: HTTP 403 for all three historical state/finality requests (epochs 479862, 480582, 481272).
+- `https://public-mainnet-node.ethereum.org`: TLS/connection failure for all three requests from GitHub Actions; no HTTP response or API schema was obtained.
+- Neither endpoint reached the attestation reward request. The workflow succeeded because it captured the failures and uploaded artifacts; it did **not** pass provider feasibility.
+- `complete_consensus_issuance_penalty_accounting_verified` remains false.
+
+**Decision:** the anonymous public-endpoint route is blocked in the current CI environment. Do not keep cycling through unverified public URLs. Next viable route is an explicitly authorized data provider with documented historical finalized-epoch support and aggregate reward/penalty semantics, or a separately costed fork-aware replay. A credentialed provider may need a user-approved API key stored as a GitHub Actions secret; no secret has been created or requested by this change. Even an aggregate rewards API must be audited for missing protocol categories and exact epoch coverage before it can be treated as full issuance/penalty evidence.
