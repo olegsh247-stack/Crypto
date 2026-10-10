@@ -88,3 +88,40 @@ The read-only research workflow [ETH Independent Interval Cross-check #4](https:
 This is a successful independent check of two execution-fee components for one interval only. It does not independently validate issuance, consensus penalties, other execution burn, net supply flow, staking queues, or the complete historical series.
 
 No production migration, observation write, Worker deployment, signal evaluation, scenario-state publication, or PR merge is authorized by this document.
+
+
+## 8. Source-quality work plan — evidence gates before evaluator
+
+This section is an implementation boundary, not a claim that the listed sources have passed validation. Keep candidate observations available for research/rehearsal, but do not promote them to accepted signal inputs until the per-family gates below are satisfied.
+
+### Validation matrix
+
+| Signal family | Current evidence | Required independent validation | Acceptance condition | Status |
+|---|---|---|---|---|
+| Gross issuance | ethsupply.fyi interval series; internal equation only | Recompute consensus-layer issuance for identical epoch/slot bounds from a separately operated consensus source or reproducible protocol-level data. Preserve missed slots, validator-set context, fork rules and exact interval mapping. | Same interval and methodology are reproducible; unexplained delta is zero or explicitly explained by a documented source/methodology difference. | Blocked |
+| Consensus penalties | ethsupply.fyi interval series; internal equation only | Compare per-epoch penalty/reward accounting over the exact provider interval against independent consensus-layer data. Separate ordinary penalties, inactivity leak and slashing effects; do not infer penalties from net supply. | Independent totals cover the same finalized epochs and accounting categories, with a documented reconciliation. | Blocked |
+| Entry/exit queues and waits | ethsupply.fyi timestamped points; dashboard reference only | Obtain an approved machine-readable source/schema or a documented manual protocol-data extraction; align finalized epoch and timestamp, and compare entry/exit balances and wait-time fields separately. | At least three distinct timestamps reconcile within a documented source update cadence; balances and wait estimates are not conflated. | Blocked |
+| L2 TVS | L2BEAT documented endpoint; API key not configured | Approve secret handling and endpoint access, or verify a documented public alternative. Record universe, USD conversion, aggregation method, timestamp, and response schema. | Stable schema and timestamp semantics; fixed project universe; missing projects and price/FX effects are visible. | Blocked |
+| L2 activity | L2BEAT documented activity endpoint; no approved capture | Verify authenticated endpoint/schema or public alternative; distinguish transactions, user operations, and UOPS. Define rollup universe and aggregation window. | One metric definition and fixed project universe are reproducible over comparable windows; no mixing of counts and rates. | Blocked |
+| Validator/operator concentration | No suitable provider series | Select an independent dataset that attributes stake to operators/providers with a defensible entity-resolution method and denominator. Credential category is not operator identity. | Methodology, coverage, attribution confidence, denominator and timestamp are documented; unknown/unattributed stake is reported. | Blocked |
+| Alternative-L1 competitive share | No fixed peer set or comparable family | Choose a fixed peer universe and one comparable metric family (fees or activity), with common windows, unit conventions, source coverage and inclusion rules. | ETH and each peer use the same family and window; missing peers are not silently dropped; share denominator is explicit. | Blocked |
+| Official roadmap milestone | Official roadmap/blog links; no event ledger yet | Capture dated official announcements and changes, explicitly recording milestone, network, status, publication/update time and source URL. | Historical status changes are preserved; testnet and mainnet are distinct; target dates alone never imply delivery or schedule confidence. | Blocked |
+| Base-fee and blob-fee burn | One independently checked interval; zero-wei deltas in that interval | Repeat the existing RPC comparison across multiple non-adjacent complete intervals from the retained candidate window, including interval block counts and active blob-schedule applicability. | At least three intervals spanning the captured window match exact component totals and block counts, or discrepancies are classified and resolved. | Partial: one interval |
+
+### Execution order
+
+1. **Broaden the existing RPC cross-check first.** Reuse the current integer-only computation and source-interval lineage. Test several non-adjacent intervals before expanding into consensus accounting. Keep this workflow research-only: a mismatch or non-evaluable interval must be visible in its artifact and must not be described as a passing source verdict.
+2. **Resolve consensus issuance and penalties independently.** A protocol explanation is not an observed independent series. Do not estimate missing consensus components by rearranging the provider's net-flow equation; that would only restate the same source.
+3. **Resolve staking queues as a separate workstream.** Do not scrape HTML or introduce unapproved credentials. If machine-readable access remains unavailable, record the blocker and keep the metrics candidate-only.
+4. **Resolve L2 data access and definitions.** TVS and activity require separate contracts and separate quality checks; neither substitutes for L1 fee demand.
+5. **Define concentration and competitive-share populations before capture.** Fix the entity/peer universe and denominator first; do not retrofit a narrative around whichever data happen to be available.
+6. **Create a dated official milestone ledger.** Preserve changes rather than overwriting the latest status.
+7. Only after the relevant family passes its evidence gate, define windows, baselines, missing-data behavior and numeric thresholds with explicit rationale. Then implement evaluator logic and parity tests across API/Worker. No automatic monitoring event or scenario-state publication is part of source validation.
+
+### Research workflow acceptance semantics
+
+- A green GitHub Actions run means the script executed and produced its artifact; it does not automatically mean the source is accepted.
+- A "matched" result is a component/window-level result, not a provider-wide verdict.
+- "Mismatch" and "not_evaluable" must remain inspectable; they must never be coerced into "matched" to keep CI green.
+- Preserve the exact source interval, RPC block range/count, schedule parameters, deltas, and read-only guardrails in artifacts.
+- No production database write, production migration, API/Worker deployment, VPS provisioning, PR merge, signal evaluation, monitoring event, or scenario-state publication is authorized by this research plan.
