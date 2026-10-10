@@ -19,6 +19,7 @@ from typing import Any
 SOLANA_RPC = os.environ.get("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com")
 BSC_RPC = os.environ.get("BSC_RPC_URL", "https://bsc-dataseed.binance.org")
 CAKE_TOKEN = "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"
+LEGACY_CAKE_POOL = "0x45c54210128a065de780C4B0Df3d16664f7f859e"
 BURN_ADDRESS = "0x000000000000000000000000000000000000dead"
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 LOCKED_CANDIDATES = {
@@ -53,14 +54,37 @@ def rpc_post(endpoint: str, method: str, params: list[Any]) -> dict[str, Any]:
         return {"method": method, "started_at_utc": started, "finished_at_utc": utc_now(), "ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
-def eth_call(endpoint: str, method: str, data: str, block_tag: str) -> dict[str, Any]:
-    result = rpc_post(endpoint, "eth_call", [{"to": CAKE_TOKEN, "data": data}, block_tag])
+def eth_call_at(endpoint: str, target: str, method: str, data: str, block_tag: str) -> dict[str, Any]:
+    result = rpc_post(endpoint, "eth_call", [{"to": target, "data": data}, block_tag])
     result["field"] = method
     if result.get("ok") and result.get("result"):
         try:
             result["raw_integer"] = int(result["result"], 16)
         except (TypeError, ValueError):
             pass
+    return result
+
+
+def eth_call(endpoint: str, method: str, data: str, block_tag: str) -> dict[str, Any]:
+    return eth_call_at(endpoint, CAKE_TOKEN, method, data, block_tag)
+
+
+def cake_pool_view_call(endpoint: str, signature: str, block_tag: str) -> dict[str, Any]:
+    # Ask the same JSON-RPC endpoint for the Keccak selector so no guessed selector is hard-coded.
+    signature_bytes = "0x" + signature.encode("ascii").hex()
+    hashed = rpc_post(endpoint, "web3_sha3", [signature_bytes])
+    if not hashed.get("ok") or not isinstance(hashed.get("result"), str) or len(hashed["result"]) < 10:
+        return {
+            "method": signature,
+            "ok": False,
+            "error": {"message": "RPC could not compute function selector via web3_sha3"},
+            "started_at_utc": hashed.get("started_at_utc"),
+            "finished_at_utc": hashed.get("finished_at_utc"),
+        }
+    selector = hashed["result"][:10]
+    result = eth_call_at(endpoint, LEGACY_CAKE_POOL, signature, selector, block_tag)
+    result["selector"] = selector
+    result["signature"] = signature
     return result
 
 
@@ -98,6 +122,15 @@ def capture() -> dict[str, Any]:
             "zero_address": cake_balance_call(BSC_RPC, "zero_address", ZERO_ADDRESS, block_tag),
             **{label: cake_balance_call(BSC_RPC, label, address, block_tag) for label, address in LOCKED_CANDIDATES.items()},
         },
+        "cake_pool_state": {
+            key: cake_pool_view_call(BSC_RPC, signature, block_tag)
+            for key, signature in {
+                "total_locked_amount": "totalLockedAmount()",
+                "total_shares": "totalShares()",
+                "available": "available()",
+                "balance_of": "balanceOf()",
+            }.items()
+        },
     }
 
     vote_result = sol.get("getVoteAccounts", {}).get("result")
@@ -121,6 +154,10 @@ def capture() -> dict[str, Any]:
                 for balance_key, balance_value in value["balances"].items():
                     if balance_value.get("ok") is False:
                         errors.append(f"{section_name}.balances.{balance_key}")
+            elif key == "cake_pool_state" and isinstance(value, dict):
+                for pool_key, pool_value in value.items():
+                    if pool_value.get("ok") is False:
+                        errors.append(f"{section_name}.cake_pool_state.{pool_key}")
 
     return {
         "schema_version": "1.0",

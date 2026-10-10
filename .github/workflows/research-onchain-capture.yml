@@ -42,6 +42,9 @@ jobs:
             scripts/research/capture_sol_cake_rpc.py \
             scripts/research/normalize_sol_cake_rpc_capture.py \
             scripts/research/validate_evidence_envelope.py
+      - name: Test evidence normalizer
+        run: |
+          PYTHONPATH=scripts/research python -m unittest discover -s scripts/research/tests -p 'test_normalize_sol_cake_rpc_capture.py'
       - name: Capture public on-chain state (read-only)
         run: |
           mkdir -p research-capture

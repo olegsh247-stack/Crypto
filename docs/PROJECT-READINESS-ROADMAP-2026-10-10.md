@@ -158,3 +158,11 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - Added the source-backed finding and interpretation guardrails to [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md) in commit [c544476](https://github.com/olegsh247-stack/Crypto/commit/c54447643bd1cb7787c73890955e6b0607cc6f98).
 - Source references: [verified CakePool contract](https://bscscan.com/address/0x45c54210128a065de780c4b0df3d16664f7f859e), [official PancakeSwap Cake Pool documentation](https://docs.pancakeswap.finance/welcome-to-pancakeswap/how-to-guides/v3-v2-migration/migration/cake-syrup-pool).
 - **Not yet closed:** no new pinned RPC capture of pool accounting getters has been taken, no user-level lock expiry reconstruction has been completed, and no final circulating-supply formula/value is approved. The next implementation block is to add same-block read-only pool-state fields to the existing capture, with tests, then reconcile pool state and events at aligned month-end blocks.
+
+
+## Progress update — CAKE pool getter capture implemented (pending CI evidence)
+
+- Extended the read-only capture to query CakePool `totalLockedAmount()`, `totalShares()`, `available()`, and `balanceOf()` at the same pinned BSC block as token supply and balance observations. Selectors are derived using JSON-RPC `web3_sha3`, not guessed constants.
+- Extended normalization with separate pool-state observations and added fixture assertions to preserve the distinction between CAKE balances and pool-share units. No pool getter is automatically treated as burned supply.
+- Added a normalizer unit-test step to the Research On-chain Capture workflow. **Pending:** this code has not yet been validated by the next GitHub Actions run; if the public BSC RPC does not support `web3_sha3`, selector derivation will fail visibly and must be handled before accepting the capture.
+- The current CAKE methodology remains unresolved until a successful same-block capture and event/lock-state reconciliation are reviewed.

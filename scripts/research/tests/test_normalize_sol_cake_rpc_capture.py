@@ -28,6 +28,12 @@ def fixture():
                 "burn_address": {**rpc("0x1bc16d674ec80000"), "raw_integer": 2000000000000000000},
                 "legacy_cake_pool_balance": {**rpc("0x29a2241af62c0000"), "raw_integer": 3000000000000000000},
             },
+            "cake_pool_state": {
+                "total_locked_amount": {**rpc("0x2c68af0bb1400000"), "raw_integer": 3200000000000000000},
+                "total_shares": {**rpc("0x3635c9adc5dea00000"), "raw_integer": 1000000000000000000000},
+                "available": {**rpc("0x1bc16d674ec80000"), "raw_integer": 2000000000000000000},
+                "balance_of": {**rpc("0x29a2241af62c0000"), "raw_integer": 3000000000000000000},
+            },
         },
     }
 
@@ -47,6 +53,12 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertEqual(metrics["legacy_cake_pool_balance"]["value"], "3")
         self.assertIn("legacy CAKE Pool", metrics["legacy_cake_pool_balance"]["definition"])
         self.assertEqual(metrics["contract_supply_minus_burn_address"]["value"], "998")
+        self.assertEqual(metrics["legacy_cake_pool_total_locked_amount"]["value"], "3.2")
+        self.assertEqual(metrics["legacy_cake_pool_total_shares"]["value"], "1000")
+        self.assertEqual(metrics["legacy_cake_pool_total_shares"]["unit"], "pool_shares")
+        self.assertEqual(metrics["legacy_cake_pool_available"]["value"], "2")
+        self.assertEqual(metrics["legacy_cake_pool_balance_of"]["value"], "3")
+        self.assertIn("not by itself a permanently burned", metrics["legacy_cake_pool_total_locked_amount"]["definition"])
         self.assertEqual(metrics["contract_total_supply"]["raw_artifact_ref"], "actions-run:fixture")
 
     def test_rejects_non_integer_get_supply_units(self):

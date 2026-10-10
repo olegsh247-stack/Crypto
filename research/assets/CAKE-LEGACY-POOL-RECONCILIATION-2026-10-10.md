@@ -79,3 +79,8 @@ The verified source on BscScan identifies this address as the PancakeSwap `CakeP
 Extend the existing capture script to call the pool's verified view methods at the same BSC block tag as `totalSupply()` and token balances, preserving raw return values and selectors. Add tests for successful/missing pool-state fields, then use the captured state plus event history to calculate only explicitly supported bounds. Until this is complete, the circulating-supply formula remains unresolved and unpublished.
 
 This finding narrows the uncertainty but does **not** yet establish a final circulating-supply number.
+
+
+## 6. Next capture implementation — pool accounting getters
+
+The read-only capture now also attempts to record the verified CakePool getters `totalLockedAmount()`, `totalShares()`, `available()`, and `balanceOf()` at the exact same pinned BSC block as the token supply/balance calls. Function selectors are derived via the endpoint's standard `web3_sha3` JSON-RPC method rather than guessed constants. The normalizer keeps these as separate observations and labels pool shares distinctly; it does not subtract any pool-state field from circulating supply. The workflow runs the normalizer unit tests before performing the live read-only capture. The actual workflow result must be checked before treating these new fields as verified observations.

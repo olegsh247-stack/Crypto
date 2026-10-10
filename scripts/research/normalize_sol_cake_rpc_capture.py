@@ -190,6 +190,36 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
         CAKE_TOKENOMICS_URL,
     ))
 
+    pool_state = bsc.get("cake_pool_state")
+    if not isinstance(pool_state, dict):
+        raise ValueError("CAKE capture is missing legacy pool state")
+    pool_metrics = (
+        ("total_locked_amount", "legacy_cake_pool_total_locked_amount", "CAKE", True),
+        ("total_shares", "legacy_cake_pool_total_shares", "pool_shares", True),
+        ("available", "legacy_cake_pool_available", "CAKE", True),
+        ("balance_of", "legacy_cake_pool_balance_of", "CAKE", True),
+    )
+    pool_url = "https://bscscan.com/address/0x45c54210128a065de780c4b0df3d16664f7f859e"
+    for field, metric_id, unit, scaled in pool_metrics:
+        item = require_result(pool_state, field)
+        raw_value = item.get("raw_integer")
+        if not isinstance(raw_value, int) or raw_value < 0:
+            raise ValueError(f"legacy CAKE pool raw integer is missing or invalid: {field}")
+        value = Decimal(raw_value) / scale if scaled else Decimal(raw_value)
+        definition = (
+            f"Legacy CakePool {field}() getter at BSC block {block_number}; "
+            "raw result is preserved in the referenced capture. This is contract state, "
+            "not by itself a permanently burned or circulating-supply amount."
+        )
+        if field == "total_shares":
+            definition += " Shares are scaled by token decimals for readability and are not assumed equivalent to CAKE."
+        metrics.append(make_metric(
+            "CAKE", metric_id, format(value, "f"), unit,
+            f"bsc_eth_call_legacy_cake_pool_{field}", pool_url,
+            item.get("finished_at_utc") or finished, finished, "onchain_observation",
+            raw_artifact_ref, definition, CAKE_TOKENOMICS_URL,
+        ))
+
     return {"schema_version": "1.0", "metrics": metrics}
 
 
