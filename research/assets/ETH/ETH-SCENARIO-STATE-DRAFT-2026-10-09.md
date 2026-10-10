@@ -194,6 +194,70 @@ The fresh read-only API preflight exposed the actual contents behind the matchin
 
 The API/runtime contract now returns and checks these collections with snapshot lineage, but **contract correctness does not make stale qualitative evidence current**. Do not simply attach the external observations to the old evidence IDs: they describe different claims. The next valid product step is to capture the fresh metric observations and their dated source URLs into the product's observation/evidence workflow, then recalculate or explicitly assess the affected factors. Only after that should a candidate state be reviewed for publication.
 
+### Candidate state payload shape — draft only, do not write
+
+The candidate can be represented by the current API/UI contract without changing the published Bull/Base/Bear definitions. This is an **illustrative payload for review**, not a production write request. Its external observations are included as dated source-bearing indicators because they are not currently stored as numeric observations in the published baseline.
+
+```json
+{
+  "asset_id": "eth",
+  "scenario_id": "base",
+  "state": "base",
+  "confidence": 0.55,
+  "rationale": "Base remains the best-supported working scenario: L2 scale and year-over-year network fee activity are positive, while 30-day net issuance is materially positive and the relationship between L2 growth and ETH value accrual remains unresolved. The evidence is mixed and does not establish either a Bull acceleration or a structural Bear breakdown.",
+  "snapshot_id": "ETH-2026-10-04-v1",
+  "indicators": {
+    "assessment_date": "2026-10-10",
+    "publication_status": "draft_not_published",
+    "external_observations": [
+      {
+        "metric": "net_issuance_30d",
+        "value": 86321,
+        "unit": "ETH",
+        "window_ending": "2026-10-09T12:12:00Z",
+        "gross_issuance": 89019,
+        "burn": 2698,
+        "source_url": "https://insidecrypto.net/onchain/ethereum/supply/",
+        "interpretation": "negative_for_short_term_supply_scarcity"
+      },
+      {
+        "metric": "transaction_fees_daily",
+        "value": 186.44,
+        "unit": "ETH/day",
+        "observed_date": "2026-10-08",
+        "year_over_year_change_pct": 45.6,
+        "source_url": "https://ycharts.com/indicators/ethereum_network_transaction_fees_per_day",
+        "interpretation": "positive_but_volatile_network_fee_activity_proxy"
+      },
+      {
+        "metric": "rollup_total_value_secured",
+        "value": 34390000000,
+        "unit": "USD",
+        "window_ending": "2026-10-06",
+        "year_over_year_change_pct": 34.1,
+        "source_url": "https://l2beat.com/layer2s/tvs",
+        "interpretation": "positive_ecosystem_scale_not_proof_of_eth_value_accrual"
+      },
+      {
+        "metric": "validator_queues",
+        "capture_date": "2026-10-10",
+        "deposit_queue_eth_approx": 1400000,
+        "exit_queue_eth_approx": 434500,
+        "active_validator_balance_eth_approx": 43745000,
+        "source_url": "https://www.beaconcha.in/validators/queues",
+        "interpretation": "cross_section_only_trend_not_yet_verified"
+      }
+    ],
+    "limitations": [
+      "External observations are not yet persisted as numeric observations/evidence in the Crypto database.",
+      "Baseline evidence IDs are qualitative claims and must not be misrepresented as direct evidence for these numeric observations.",
+      "No monitoring trigger was observed or fabricated.",
+      "Candidate state must remain unpublished until source/metric capture is integrated and the user explicitly authorizes a production write."
+    ]
+  }
+}
+```
+
 ### Remaining blockers before publication
 
 1. Reconcile these external observations with the project's actual `observations`, `monitoring_signals`, `critical_factors` and evidence rows for `ETH-2026-10-04-v1`, using read-only queries/API only.
