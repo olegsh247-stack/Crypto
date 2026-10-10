@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sys
 from typing import Any
 
@@ -32,36 +33,42 @@ def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def get_logs(endpoint: str, start: int, end: int, topics: list[Any]) -> list[dict[str, Any]]:
-    response = rpc_post(endpoint, "eth_getLogs", [{
-        "address": CAKE_TOKEN,
-        "fromBlock": hex(start),
-        "toBlock": hex(end),
-        "topics": topics,
-    }])
-    if response.get("ok") is not True or not isinstance(response.get("result"), list):
-        raise ValueError(
-            f"eth_getLogs failed for blocks {start}-{end}: {response.get('error')}"
-        )
-    return response["result"]
+def get_logs(endpoints: list[str], start: int, end: int, topics: list[Any]) -> tuple[list[dict[str, Any]], str]:
+    errors: list[str] = []
+    for endpoint in endpoints:
+        response = rpc_post(endpoint, "eth_getLogs", [{
+            "address": CAKE_TOKEN,
+            "fromBlock": hex(start),
+            "toBlock": hex(end),
+            "topics": topics,
+        }])
+        if response.get("ok") is True and isinstance(response.get("result"), list):
+            return response["result"], endpoint
+        errors.append(f"{endpoint}: {response.get('error')}")
+    raise ValueError(f"eth_getLogs failed for blocks {start}-{end}; " + " | ".join(errors))
 
 
-def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[str, Any]:
+def query_range(endpoints: list[str], start: int, end: int, chunk_size: int) -> dict[str, Any]:
     dead_topic = topic_address(BURN_ADDRESS)
     zero_topic = topic_address(ZERO_ADDRESS)
     transfers_to_dead: list[dict[str, Any]] = []
     transfers_from_dead: list[dict[str, Any]] = []
-    chunks: list[dict[str, int]] = []
+    chunks: list[dict[str, Any]] = []
+    providers_used: set[str] = set()
 
     for chunk_start in range(start, end + 1, chunk_size):
         chunk_end = min(end, chunk_start + chunk_size - 1)
         chunks.append({"from_block": chunk_start, "to_block": chunk_end})
-        transfers_to_dead.extend(get_logs(
-            endpoint, chunk_start, chunk_end, [TRANSFER_TOPIC, None, dead_topic]
-        ))
-        transfers_from_dead.extend(get_logs(
-            endpoint, chunk_start, chunk_end, [TRANSFER_TOPIC, dead_topic, None]
-        ))
+        to_logs, to_provider = get_logs(
+            endpoints, chunk_start, chunk_end, [TRANSFER_TOPIC, None, dead_topic]
+        )
+        from_logs, from_provider = get_logs(
+            endpoints, chunk_start, chunk_end, [TRANSFER_TOPIC, dead_topic, None]
+        )
+        transfers_to_dead.extend(to_logs)
+        transfers_from_dead.extend(from_logs)
+        providers_used.update((to_provider, from_provider))
+        chunks[-1]["providers"] = sorted({to_provider, from_provider})
 
     def sum_raw(logs: list[dict[str, Any]]) -> int:
         total = 0
@@ -93,6 +100,7 @@ def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[st
     ]
 
     return {
+        "rpc_providers_used": sorted(providers_used),
         "from_block_exclusive_boundary_plus_one": start,
         "to_block_inclusive": end,
         "chunk_size_blocks": chunk_size,
@@ -112,13 +120,15 @@ def query_range(endpoint: str, start: int, end: int, chunk_size: int) -> dict[st
     }
 
 
-def capture(endpoint: str = BSC_RPC, chunk_size: int = 20000) -> dict[str, Any]:
+def capture(endpoint: str = BSC_RPC, chunk_size: int = 10000) -> dict[str, Any]:
     if chunk_size < 1 or chunk_size > 50000:
         raise ValueError("chunk size must be between 1 and 50000 blocks")
     chain = rpc_post(endpoint, "eth_chainId", [])
     if chain.get("ok") is not True or int(chain.get("result", "0x0"), 16) != 56:
         raise ValueError("CAKE Transfer-log capture requires BNB Smart Chain (chain ID 56)")
 
+    fallback = os.environ.get("BSC_RPC_FALLBACK_URL", "https://rpc-bnb.blockmachine.io").strip()
+    endpoints = list(dict.fromkeys([endpoint] + ([fallback] if fallback else [])))
     started = utc_now()
     intervals = []
     for (start_utc, start_block, start_hash), (end_utc, end_block, end_hash) in zip(
@@ -126,7 +136,7 @@ def capture(endpoint: str = BSC_RPC, chunk_size: int = 20000) -> dict[str, Any]:
     ):
         # State snapshots are pinned at each boundary block. To compare the
         # state difference, logs begin at start_block + 1 and include end_block.
-        interval = query_range(endpoint, start_block + 1, end_block, chunk_size)
+        interval = query_range(endpoints, start_block + 1, end_block, chunk_size)
         interval.update({
             "start_boundary_utc": start_utc,
             "start_boundary_block": start_block,
@@ -143,7 +153,7 @@ def capture(endpoint: str = BSC_RPC, chunk_size: int = 20000) -> dict[str, Any]:
         "started_at_utc": started,
         "finished_at_utc": utc_now(),
         "chain_id": 56,
-        "rpc_endpoint": endpoint,
+        "rpc_endpoints_in_priority_order": endpoints,
         "token_address": CAKE_TOKEN,
         "transfer_topic0": TRANSFER_TOPIC,
         "dead_address": BURN_ADDRESS,
