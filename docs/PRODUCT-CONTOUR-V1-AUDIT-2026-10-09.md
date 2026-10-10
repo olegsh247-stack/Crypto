@@ -96,7 +96,7 @@ Fresh read-only preflight against the live Worker and VPS Node API matched publi
 ## Acceptance decision
 
 - **Source structure:** present for all ten Product Contour blocks.
-- **Current code gate:** Product Contour Gate #76 passed on PR head `84f04cbfe86954926bcbdf2bf357a2665abaa69a`; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104882). VPS API Build Rehearsal #102 also passed on the same head; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104164).
+- **Current code gate:** Product Contour Gate #81 passed after factor/score lineage checks and the evidence-bearing rollback fixture; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/38032000436). VPS API Build Rehearsal #111 passed on commit `e8200263e3d9de2e9ceb554112fdd2fec84d2aca`; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/38031827952). The subsequent rehearsal including baseline evidence IDs in the rollback fixture is still running and must be checked before declaring the latest PR head fully green.
 - **Research coverage:** BTC/ETH have published baselines; SOL/CAKE are not yet published.
 - **End-to-end decision workflow:** runtime contracts, ETH snapshot preflight and disposable scenario-state rollback are verified; the product assessment is not complete because BTC/ETH still have no recorded scenario-state assessments and the ETH trend-evidence set remains incomplete.
 - **Self-hosted runtime:** Node API + Worker builds, clean PostgreSQL 16 bootstrap, migration idempotency, 9-asset ingestion, history, seven-endpoint Worker/VPS parity and admin boundary passed in CI. Production topology is still not accepted or deployed; no VPS has been provisioned.
