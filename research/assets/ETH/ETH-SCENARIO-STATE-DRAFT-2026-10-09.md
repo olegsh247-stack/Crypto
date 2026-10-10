@@ -181,6 +181,19 @@ Beaconcha.in's validator-queue page captured 2026-10-10 showed approximately 1.4
 - **Bear is not established:** this evidence set does not show a durable collapse in L2 ecosystem scale or network-fee activity.
 - **Confidence remains low-to-medium** because source methods differ, the staking observation is cross-sectional, and these external series have not yet been reconciled with the exact stored ETH observations/factors/scores for the published baseline.
 
+### Stored product evidence reconciliation — read-only preflight 2026-10-10
+
+The fresh read-only API preflight exposed the actual contents behind the matching counts. This changes the publication decision: the 15 published evidence rows are **qualitative research evidence**, not current market observations.
+
+- All 15 evidence rows have `as_of = 2026-10-07T09:16:19.544Z`.
+- The rows have no numeric `observation_value` and no numeric `observation_unit`; `observation_text` contains narrative research claims.
+- Their source names are primarily Ethereum Foundation and Ethereum Roadmap pages. They support protocol/ecosystem context, but do not directly store the fresh 30-day net issuance, daily transaction-fee, L2 TVS or validator-queue observations listed in the external refresh above.
+- The baseline's six factors remain qualitative: L2/data demand improving (0.75 confidence), settlement demand mixed (0.70), value accrual improving but conditional (0.82), ecosystem growth improving (0.88), institutional demand mixed (0.70), and network adoption improving (0.75). All six carry snapshot lineage `ETH-2026-10-04-v1`.
+- The five published scores are baseline values, not recalculated market scores: health 0.82, thesis 0.78, value accrual 0.68, confidence 0.82 and competitive position 0.80.
+- The stored Base scenario definition has probability 0.50 and confidence 0.82. These are the published baseline's scenario parameters, not a fresh posterior probability from the new evidence.
+
+The API/runtime contract now returns and checks these collections with snapshot lineage, but **contract correctness does not make stale qualitative evidence current**. Do not simply attach the external observations to the old evidence IDs: they describe different claims. The next valid product step is to capture the fresh metric observations and their dated source URLs into the product's observation/evidence workflow, then recalculate or explicitly assess the affected factors. Only after that should a candidate state be reviewed for publication.
+
 ### Remaining blockers before publication
 
 1. Reconcile these external observations with the project's actual `observations`, `monitoring_signals`, `critical_factors` and evidence rows for `ETH-2026-10-04-v1`, using read-only queries/API only.
