@@ -149,7 +149,7 @@ No database schema or research content was changed.
 
 ### Remaining audit items
 
-Read-only live-payload completeness checks for BTC, ETH, SOL and CAKE remain open. No live payload or direct Neon read-only query was performed during this patch, so runtime row counts, null rates and lineage across representative assets are not yet verified.
+Read-only live-payload completeness checks for BTC, ETH, SOL and CAKE remain open. A SELECT-only diagnostic script is prepared at `scripts/audit-product-contour-v1-readonly.sql`; it reports latest snapshot IDs, row counts, null/link gaps, source coverage and historical/unlineaged records. It has **not** been executed against Neon, so runtime row counts, null rates and lineage across representative assets are not yet verified. Do not use the main Release Gate to run this audit: that workflow applies migrations and can deploy the Worker before its later verification steps.
 
 ### Verification status
 
