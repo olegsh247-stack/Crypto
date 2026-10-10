@@ -88,3 +88,22 @@ The capture workflow's successful status validates script syntax, artifact struc
 ### L2BEAT access clarification
 
 Official OpenAPI: https://api.l2beat.com/openapi. The `/v1/tvs` endpoint requires `apiKey` as a query parameter. The current capture intentionally does not attempt unauthenticated requests or add credentials to CI. L2 scale remains a source gap until access is authorized or a verified public alternative is selected.
+
+## 8. Read-only observations API — implementation in review
+
+Implemented a bounded GET /api/observations contract in both API runtimes:
+
+- Worker: workers/crypto-api/src/index.ts
+- VPS API: vps/api/src/app.ts
+
+Contract:
+- Requires asset_id; only returns observations whose asset is enabled.
+- Optional metric_id filter; limit defaults to 50 and is constrained to 1–100.
+- Returns typed value columns, unit, observed/window timestamps, source identity and URL, methodology, status/freshness, revision, and creation timestamp.
+- Deterministic ordering: observed_at DESC, revision DESC, observation_id DESC.
+- GET-only and explicitly marked read_only: true; no admin token is needed for this bounded public read. No admin credentials are returned.
+- Invalid/missing asset, invalid metric filter, invalid limit, and limits above 100 are rejected before querying. Query failures return a generic error without leaking database details.
+
+The VPS Build Rehearsal now checks the response contract and input validation against disposable PostgreSQL. The existing Product Contour Gate and VPS Build Rehearsal must pass on the latest branch head before this endpoint is considered validated. The public Worker endpoint has not been deployed; do not use the live production endpoint as proof of branch behavior.
+
+This is read access only. Controlled ingestion, source artifact validation, natural-key upsert, persisted observation checks, and signal evaluation remain subsequent steps. No production data was written and no production migration was run.
