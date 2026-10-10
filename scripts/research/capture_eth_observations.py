@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+from decimal import Decimal, InvalidOperation
 import math
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -112,18 +114,18 @@ def _data_value_shape(value: Any) -> dict[str, Any]:
     }
 
 
-def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
+def probe_ethsupply(url: str, kind: str) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Probe the documented public API without storing its full response or deriving metrics."""
     response = http_json(url)
     summary = {k: v for k, v in response.items() if k != "payload"}
     if not response.get("ok"):
         summary["schema_probe"] = {"kind": kind, "status": "unavailable"}
-        return summary
+        return summary, None
 
     payload = response.get("payload")
     if not isinstance(payload, dict):
         summary["schema_probe"] = {"kind": kind, "status": "invalid_payload_type"}
-        return summary
+        return summary, None
 
     generated_at = payload.get("generatedAt")
     generated_at_utc = _unix_utc(generated_at)
@@ -237,7 +239,7 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
         })
 
     summary["schema_probe"] = probe
-    return summary
+    return summary, payload
 
 
 def capture() -> dict[str, Any]:
