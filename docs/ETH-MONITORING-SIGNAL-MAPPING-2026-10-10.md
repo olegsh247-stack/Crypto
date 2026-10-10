@@ -40,7 +40,7 @@ The capture artifact now includes these 14 registered metric families:
 - `eth.pending_deposit_queue_eth`, `eth.scheduled_activation_queue_eth`, `eth.scheduled_exit_queue_eth` — `ETH` point balances.
 - `eth.entry_queue_wait_seconds`, `eth.exit_queue_wait_seconds` — queue-wait-time point observations in seconds.
 
-The latest [ETH Observation Capture #76](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012377) produced 578 candidate rows. The exact equation `netWei = issuanceWei − burnWei − consensusPenaltiesWei − otherExecutionBurnWei` reconciled across 48/48 same-window intervals with zero missing components or mismatches. [VPS API Build Rehearsal #203](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012458) inserted all 578 rows into disposable PostgreSQL and replayed them with 578 duplicates and zero new rows. The VPS API also recomputes this equation in exact decimal-string/wei arithmetic and rejects inconsistent interval artifacts before persistence. This proves internal accounting consistency, not independent provider correctness. Provider-reported supply/staking series remain candidates until independently cross-checked. The four unresolved gaps and L2 activity/TVS limitations remain explicit. The source/metric registry and idempotency migration are tested on disposable PostgreSQL only; no production migration or observation write has been performed.
+The latest [ETH Observation Capture #90](https://github.com/olegsh247-stack/Crypto/actions/runs/38038470477) produced 578 candidate rows. The exact equation `netWei = issuanceWei − burnWei − consensusPenaltiesWei − otherExecutionBurnWei` reconciled across 48/48 same-window intervals with zero missing components or mismatches. [VPS API Build Rehearsal #217](https://github.com/olegsh247-stack/Crypto/actions/runs/38038470519) inserted all 578 rows into disposable PostgreSQL and replayed them with 578 duplicates and zero new rows. The VPS API also recomputes this equation in exact decimal-string/wei arithmetic and rejects inconsistent interval artifacts before persistence. [ETH Independent Interval Cross-check #4](https://github.com/olegsh247-stack/Crypto/actions/runs/38038470527) independently matched base-fee and blob-fee burn to Ethereum RPC exactly for one 957-block interval, both with zero-wei delta. This validates two fee components for one interval, not the whole provider series. Issuance/penalty/staking series remain candidates pending independent checks. The four unresolved gaps and L2 activity/TVS limitations remain explicit. The source/metric registry and idempotency migration are tested on disposable PostgreSQL only; no production migration or observation write has been performed.
 
 ## Threshold contract — not yet populated
 
@@ -67,7 +67,7 @@ Before any signal can be evaluated numerically, its configuration must specify:
 
 ## Implementation sequence
 
-1. Independently cross-check the captured provider series and approve source-quality rules for the six signal families.
+1. Extend independent checks to additional fee intervals, then separately verify issuance/penalties and staking queue observations; approve source-quality rules for the six signal families.
 2. Capture repeated observations for the required daily/weekly windows in disposable/rehearsal storage; resolve the known source gaps.
 3. Add only explicit, reviewable signal configurations after thresholds have a defensible basis.
 4. Implement the evaluator and Worker/VPS parity tests using synthetic fixtures plus real capture artifacts in disposable storage.
