@@ -99,7 +99,30 @@ The current PR head is `4fca3266261552a559eb97a46746791ee6de8a84`. PR #3 remains
 
 The next PR run now performs two checks automatically: a fresh read-only ETH snapshot/collection-count preflight against both live Worker and VPS Node API, and a disposable-PostgreSQL candidate-state insert/rollback test. The preflight requires the same published snapshot and Base/Bear/Bull definitions, checks scenario-state lineage on the VPS response, and compares counts for blocks, domains, factors, scores, evidence, signals and events. The rollback test verifies that an evidence-linked candidate row can be inserted within a transaction and leaves no persistent row after `ROLLBACK`. Neither check writes to production or publishes a scenario state.
 
-Run #99's fresh preflight found a real VPS API contract gap: the Node API neither queried the published snapshot's evidence rows nor exposed an `evidence` array, while the Worker did both. The VPS API now selects the same snapshot-scoped evidence fields as the Worker, includes `evidence` in the response, and includes evidence-linked sources in its source query. The next run must confirm live/VPS evidence and related collection counts match.
+Run #99's fresh preflight found a real VPS API contract gap: the Node API neither queried the published snapshot's evidence rows nor exposed an `evidence` array, while the Worker did both. The VPS API was corrected to select the same snapshot-scoped evidence fields, return the `evidence` array, and include evidence-linked sources.
+
+### Verification completed — run #102 on 2026-10-09
+
+The corrected PR head `84f04cbfe86954926bcbdf2bf357a2665abaa69a` passed both gates:
+
+- [VPS API Build Rehearsal #102 — success](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104164)
+- [Product Contour Gate #76 — success](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104882)
+
+Verified by the VPS rehearsal:
+- clean PostgreSQL 16 bootstrap and migration rerun/idempotency;
+- scenario-state insert/rollback on disposable PostgreSQL: inserted one evidence-linked candidate row, then verified zero rows remain after rollback;
+- registry contract: 10 enabled assets including USDT and 9 enabled research market pairs;
+- mutation E2E and 9-asset ingestion: 72 candle rows written, fresh rows for all 9 assets, two ingestion runs, zero duplicate candle keys, monitoring metadata refreshed;
+- persisted ETH history: 8 rows returned after ingestion;
+- Worker/VPS parity passed across 7 endpoints, including scenario definitions/states and snapshot-lineage checks;
+- admin boundary: unauthenticated request 401; authorized local test request 200.
+
+The fresh read-only ETH preflight passed against both runtimes and matched the same published snapshot, `ETH-2026-10-04-v1`, with Base/Bear/Bull definitions and matching collection counts:
+- research blocks 15; domains 6; factors 6; scores 5; evidence 15; monitoring signals 6; monitoring events 0;
+- scenario definitions 3; scenario-state rows 0.
+- VPS definition and state lineage were verified. The live Worker runtime does not expose definition-level `snapshot_id` in its response, so that field is reported as `not_exposed_by_runtime` there; the shared contract and snapshot identity still matched.
+
+This confirms runtime portability and the current published data shape in the read-only check. It does **not** create or authorize a scenario state. Zero scenario states and zero monitoring events remain the truthful current state.
 
 ## Safety / scope
 
