@@ -67,7 +67,7 @@ Before any signal can be evaluated numerically, its configuration must specify:
 
 ## Implementation sequence
 
-1. Approve the metric/source definitions and source-quality rules for the six signal families.
+1. Independently cross-check the captured provider series and approve source-quality rules for the six signal families.
 2. Capture repeated observations for the required daily/weekly windows in disposable/rehearsal storage; resolve the known source gaps.
 3. Add only explicit, reviewable signal configurations after thresholds have a defensible basis.
 4. Implement the evaluator and Worker/VPS parity tests using synthetic fixtures plus real capture artifacts in disposable storage.
