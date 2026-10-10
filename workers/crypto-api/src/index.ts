@@ -153,6 +153,31 @@ export default {
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
+ if(url.pathname==="/api/observations"||url.pathname==="/api/observations/"){
+  if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);
+  const rawAssetId=url.searchParams.get("asset_id")?.trim().toLowerCase()??"";
+  const metricId=url.searchParams.get("metric_id")?.trim()??"";
+  const rawLimit=url.searchParams.get("limit")??"50";
+  if(!rawAssetId||!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(rawAssetId))return json({status:"error",error:"valid_asset_id_required"},400);
+  if(metricId&&!/^[a-z][a-z0-9_.-]{0,127}$/.test(metricId))return json({status:"error",error:"invalid_metric_id"},400);
+  if(!/^\\d+$/.test(rawLimit))return json({status:"error",error:"invalid_limit"},400);
+  const limit=Number(rawLimit);
+  if(!Number.isInteger(limit)||limit<1||limit>100)return json({status:"error",error:"limit_out_of_range",min:1,max:100},400);
+  try{
+   const rows=await sql`select o.observation_id,o.metric_id,md.name as metric_name,o.asset_id,
+     o.value_numeric,o.value_integer,o.value_boolean,o.value_text,o.value_json,o.unit,
+     o.observed_at,o.period_start,o.period_end,o.source_id,s.name as source_name,
+     o.source_url,o.methodology,o.status,o.freshness,o.revision,o.created_at
+     from observations o
+     join assets a on a.asset_id=o.asset_id and a.enabled=true
+     join metric_definitions md on md.metric_id=o.metric_id
+     join sources s on s.source_id=o.source_id
+     where o.asset_id=${rawAssetId} and (${metricId||null}::text is null or o.metric_id=${metricId||null})
+     order by o.observed_at desc,o.revision desc,o.observation_id desc
+     limit ${limit}`;
+   return json({status:"ok",read_only:true,asset_id:rawAssetId,metric_id:metricId||null,items:rows,count:rows.length,limit});
+  }catch{return json({status:"error",error:"observations_query_failed"},503)}
+ }
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
  const pairTicker=getPairTickerSymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
   const parts=pairTicker.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
