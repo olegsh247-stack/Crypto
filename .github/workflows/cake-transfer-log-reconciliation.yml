@@ -31,7 +31,7 @@ jobs:
           python-version: "3.12"
       - name: Capture CAKE dead-address Transfer logs (read-only)
         env:
-          BSC_RPC_URL: https://bsc.drpc.org
+          BSC_RPC_URL: https://bsc-rpc.publicnode.com
           BSC_RPC_FALLBACK_URL: https://rpc-bnb.blockmachine.io
           RPC_MIN_INTERVAL_SECONDS: "1.05"
         run: |
