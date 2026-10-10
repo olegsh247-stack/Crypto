@@ -345,3 +345,26 @@ A proper replay PoC would therefore still require selecting and pinning a consen
 
 **Scope:** read-only documentation/research only. No source code, database schema, production data, Worker, VPS, or signal behavior was changed by this spike.
 
+## 17. Hosted provider schema check — 2026-10-10
+
+### Public documentation inspected
+
+- Aggregate rewards: https://docs.beaconcha.in/api-reference/ethereum/validators/rewards-aggregate
+- Per-validator rewards list: https://docs.beaconcha.in/api-reference/ethereum/validators/rewards-list
+- Current API pricing/access matrix: https://beaconcha.in/pricing?product=api
+
+### What the published schema establishes
+
+- `POST /api/v2/ethereum/validators/rewards-aggregate` returns reward/penalty totals and categories including attestation head/source/target, inactivity-leak penalty, sync-committee rewards/penalties, proposal rewards and a finality label. The response also reports the actual covered slot, epoch and timestamp range.
+- The endpoint requires a Bearer API token and a validator selector. Documented selectors include validator indices/public keys and, for premium tiers, withdrawal/deposit addresses and entity selectors. This is an aggregate over a selected set of validators, not an explicitly documented network-wide protocol issuance ledger.
+- Only finalized epochs are supported.
+- Arbitrary custom timestamp/epoch/slot ranges are documented as Scale/Enterprise-only and are expanded to whole UTC days. The returned range may differ from the requested range. Therefore this endpoint cannot be assumed to provide an exact one-epoch or exact 30-epoch interval.
+- The schema reports validator rewards and penalties; it does not establish complete gross protocol issuance, a complete taxonomy of all supply-changing events, or independent reconciliation against canonical network state.
+- Public pricing currently lists Scale at €399/month excluding VAT and Enterprise as custom-priced; the free trial is limited to 1,000 requests. No plan was purchased and no API key was created or used.
+
+### Decision
+
+**Beaconcha.in is not accepted as the complete source for Crypto's gross issuance / consensus-penalty contract on the evidence currently published.** It may be useful later as a validator-reward/penalty cross-check if an approved plan is selected, but it does not currently satisfy the exact-window and complete network-wide accounting gates.
+
+No credential is required to reach this decision: this was documentation-only research. Do not purchase a plan or create/use an API secret without explicit user approval. Continue provider discovery only for a source whose published contract explicitly covers network-wide issuance, all required penalty categories, fork-aware methodology, and exact finalized interval bounds; otherwise keep the metrics candidate-only.
+
