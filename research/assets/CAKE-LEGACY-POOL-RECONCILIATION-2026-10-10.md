@@ -56,3 +56,26 @@ This produces a methodology question that must not be papered over:
 5. Only then approve the circulating-supply formula for Product Contour.
 
 No production writes, database migration, deployment, PR merge, scores, scenarios, monitoring events or SOL/CAKE publication occurred.
+
+
+## 5. Verified contract-state finding — 2026-10-10 follow-up
+
+The verified source on BscScan identifies this address as the PancakeSwap `CakePool` contract and exposes state/functions including `totalLockedAmount()`, `totalShares()`, `available()`, `balanceOf()`, and per-user `userInfo(address)` fields including `lockEndTime`, `locked`, and `lockedAmount`. The source also exposes `withdraw`, `withdrawAll`, and `withdrawByAmount`. This is materially stronger than treating the address as a generic inaccessible wallet: the contract has accounting for user lock state and withdrawal paths.
+
+- Verified contract/source and ABI: https://bscscan.com/address/0x45c54210128a065de780c4b0df3d16664f7f859e
+- Official PancakeSwap integration documentation identifies the same address as the CakePool contract: https://docs.pancakeswap.finance/welcome-to-pancakeswap/how-to-guides/v3-v2-migration/migration/cake-syrup-pool
+- BscScan's transaction/event view includes `Withdraw` and `Withdraw All` activity for this contract; these events establish that withdrawal activity exists, but do not by themselves identify how much of the current balance is permanently unrecoverable: https://goto.bscscan.com/address/0x45c54210128a065de780c4b0df3d16664f7f859e
+
+### Interpretation
+
+1. **Do not subtract the full `balanceOf(CakePool)` from circulating supply.** The pool is an active accounting contract with withdraw functions and individual user lock expiries. Contract balance is not synonymous with permanently burned supply.
+2. `totalLockedAmount()` is a useful on-chain state variable, but it is not automatically equal to permanently irrecoverable CAKE. It tracks lock principal in the pool's own logic and can change as locks expire/unlock; current `userInfo` records may be needed to classify remaining lock periods and any delegated balances.
+3. `totalShares()`, `available()`, `balanceOf()`, and `totalLockedAmount()` should be captured at one pinned block, alongside the CAKE token balance of the pool. The exact semantics of each getter must be read from verified source before deriving any circulating-supply adjustment.
+4. Historical reconstruction must account for pool deposits, withdrawals, unlocks and token transfers. A withdrawal event is evidence of recoverability for that withdrawn amount, not proof that every current token is liquid; an active lock is not proof of permanent burn.
+5. The earlier ~5.29M delegated/locked figure from the official 2025 article is a dated historical claim and must not be reused as the current locked balance.
+
+### Next read-only capture enhancement
+
+Extend the existing capture script to call the pool's verified view methods at the same BSC block tag as `totalSupply()` and token balances, preserving raw return values and selectors. Add tests for successful/missing pool-state fields, then use the captured state plus event history to calculate only explicitly supported bounds. Until this is complete, the circulating-supply formula remains unresolved and unpublished.
+
+This finding narrows the uncertainty but does **not** yet establish a final circulating-supply number.
