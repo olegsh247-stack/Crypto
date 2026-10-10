@@ -52,6 +52,9 @@ jobs:
               assert metric["value_numeric"] == metric["value_numeric"]
           for key in ("ethsupply_live", "ethsupply_history_30d"):
               probe = data["requests"][key]
+              assert isinstance(probe.get("ok"), bool), (key, probe)
+              assert isinstance(probe.get("http_status"), int) if probe.get("ok") else True, (key, probe)
+              assert probe.get("started_at_utc") and probe.get("finished_at_utc"), (key, probe)
               assert isinstance(probe.get("schema_probe"), dict), (key, probe)
               assert "payload" not in probe, "raw provider payload must not be copied into the artifact"
               shape = probe["schema_probe"]
