@@ -123,12 +123,19 @@ def query_range(endpoints: list[str], start: int, end: int, chunk_size: int) -> 
 def capture(endpoint: str = BSC_RPC, chunk_size: int = 10000) -> dict[str, Any]:
     if chunk_size < 1 or chunk_size > 50000:
         raise ValueError("chunk size must be between 1 and 50000 blocks")
-    chain = rpc_post(endpoint, "eth_chainId", [])
-    if chain.get("ok") is not True or int(chain.get("result", "0x0"), 16) != 56:
-        raise ValueError("CAKE Transfer-log capture requires BNB Smart Chain (chain ID 56)")
-
-    fallback = os.environ.get("BSC_RPC_FALLBACK_URL", "https://rpc-bnb.blockmachine.io").strip()
-    endpoints = list(dict.fromkeys([endpoint] + ([fallback] if fallback else [])))
+    fallback_value = os.environ.get("BSC_RPC_FALLBACK_URL", "https://rpc-bnb.blockmachine.io")
+    fallbacks = [item.strip() for item in fallback_value.split(",") if item.strip()]
+    endpoints = list(dict.fromkeys([endpoint] + fallbacks))
+    chain_ok = False
+    chain_errors: list[str] = []
+    for candidate in endpoints:
+        chain = rpc_post(candidate, "eth_chainId", [])
+        if chain.get("ok") is True and int(chain.get("result", "0x0"), 16) == 56:
+            chain_ok = True
+            break
+        chain_errors.append(f"{candidate}: {chain.get('error') or chain.get('result')}")
+    if not chain_ok:
+        raise ValueError("Could not verify BNB Smart Chain (chain ID 56) on any RPC endpoint: " + " | ".join(chain_errors))
     started = utc_now()
     intervals = []
     for (start_utc, start_block, start_hash), (end_utc, end_block, end_hash) in zip(
