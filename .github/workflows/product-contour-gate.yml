@@ -33,6 +33,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install Worker dependencies
+        working-directory: workers/crypto-api
+        run: npm install --no-audit --no-fund
       - name: Bundle Worker without deployment
         working-directory: workers/crypto-api
         run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/crypto-api-worker-build
