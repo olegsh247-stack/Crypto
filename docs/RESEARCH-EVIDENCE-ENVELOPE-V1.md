@@ -32,9 +32,10 @@ Each document is a JSON object with `schema_version: "1.0"` and a non-empty `met
 3. Do not conflate total supply, circulating supply, burn-address balance, protocol revenue, gross fees, holder revenue, or token emissions.
 4. Keep the source's native units and definition; convert only in a separately identified derived metric.
 5. Keep provider observations and issuer-reported claims separate from direct chain reads.
-6. Preserve unknown freshness as null rather than fabricating a lag.
-7. The validator performs no network access, database writes, chain transactions, deployments or publication.
-8. The schema is an internal first iteration; expanding supported asset IDs or evidence kinds requires a reviewed code + documentation change.
+6. For Solana `getSupply`, the raw `total`, `circulating` and `nonCirculating` fields are lamport counts; convert by dividing by 1e9 before labeling a metric `SOL`, and preserve the raw artifact/context slot.
+7. Preserve unknown freshness as null rather than fabricating a lag.
+8. The validator performs no network access, database writes, chain transactions, deployments or publication.
+9. The schema is an internal first iteration; expanding supported asset IDs or evidence kinds requires a reviewed code + documentation change.
 
 ## Local validation
 
