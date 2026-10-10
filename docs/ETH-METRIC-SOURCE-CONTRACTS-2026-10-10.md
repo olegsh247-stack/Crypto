@@ -143,3 +143,36 @@ Reviewed artifacts from [ETH Independent Interval Cross-check run 10](https://gi
 ### Scope and decision
 
 Accept only the narrow claim that the provider's interval-level base-fee and blob-fee burn fields matched the independent RPC calculation in these three sampled windows. Do not generalize this to all 48 intervals or to the provider's full accounting model. The next evidence task is independent consensus-layer issuance and penalties for exactly aligned finalized epoch/slot ranges. No evaluator thresholds are approved by these results.
+
+
+## 10. Consensus-layer source feasibility review — issuance and penalties
+
+Reviewed the official Ethereum consensus API specification and protocol reward/penalty documentation before selecting an implementation path.
+
+### Findings
+
+- The official Beacon API defines `POST /eth/v1/beacon/rewards/attestations/{epoch}`, which returns attestation reward information for validators and carries `finalized` and `execution_optimistic` metadata. It is useful evidence, but it is **not a complete per-epoch issuance/penalty total**: its documented scope is attestation rewards, not every consensus-layer balance change.
+- The API also defines `GET /eth/v1/beacon/rewards/blocks/{block_id}` for proposer rewards from attestations, sync committees and slashings included in a proposed block. That endpoint is also not a complete interval accounting ledger for all validators and all protocol penalties.
+- Official protocol documentation describes rewards and penalties as epoch-applied, including missed participation, inactivity leak and slashing/correlation effects. Exact totals must follow the fork-specific consensus transition rules and the same finalized epoch range as the candidate provider interval.
+- Therefore, neither the attestation endpoint alone nor block proposer rewards alone can be used as the independent total. Validator balance differences alone also cannot be treated as issuance/penalties without accounting for deposits, withdrawals, consolidations and other state changes.
+- The standard API contract does not itself guarantee historical retention or provide a public endpoint URL. Any chosen endpoint must be probed for the required historical finalized epochs, request limits, retention, completeness, and rate limits before CI integration.
+
+### Candidate validation route
+
+1. Identify a read-only Beacon API provider or independently operated consensus dataset that can serve the historical epoch range corresponding to the candidate interval. Do not add a credential or vendor dependency until access, retention, and terms are reviewed.
+2. Probe a single finalized epoch using the official schema. Preserve provider identity, endpoint/version, response status, `finalized`, `execution_optimistic`, epoch/slot mapping, and capture time. A non-finalized or execution-optimistic result is not accepted for reconciliation.
+3. Determine whether the provider exposes a full protocol accounting result or only a subset. If only reward subcategories are exposed, label each as partial and do not sum them into a claimed complete issuance/penalty total.
+4. If no provider exposes complete accounting, the alternative is a reproducible fork-aware consensus state-transition replay from a trusted finalized state and complete intervening blocks. This is a materially larger task and must be scoped/tested separately; do not approximate it from the provider's own fields.
+5. Reconcile at least three non-adjacent complete windows with exact epoch boundaries, then expand coverage. Record gross issuance and penalties separately, and classify slashing/inactivity effects explicitly. Only then can either metric be promoted from candidate quality.
+
+### Official references
+
+- Ethereum Beacon API specification: https://github.com/ethereum/beacon-APIs
+- Attestation rewards endpoint contract: https://github.com/ethereum/beacon-APIs/blob/master/apis/beacon/rewards/attestations.yaml
+- Block rewards endpoint contract: https://github.com/ethereum/beacon-APIs/blob/master/apis/beacon/rewards/blocks.yaml
+- Ethereum consensus rewards and penalties overview: https://ethereum.org/developers/docs/consensus-mechanisms/pos/rewards-and-penalties/
+- Fork-specific consensus transition specification: https://ethereum.github.io/consensus-specs/
+
+### Decision
+
+**No consensus issuance/penalty evaluator or numeric threshold is implemented in this step.** The next engineering task is a bounded, read-only provider feasibility probe against the chosen historical finalized interval. If a provider cannot demonstrate full coverage, document the limitation and stop rather than treating a partial endpoint as independent confirmation.
