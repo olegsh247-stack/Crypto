@@ -375,3 +375,27 @@ Six domain records exist and block mappings are populated. The DB mapping is one
 
 No production data changes are authorized or implied by this audit.
 
+## BTC domain mapping reconciliation — 2026-10-11
+
+A direct comparison of live `research_block_domains` rows against `research/STRUCTURE-1.md` confirms the mapping mismatch and makes its scope precise.
+
+| Block | Structure 1 | Live DB mapping | Audit result |
+|---|---|---|---|
+| 4 — Network / On-chain | Technology & Infrastructure; Adoption & Capital; Economics & Ecosystem | Technology & Infrastructure only | Missing two secondary mappings |
+| 5 — Ecosystem | Economics & Ecosystem; Technology & Infrastructure | Economics & Ecosystem only | Missing secondary mapping |
+| 7 — Institutions & Capital | Adoption & Capital; Economics & Ecosystem | Adoption & Capital only | Missing secondary mapping |
+| 8 — Development / Adoption | Economics & Ecosystem; Thesis & Outlook | Foundation only | Primary mapping conflicts; secondary mapping absent |
+| 9 — Macro | Competition & Environment; Thesis & Outlook | Competition & Environment only | Missing secondary mapping |
+| 10 — Competition & Alternatives | Competition & Environment; Thesis & Outlook | Competition & Environment only | Missing secondary mapping |
+| 15 — Monitoring | Monitoring; Thesis & Outlook | Thesis & Outlook only | Structure names “Monitoring” as a primary domain, but canonical domain list contains six domains and no separate Monitoring domain; clarify this conceptual alias before changing data |
+
+Blocks 1, 2, 3, 6, 11–14 match their listed primary mappings. The live mapping has only one domain per block, all with relevance weight 1.0, while Structure 1 explicitly allows a block to feed multiple Dashboard domains.
+
+**Decision:** treat Structure 1 as the intended conceptual reference but do not silently rewrite production mappings. Before a migration or seed correction, resolve whether “Monitoring” in block 15 means the Thesis & Outlook domain or a UI responsibility, and define stable relevance weights for secondary mappings. Then update the canonical seed/migration and tests together, and validate on disposable PostgreSQL first.
+
+## BTC score/scenario semantics — additional verification
+
+- The five score rows store values on `[0,1]`, a methodology version and explanations. They do not store a formula, factor contribution map or direct evidence references. The values should not be represented as reproducible quantitative calculations until that derivation is documented and tested.
+- Scenario probabilities are Base 0.50, Bear 0.20 and Bull 0.30 (sum 1.00). The `supporting_evidence` field is plain generic text (for example, “Current Structure 1 research baseline”), not a reference to specific evidence IDs. Invalidation conditions are prose with no numeric threshold, observation window or evaluation rule.
+- These fields are enough to render a research hypothesis, but not enough to claim deterministic monitoring or a verified live scenario-state transition.
+
