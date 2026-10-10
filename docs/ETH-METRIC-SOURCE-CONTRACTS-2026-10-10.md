@@ -228,3 +228,16 @@ Artifact: `eth-consensus-source-feasibility-38050502012`
 - `complete_consensus_issuance_penalty_accounting_verified` remains false.
 
 **Decision:** the anonymous public-endpoint route is blocked in the current CI environment. Do not keep cycling through unverified public URLs. Next viable route is an explicitly authorized data provider with documented historical finalized-epoch support and aggregate reward/penalty semantics, or a separately costed fork-aware replay. A credentialed provider may need a user-approved API key stored as a GitHub Actions secret; no secret has been created or requested by this change. Even an aggregate rewards API must be audited for missing protocol categories and exact epoch coverage before it can be treated as full issuance/penalty evidence.
+
+
+## 13. Credentialed provider candidate review — beaconcha.in
+
+Official provider overview: https://beaconcha.in/api. It advertises historical and real-time consensus data, validator rewards, and an API key. Its public API landing page describes a free trial and paid tiers; separate integration documentation reports that arbitrary custom reward time ranges are limited to Scale/Enterprise plans and rounded to whole UTC days. See also https://docs.beaconcha.in/api-reference/ethereum/validators/rewards-aggregate and https://docs.beaconcha.in/api-reference/ethereum/validators/rewards-list.
+
+This is a **candidate requiring further verification**, not an approved source:
+- The published reward APIs are validator-oriented. It is not yet established that an API response can provide a complete network-wide, fork-correct ledger of issuance and all penalties for our exact 30-epoch / 960-slot windows.
+- Arbitrary historical ranges may require a paid tier, so no plan purchase or subscription is assumed.
+- Do not store or request an API key in code, logs, or chat. If this provider is selected, the user must first authorize the account/plan and then add the key as a repository Actions secret through GitHub settings. The probe can then read the secret from an environment variable without printing it.
+- Before integration, run a minimal request for one finalized epoch/window, document exact response fields, coverage and plan/rate-limit restrictions, and compare against a second independent method. If it cannot cover full-network issuance and all penalty categories, keep it as partial evidence only.
+
+**Next gate:** no evaluator implementation until one of these is demonstrated: (a) a complete, documented aggregate dataset with exact epoch/slot coverage and independently reconciled categories, or (b) a separately approved and reproducible fork-aware state-transition replay design.
