@@ -1,6 +1,6 @@
 # Product Contour v1 — current validation status
 
-Date: 2026-10-09
+Date: 2026-10-10
 Branch: `fix/product-contour-v1-contracts`
 PR: https://github.com/olegsh247-stack/Crypto/pull/3
 Latest fully verified Product Contour Gate commit: `a2a49b9bc640d808ccc6b60790a5ea2ed5ce27e7`; [run #37978540004](https://github.com/olegsh247-stack/Crypto/actions/runs/37978540004) passed on 9 October 2026 after the research-evidence and read-only API-test reliability updates.
@@ -60,3 +60,15 @@ No production deployment, Neon write, schema migration, VPS operation, or visual
 The scheduler previously advanced `monitoring_signals.last_updated_at` after market-candle ingestion even though it did not recalculate the signals. This could make stale signal values appear fresh. Both the Cloudflare Worker and VPS Node worker now leave signal timestamps unchanged during candle ingestion; the VPS rehearsal checks this behavior across repeated ingestion runs.
 
 This fix does not complete metric-backed signal evaluation. The ETH scenario state remains unpublished until fresh numeric observations are captured, reconciled to the product's observation/evidence records, and evaluated against the published scenario assumptions. Product Contour Gate and VPS API Build Rehearsal results for this follow-up commit must be checked before treating the fix as validated. No production write, migration, deployment, or scenario-state publication was performed.
+
+## Verification update — 2026-10-10 (supersedes earlier pending-run notes)
+
+The monitoring freshness correction is now validated on branch head `351c843d8cd7118f82572417c72a4d061bc297f8`:
+
+- **Product Contour Gate #97 — PASS:** [run #38033586960](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586960). Web build, UI/runtime contract E2E and disposable PostgreSQL clean-bootstrap/idempotency rehearsal all succeeded.
+- **VPS API Build Rehearsal #123 — PASS:** [run #38033586868](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586868). Shared runtime/API/worker builds, disposable PostgreSQL migrations, transaction rollback, API and mutation contracts, ingestion, Worker parity, read-only ETH preflight and admin-boundary checks all succeeded.
+- **Research On-chain Capture #71 — PASS:** [run #38033586920](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586920). Public SOL/CAKE capture and raw-artifact upload succeeded. This artifact is research input only, not a published snapshot.
+
+The above validates the code/test paths exercised by these workflows. It does not complete the ETH scenario assessment, publish SOL/CAKE snapshots, prove production Neon migration readiness, or mean the VPS is deployed.
+
+**Next product task:** [Issue #5 — ETH numeric observations and monitoring-signal evaluation](https://github.com/olegsh247-stack/Crypto/issues/5). Issue #4 remains the separate SOL/CAKE publication and baseline-semantics tracker. PR #3 remains open and Draft; no merge or production operation was performed.
