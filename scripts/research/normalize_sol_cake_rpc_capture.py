@@ -170,6 +170,18 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
         f"CAKE balance at burn address, pinned to BSC block {block_number}.",
         CAKE_TOKENOMICS_URL,
     ))
+    legacy_pool = require_result(balances, "legacy_cake_pool_balance")
+    legacy_pool_raw = legacy_pool.get("raw_integer")
+    if not isinstance(legacy_pool_raw, int):
+        raise ValueError("legacy CAKE pool raw balance is missing")
+    legacy_pool_value = Decimal(legacy_pool_raw) / scale
+    metrics.append(make_metric(
+        "CAKE", "legacy_cake_pool_balance", format(legacy_pool_value, "f"), "CAKE",
+        "bsc_eth_call_balanceOf_legacy_cake_pool", "https://bscscan.com/token/0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        legacy_pool.get("finished_at_utc") or finished, finished, "onchain_observation", raw_artifact_ref,
+        f"CAKE balance of the historically documented legacy CAKE Pool at BSC block {block_number}; included as a separately observed candidate locked balance pending final methodology reconciliation.",
+        CAKE_TOKENOMICS_URL,
+    ))
     metrics.append(make_metric(
         "CAKE", "contract_supply_minus_burn_address", format(total_value - burn_value, "f"), "CAKE",
         "derived_bsc_totalSupply_minus_burn_balance", CAKE_TOKENOMICS_URL,
