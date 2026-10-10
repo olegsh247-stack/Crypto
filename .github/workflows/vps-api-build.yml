@@ -184,6 +184,30 @@ jobs:
               "quality": "single_block_observation_not_daily_series",
               "source_block_number": 23600000,
               "source_block_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }, {
+              "metric_id": "eth.net_supply_flow_per_interval",
+              "asset_id": "ETH",
+              "value_numeric": "-0.012345678901234567",
+              "unit": "ETH/interval",
+              "observed_at": "2026-10-10T07:00:00Z",
+              "period_start": "2026-10-10T03:48:00Z",
+              "period_end": "2026-10-10T07:00:00Z",
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable interval fixture for decimal-string precision and signed net-flow validation.",
+              "quality": "candidate_needs_independent_cross_check"
+            }, {
+              "metric_id": "eth.entry_queue_wait_seconds",
+              "asset_id": "ETH",
+              "value_numeric": 3600,
+              "unit": "seconds",
+              "observed_at": "2026-10-10T07:00:00Z",
+              "period_start": None,
+              "period_end": None,
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable point fixture for entry queue wait time; not a queue balance.",
+              "quality": "candidate_needs_independent_cross_check"
             }]
           }
           with open("/tmp/eth-observation-artifact.json", "w") as f:
@@ -204,9 +228,9 @@ jobs:
           d=json.load(open('/tmp/observation-ingest-first.json'))
           assert d.get('status')=='ok', d
           assert d.get('read_only') is False, d
-          assert d.get('received_count')==2 and d.get('inserted_count')==2 and d.get('duplicate_count')==0, d
-          assert len(d.get('items',[]))==2 and {i.get('metric_id') for i in d['items']}=={'eth.market_spot_price','eth.base_fee_burned_per_block'}, d
-          print("VPS_API_OBSERVATION_INGEST_OK inserted=2 price=1 block=1")
+          assert d.get('received_count')==4 and d.get('inserted_count')==4 and d.get('duplicate_count')==0, d
+          assert len(d.get('items',[]))==4 and {i.get('metric_id') for i in d['items']}=={'eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds'}, d
+          print("VPS_API_OBSERVATION_INGEST_OK inserted=4 price=1 block=1 interval=1 queue=1")
           PY
           replay_code=$(curl -sS -o /tmp/observation-ingest-replay.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-observation-artifact.json)
           test "$replay_code" = "200"
@@ -214,11 +238,11 @@ jobs:
           import json
           d=json.load(open('/tmp/observation-ingest-replay.json'))
           assert d.get('status')=='ok', d
-          assert d.get('received_count')==2 and d.get('inserted_count')==0 and d.get('duplicate_count')==2, d
-          print("VPS_API_OBSERVATION_IDEMPOTENCY_OK replay_inserted=0 duplicates=2")
+          assert d.get('received_count')==4 and d.get('inserted_count')==0 and d.get('duplicate_count')==4, d
+          print("VPS_API_OBSERVATION_IDEMPOTENCY_OK replay_inserted=0 duplicates=4")
           PY
-          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-10-10T07:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block');")
-          test "$stored" = "2"
+          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-10-10T07:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
+          test "$stored" = "4"
           echo "VPS_API_OBSERVATION_STORAGE_OK unique_natural_key_rows=$stored"
       - name: VPS mutation contract E2E
         run: |
