@@ -19,6 +19,7 @@ Until step 3 is accepted, do not promote ETH numeric expansion, SOL/CAKE publica
 
 ### Architecture
 - The target architecture is decided: Caddy + Node.js API + separate Node.js worker + PostgreSQL 16.
+- Runtime portability audit: [Hosting Runtime Portability Audit](HOSTING-RUNTIME-PORTABILITY-AUDIT-2026-10-11.md). The target rehearsal exists, but API duplication, scheduler mismatch, signal-freshness semantics, Caddy/backup/deployment gaps and provider account inventory remain open. Architecture analysis is active; no cutover is authorized.
 - This is a documented target, not a deployed environment. No VPS has been purchased/provisioned.
 - Cloudflare Workers and Neon remain the current operational environment until an explicitly approved cutover.
 - Hosting decision: [Hosting Architecture Decision](HOSTING-ARCHITECTURE-DECISION-2026-10-10.md).
