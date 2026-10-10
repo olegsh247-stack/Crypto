@@ -266,3 +266,50 @@ The anonymous Beacon API path is blocked from GitHub Actions. Do not add more gu
 2. **Fork-aware replay:** estimate a reproducible implementation against the official fork-specific consensus transition rules, including required historical finalized state, all intervening blocks, state availability/retention, and independent test vectors. A validator-reward endpoint or balance-delta approximation is not an acceptable substitute.
 
 Until one route proves complete coverage and independent reconciliation, gross issuance, consensus penalties, and net supply flow remain candidate-only; do not implement signal thresholds or publish monitoring/scenario states from them.
+
+
+## 15. Feasibility assessment: aggregate rewards provider vs fork-aware replay — 2026-10-10
+
+### A. Open-source implementation reviewed: OpenFusionist/beacon-rewards
+
+Repository: https://github.com/OpenFusionist/beacon-rewards
+
+Inspected `README.md`, `.env.example`, `cmd/rewards/main.go`, `internal/rewards/service.go`, and server API setup. Findings:
+
+- It requires configured Beacon Chain and Execution Layer nodes; the documented defaults are local node endpoints. It is a service to run, not a hosted public dataset that Crypto can query without infrastructure.
+- Its `GET /rewards/network` returns a cache-window aggregate with CL rewards, EL rewards, total rewards, active-validator count, effective balance and projected APR.
+- Its documented backfill is for recent history, explicitly not archive-mode reprocessing; the README recommends a backfill window of no more than 24 hours.
+- The visible API/data model does not establish a complete, separately reconciled ledger for gross protocol issuance, attestation/inactivity penalties, slashing penalties, withdrawals/consolidations and every other balance-changing category over arbitrary historical 30-epoch windows.
+- Therefore it is a useful implementation reference and possibly a validator reward cross-check, but **not accepted as the complete ETH supply-flow source**. Adopting it would also introduce a new service and node/database operational burden.
+
+### B. Fork-aware replay: feasibility and cost
+
+Official references:
+- Consensus specs and fork schedule: https://ethereum.github.io/consensus-specs/
+- Phase 0 state transition and epoch processing: https://github.com/ethereum/consensus-specs/blob/master/specs/phase0/beacon-chain.md
+- Electra epoch processing: https://github.com/ethereum/consensus-specs/blob/master/specs/electra/beacon-chain.md
+- Beacon API warning about public exposure of expensive endpoints: https://github.com/ethereum/beacon-APIs
+
+Replay can be made reproducible in principle, but it is not a small aggregation script. It must start from a trusted/checkpointed state before the target window and apply every intervening slot/block transition using the correct fork rules, including empty slots, validator registry/balance changes, rewards and penalties, slashings, deposits, withdrawals/consolidations and fork-specific changes. It needs historical consensus data and enough state to reproduce each target epoch, then independent known-answer vectors and reconciliation.
+
+The sampled intervals are in the post-Fulu era (Fulu fork epoch 411392; sampled epochs are later than that). A solution cannot simply implement Phase 0/Altair reward formulas and assume they are complete. A full replay project needs a version-pinned consensus client/spec implementation or equivalent maintained transition engine, historical state/block availability, explicit trust/bootstrap assumptions, and tests across the relevant fork boundaries.
+
+### C. Decision matrix
+
+| Route | Completeness potential | Main blocker | Decision |
+| --- | --- | --- | --- |
+| Anonymous public Beacon API | Unknown; current endpoints blocked (403/TLS) | No usable historical finalized-state access from CI | Stop probing guessed public URLs |
+| Credentialed hosted provider | Potentially convenient | No evidence yet of a network-wide dataset covering every required category and exact windows; plan/API access may cost money | Do not purchase or create a secret without explicit authorization; require schema/sample proof first |
+| OpenFusionist Beacon Rewards | Validator reward aggregate | Requires node infrastructure; recent-history-oriented backfill; does not prove complete supply/penalty ledger | Reference only; not accepted as source |
+| Fork-aware replay | Highest potential for reproducibility if built correctly | High implementation, historical data, maintenance and validation cost | Do not start full implementation before a bounded spike and cost/benefit decision |
+
+### D. Recommended next action and acceptance gate
+
+Run a bounded design spike only; no production code/evaluator yet:
+
+1. Define exact metric accounting boundaries: gross issuance, consensus penalties (subcategories), withdrawals/consolidations and how each category affects total supply versus validator balances.
+2. Check whether an existing maintained consensus client or official test harness can replay one sampled finalized interval from a reproducible pre-window state and expose category-level balance deltas.
+3. Require a tiny proof-of-concept for one epoch with pinned fork/spec version, state/block roots, complete category ledger, deterministic rerun and independent reconciliation.
+4. In parallel, only if useful, ask for/inspect a hosted provider's documented sample schema and exact-window coverage without sharing secrets. No plan purchase or secret creation is authorized.
+
+**Go/no-go:** If one-epoch replay cannot produce a transparent category ledger and known-answer reconciliation without building a large custom consensus implementation, pause replay and return to provider discovery. Do not implement signal thresholds, publish ETH net-supply-flow observations as verified, or emit monitoring/scenario states until this gate passes.
