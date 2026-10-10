@@ -182,3 +182,33 @@ At all five snapshots, `available()` equals the BEP-20 token balance of the Cake
 ### Next step
 
 Reconstruct the exact June–September mint/burn transfer event totals and match them to issuer-reported monthly periods; verify the official methodology's weekly-burn proration. Only after this does the circulating-supply definition become eligible for Product Contour review. Do not publish a final circulating-supply value or derive scores from this candidate series yet.
+
+
+## 11. Issuer report comparison — exact published values
+
+The four official monthly reports state the following figures:
+
+| Report month | Minted (CAKE) | Burned (CAKE) | Reported net mint (CAKE) | Report publication / as-of date | Source |
+|---|---:|---:|---:|---|---|
+| June 2026 | 652,564 | 2,402,150 | −1,749,587 | Published Jul 9; says as of Jul 6 | [June CAKE Burn Report](https://blog.pancakeswap.finance/articles/cake-burn-june-2026) |
+| July 2026 | 674,316 | 1,944,441 | −1,270,125 | Published Aug 6; says as of Aug 3 | [July CAKE Burn Report](https://blog.pancakeswap.finance/articles/july-cake-burn-report) |
+| August 2026 | 674,316 | 2,746,334 | −2,072,018 | Published Sep 9; says as of Sep 7 | [August CAKE Burn Report](https://blog.pancakeswap.finance/articles/august-cake-burn-report) |
+| September 2026 | 652,564 | 2,963,567 | −2,311,003 | Published Oct 7; says as of Oct 5 | [September CAKE Burn Report](https://blog.pancakeswap.finance/articles/september-cake-burn-report) |
+| **Total** | **2,653,760** | **10,056,492** | **−7,402,733** | Four reported months | Sum of the four reported net-mint values |
+
+The June line has a one-CAKE arithmetic difference between the displayed minted/burned totals and the report's net-mint figure (652,564 − 2,402,150 = −1,749,586, while the report says −1,749,587). Preserve the issuer's stated net-mint value as reported; do not silently adjust it.
+
+### Why the on-chain boundary series cannot yet be compared as if windows matched
+
+The issuer explicitly says it excludes CAKE mints that directly contribute to burning and prorates weekly burns across adjacent months. The historical RPC series instead measures raw `totalSupply()`, the dead-address balance, and their difference at exact UTC block boundaries. Therefore the raw `totalSupply()` increase of hundreds of millions per month is not itself user-facing issuance: it must be separated from the mint-to-dead component, while dead-address transfers and the issuer's weekly-burn allocation are reconciled independently.
+
+The on-chain tracker-style candidate changed by approximately **+4,378,618.189132 CAKE** from the June 1 to October 1 snapshots, whereas the sum of issuer-reported monthly net-mint figures is **−7,402,733 CAKE**. These are not aligned reporting windows, so this is a **reconciliation target**, not a conclusion that the issuer or RPC is wrong. The large September sign difference makes event-level attribution the next required step.
+
+### Required event-level reconciliation
+
+1. Identify mint-to-dead transfers separately from regular emission mints. The official reports explicitly exclude the former from their reported mint total.
+2. Sum transfers into and out of the dead address for the same exact block intervals and reconcile them to the observed dead-address balance delta.
+3. Compare `ΔtotalSupply − mint-to-dead amount` against the issuer's reported regular mint, then compare transfers-to-dead (with weekly-burn proration applied) against reported burns.
+4. Use the issuer's stated as-of dates (July 6, August 3, September 7, October 5) as separate checkpoints where an exact time/block can be resolved. Do not claim calendar-month equality unless the reporting methodology establishes it.
+
+The official reports and their notes are source evidence, not permission to publish a circulating-supply figure. Until the event-level bridge is complete, keep the candidate series unapproved.
