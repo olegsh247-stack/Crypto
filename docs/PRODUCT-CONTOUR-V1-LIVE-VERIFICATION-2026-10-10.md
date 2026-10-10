@@ -99,3 +99,26 @@ The current `fix/product-contour-v1-contracts` version of `web/app/assets/[asset
 - [ ] After the gate passes, complete one end-to-end BTC product scenario.
 
 No Vercel project was created, no deployment was initiated, and no production state was changed.
+
+
+## Temporary Web hosting compatibility check — 2026-10-11
+
+### What the repository supports today
+
+- Web is a Next.js 15 application with ordinary `build` and `start` scripts in `web/package.json`; it is not a static-only export.
+- Pages fetch the API server-side. `web/lib/api.ts` reads `CRYPTO_API_URL` and defaults to `http://localhost:8787`. Any remote preview **must** set `CRYPTO_API_URL=https://crypto-api.olegsh247.workers.dev`; otherwise the hosted Web will attempt to call its own localhost and fail to load real data.
+- The TypeScript project includes `../shared/**/*.ts`, so a hosting build must have access to the repository's `shared/` directory as well as `web/`. A host configured with `web/` as an isolated source root may break this unless external-root file access is enabled or the build context is configured accordingly.
+- The existing UI runtime workflow already tests the required Web build and routes using the deployed API, but the latest successful run is not proven to match the current branch head. Run that gate before creating a public preview.
+
+### Decision for a temporary address
+
+Keep the target architecture unchanged: self-managed VPS (Next.js Web + Node API + worker + PostgreSQL) remains the intended final hosting model. Do not buy a domain, provision a VPS, or remove Cloudflare/Neon during this temporary check.
+
+If a temporary public URL is needed before the VPS phase, use a **preview-only deployment**, not a production domain. Vercel is technically plausible for a short-lived Next.js preview, but it is an additional temporary host and requires careful project-root/shared-directory configuration plus the API environment variable above. No Crypto Vercel project currently exists in the connected account. Do not create the project or deploy until the current Web build/runtime gate is green; then use a preview URL only, with no production alias or DNS changes. If the user prefers zero new hosting providers, defer the public URL until the VPS is approved and available.
+
+### Next gates
+
+- [x] Identify the required API environment variable and the external `shared/` source dependency.
+- [x] Preserve the documented VPS target architecture.
+- [ ] Obtain a fresh successful Web build + UI runtime contract gate on the current branch head.
+- [ ] Then decide between a short-lived Vercel preview and waiting for VPS hosting; if preview is chosen, configure it as preview-only and verify BTC end-to-end in the browser.
