@@ -97,14 +97,18 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const deterioratingSignals = monitoring.filter((m: any) => m.direction === "deteriorating").length;
   const thesisState = thesisPercent != null
     ? thesisPercent >= 70 ? "Positive" : thesisPercent <= 40 ? "Negative" : "Neutral"
-    : positiveFactors > negativeFactors ? "Positive" : negativeFactors > positiveFactors ? "Negative" : "Mixed";
+    : factors.length > 0
+      ? positiveFactors > negativeFactors ? "Positive" : negativeFactors > positiveFactors ? "Negative" : "Mixed"
+      : "Not assessed";
   const marketDirection = weekChange == null ? "Unknown" : weekChange > 0.5 ? "Improving" : weekChange < -0.5 ? "Deteriorating" : "Stable";
-  const researchDirection = improvingSignals > deterioratingSignals ? "Improving" : deterioratingSignals > improvingSignals ? "Deteriorating" : mixedFactors > 0 ? "Mixed" : "Stable";
+  const researchDirection = improvingSignals > deterioratingSignals ? "Improving" : deterioratingSignals > improvingSignals ? "Deteriorating" : monitoring.length > 0 || mixedFactors > 0 ? mixedFactors > 0 && monitoring.length === 0 ? "Mixed" : "Stable" : "Unavailable";
   const decisionHeadline = thesisState === "Positive"
     ? "The thesis currently has more support than pressure."
     : thesisState === "Negative"
       ? "The thesis currently has more pressure than support."
-      : "The thesis is currently balanced or insufficiently resolved.";
+      : thesisState === "Not assessed"
+        ? "No published research snapshot is available yet; a thesis assessment cannot be made."
+        : "The thesis is currently balanced or insufficiently resolved.";
   const invalidation = currentScenario?.invalidation_conditions ?? scenarios.find((s: any) => s.scenario_type === "base")?.invalidation_conditions ?? null;
   const decisionDrivers = [
     mainCatalyst?.name ? { label: "Catalyst", value: mainCatalyst.name } : null,
@@ -136,6 +140,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   return <main className="shell">
     <MarketTabs />
     <div className="section"><Link href="/">← Assets</Link><div className="row asset-heading"><div><p className="eyebrow">02 · ASSET DASHBOARD</p><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div><div className="hero-actions"><span className="pill">{getResearchStatusLabel(status)}</span>{freshness && <span className="pill">{getResearchFreshnessLabel(freshness)}</span>}</div></div></div>
+    {!research && <div className="card section"><h2>Research not yet published</h2><p className="muted">This asset is present in the registry, but it has no published research snapshot. Scores, factors, scenarios and evidence are shown as unavailable until research is recorded; missing data is not treated as zero.</p></div>}
     <nav className="dashboard-nav" aria-label="Asset dashboard sections"><a href="#overview">Overview</a><a href="#domains">Domains</a><a href="#factors">Factors</a><a href="#scores">Scores</a><a href="#scenarios">Scenarios</a><a href="#monitoring">Monitoring</a><a href="#evidence">Evidence</a></nav>
 
     <section id="market" className="section card" aria-label="Market chart">
