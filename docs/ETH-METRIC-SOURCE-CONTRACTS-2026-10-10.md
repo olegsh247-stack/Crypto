@@ -2,7 +2,7 @@
 
 **Issue:** [#5 — ETH vertical slice](https://github.com/olegsh247-stack/Crypto/issues/5)  
 **Branch:** `fix/product-contour-v1-contracts`  
-**Status:** Source-selection proposal. A read-only schema/freshness probe now records response metadata and field shapes for the live and 30-day endpoints. Candidate metrics remain unregistered until the probe artifact is inspected and exact field/window semantics are independently checked. No ethsupply.fyi values are ingested yet.
+**Status:** Candidate-series capture is implemented and rehearsed on disposable PostgreSQL. CI captures 482 dated candidate records from ethsupply.fyi plus two point observations, inserts them into the disposable DB and confirms an idempotent replay. No production writes have occurred; independent source cross-check is still required before signal evaluation.
 
 ## 1. Preferred source candidate: ethsupply.fyi public API
 
@@ -18,17 +18,17 @@ The published methodology describes a per-slot ledger that accounts for issuance
 
 | Candidate metric | API fields / series | Unit to store | Window and timestamp | Caveats |
 |---|---|---|---|---|
-| Gross issuance | Historical slot/summary series (actual range response must be inspected) or live `accounting.issuance.totalWei` | ETH per day/epoch, derived from exact wei | Use provider interval bounds and finalized/head metadata | Do not mix live and finalized values or double-count consensus/execution issuance. Confirm whether the chosen field is a point or interval total. |
-| Total burn | Historical slot/summary series (actual range response must be inspected); breakdown fields for base fee and blob fee | ETH per day/epoch, derived from exact wei | Provider interval bounds | Keep base-fee burn, blob-fee burn, penalties and other destruction separate where available. |
-| Net supply flow | Historical slot/summary series (actual range response must be inspected) or live `accounting.netWei` | ETH per day/epoch | Preserve source interval and finalized/head state | Treat this as provider-derived net flow, not an independently reconstructed number. Cross-check issuance minus burn and provider warnings. |
-| L1 fee / data demand | Historical slot series `baseFeeBurnWei`, `blobBaseFeeBurnWei`, `gasUsed`, `blobsUsed`, target/max fields (verify exact fields in probe output) | ETH per day/epoch, gas or blobs per interval | Use aligned history points and provider interval metadata | Burn is not total user fees/tips. Gas and blob counts are activity measures, not interchangeable with fee burn. |
-| Entry/exit queue | Historical staking/queue series and `entryQueueWaitSeconds` / `exitQueueWaitSeconds` where present | ETH queued, validators/requests or seconds, each separate | Repeated dated points; do not infer a trend from one snapshot | Queue balances, queue wait and validator concentration are distinct metrics. Verify coverage and null/missing semantics. |
+| Gross issuance | Historical `slots[].issuanceWei` or live `accounting.issuance.totalWei` | ETH per day/epoch, derived from exact wei | Use provider interval bounds and finalized/head metadata | Do not mix live and finalized values or double-count consensus/execution issuance. Confirm whether the chosen field is a point or interval total. |
+| Total burn | Historical `slots[].burnWei`; breakdown fields `slots[].baseFeeBurnWei` and `slots[].blobBaseFeeBurnWei` | ETH per day/epoch, derived from exact wei | Provider interval bounds | Keep base-fee burn, blob-fee burn, penalties and other destruction separate where available. |
+| Net supply flow | Historical `slots[].netWei` or live `accounting.netWei` | ETH per day/epoch | Preserve source interval and finalized/head state | Treat this as provider-derived net flow, not an independently reconstructed number. Cross-check issuance minus burn and provider warnings. |
+| L1 fee / data demand | Historical slot fields `baseFeeBurnWei`, `blobBaseFeeBurnWei`, `gasUsed`, `blobsUsed`, target/max fields; only the two burn series are currently registered. Probe observed `blobsUsed` as a Python float despite the published schema declaring an integer, so it is deliberately not emitted. | ETH per day/epoch, gas or blobs per interval | Use aligned history points and provider interval metadata | Burn is not total user fees/tips. Gas and blob counts are activity measures, not interchangeable with fee burn. |
+| Entry/exit queue | Historical `staking[].pendingDepositsGwei`, `scheduledActivationsGwei`, `scheduledExitsGwei` plus `queueWaits[].entryQueueWaitSeconds` / `exitQueueWaitSeconds` | ETH queued, validators/requests or seconds, each separate | Repeated dated points; do not infer a trend from one snapshot | Queue balances, queue wait and validator concentration are distinct metrics. Verify coverage and null/missing semantics. |
 | Staking concentration | Validator-type/withdrawal-credential breakdown | Shares by credential category only, if defined consistently | Same point/window and denominator | Credential type is **not** staking-provider/operator concentration. Do not label it as such. |
 
 ### Required adapter checks before registering metrics
 
 1. Capture a sample response without database writes and pin the exact response timestamp/revision.
-2. Confirm the actual JSON shape for the chosen range, exact field names, interval boundaries and finalized/head semantics. The first probe observed `range=30d` with `interval=30epochs`, 225 slot points and an empty `epochs` array; do not assume epoch points are populated or infer nested paths from the schema alone.
+2. The probe confirmed `range=30d`, `interval=30epochs`, `intervalSlots=960`, 225 slot points and an empty `epochs` array. The capture emits the latest 48 valid slot intervals (about 6.4 days), plus the latest 48 staking and queue-wait points. Do not call these daily observations.
 3. Preserve exact wei/gwei integer strings during parsing. Convert to decimal ETH using integer/decimal arithmetic; do not use JavaScript floating-point for wei.
 4. Evaluate freshness per metric using its own `DataValue.asOf`, not just document `generatedAt`. The first probe's live document was generated within seconds, while some accounting values had `asOf` timestamps roughly 18 minutes earlier. Reject missing, stale, partial or `unavailable` values and preserve provider warnings/source lineage.
 5. Reconcile net flow against the chosen issuance/burn components where their intervals match. Record any unreconciled difference as a quality warning; do not silently force equality.
