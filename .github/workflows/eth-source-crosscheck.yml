@@ -42,13 +42,15 @@ jobs:
           print("ETH_SOURCE_CROSSCHECK_ARITHMETIC_OK")
           PY
       - name: Capture public source (read-only)
-        run: python scripts/research/capture_eth_observations.py --output /tmp/eth-observation-capture.json
+        run: |
+          mkdir -p research-crosscheck
+          python scripts/research/capture_eth_observations.py --output research-crosscheck/eth-observation-capture.json
       - name: Cross-check the latest complete interval
         run: |
-          python scripts/research/crosscheck_ethsupply_interval.py --artifact /tmp/eth-observation-capture.json --output /tmp/eth-source-crosscheck.json
+          python scripts/research/crosscheck_ethsupply_interval.py --artifact research-crosscheck/eth-observation-capture.json --output research-crosscheck/eth-source-crosscheck.json
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/eth-source-crosscheck.json'))
+          d=json.load(open('research-crosscheck/eth-source-crosscheck.json'))
           assert d.get('database_write_performed') is False
           assert d.get('blockchain_write_performed') is False
           assert d.get('status') in {'matched','mismatch','not_evaluable'}, d
@@ -57,12 +59,12 @@ jobs:
               print("::warning::Independent ETH source comparison is not accepted; inspect the uploaded research artifact.")
           PY
       - name: Upload read-only cross-check artifacts
-        if: ${{ always() && hashFiles('/tmp/eth-observation-capture.json', '/tmp/eth-source-crosscheck.json') != '' }}
+        if: ${{ always() && hashFiles('research-crosscheck/eth-observation-capture.json', 'research-crosscheck/eth-source-crosscheck.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: eth-independent-source-crosscheck-${{ github.run_id }}
           path: |
-            /tmp/eth-observation-capture.json
-            /tmp/eth-source-crosscheck.json
+            research-crosscheck/eth-observation-capture.json
+            research-crosscheck/eth-source-crosscheck.json
           if-no-files-found: warn
           retention-days: 7
