@@ -399,3 +399,40 @@ Blocks 1, 2, 3, 6, 11–14 match their listed primary mappings. The live mapping
 - Scenario probabilities are Base 0.50, Bear 0.20 and Bull 0.30 (sum 1.00). The `supporting_evidence` field is plain generic text (for example, “Current Structure 1 research baseline”), not a reference to specific evidence IDs. Invalidation conditions are prose with no numeric threshold, observation window or evaluation rule.
 - These fields are enough to render a research hypothesis, but not enough to claim deterministic monitoring or a verified live scenario-state transition.
 
+
+
+## Domain mapping implementation prep — 2026-10-11
+
+### Canonical semantic decision
+
+The six Dashboard Domains remain exactly those defined in Structure 1. “Monitoring” is a cross-cutting function and Deep Research section 15, not a seventh Dashboard Domain. The BTC-15 mapping table now identifies Thesis & Outlook as its primary domain and explains the Monitoring role. This resolves the internal contradiction in Structure 1 without expanding the domain taxonomy.
+
+Commit: `3bd2406fe1438cb659a7cf4e1cb94eba93f7eb73` — `docs: clarify monitoring domain mapping in Structure 1`.
+
+### Mapping correction still not applied to data
+
+The live BTC mapping still has missing secondary links for blocks 4, 5, 7, 9 and 10, and a primary mismatch for block 8. The documentation correction does not alter the database. No production migration or SQL write was run.
+
+Before preparing a migration, locate and verify the authoritative seed/migration source that populates `research_block_domains` and its disposable-PostgreSQL test path. The repository root does not expose a conventional top-level migrations directory; do not infer that a file is authoritative from naming alone. Next implementation unit must:
+1. Find the canonical seed/migration mechanism and existing schema-rehearsal workflow.
+2. Define explicit, stable relevance weights for every secondary mapping (do not copy 1.0 to every relation without a contract).
+3. Add a regression test asserting the complete 15-block mapping against Structure 1, including all six allowed Dashboard Domains and the BTC-15 rule.
+4. Run the test against a disposable database / existing migration rehearsal.
+5. Only then propose a separate production migration for explicit approval.
+
+### Proposed BTC mapping contract to test
+
+- 01 Foundation
+- 02 Technology & Infrastructure
+- 03 Economics & Ecosystem
+- 04 Technology & Infrastructure; Adoption & Capital; Economics & Ecosystem
+- 05 Economics & Ecosystem; Technology & Infrastructure
+- 06 Adoption & Capital
+- 07 Adoption & Capital; Economics & Ecosystem
+- 08 Economics & Ecosystem; Thesis & Outlook
+- 09 Competition & Environment; Thesis & Outlook
+- 10 Competition & Environment; Thesis & Outlook
+- 11–14 Thesis & Outlook
+- 15 Thesis & Outlook (Monitoring is the section/function, not a separate Domain)
+
+This is the intended contract for tests and seed reconciliation, not a statement that live database rows have already been corrected.
