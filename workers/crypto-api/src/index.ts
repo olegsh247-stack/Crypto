@@ -179,8 +179,8 @@ export default {
    const contract=contracts[item.metric_id];
    if(!["ETH","eth"].includes(item.asset_id)||item.unit!==contract.unit||item.source_id!==contract.source_id||item.source_url!==contract.source_url)return json({status:"error",error:"metric_contract_mismatch",metric_id:item.metric_id},400);
    if(typeof item.value_numeric!=="number"||!Number.isFinite(item.value_numeric)||(contract.exclusive?item.value_numeric<=contract.minimum:item.value_numeric<contract.minimum))return json({status:"error",error:"invalid_numeric_value",metric_id:item.metric_id},400);
-   if(typeof item.observed_at!=="string"||!Number.isFinite(Date.parse(item.observed_at))||!/(Z|[+-]\\d{2}:\\d{2})$/.test(item.observed_at)||Date.parse(item.observed_at)>now+300000)return json({status:"error",error:"invalid_observed_at",metric_id:item.metric_id},400);
-   const validOptionalTime=(value:unknown)=>value===null||(typeof value==="string"&&Number.isFinite(Date.parse(value))&&/(Z|[+-]\\d{2}:\\d{2})$/.test(value));
+   if(typeof item.observed_at!=="string"||!Number.isFinite(Date.parse(item.observed_at))||!/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(item.observed_at)||Date.parse(item.observed_at)>now+300000)return json({status:"error",error:"invalid_observed_at",metric_id:item.metric_id},400);
+   const validOptionalTime=(value:unknown)=>value===null||(typeof value==="string"&&Number.isFinite(Date.parse(value))&&/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(value));
    if(!validOptionalTime(item.period_start)||!validOptionalTime(item.period_end))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
    if(item.period_start&&item.period_end&&Date.parse(item.period_end)<Date.parse(item.period_start))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
    if(contract.point&&(item.period_start!==null||item.period_end!==null))return json({status:"error",error:"point_observation_must_not_have_window",metric_id:item.metric_id},400);
