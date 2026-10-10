@@ -171,6 +171,29 @@ export default {
    seen.add(naturalKey);
    validated.push({metric_id:item.metric_id,asset_id:"eth",value_numeric:item.value_numeric,unit:item.unit,observed_at:new Date(item.observed_at).toISOString(),period_start:item.period_start?new Date(item.period_start).toISOString():null,period_end:item.period_end?new Date(item.period_end).toISOString():null,source_id:item.source_id,source_url:item.source_url,methodology});
   }
+  // Reconcile every interval that includes net supply flow using exact decimal-string
+  // arithmetic at wei precision. Never rely on JS floating-point for supply accounting.
+  const accountingIds=["eth.gross_issuance_per_interval","eth.execution_fee_burn_per_interval","eth.consensus_penalties_per_interval","eth.other_execution_burn_per_interval","eth.net_supply_flow_per_interval"];
+  const accountingGroups=new Map<string,Map<string,bigint>>();
+  for(const item of validated){
+   if(!accountingIds.includes(item.metric_id))continue;
+   if(typeof item.value_numeric!=="string")return json({status:"error",error:"accounting_values_must_be_decimal_strings",metric_id:item.metric_id},400);
+   const match=/^(-?)(0|[1-9][0-9]*)(?:\.([0-9]{1,18}))?$/.exec(item.value_numeric);
+   if(!match)return json({status:"error",error:"invalid_accounting_decimal",metric_id:item.metric_id},400);
+   const scaled=BigInt(match[2])*1000000000000000000n+BigInt((match[3]??"").padEnd(18,"0")||"0");
+   const exact=match[1]==="-"?-scaled:scaled;
+   const key=item.period_start+"|"+item.period_end;
+   if(!accountingGroups.has(key))accountingGroups.set(key,new Map<string,bigint>());
+   const group=accountingGroups.get(key)!;
+   if(group.has(item.metric_id))return json({status:"error",error:"duplicate_accounting_component",metric_id:item.metric_id},400);
+   group.set(item.metric_id,exact);
+  }
+  for(const [window,group] of accountingGroups){
+   if(!group.has("eth.net_supply_flow_per_interval"))continue;
+   if(accountingIds.some(id=>!group.has(id)))return json({status:"error",error:"incomplete_accounting_interval"},400);
+   const expected=group.get("eth.gross_issuance_per_interval")!-group.get("eth.execution_fee_burn_per_interval")!-group.get("eth.consensus_penalties_per_interval")!-group.get("eth.other_execution_burn_per_interval")!;
+   if(group.get("eth.net_supply_flow_per_interval")!==expected)return json({status:"error",error:"accounting_reconciliation_failed",period_end:window.split("|")[1]},400);
+  }
   try{
    const activeAsset=await sql`select asset_id from assets where asset_id='eth' and enabled=true limit 1`;
    if(!activeAsset[0])return json({status:"error",error:"asset_not_found"},404);
