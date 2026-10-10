@@ -248,7 +248,7 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
     gaps: list[dict[str, str]] = []
     if not isinstance(payload, dict):
         return metrics, [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "Historical source payload unavailable or invalid."}]
-    if payload.get("range") != "30d" or payload.get("interval") != "30epochs" or payload.get("intervalSlots") != 960:
+    if payload.get("schemaVersion") != 1 or not isinstance(payload.get("revision"), int) or payload.get("range") != "30d" or payload.get("interval") != "30epochs" or payload.get("intervalSlots") != 960:
         return metrics, [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "Unexpected range/interval; expected range=30d, interval=30epochs and 960 slots."}]
     coverage = payload.get("coverage") if isinstance(payload.get("coverage"), dict) else {}
     warnings = payload.get("warnings") if isinstance(payload.get("warnings"), list) else []
@@ -282,7 +282,7 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
 
     source_url = ETHSUPPLY_HISTORY_URL
     quality = "candidate_needs_independent_cross_check"
-    methodology_base = "ethsupply.fyi public 30d history; 30-epoch aggregate (960 slots); exact integer converted with Decimal; not independently cross-checked."
+    methodology_base = f"ethsupply.fyi public 30d history; revision={payload.get('revision')}; generatedAt={iso_unix(generated_at)}; coverageSlots={coverage.get('fromSlot')}..{coverage.get('toSlot')}; 30-epoch aggregate (960 slots); exact integer converted with Decimal; not independently cross-checked."
     slot_specs = [
         ("issuanceWei", "eth.gross_issuance_per_interval", "ETH/interval", False, "Gross issuance reported by provider."),
         ("burnWei", "eth.total_burn_per_interval", "ETH/interval", False, "Total burn reported by provider; component metrics remain separate."),
@@ -318,6 +318,11 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
     staking = payload.get("staking") if isinstance(payload.get("staking"), list) else []
     staking_rows = [x for x in staking if isinstance(x, dict) and iso_unix(x.get("timestamp"))]
     staking_rows.sort(key=lambda x: x["timestamp"])
+    if staking_rows:
+        staking_age = dt.datetime.now(dt.timezone.utc).timestamp() - staking_rows[-1]["timestamp"]
+        if staking_age > 3600 or staking_age < -300:
+            gaps.append({"metric_id": "eth.staking_queue_history", "status": "not_captured", "reason": "Latest staking queue point is stale or future-dated."})
+            staking_rows = []
     for row in staking_rows[-48:]:
         observed = iso_unix(row.get("timestamp"))
         if not observed:
@@ -341,6 +346,11 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
     queue_waits = payload.get("queueWaits") if isinstance(payload.get("queueWaits"), list) else []
     queue_rows = [x for x in queue_waits if isinstance(x, dict) and iso_unix(x.get("timestamp"))]
     queue_rows.sort(key=lambda x: x["timestamp"])
+    if queue_rows:
+        queue_age = dt.datetime.now(dt.timezone.utc).timestamp() - queue_rows[-1]["timestamp"]
+        if queue_age > 3600 or queue_age < -300:
+            gaps.append({"metric_id": "eth.queue_wait_history", "status": "not_captured", "reason": "Latest queue-wait point is stale or future-dated."})
+            queue_rows = []
     for row in queue_rows[-48:]:
         observed = iso_unix(row.get("timestamp"))
         if not observed:
