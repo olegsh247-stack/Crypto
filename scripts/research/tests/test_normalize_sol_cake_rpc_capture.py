@@ -13,7 +13,7 @@ def fixture():
         "schema_version": "1.0",
         "finished_at_utc": "2026-10-10T10:00:02Z",
         "solana": {
-            "getSupply": rpc({"context": {"slot": 12345}, "value": {"circulating": 100.25, "nonCirculating": 20.5}}),
+            "getSupply": rpc({"context": {"slot": 12345}, "value": {"circulating": 100250000000, "nonCirculating": 20500000000}}),
             "getInflationRate": rpc({"total": 0.036}),
             "getEpochInfo": rpc({"epoch": 100}),
             "getVoteAccounts": rpc({"current": [], "delinquent": []}),
@@ -38,11 +38,19 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertEqual(validate_document(result), [])
         metrics = {m["metric_id"]: m for m in result["metrics"]}
         self.assertEqual(metrics["circulating_supply"]["value"], "100.25")
+        self.assertEqual(metrics["non_circulating_supply"]["value"], "20.5")
+        self.assertIn("lamports divided by 1e9", metrics["circulating_supply"]["definition"])
         self.assertIn("slot 12345", metrics["circulating_supply"]["definition"])
         self.assertEqual(metrics["contract_total_supply"]["value"], "1000")
         self.assertEqual(metrics["burn_address_balance"]["value"], "2")
         self.assertEqual(metrics["contract_supply_minus_burn_address"]["value"], "998")
         self.assertEqual(metrics["contract_total_supply"]["raw_artifact_ref"], "actions-run:fixture")
+
+    def test_rejects_non_integer_get_supply_units(self):
+        data = fixture()
+        data["solana"]["getSupply"]["result"]["value"]["circulating"] = 100.25
+        with self.assertRaisesRegex(ValueError, "integer lamport counts"):
+            normalize(data, "fixture")
 
     def test_rejects_wrong_chain_id(self):
         data = fixture()
