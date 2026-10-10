@@ -1,0 +1,58 @@
+name: ETH Consensus Source Feasibility Probe (research)
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/probe_beacon_consensus_source.py"
+      - "scripts/research/capture_eth_observations.py"
+      - ".github/workflows/eth-consensus-source-probe.yml"
+      - "docs/ETH-METRIC-SOURCE-CONTRACTS-2026-10-10.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eth-consensus-source-probe-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: Read-only historical Beacon API feasibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: python -m py_compile scripts/research/capture_eth_observations.py scripts/research/probe_beacon_consensus_source.py
+      - name: Capture candidate intervals (read-only)
+        run: |
+          mkdir -p research-consensus-probe
+          python scripts/research/capture_eth_observations.py --output research-consensus-probe/eth-observation-capture.json
+      - name: Probe historical finalized epochs (read-only)
+        run: |
+          python scripts/research/probe_beacon_consensus_source.py --artifact research-consensus-probe/eth-observation-capture.json --output research-consensus-probe/eth-consensus-source-probe.json
+          python - <<'PY'
+          import json
+          p = json.load(open("research-consensus-probe/eth-consensus-source-probe.json", encoding="utf-8"))
+          print("ETH_CONSENSUS_SOURCE_PROBE_STATUS=" + str(p.get("status")))
+          print("ETH_CONSENSUS_SOURCE_PROBE_FINALIZED=" + str(p.get("finalized_non_optimistic_probes")))
+          print("ETH_CONSENSUS_COMPLETE_ACCOUNTING_VERIFIED=" + str(p.get("complete_consensus_issuance_penalty_accounting_verified")))
+          if p.get("status") != "historical_partial_source_accessible":
+              print("::warning::Historical Beacon API feasibility was not confirmed; inspect the artifact.")
+          PY
+      - name: Upload feasibility artifacts
+        if: ${{ always() && hashFiles('research-consensus-probe/eth-observation-capture.json', 'research-consensus-probe/eth-consensus-source-probe.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eth-consensus-source-feasibility-${{ github.run_id }}
+          path: |
+            research-consensus-probe/eth-observation-capture.json
+            research-consensus-probe/eth-consensus-source-probe.json
+          if-no-files-found: warn
+          retention-days: 7
