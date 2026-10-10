@@ -52,9 +52,9 @@ The documented API exposes TVS and activity endpoints, including `/v1/tvs` and `
 - Public queue dashboard: https://www.beaconcha.in/validators/queues
 - API documentation and access plans: https://www.beaconcha.in/api
 
-The public dashboard shows entry and exit queue information and historical views. It is useful for cross-checking a capture, but dashboard HTML is not the ingestion contract. Programmatic API access, key requirements, response fields, update cadence and historical availability must be verified before implementing an adapter.
+The public dashboard shows entry/exit queue balances and wait-time history at 7d/30d/90d and longer windows. The API product advertises API keys and tiered access; this repository has no approved beaconcha.in credential. Therefore the dashboard is a manual comparison reference only: do not scrape its HTML, and do not treat a dashboard snapshot with a different finalized epoch/timestamp as an exact match to the captured ethsupply.fyi points. Automated cross-checking is blocked on an approved API access decision and a verified endpoint/schema.
 
-**Decision:** keep entry queue, exit queue and queue wait time as separate metrics. Do not derive validator concentration from queue size.
+**Decision:** keep entry queue, exit queue and queue wait time as separate metrics. Do not derive validator concentration from queue size. No independent queue cross-check is claimed yet.
 
 ## 4. Roadmap milestone signal
 
