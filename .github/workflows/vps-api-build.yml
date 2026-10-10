@@ -121,6 +121,30 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
+          # Public observation reads are scoped to an enabled asset and bounded to 100 rows.
+          curl -fsS 'http://127.0.0.1:8080/api/observations?asset_id=eth&limit=10' > /tmp/eth-observations.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/eth-observations.json'))
+          assert d.get('status')=='ok', d
+          assert d.get('read_only') is True, d
+          assert d.get('asset_id')=='eth', d
+          assert d.get('limit')==10, d
+          assert isinstance(d.get('items'),list), d
+          assert d.get('count')==len(d['items']), d
+          for item in d['items']:
+            assert item.get('asset_id')=='eth', item
+            assert item.get('observation_id') and item.get('metric_id') and item.get('source_id'), item
+            assert item.get('observed_at') and item.get('revision',0)>=1, item
+          print(f"VPS_API_OBSERVATIONS_OK read_only=1 rows={len(d['items'])}")
+          PY
+          missing_asset_code=$(curl -sS -o /tmp/observations-missing-asset.json -w '%{http_code}' 'http://127.0.0.1:8080/api/observations')
+          test "$missing_asset_code" = "400"
+          invalid_limit_code=$(curl -sS -o /tmp/observations-invalid-limit.json -w '%{http_code}' 'http://127.0.0.1:8080/api/observations?asset_id=eth&limit=abc')
+          test "$invalid_limit_code" = "400"
+          oversized_limit_code=$(curl -sS -o /tmp/observations-oversized-limit.json -w '%{http_code}' 'http://127.0.0.1:8080/api/observations?asset_id=eth&limit=101')
+          test "$oversized_limit_code" = "400"
+          echo "VPS_API_OBSERVATIONS_VALIDATION_OK missing_asset=400 invalid_limit=400 oversized_limit=400"
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
