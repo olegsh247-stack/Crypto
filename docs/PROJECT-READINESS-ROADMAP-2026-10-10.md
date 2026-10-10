@@ -29,6 +29,7 @@
 - Work is tracked in [Issue #7](https://github.com/olegsh247-stack/Crypto/issues/7).
 - CAKE issuer reports for June–September 2026 sum to **-7,402,733 CAKE** in reported net-mint arithmetic. This is not yet a verified on-chain `totalSupply()` delta or independently confirmed circulating-supply change.
 - SDA is identified as a candidate SOL data path, but provider access/terms and credentials are not established; no historical SOL daily series has yet been captured.
+- A read-only RPC capture succeeded on 2026-10-10. SOL supply was captured at finalized slot 455,192,578; CAKE reads were pinned to BSC block 126,797,363. The raw artifact is documented in [Verified RPC Capture](../research/assets/SOL-CAKE-VERIFIED-RPC-CAPTURE-2026-10-10.md). CAKE raw `totalSupply()` was 5,543,692,995.751051 and burn-address balance 5,168,552,286.608597, yielding 375,140,709.142454 CAKE before legacy-pool methodology. The large raw totalSupply is not an error by itself; circulating-supply interpretation must include the burn address and verified legacy-pool treatment.
 - SOL and CAKE remain unpublished research drafts. Do not fabricate scores, factors, scenarios, signals or evidence.
 
 ## 2. Ordered roadmap and exit criteria
