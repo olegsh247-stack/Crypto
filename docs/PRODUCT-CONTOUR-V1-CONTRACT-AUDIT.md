@@ -191,3 +191,19 @@ Therefore the empty `scenario_states` result is not evidence that the research s
 
 - SOL and CAKE are enabled assets but have no published research snapshot. Confirm intended Product Contour v1 scope before generating/publishing new research; do not seed placeholder research just to fill cards.
 - This audit verifies database content, not the deployed Worker HTTP payload or browser runtime. The PR Web build is the current code-level validation; a safe live API E2E check remains separate from this read-only database audit.
+
+
+### Empty-state consistency check — 2026-10-10
+
+The read-only Neon audit found no published snapshot for SOL or CAKE. The current Dashboard and Deep Research sections already render empty arrays as unavailable/not populated for factors, scores, scenarios, monitoring, and evidence; they do not create synthetic rows.
+
+A follow-up static review found one misleading derived state: when an asset had no thesis score and no critical factors, the Dashboard's fallback classified the thesis as `Mixed`; when it had no monitoring signals, research direction could appear as `Stable`. Those labels implied an assessment despite the absence of evidence.
+
+The PR now:
+- uses `Not assessed` for thesis state when neither a thesis score nor factors exist;
+- uses `Unavailable` for research direction when no monitoring signals or mixed factor state exist;
+- gives the decision headline an explicit no-published-snapshot message;
+- shows a Dashboard notice when no published research snapshot exists;
+- shows the same distinction on Deep Research, clarifying that the 15 chapters are the canonical structure, not completed analysis.
+
+This is a UI-only correction. No Neon writes, schema changes, migrations, deployment, or asset-specific hardcoding were introduced. Build verification is required on the resulting PR head.
