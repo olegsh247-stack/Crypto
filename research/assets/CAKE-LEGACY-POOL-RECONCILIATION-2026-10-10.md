@@ -84,3 +84,34 @@ This finding narrows the uncertainty but does **not** yet establish a final circ
 ## 6. Next capture implementation — pool accounting getters
 
 The read-only capture now also attempts to record the verified CakePool getters `totalLockedAmount()`, `totalShares()`, `available()`, and `balanceOf()` at the exact same pinned BSC block as the token supply/balance calls. Function selectors are pinned to the Keccak-256 signatures (`totalLockedAmount()` → `0x05a9f274`, `totalShares()` → `0x3a98ef39`, `available()` → `0x48a0d754`, `balanceOf()` → `0x722713f7`) and covered by a unit test. The normalizer keeps these as separate observations and labels pool shares distinctly; it does not subtract any pool-state field from circulating supply. The workflow runs the normalizer unit tests before performing the live read-only capture. The actual workflow result must be checked before treating these new fields as verified observations.
+
+
+## 7. Successful same-block pool-state capture — run 38074692658
+
+**Workflow:** [Research On-chain Capture #38074692658](https://github.com/olegsh247-stack/Crypto/actions/runs/38074692658) — success. Syntax check, evidence-normalizer unit tests, read-only capture, normalization, envelope validation and artifact upload all passed.
+
+- **Pinned BSC block:** 126,873,367 (chain ID 56).
+- **Raw capture SHA-256:** `56e6997159580821126388613bc644209e661a3636b42a217bc5a08ade459da5`.
+- **Normalized envelope SHA-256:** `569f5edcc94aa0bbdad433730eae7807dfa9eb5c18a685bb3ef6d8354088bd92`.
+- **Capture errors:** none. Artifact: `sol-cake-rpc-capture-38074692658`.
+
+| Getter / observation | Value at block 126,873,367 | Source meaning / caveat |
+|---|---:|---|
+| CAKE `totalSupply()` | 5,543,692,995.751051 CAKE | Contract total supply, not circulating supply |
+| Burn address balance | 5,168,552,286.608597 CAKE | Separate raw token balance |
+| `totalSupply - burn balance` | 375,140,709.142454 CAKE | Candidate baseline only; policy exclusions still require methodology review |
+| CAKE balance held by CakePool | 13,393,658.357722 CAKE | BEP-20 `balanceOf(CakePool)` |
+| `available()` | 13,393,658.357722 CAKE | Verified source: direct token balance held by CakePool; exactly matches token-level balance at this block |
+| `totalLockedAmount()` | 10,643,456.465049 CAKE | Pool accounting field; not equivalent by itself to permanently burned supply |
+| `totalShares()` | 190,019,229.888360 shares | Share accounting; not to be assumed equal to CAKE |
+| CakePool `balanceOf()` | 203,751,102.981434 CAKE | Verified source defines this as direct token balance plus `totalBoostDebt`, not the token balance of the contract |
+
+The `balanceOf()` getter is therefore not a duplicate of the CAKE token's `balanceOf(pool)`: its difference from `available()` is approximately **190,357,444.623712 CAKE**, consistent with a substantial boost-debt component. The next capture enhancement adds the explicit `totalBoostDebt()` getter so that this relationship can be tested rather than inferred. Until that next read-only run succeeds, the difference is a derived cross-check from this artifact, not an independently captured `totalBoostDebt` field.
+
+## 8. SOL point-in-time observation from the same run
+
+The Solana RPC capture had no reported errors. `getSupply` returned finalized context slot **455,349,175**: circulating **588,848,618.770245 SOL**, non-circulating **46,750,203.227394 SOL**, combined **635,598,821.997639 SOL**. The separate `getSlot` request returned slot 455,349,174, one slot behind because calls are sequential; use the `getSupply` context slot for the supply observation. This is a point-in-time supply snapshot, not a historical activity series.
+
+### Interpretation boundary
+
+The new same-block state improves the description of the CakePool accounting, but it does **not** yet establish how much CAKE should be excluded from circulating supply. We still need the explicit boost-debt getter, relevant user-level lock-state/event history, and aligned source methodology before approving a canonical formula.

@@ -34,6 +34,7 @@ def fixture():
                 "total_shares": {**rpc("0x3635c9adc5dea00000"), "raw_integer": 1000000000000000000000},
                 "available": {**rpc("0x1bc16d674ec80000"), "raw_integer": 2000000000000000000},
                 "balance_of": {**rpc("0x29a2241af62c0000"), "raw_integer": 3000000000000000000},
+                "total_boost_debt": {**rpc("0x1bc16d674ec80000"), "raw_integer": 2000000000000000000},
             },
         },
     }
@@ -45,6 +46,7 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertEqual(POOL_VIEW_SELECTORS["total_shares"], ("totalShares()", "0x3a98ef39"))
         self.assertEqual(POOL_VIEW_SELECTORS["available"], ("available()", "0x48a0d754"))
         self.assertEqual(POOL_VIEW_SELECTORS["balance_of"], ("balanceOf()", "0x722713f7"))
+        self.assertEqual(POOL_VIEW_SELECTORS["total_boost_debt"], ("totalBoostDebt()", "0x7d5e81e2"))
 
     def test_normalizes_capture_and_preserves_context(self):
         result = normalize(fixture(), "actions-run:fixture")
@@ -65,6 +67,8 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertEqual(metrics["legacy_cake_pool_total_shares"]["unit"], "pool_shares")
         self.assertEqual(metrics["legacy_cake_pool_available"]["value"], "2")
         self.assertEqual(metrics["legacy_cake_pool_balance_of"]["value"], "3")
+        self.assertEqual(metrics["legacy_cake_pool_total_boost_debt"]["value"], "2")
+        self.assertIn("direct CAKE balance plus totalBoostDebt", metrics["legacy_cake_pool_balance_of"]["definition"])
         self.assertIn("not by itself a permanently burned", metrics["legacy_cake_pool_total_locked_amount"]["definition"])
         self.assertEqual(metrics["contract_total_supply"]["raw_artifact_ref"], "actions-run:fixture")
 

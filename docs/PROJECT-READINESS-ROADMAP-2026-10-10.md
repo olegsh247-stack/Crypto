@@ -173,3 +173,12 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - The Research On-chain Capture workflow is now triggered by commits to its unit-test files as well as the capture/normalizer scripts. This was committed as `87401ed5c0f5535b617239c6a661906caaddc9ca`.
 - GitHub Actions run [#38074692658](https://github.com/olegsh247-stack/Crypto/actions/runs/38074692658) started on that commit. At the latest check, Python setup, syntax check, and the evidence-normalizer unit tests had all passed. The live read-only SOL + CAKE RPC capture step was still running; normalization, envelope validation, and artifact upload had not yet completed.
 - **No pass is declared yet.** Do not accept the new CakePool getter values until the capture step finishes, the evidence envelope validates, and the artifact is inspected. If the public RPC calls hang/fail, review the job log and distinguish endpoint reliability from code/schema errors.
+
+
+## CI result and verified on-chain values — 2026-10-10
+
+- Research capture run [#38074692658](https://github.com/olegsh247-stack/Crypto/actions/runs/38074692658) **passed** end-to-end, including syntax check, normalizer tests, read-only RPC capture, normalization, evidence-envelope validation and artifact upload. Artifact name: `sol-cake-rpc-capture-38074692658`.
+- At BSC block 126,873,367: CAKE total supply 5,543,692,995.751051; dead-address balance 5,168,552,286.608597; pool token balance and `available()` 13,393,658.357722; `totalLockedAmount()` 10,643,456.465049; `totalShares()` 190,019,229.888360; CakePool `balanceOf()` 203,751,102.981434. Raw capture SHA-256: `56e6997159580821126388613bc644209e661a3636b42a217bc5a08ade459da5`.
+- The verified CakePool source defines `available()` as direct CAKE held by the pool and `balanceOf()` as direct CAKE plus `totalBoostDebt`. Therefore the apparent 190.357M CAKE difference is pool accounting debt, not a second wallet balance. Added a follow-up capture of `totalBoostDebt()` with tests so the identity can be reconciled directly.
+- SOL `getSupply` at finalized context slot 455,349,175 returned circulating 588,848,618.770245 SOL and non-circulating 46,750,203.227394 SOL; combined 635,598,821.997639 SOL. These are point-in-time values only.
+- **Still open:** canonical CAKE circulating-supply treatment and historical mint/burn reconciliation; SOL historical activity series; Product Contour v1 full readiness audit. No production writes, migration, publication, merge or VPS cutover.

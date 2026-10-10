@@ -74,6 +74,7 @@ POOL_VIEW_SELECTORS = {
     "total_shares": ("totalShares()", "0x3a98ef39"),
     "available": ("available()", "0x48a0d754"),
     "balance_of": ("balanceOf()", "0x722713f7"),
+    "total_boost_debt": ("totalBoostDebt()", "0x7d5e81e2"),
 }
 
 

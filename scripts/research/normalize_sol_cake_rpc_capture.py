@@ -198,6 +198,7 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
         ("total_shares", "legacy_cake_pool_total_shares", "pool_shares", True),
         ("available", "legacy_cake_pool_available", "CAKE", True),
         ("balance_of", "legacy_cake_pool_balance_of", "CAKE", True),
+        ("total_boost_debt", "legacy_cake_pool_total_boost_debt", "CAKE", True),
     )
     pool_url = "https://bscscan.com/address/0x45c54210128a065de780c4b0df3d16664f7f859e"
     for field, metric_id, unit, scaled in pool_metrics:
@@ -213,6 +214,12 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
         )
         if field == "total_shares":
             definition += " Shares are scaled by token decimals for readability and are not assumed equivalent to CAKE."
+        elif field == "available":
+            definition += " Verified source defines available() as the CAKE token balance held directly by the pool contract."
+        elif field == "balance_of":
+            definition += " Verified source defines balanceOf() as the pool's direct CAKE balance plus totalBoostDebt; it is an accounting value, not a wallet balance."
+        elif field == "total_boost_debt":
+            definition += " Verified source defines totalBoostDebt as the pool's boosted/owed CAKE accounting component; compare against balanceOf() minus available() as a consistency check."
         metrics.append(make_metric(
             "CAKE", metric_id, format(value, "f"), unit,
             f"bsc_eth_call_legacy_cake_pool_{field}", pool_url,
