@@ -5,7 +5,14 @@
 BEGIN;
 
 WITH candidate AS (
-  SELECT rs.scenario_type AS scenario_id, rs.snapshot_id
+  SELECT
+    rs.scenario_type AS scenario_id,
+    rs.snapshot_id,
+    coalesce((
+      SELECT jsonb_agg(e.evidence_id::text ORDER BY e.evidence_id)
+      FROM evidence e
+      WHERE e.snapshot_id = rs.snapshot_id
+    ), '[]'::jsonb) AS evidence_ids
   FROM research_scenarios rs
   JOIN research_snapshots s ON s.snapshot_id = rs.snapshot_id
   WHERE s.asset_id = 'eth'
@@ -23,7 +30,10 @@ SELECT
   'base',
   '0.50',
   'CI rollback rehearsal only',
-  jsonb_build_object('test_marker', 'scenario-state-rollback-rehearsal'),
+  jsonb_build_object(
+    'test_marker', 'scenario-state-rollback-rehearsal',
+    'evidence_ids', evidence_ids
+  ),
   now(),
   snapshot_id
 FROM candidate;
@@ -40,6 +50,18 @@ BEGIN
 
   IF rows_found <> 1 THEN
     RAISE EXCEPTION 'scenario state insert rehearsal expected 1 row, got %', rows_found;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM scenario_states
+    WHERE asset_id = 'eth'
+      AND scenario_id = 'base'
+      AND rationale = 'CI rollback rehearsal only'
+      AND indicators->>'test_marker' = 'scenario-state-rollback-rehearsal'
+      AND jsonb_typeof(indicators->'evidence_ids') = 'array'
+      AND jsonb_array_length(indicators->'evidence_ids') > 0
+  ) THEN
+    RAISE EXCEPTION 'scenario state rehearsal did not include baseline evidence IDs';
   END IF;
   RAISE NOTICE 'SCENARIO_STATE_ROLLBACK_INSERT_OK rows=%', rows_found;
 END $$;
