@@ -227,6 +227,14 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
             raw_artifact_ref, definition, CAKE_TOKENOMICS_URL,
         ))
 
+    # Verified CakePool source: balanceOf() = token.balanceOf(address(this)) + totalBoostDebt.
+    # available() is token.balanceOf(address(this)); enforce the identity at the pinned block.
+    available_raw = pool_state["available"].get("raw_integer")
+    balance_of_raw = pool_state["balance_of"].get("raw_integer")
+    boost_debt_raw = pool_state["total_boost_debt"].get("raw_integer")
+    if balance_of_raw != available_raw + boost_debt_raw:
+        raise ValueError("CakePool balanceOf() must equal available() + totalBoostDebt() at the pinned block")
+
     return {"schema_version": "1.0", "metrics": metrics}
 
 
