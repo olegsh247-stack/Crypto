@@ -106,8 +106,9 @@ def first_block_at_or_after(target: int, latest: int, cache: dict[int, dict[str,
     low, high = 0, latest
     while low < high:
         mid = (low + high) // 2
-        block = cache.setdefault(mid, block_by_number(mid))
-        timestamp = hex_int(block.get("timestamp"), "timestamp")
+        if mid not in cache:
+            cache[mid] = block_by_number(mid)
+        timestamp = hex_int(cache[mid].get("timestamp"), "timestamp")
         if timestamp >= target:
             high = mid
         else:
