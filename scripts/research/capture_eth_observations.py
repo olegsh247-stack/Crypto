@@ -222,6 +222,14 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
                 key: type(slot_sample.get(key)).__name__ if key in slot_sample else "missing"
                 for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blobsUsed", "fromTimestamp", "toTimestamp", "blocks")
             },
+            "staking_sample_value_types": {
+                key: type(staking_sample.get(key)).__name__ if key in staking_sample else "missing"
+                for key in ("activeBalanceGwei", "activeValidators", "pendingDepositsGwei", "scheduledActivationsGwei", "scheduledExitsGwei", "entryQueueWaitSeconds", "exitQueueWaitSeconds")
+            },
+            "queue_sample_value_types": {
+                key: type(queue_sample.get(key)).__name__ if key in queue_sample else "missing"
+                for key in ("entryQueueWaitSeconds", "exitQueueWaitSeconds")
+            },
             "summary_value_types": {
                 key: type(history_summary.get(key)).__name__ if key in history_summary else "missing"
                 for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blocks", "fromTimestamp", "toTimestamp")
