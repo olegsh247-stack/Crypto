@@ -1,0 +1,56 @@
+name: Research CAKE Historical Month-boundary Capture
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/capture_cake_month_end_rpc.py"
+      - "scripts/research/capture_sol_cake_rpc.py"
+      - "scripts/research/tests/test_capture_cake_month_end_rpc.py"
+      - ".github/workflows/research-cake-history-capture.yml"
+  push:
+    branches:
+      - "fix/product-contour-v1-contracts"
+    paths:
+      - "scripts/research/capture_cake_month_end_rpc.py"
+      - "scripts/research/capture_sol_cake_rpc.py"
+      - "scripts/research/tests/test_capture_cake_month_end_rpc.py"
+      - ".github/workflows/research-cake-history-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cake-history-capture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Read-only CAKE month-boundary state capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: |
+          python -m py_compile scripts/research/capture_cake_month_end_rpc.py scripts/research/capture_sol_cake_rpc.py
+      - name: Test historical block selection
+        run: |
+          PYTHONPATH=scripts/research python -m unittest discover -s scripts/research/tests -p 'test_capture_cake_month_end_rpc.py'
+      - name: Capture read-only month-boundary state
+        run: |
+          mkdir -p research-capture
+          python scripts/research/capture_cake_month_end_rpc.py --output research-capture/cake-month-boundary-capture.json
+      - name: Upload historical capture artifact
+        if: ${{ always() && hashFiles('research-capture/cake-month-boundary-capture.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cake-month-boundary-capture-${{ github.run_id }}
+          path: research-capture/cake-month-boundary-capture.json
+          if-no-files-found: error
+          retention-days: 7

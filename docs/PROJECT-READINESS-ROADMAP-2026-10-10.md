@@ -191,3 +191,10 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - Raw capture SHA-256: `8f1cad22f097456c76b59ef20ba47f6ffc70d70011d377a685167887ebc1d9f3`; normalized envelope SHA-256: `09c1a3734b1adf6473ace77b5162d23d15e2e5ac809bd06eb2981707b344f58a`.
 - Added a normalizer invariant and negative test: inconsistent pool accounting is rejected. Full details are in [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md).
 - **Closed:** read-only capture of current CakePool accounting getters and the source-backed balance identity. **Still open:** determining which, if any, pool-related amount belongs excluded from circulating supply; historical month-boundary supply/lock/event reconciliation; SOL historical activity; Product Contour v1 readiness.
+
+
+## Next implementation block — CAKE historical month-boundary state capture
+
+- Added a separate read-only workflow/script to select the last BSC block at or before each UTC boundary (2026-06-01, 2026-07-01, 2026-08-01, 2026-09-01, 2026-10-01) using binary search over block timestamps.
+- Each selected block captures total supply, dead-address balance, legacy CakePool token balance, `available()`, `totalBoostDebt()`, `balanceOf()`, `totalLockedAmount()`, and `totalShares()`, preserving block number/hash/timestamp and boundary offset. No values are subtracted from circulating supply by this script.
+- Unit tests cover timestamp parsing and at-or-before block selection. The new workflow must pass before these historical snapshots are treated as evidence; the next work is to inspect the artifact, then add bounded event history if the public RPC supports it.
