@@ -29,7 +29,7 @@ jobs:
           BSC_RPC_URL: https://rpc-bnb.blockmachine.io
           RPC_MIN_INTERVAL_SECONDS: "1.05"
         run: |
-          python scripts/research/capture_cake_transfer_logs.py --chunk-size 50000 --output cake-transfer-log-reconciliation.json
+          python scripts/research/capture_cake_transfer_logs.py --chunk-size 10000 --output cake-transfer-log-reconciliation.json
       - name: Upload raw reconciliation artifact
         if: always()
         uses: actions/upload-artifact@v4
