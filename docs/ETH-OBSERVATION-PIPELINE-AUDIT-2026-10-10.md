@@ -132,8 +132,9 @@ No numeric thresholds have been approved. Next work is independent source valida
 
 ## 11. Current-head validation — 2026-10-10
 
-- [Product Contour Gate #172 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38037847163): Worker dry-run bundle, UI/runtime contract, and disposable PostgreSQL migration rehearsal.
-- [VPS API Build Rehearsal #198 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38037847001): API/worker build, read-only observations contract, protected ingestion, arithmetic-mismatch rejection, 578-row live capture insertion and idempotent replay, worker ingestion/parity, read-only scenario preflight, and admin-boundary checks.
-- [ETH Observation Capture #71 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38037847009): 578 candidate rows; exact accounting reconciliation on 48/48 intervals; four unresolved metric/source gaps remain.
+- [Product Contour Gate #177 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012532): Worker dry-run bundle, UI/runtime contract, and disposable PostgreSQL migration rehearsal.
+- [VPS API Build Rehearsal #203 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012458): API/worker build, read-only observations contract, protected ingestion, exact accounting-mismatch rejection, 578-row live capture insertion and idempotent replay, worker ingestion/parity, read-only scenario preflight, and admin-boundary checks.
+- [ETH Observation Capture #76 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012377): 578 candidate rows; exact accounting reconciliation on 48/48 intervals.
+- [Research On-chain Capture #151 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38038012347): source capture and artifact checks.
 
 All database writes in these tests were confined to disposable PostgreSQL. The production migration has not been run, the Worker has not been deployed, the published ETH snapshot has not been changed, no monitoring signal/event or scenario state was written, and PR #3 remains open/Draft.
