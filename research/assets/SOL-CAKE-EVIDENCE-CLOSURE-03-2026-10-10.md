@@ -12,6 +12,7 @@
 4. `scripts/research/tests/test_normalize_sol_cake_rpc_capture.py` — fixture tests for normalized values, context preservation, wrong chain and unpinned block.
 5. `.github/workflows/research-evidence-envelope-tests.yml` — Python 3.12 compile + unit-test workflow, triggered by relevant pushes and pull requests.
 6. `docs/RESEARCH-EVIDENCE-ENVELOPE-V1.md` — contract definition, field semantics and guardrails.
+7. `.github/workflows/research-onchain-capture.yml` — runs the read-only RPC capture, then the normalizer/validator on successful capture, and uploads both JSON files in one seven-day artifact. The workflow also runs on pushes to this working branch when capture-related paths change.
 
 ## Validation history
 
@@ -30,10 +31,10 @@ The envelope explicitly separates direct on-chain observations, provider metrics
 ## Scope deliberately not yet implemented
 
 - No live provider adapter has been added: SDA providers may require API keys, and data access/terms have not been configured or reviewed.
-- No new SOL or CAKE RPC capture was executed in this pass.
+- The workflow integration has been committed, but a fresh SOL/CAKE RPC capture is not yet confirmed. Do not treat fixture tests as a live-source validation.
 - No evidence was written to Neon; no scores, scenarios, monitoring events or published snapshots were created.
 - No deployment or merge to `main` occurred.
 
 ## Next step
 
-Next, wire the tested normalizer into the read-only capture workflow so each successful run validates and uploads both the raw capture and normalized envelope. Keep publication and database writes out of that workflow. Fresh RPC execution still requires a new workflow run; no fresh capture is claimed here. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
+Next, inspect the workflow run triggered by the workflow change and confirm both artifacts are present. Then compare raw and normalized values from that same fresh capture. Keep publication and database writes out of that workflow. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
