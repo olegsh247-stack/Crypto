@@ -12,6 +12,7 @@ import datetime as dt
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -28,6 +29,8 @@ LOCKED_CANDIDATES = {
     "precompile_0x1_balance": "0x0000000000000000000000000000000000000001",
     "precompile_0x2_balance": "0x0000000000000000000000000000000000000002",
 }
+RPC_MIN_INTERVAL_SECONDS = max(0.0, float(os.environ.get("RPC_MIN_INTERVAL_SECONDS", "0")))
+_LAST_RPC_CALL_MONOTONIC = 0.0
 
 
 def utc_now() -> str:
@@ -35,6 +38,12 @@ def utc_now() -> str:
 
 
 def rpc_post(endpoint: str, method: str, params: list[Any]) -> dict[str, Any]:
+    global _LAST_RPC_CALL_MONOTONIC
+    elapsed = time.monotonic() - _LAST_RPC_CALL_MONOTONIC
+    delay = RPC_MIN_INTERVAL_SECONDS - elapsed
+    if delay > 0:
+        time.sleep(delay)
+    _LAST_RPC_CALL_MONOTONIC = time.monotonic()
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
     request = urllib.request.Request(
         endpoint,
