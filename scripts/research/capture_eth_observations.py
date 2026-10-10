@@ -313,8 +313,11 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
                 "metric_id": metric_id, "asset_id": "ETH", "value_numeric": value, "unit": unit,
                 "observed_at": end, "period_start": start, "period_end": end,
                 "source_id": "ethsupply_fyi", "source_url": source_url,
-                "methodology": f"{description} Source field={field}; interval bounds retained. {methodology_base}",
+                "methodology": f"{description} Source field={field}; interval bounds retained; provider slots={row.get('fromSlot')}..{row.get('toSlot')}; blocks={row.get('blocks')}. {methodology_base}",
                 "quality": quality,
+                "source_interval_blocks": row.get("blocks"),
+                "source_from_slot": row.get("fromSlot"),
+                "source_to_slot": row.get("toSlot"),
             })
 
     staking = payload.get("staking") if isinstance(payload.get("staking"), list) else []
