@@ -54,6 +54,12 @@ function inspect(source, body, requireLineage) {
       assert(row.snapshot_id === snapshot.snapshot_id, source + " exposed scenario state snapshot mismatch: " + JSON.stringify(row));
     }
   }
+  for (const field of ["critical_factors", "scores"]) {
+    for (const row of body[field] || []) {
+      assert(row.snapshot_id === snapshot.snapshot_id,
+        source + " " + field + " row is not scoped to latest published snapshot: " + JSON.stringify(row));
+    }
+  }
 
   const counts = {};
   for (const [field, label] of requiredArrays) {
@@ -70,6 +76,8 @@ function inspect(source, body, requireLineage) {
     scenario_types: types,
     definition_lineage: scenarios.every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "not_exposed_by_runtime",
     state_lineage: states.every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : (states.length === 0 ? "no_state_rows" : "not_exposed_by_runtime"),
+    factor_lineage: (body.critical_factors || []).every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "mismatch",
+    score_lineage: (body.scores || []).every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "mismatch",
     counts
   };
 }
