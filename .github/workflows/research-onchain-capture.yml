@@ -4,6 +4,16 @@ on:
   pull_request:
     paths:
       - "scripts/research/capture_sol_cake_rpc.py"
+      - "scripts/research/normalize_sol_cake_rpc_capture.py"
+      - "scripts/research/validate_evidence_envelope.py"
+      - ".github/workflows/research-onchain-capture.yml"
+  push:
+    branches:
+      - "fix/product-contour-v1-contracts"
+    paths:
+      - "scripts/research/capture_sol_cake_rpc.py"
+      - "scripts/research/normalize_sol_cake_rpc_capture.py"
+      - "scripts/research/validate_evidence_envelope.py"
       - ".github/workflows/research-onchain-capture.yml"
   workflow_dispatch:
 
@@ -27,16 +37,27 @@ jobs:
         with:
           python-version: "3.12"
       - name: Syntax check
-        run: python -m py_compile scripts/research/capture_sol_cake_rpc.py
+        run: |
+          python -m py_compile \
+            scripts/research/capture_sol_cake_rpc.py \
+            scripts/research/normalize_sol_cake_rpc_capture.py \
+            scripts/research/validate_evidence_envelope.py
       - name: Capture public on-chain state (read-only)
         run: |
           mkdir -p research-capture
           python scripts/research/capture_sol_cake_rpc.py --output research-capture/sol-cake-rpc-capture.json
-      - name: Upload raw evidence artifact
+      - name: Normalize and validate evidence envelope
+        if: ${{ success() && hashFiles('research-capture/sol-cake-rpc-capture.json') != '' }}
+        run: |
+          python scripts/research/normalize_sol_cake_rpc_capture.py \
+            research-capture/sol-cake-rpc-capture.json \
+            --raw-artifact-ref "github-actions-artifact:sol-cake-rpc-capture-${GITHUB_RUN_ID}" \
+            --output research-capture/sol-cake-evidence-envelope.json
+      - name: Upload capture artifacts
         if: ${{ always() && hashFiles('research-capture/sol-cake-rpc-capture.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: sol-cake-rpc-capture-${{ github.run_id }}
-          path: research-capture/sol-cake-rpc-capture.json
+          path: research-capture/*.json
           if-no-files-found: error
           retention-days: 7
