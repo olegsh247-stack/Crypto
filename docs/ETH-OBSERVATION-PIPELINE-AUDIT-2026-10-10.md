@@ -3,7 +3,7 @@
 **Date:** 2026-10-10  
 **Issue:** [#5 — ETH vertical slice: persist dated numeric observations and evaluate monitoring signals](https://github.com/olegsh247-stack/Crypto/issues/5)  
 **Branch:** `fix/product-contour-v1-contracts`  
-**Scope:** Read-only source audit. No database writes, migrations, deployments, or scenario-state publication.
+**Scope:** Source/schema audit and disposable-PostgreSQL rehearsal. No production writes, production migrations, deployments, or scenario-state publication.
 
 ## 1. Findings from the canonical model
 
@@ -27,7 +27,7 @@ The canonical `sources` and `metric_definitions` tables are present. The table h
 4. The metric registry file is primarily a BTC reference registry. ETH-specific numeric metric definitions must be explicit and must not be inferred by relabeling BTC metrics.
 5. The existing public market-candle ingestion has fallback providers and normalizes candles into a common table. That path is suitable for price history, but does not provide supply-flow, L1 fee, L2 scale, or staking-queue observations.
 
-## 3. Proposed first metric contract (capture-only; not yet approved for ingestion)
+## 3. Original candidate metric contract (superseded by the source-contract document)
 
 Keep these data series independent. Each capture record must carry the provider's actual observation time/window, source URL, units, method, and quality caveats.
 
@@ -39,9 +39,9 @@ Keep these data series independent. Each capture record must carry the provider'
 | L2 scale | Total value secured (TVS) or another explicitly named aggregate, with a fixed L2 universe and source methodology | USD; provider snapshot time | L2BEAT public API/data | TVS is not transaction count and can change with asset prices or methodology |
 | Staking queue | Validator entry and exit queue sizes or wait times, stored as separate metrics | validators and/or estimated days; point-in-time | Ethereum consensus/staking queue source with public documented endpoint | Do not combine entry and exit queues; preserve source's estimate and timestamp |
 
-These are candidate definitions, not current measured values. A metric should be omitted from the first capture if its authoritative endpoint, units, or time semantics cannot be validated. No values should be fabricated to fill a row.
+This table records the initial proposal. Current metric IDs, units and source field semantics are documented in [ETH Metric Source Contracts](ETH-METRIC-SOURCE-CONTRACTS-2026-10-10.md). Provider-derived interval and queue values are now captured and rehearsed in disposable PostgreSQL, but remain candidates pending independent cross-check. No values or thresholds are fabricated.
 
-## 4. Original implementation sequence (progress updated in sections 8–9)
+## 4. Original implementation sequence (progress updated in sections 8–10)
 
 1. Finish the current-head Product Contour Gate, VPS Build Rehearsal, and on-chain capture workflow checks.
 2. Complete a repository-wide inventory of observation-related constraints, metric definitions, monitoring signal schema, admin route patterns, and Worker/VPS parity.
@@ -74,15 +74,15 @@ Observed source behavior:
 - Binance ticker endpoint returned a positive price, but its response does not carry a provider observation timestamp. The record therefore labels the timestamp as capture-time proxy and keeps the unit as `USDT/ETH`.
 - Ethereum public JSON-RPC returned a latest block and fields needed for a single-block base-fee burn calculation. This is not total fees and is not a daily series.
 - The documented L2BEAT TVS request returned an error in the first capture. Review of the official OpenAPI specification established that this API requires an API key in the query string. The capture now skips it explicitly when no approved credential is configured; no key is logged or written to an artifact. Do not add an API key to ordinary CI until a reviewed secret-handling approach is approved.
-- Net supply flow and separate staking entry/exit queues remain unmeasured gaps.
+- At the time of this first capture, net supply flow and separate staking entry/exit queues were unmeasured; candidate series are now captured as described in sections 9–10.
 
 Additional repository inventory:
 - The canonical seed registry is BTC-centric. Existing `market.spot_price` is described as BTC and defaults to `USD/BTC`; ETH measurements must not reuse that metric ID. The capture script now uses separate `eth.*` metric IDs.
-- `market_binance` exists in the market-data source migration. `ethereum_public_rpc` and the two ETH metric definitions were absent from the prior base migrations; the additive migration draft now registers them. Production remains unmigrated.
+- `market_binance` exists in the market-data source migration. `ethereum_public_rpc`, `ethsupply_fyi` and twelve ETH-specific metric definitions are registered by the additive migration draft. Production remains unmigrated.
 - At the time of the initial inventory, Worker and VPS API did not expose a dedicated read-only observations endpoint. This gap is now addressed by the contract documented in section 8.
 - The base observations schema has no natural-key uniqueness constraint. Section 9 now documents the revision-1 replay semantics and additive unique index, rehearsed against disposable PostgreSQL.
 
-The capture workflow's successful status validates script syntax, artifact structure and safety assertions; it does not mean all five metric families have been sourced or that the artifact is ready for database ingestion.
+The first capture's successful status validated the original two-metric artifact. Current capture and ingestion results are documented in sections 8–10; provider-derived series still require independent cross-check before signal evaluation.
 
 
 ### L2BEAT access clarification
@@ -106,7 +106,7 @@ Contract:
 
 The VPS Build Rehearsal now checks the response contract and input validation against disposable PostgreSQL. The existing Product Contour Gate and VPS Build Rehearsal must pass on the latest branch head before this endpoint is considered validated. The public Worker endpoint has not been deployed; do not use the live production endpoint as proof of branch behavior.
 
-This is read access only. Controlled ingestion, source artifact validation, natural-key upsert, persisted observation checks, and signal evaluation remain subsequent steps. No production data was written and no production migration was run.
+This endpoint is read access only. Controlled ingestion, source artifact validation, natural-key replay and persisted observation checks are implemented in section 9. Signal evaluation remains subsequent. No production data was written and no production migration was run.
 ## 9. Controlled artifact ingestion — implementation in review
 
 Added POST /api/admin/observations to both API runtimes. The route is protected by the existing Bearer ADMIN_TOKEN boundary and accepts the capture artifact format produced by scripts/research/capture_eth_observations.py.
@@ -125,6 +125,6 @@ The VPS Build Rehearsal exercises missing authentication, rejected write-flag ar
 The endpoint is not called by ordinary capture CI and has not been used against production. The new migration remains unexecuted against production. This implementation intentionally does not evaluate monitoring signals, create monitoring events, publish scenario states, or treat the capture-time ETH/USDT price as sufficient evidence for a thesis transition. The ethsupply.fyi series remain candidates pending independent cross-check.
 ## 10. Monitoring mapping and threshold boundary
 
-The six ETH thesis signals are mapped in [ETH Monitoring Signal Mapping](ETH-MONITORING-SIGNAL-MAPPING-2026-10-10.md). The capture now provides 12 metric families and recent runs have demonstrated idempotent ingestion of 482 candidate rows into disposable PostgreSQL. This improves evidence coverage for provider-reported issuance/burn components and staking queues, but it does not close the six-signal evaluation problem: ethsupply.fyi accounting has not yet been independently cross-checked; the interval series is not a daily fee/activity aggregate; L2 activity/TVS, validator concentration, comparable alternative-L1 share and official milestone status remain gaps. The spot-price timestamp remains a capture-time proxy, and one-block base-fee burn remains a point observation.
+The six ETH thesis signals are mapped in [ETH Monitoring Signal Mapping](ETH-MONITORING-SIGNAL-MAPPING-2026-10-10.md), with source fields and constraints in [ETH Metric Source Contracts](ETH-METRIC-SOURCE-CONTRACTS-2026-10-10.md). The capture now provides 12 metric families and recent runs have demonstrated idempotent ingestion of 482 candidate rows into disposable PostgreSQL. This improves evidence coverage for provider-reported issuance/burn components and staking queues, but it does not close the six-signal evaluation problem: ethsupply.fyi accounting has not yet been independently cross-checked; the interval series is not a daily fee/activity aggregate; L2 activity/TVS, validator concentration, comparable alternative-L1 share and official milestone status remain gaps. The spot-price timestamp remains a capture-time proxy, and one-block base-fee burn remains a point observation.
 
 No numeric thresholds have been approved. Next work is source validation and window/threshold design, not a fabricated evaluator. Any evaluator must leave signal state and last_updated_at unchanged on failed or incomplete evaluation. No monitoring events or scenario state should be created from observation arrival alone.
