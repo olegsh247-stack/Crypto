@@ -94,4 +94,31 @@ for (const key of Object.keys(liveResult.counts)) {
     "live/VPS count mismatch for " + key + ": live=" + liveResult.counts[key] + " vps=" + vpsResult.counts[key]);
 }
 
+const decisionInputs = {
+  critical_factors: (liveBody.critical_factors || []).map(row => ({
+    name: row.name, current_state: row.current_state, trend: row.trend,
+    confidence: row.confidence, thesis_impact: row.thesis_impact,
+    monitoring_priority: row.monitoring_priority, snapshot_id: row.snapshot_id
+  })),
+  scores: (liveBody.scores || []).map(row => ({
+    score_type: row.score_type, value: row.value, confidence: row.confidence,
+    explanation: row.explanation, snapshot_id: row.snapshot_id
+  })),
+  evidence: (liveBody.evidence || []).map(row => ({
+    evidence_id: row.evidence_id, research_block_id: row.research_block_id,
+    research_domain_id: row.research_domain_id, claim: row.claim,
+    data_summary: row.data_summary, signal: row.signal, assessment: row.assessment,
+    confidence: row.confidence, thesis_impact: row.thesis_impact, status: row.status,
+    as_of: row.as_of, metric_id: row.metric_id, observation_value: row.observation_value,
+    observation_text: row.observation_text, observation_unit: row.observation_unit,
+    source_name: row.source_name, source_url: row.source_url
+  })),
+  scenario_definitions: (liveBody.research_scenarios || []).map(row => ({
+    scenario_type: row.scenario_type, probability: row.probability,
+    assumptions: row.assumptions, supporting_evidence: row.supporting_evidence,
+    invalidation_conditions: row.invalidation_conditions, thesis_impact: row.thesis_impact,
+    confidence: row.confidence
+  }))
+};
 console.log("ETH_SCENARIO_PREFLIGHT_OK " + JSON.stringify({ live: liveResult, vps: vpsResult }));
+console.log("ETH_SCENARIO_DECISION_INPUTS " + JSON.stringify(decisionInputs));
