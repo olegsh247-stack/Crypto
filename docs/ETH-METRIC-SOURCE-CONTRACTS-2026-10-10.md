@@ -66,11 +66,8 @@ No source is selected yet. Before a source adapter is approved, define a fixed p
 
 ## 6. Current status and implementation boundary
 
-The branch currently registers two capture candidates:
+The branch now registers 12 ETH metric IDs across three evidence groups: Binance ETH/USDT spot price (capture-time proxy), one execution block's base-fee burn, and ethsupply.fyi historical interval/point candidates for issuance, burn components, net supply flow, staking queue balances and queue wait times. The current capture artifact probes provider freshness/coverage and emits up to 48 recent historical rows per supported series; one recent run produced 482 rows. This demonstrates capture and disposable-database ingestion, not independent verification of the provider's accounting or completeness.
 
-- `eth.market_spot_price` — Binance ETH/USDT spot; capture timestamp is a proxy because the ticker response does not provide provider observation time.
-- `eth.base_fee_burned_per_block` — one block's base-fee burn from Ethereum JSON-RPC; excludes priority fees and is not a daily series.
-
-These two candidates do not yet supply the six-signal evaluator. The **read-only ethsupply.fyi schema probe** is now part of the capture artifact and reports live availability/freshness, historical coverage, point counts and actual sample field/type shapes. Inspect the newest artifact for the slot/summary fields and per-metric freshness; then cross-check one interval against an independent source. Only after exact response semantics are confirmed should daily/epoch metric IDs and source registry entries be added. Do not implement thresholds or update monitoring signals until the metric definitions and source windows are evidence-backed.
+The ethsupply.fyi series are still third-party candidates. Cross-check representative intervals, units, timestamps and accounting semantics against an independent source before using them for thesis evaluation. Interval data must not be silently relabelled daily. L2 TVS/activity still require approved API access or a verified alternative; validator concentration, a daily L1 activity/fee series, a comparable alternative-L1 peer set and official milestone status remain separate gaps. Do not implement numeric thresholds or update monitoring signals until definitions, source quality, windows and rationale are evidence-backed.
 
 No production migration, observation write, Worker deployment, signal evaluation, scenario-state publication, or PR merge is authorized by this document.
