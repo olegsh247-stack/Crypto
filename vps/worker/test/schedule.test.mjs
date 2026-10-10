@@ -50,3 +50,13 @@ test("a boundary is strictly in the future, including at midnight", () => {
   const now = new Date("2026-10-25T23:00:00.000Z");
   assert.equal(nextLondonDayBoundary(now).toISOString(), "2026-10-26T00:00:00.000Z");
 });
+
+test("candle boundary is midnight on the London calendar day at spring DST change", async () => {
+  const { londonDayBoundary } = await import("../dist/schedule.js");
+  assert.equal(londonDayBoundary(new Date("2026-03-29T12:00:00.000Z")).toISOString(), "2026-03-29T00:00:00.000Z");
+});
+
+test("candle boundary is midnight on the London calendar day at autumn DST change", async () => {
+  const { londonDayBoundary } = await import("../dist/schedule.js");
+  assert.equal(londonDayBoundary(new Date("2026-10-25T12:00:00.000Z")).toISOString(), "2026-10-24T23:00:00.000Z");
+});
