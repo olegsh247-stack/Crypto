@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Live API verification includes Dashboard payload contracts for BTC, ETH, SOL and CAKE.
 const base = (process.env.CRYPTO_API_URL || "").replace(/\/$/, "");
 if (!base) throw new Error("CRYPTO_API_URL is required");
 
