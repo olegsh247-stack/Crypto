@@ -31,10 +31,12 @@ The envelope explicitly separates direct on-chain observations, provider metrics
 ## Scope deliberately not yet implemented
 
 - No live provider adapter has been added: SDA providers may require API keys, and data access/terms have not been configured or reviewed.
-- Workflow run #186 successfully captured fresh RPC state, normalized seven metrics and uploaded both JSON files: https://github.com/olegsh247-stack/Crypto/actions/runs/38061956090. Raw-vs-normalized comparison exposed a units bug: `getSupply` lamport counts had initially been labeled as SOL. The normalizer and fixture tests have now been corrected to divide by 1e9 and reject non-integer `getSupply` values. A new workflow run must confirm the fix against live data before considering the evidence pass closed.
+- Workflow run #186 captured fresh RPC state and uploaded both JSON files: https://github.com/olegsh247-stack/Crypto/actions/runs/38061956090. Raw-vs-normalized comparison exposed a units bug: `getSupply` lamport counts had initially been labeled as SOL. The normalizer and fixture tests were corrected to divide by 1e9 and reject non-integer `getSupply` values.
+- Corrected live run: https://github.com/olegsh247-stack/Crypto/actions/runs/38062042855 — **success**. Raw capture reports no RPC errors; both raw and normalized JSON artifacts were uploaded. Seven normalized metrics were cross-checked against raw values using exact decimal arithmetic: SOL circulating and non-circulating supply (lamports → SOL), CAKE `totalSupply`, burn-address balance and derived subtraction; BSC chain ID is 56 and all CAKE reads use pinned block `0x78d...` (exact block is recorded in the raw artifact). All seven reconciliation checks passed.
+- Corrected unit-test workflow: https://github.com/olegsh247-stack/Crypto/actions/runs/38062050577 — **success**, including compile and unit tests.
 - No evidence was written to Neon; no scores, scenarios, monitoring events or published snapshots were created.
 - No deployment or merge to `main` occurred.
 
 ## Next step
 
-Next, confirm the new workflow run succeeds with corrected SOL units, then compare raw and normalized values from that same capture. Keep publication and database writes out of that workflow. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
+Next, use the verified capture as evidence input for the separate semantic/source-quality review. Do not promote SOL/CAKE to published product signals until historical SOL activity/provider evidence and CAKE same-window supply/economics reconciliation are completed. Keep publication and database writes out of the capture workflow.
