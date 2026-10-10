@@ -40,6 +40,9 @@ jobs:
       - name: Build VPS worker
         working-directory: vps/worker
         run: npm install && npm run build
+      - name: VPS worker London schedule tests
+        working-directory: vps/worker
+        run: node --test test/schedule.test.mjs
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
@@ -429,7 +432,7 @@ jobs:
         run: |
           set -euo pipefail
           before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
-          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
+          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(jsonb_agg(to_jsonb(s) order by to_jsonb(s)::text)::text, '[]') from monitoring_signals s where status <> 'disabled';")
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           result=$(grep -Eo '\{"status":"ok","service":"crypto-worker-vps"[^}]*\}' /tmp/crypto-vps-worker-1.log | tail -1)
@@ -463,15 +466,11 @@ jobs:
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-2.log
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;")
           test "$duplicates" = "0"
-          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
+          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(jsonb_agg(to_jsonb(s) order by to_jsonb(s)::text)::text, '[]') from monitoring_signals s where status <> 'disabled';")
           monitoring_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled';")
-          if [ "$monitoring_count" -gt 0 ]; then
-            test "$monitoring_after" = "$monitoring_before"
-            monitoring_signal_timestamp_unchanged=1
-          else
-            monitoring_signal_timestamp_unchanged=1
-          fi
-          echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_signal_timestamp_unchanged=$monitoring_signal_timestamp_unchanged"
+          test "$monitoring_count" -gt 0
+          test "$monitoring_after" = "$monitoring_before"
+          echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_signals=$monitoring_count full_signal_rows_unchanged=1"
       - name: VPS API parity against live Worker
         env:
           LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
