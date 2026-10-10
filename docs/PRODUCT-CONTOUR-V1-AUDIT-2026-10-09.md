@@ -109,3 +109,13 @@ A review of the actual Worker and VPS scheduler found a confirmed freshness-cont
 The correction removes that timestamp update from both schedulers. Candle ingestion now updates market history only; the existing research-review expiry check remains separate. Signal timestamps must not advance until a real signal-evaluation path updates the signal values. The VPS rehearsal assertion was changed accordingly: two idempotent ingestion runs must leave monitoring-signal timestamps unchanged.
 
 This is a product correctness fix, not a monitoring feature completion. The current signals still lack a complete numeric metric/evaluation path, so ETH scenario-state publication remains blocked. No production data was written and no monitoring event was created. Product Contour Gate and VPS API Build Rehearsal must pass on the resulting branch head before this correction is accepted.
+
+## Verification update — 2026-10-10
+
+The follow-up monitoring-freshness correction is now validated on code commit `351c843d8cd7118f82572417c72a4d061bc297f8`:
+
+- Product Contour Gate #97 passed: [run #38033586960](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586960).
+- VPS API Build Rehearsal #123 passed: [run #38033586868](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586868).
+- Read-only SOL/CAKE RPC capture and artifact upload passed: [run #38033586920](https://github.com/olegsh247-stack/Crypto/actions/runs/38033586920).
+
+These runs validate the tested code paths and the correction that market-candle ingestion must not fake monitoring-signal freshness. They do not supply the missing metric-backed signal-evaluation path or justify publishing a scenario state. The next implementation task is tracked in [Issue #5](https://github.com/olegsh247-stack/Crypto/issues/5). PR #3 remains Draft; production release, migration, deployment and data publication remain unapproved.
