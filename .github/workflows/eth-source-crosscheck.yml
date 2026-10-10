@@ -1,0 +1,68 @@
+name: ETH Independent Interval Cross-check (research)
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/crosscheck_ethsupply_interval.py"
+      - "scripts/research/capture_eth_observations.py"
+      - ".github/workflows/eth-source-crosscheck.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eth-source-crosscheck-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crosscheck:
+    name: Read-only ethsupply interval vs Ethereum RPC
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: |
+          python -m py_compile scripts/research/capture_eth_observations.py scripts/research/crosscheck_ethsupply_interval.py
+      - name: Unit-check exact arithmetic helpers
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts/research")
+          from crosscheck_ethsupply_interval import eth_decimal_to_wei, fake_exponential
+          assert eth_decimal_to_wei("1.000000000000000000") == 10**18
+          assert eth_decimal_to_wei("-0.000000000000000001") == -1
+          assert fake_exponential(1, 0, 3338477) == 1
+          print("ETH_SOURCE_CROSSCHECK_ARITHMETIC_OK")
+          PY
+      - name: Capture public source (read-only)
+        run: python scripts/research/capture_eth_observations.py --output /tmp/eth-observation-capture.json
+      - name: Cross-check the latest complete interval
+        run: |
+          python scripts/research/crosscheck_ethsupply_interval.py --artifact /tmp/eth-observation-capture.json --output /tmp/eth-source-crosscheck.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/eth-source-crosscheck.json'))
+          assert d.get('database_write_performed') is False
+          assert d.get('blockchain_write_performed') is False
+          assert d.get('status') in {'matched','mismatch','not_evaluable'}, d
+          print("ETH_SOURCE_CROSSCHECK_STATUS="+str(d.get('status')))
+          if d.get('status') != 'matched':
+              print("::warning::Independent ETH source comparison is not accepted; inspect the uploaded research artifact.")
+          PY
+      - name: Upload read-only cross-check artifacts
+        if: ${{ always() && hashFiles('/tmp/eth-observation-capture.json', '/tmp/eth-source-crosscheck.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eth-independent-source-crosscheck-${{ github.run_id }}
+          path: |
+            /tmp/eth-observation-capture.json
+            /tmp/eth-source-crosscheck.json
+          if-no-files-found: warn
+          retention-days: 7
