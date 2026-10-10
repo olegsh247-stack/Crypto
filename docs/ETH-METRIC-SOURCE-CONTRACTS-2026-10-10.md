@@ -176,3 +176,28 @@ Reviewed the official Ethereum consensus API specification and protocol reward/p
 ### Decision
 
 **No consensus issuance/penalty evaluator or numeric threshold is implemented in this step.** The next engineering task is a bounded, read-only provider feasibility probe against the chosen historical finalized interval. If a provider cannot demonstrate full coverage, document the limitation and stop rather than treating a partial endpoint as independent confirmation.
+
+
+## 11. Historical Beacon API feasibility probe — 2026-10-10
+
+Added a bounded, read-only probe in `scripts/research/probe_beacon_consensus_source.py` and the research-only workflow `.github/workflows/eth-consensus-source-probe.yml`.
+
+### Probe contract
+
+- Uses the documented PublicNode Ethereum Beacon API base URL `https://ethereum-beacon-api.publicnode.com`; no API key or secret is added.
+- Captures the current candidate interval artifact, selects up to three non-adjacent intervals where gross issuance and consensus penalties share the same source slot bounds, and probes each interval's final slot/epoch.
+- Checks historical `/eth/v1/beacon/states/{slot}/finality_checkpoints` access and requests one validator's attestation reward row through `POST /eth/v1/beacon/rewards/attestations/{epoch}`. The one-validator request bounds response size and is strictly a schema/access probe.
+- Records provider URL, slot/epoch, response metadata, finalized and execution-optimistic flags, response shape, and capture time. Any inaccessible or non-finalized/optimistic interval remains visible as not evaluable.
+- The artifact explicitly sets `complete_consensus_issuance_penalty_accounting_verified=false`. No database writes, chain writes, credential changes, deployment, or evaluator logic are part of this workflow.
+
+### Interpretation boundary
+
+This probe can establish only whether a documented public endpoint serves the chosen historical finalized ranges and a sample attestation-reward response. The reward endpoint returns per-validator attestation reward/penalty categories; it does not by itself provide a complete all-validator issuance ledger or every protocol penalty category. A green workflow must therefore not promote either metric to accepted evidence. If historical endpoint access works, the next decision is whether a separate reproducible fork-aware consensus accounting dataset/replay is feasible; if it fails, preserve the endpoint failure and do not substitute provider-derived totals.
+
+Official references:
+- PublicNode Ethereum Beacon API endpoint is documented in Nethereum's Beacon API client example: https://docs.nethereum.com/docs/consensus-light-client/nethereum-beaconchain/
+- Official Beacon API repository and security/operation caveats: https://github.com/ethereum/beacon-APIs
+- Attestation reward endpoint contract: https://github.com/ethereum/beacon-APIs/blob/master/apis/beacon/rewards/attestations.yaml
+- Fork-specific consensus rules: https://ethereum.github.io/consensus-specs/
+
+**Initial status:** code and workflow are committed to the PR branch; the live provider result must be read from the resulting GitHub Actions artifact before endpoint availability can be claimed. Complete consensus accounting remains unverified.
