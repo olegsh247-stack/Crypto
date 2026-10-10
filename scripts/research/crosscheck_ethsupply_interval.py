@@ -184,7 +184,7 @@ def batch_blocks(numbers: list[int]) -> list[dict[str, Any]]:
     return [output[number] for number in numbers]
 
 
-def choose_latest_window(metrics: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
+def complete_windows(metrics: list[dict[str, Any]]) -> list[tuple[tuple[str, str], dict[str, dict[str, Any]]]]:
     by_window: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
     for metric in metrics:
         metric_id = metric.get("metric_id")
@@ -198,9 +198,16 @@ def choose_latest_window(metrics: list[dict[str, Any]]) -> tuple[dict[str, Any],
         (window, values) for window, values in by_window.items()
         if "eth.base_fee_burn_per_interval" in values and "eth.blob_fee_burn_per_interval" in values
     ]
+    return sorted(complete, key=lambda item: iso_epoch(item[0][1]), reverse=True)
+
+
+def choose_latest_window(metrics: list[dict[str, Any]], offset: int = 0) -> tuple[dict[str, Any], dict[str, Any]]:
+    complete = complete_windows(metrics)
     if not complete:
         raise ValueError("artifact has no same-window base-fee and blob-fee metrics")
-    window, values = max(complete, key=lambda item: iso_epoch(item[0][1]))
+    if offset < 0 or offset >= len(complete):
+        raise ValueError(f"requested interval offset {offset} is unavailable; only {len(complete)} complete windows exist")
+    _, values = complete[offset]
     base = values["eth.base_fee_burn_per_interval"]
     blob = values["eth.blob_fee_burn_per_interval"]
     for metric in (base, blob):
@@ -212,11 +219,25 @@ def choose_latest_window(metrics: list[dict[str, Any]]) -> tuple[dict[str, Any],
     return base, blob
 
 
-def crosscheck(artifact: dict[str, Any]) -> dict[str, Any]:
+def choose_window_offsets(metrics: list[dict[str, Any]], count: int) -> list[int]:
+    windows = complete_windows(metrics)
+    if not windows:
+        raise ValueError("artifact has no complete intervals to cross-check")
+    if count < 1:
+        raise ValueError("interval count must be at least one")
+    selected_count = min(count, len(windows))
+    if selected_count == 1:
+        return [0]
+    # Evenly sample the retained window, including newest and oldest intervals.
+    offsets = [round(i * (len(windows) - 1) / (selected_count - 1)) for i in range(selected_count)]
+    return list(dict.fromkeys(offsets))
+
+
+def crosscheck(artifact: dict[str, Any], interval_offset: int = 0) -> dict[str, Any]:
     metrics = artifact.get("metrics")
     if not isinstance(metrics, list):
         raise ValueError("artifact metrics missing")
-    base, blob = choose_latest_window(metrics)
+    base, blob = choose_latest_window(metrics, interval_offset)
     start_text, end_text = base["period_start"], base["period_end"]
     start, end = iso_epoch(start_text), iso_epoch(end_text)
     if end <= start:
@@ -306,21 +327,67 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--output", default="eth-source-crosscheck.json")
+    parser.add_argument("--interval-count", type=int, default=1,
+                        help="Evenly sample this many non-adjacent complete intervals, including newest and oldest.")
     args = parser.parse_args()
     try:
         artifact = json.loads(Path(args.artifact).read_text(encoding="utf-8"))
-        result = crosscheck(artifact)
+        metrics = artifact.get("metrics") if isinstance(artifact, dict) else None
+        if not isinstance(metrics, list):
+            raise ValueError("artifact metrics missing")
+        offsets = choose_window_offsets(metrics, args.interval_count)
+        results = []
+        for offset in offsets:
+            try:
+                results.append(crosscheck(artifact, interval_offset=offset))
+            except Exception as exc:
+                results.append({
+                    "status": "not_evaluable",
+                    "interval_offset": offset,
+                    "reason": f"{type(exc).__name__}: {exc}",
+                    "database_write_performed": False,
+                    "blockchain_write_performed": False,
+                })
+        requested = args.interval_count
+        enough_intervals = len(results) >= requested
+        statuses = [item.get("status") for item in results]
+        if "mismatch" in statuses:
+            status = "mismatch"
+        elif not enough_intervals or any(item != "matched" for item in statuses):
+            status = "not_evaluable"
+        else:
+            status = "matched"
+        result = {
+            "status": status,
+            "intervals_requested": requested,
+            "intervals_checked": len(results),
+            "intervals_matched": sum(item == "matched" for item in statuses),
+            "interval_results": results,
+            "database_write_performed": False,
+            "blockchain_write_performed": False,
+        }
+        if len(results) == 1:
+            result.update(results[0])
+            result["intervals_requested"] = requested
+            result["intervals_checked"] = 1
+            result["intervals_matched"] = 1 if results[0].get("status") == "matched" else 0
+            result["interval_results"] = results
+            if requested > 1:
+                result["status"] = "not_evaluable"
     except Exception as exc:
         result = {
             "status": "not_evaluable",
             "reason": f"{type(exc).__name__}: {exc}",
+            "intervals_requested": args.interval_count,
+            "intervals_checked": 0,
+            "intervals_matched": 0,
+            "interval_results": [],
             "database_write_performed": False,
             "blockchain_write_performed": False,
         }
     Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    # This is a research artifact, not a merge gate: mismatch/not-evaluable is
-    # retained for review and must never be interpreted as a green source verdict.
+    # Research evidence only: any mismatch or insufficient coverage remains visible.
     return 0
 
 
