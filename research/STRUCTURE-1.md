@@ -111,9 +111,9 @@ Asset Type определяет релевантные вопросы, метр�
 | BTC-12 | Thesis & Outlook | — |
 | BTC-13 | Thesis & Outlook | — |
 | BTC-14 | Thesis & Outlook | — |
-| BTC-15 | Monitoring | Thesis & Outlook |
+| BTC-15 | Thesis & Outlook | Monitoring is the research section/function; it is not a seventh Dashboard Domain |
 
-Один Deep Research раздел может питать несколько Dashboard Domains.
+Один Deep Research раздел может питать несколько Dashboard Domains. В таблице используются только шесть Dashboard Domains из раздела 5. Monitoring — сквозная функция и раздел Deep Research (BTC-15), а не отдельный седьмой Domain; поэтому BTC-15 агрегируется в Thesis & Outlook.
 
 ## 7. Evidence Model
 
