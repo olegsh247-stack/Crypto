@@ -241,3 +241,28 @@ This is a **candidate requiring further verification**, not an approved source:
 - Before integration, run a minimal request for one finalized epoch/window, document exact response fields, coverage and plan/rate-limit restrictions, and compare against a second independent method. If it cannot cover full-network issuance and all penalty categories, keep it as partial evidence only.
 
 **Next gate:** no evaluator implementation until one of these is demonstrated: (a) a complete, documented aggregate dataset with exact epoch/slot coverage and independently reconciled categories, or (b) a separately approved and reproducible fork-aware state-transition replay design.
+
+
+## 14. Current-head validation and consensus-source decision — 2026-10-10
+
+Validated PR head: `a5b34651f094b96d4202cb33e0b0e933667246bb`.
+
+### Current-head workflow results
+
+- [Product Contour Gate #206](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555730): **PASS** — web build, read-only UI/API runtime contract, Worker bundle dry run, and clean disposable PostgreSQL migrations/idempotency all completed successfully.
+- [VPS API Build Rehearsal #232](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555404): **PASS** — API/worker builds, disposable PostgreSQL bootstrap, rollback, API contracts, ingestion/replay, Worker ingestion and parity, scenario preflight, admin boundaries, and cleanup completed successfully. This remains a rehearsal; no VPS exists or was deployed.
+- [ETH Observation Capture #105](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555372): **PASS** — read-only capture and artifact guardrails passed.
+- [ETH Independent Interval Cross-check #19](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555366): **PASS** — 3/3 non-adjacent intervals matched Ethereum JSON-RPC exactly for both base-fee burn and blob-fee burn; each component delta was 0 wei and provider/RPC block counts matched (957, 958, 958). This validates only these fee-burn components in these three sampled windows.
+- [ETH Consensus Source Feasibility Probe #7](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555383): **workflow PASS, source feasibility FAIL / not evaluable** — PublicNode returned HTTP 403 for all three historical finalized-state requests; the Swagger example endpoint failed at TLS/connection for all three. Neither endpoint reached the rewards endpoint. The artifact explicitly keeps `complete_consensus_issuance_penalty_accounting_verified=false`.
+- [Research On-chain Capture #180](https://github.com/olegsh247-stack/Crypto/actions/runs/38050555411): **PASS** — read-only SOL/CAKE capture and artifact upload completed.
+
+These runs all report the same PR head SHA above. The Product Contour and VPS rehearsal gates are green on this head; this does **not** authorize production migrations/deployment or PR merge. The consensus-source research workflow is green only in the sense that it recorded and uploaded the unsuccessful endpoint probes.
+
+### Engineering decision
+
+The anonymous Beacon API path is blocked from GitHub Actions. Do not add more guessed public URLs. The next work should be a bounded comparison of:
+
+1. **Credentialed provider:** first obtain documented proof that a provider returns network-wide, fork-correct issuance and every required penalty category for exact finalized epoch ranges. Do not buy a plan or add a secret without explicit approval.
+2. **Fork-aware replay:** estimate a reproducible implementation against the official fork-specific consensus transition rules, including required historical finalized state, all intervening blocks, state availability/retention, and independent test vectors. A validator-reward endpoint or balance-delta approximation is not an acceptable substitute.
+
+Until one route proves complete coverage and independent reconciliation, gross issuance, consensus penalties, and net supply flow remain candidate-only; do not implement signal thresholds or publish monitoring/scenario states from them.
