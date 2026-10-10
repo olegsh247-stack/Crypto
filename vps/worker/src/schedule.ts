@@ -41,6 +41,12 @@ function londonWallTimeToUtc(year: number, month: number, day: number, hour = 0)
   return new Date(guess);
 }
 
+/** Return midnight at the start of the London calendar day containing input. */
+export function londonDayBoundary(input: Date): Date {
+  const { year, month, day } = londonDateParts(input);
+  return londonWallTimeToUtc(year, month, day);
+}
+
 /** Return the next exact 00:00 boundary in Europe/London, strictly after input. */
 export function nextLondonDayBoundary(input: Date = new Date()): Date {
   const { year, month, day } = londonDateParts(input);
