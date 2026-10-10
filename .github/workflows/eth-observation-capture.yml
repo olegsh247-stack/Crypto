@@ -66,6 +66,9 @@ jobs:
               else:
                   print(f"ethsupply_history_30d: range={shape.get('range')} interval={shape.get('interval')} coverage={shape.get('coverage')} point_counts={shape.get('point_counts')}")
                   print(f"ethsupply_history_30d: slot_sample_fields={shape.get('sample_field_names', {}).get('slot')} slot_sample_value_types={shape.get('slot_sample_value_types')} summary_keys={shape.get('summary_keys')} summary_value_types={shape.get('summary_value_types')}")
+                  reconciliation = probe.get("accounting_reconciliation", {})
+                  assert reconciliation.get("status") in {"exact", "mismatch", "incomplete"}, reconciliation
+                  print(f"ethsupply_history_30d: accounting_reconciliation={reconciliation}")
           print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps; ethsupply API schema probes recorded")
           PY
       - name: Upload raw capture artifact
