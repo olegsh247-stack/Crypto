@@ -160,7 +160,7 @@ export default {
   const rawLimit=url.searchParams.get("limit")??"50";
   if(!rawAssetId||!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(rawAssetId))return json({status:"error",error:"valid_asset_id_required"},400);
   if(metricId&&!/^[a-z][a-z0-9_.-]{0,127}$/.test(metricId))return json({status:"error",error:"invalid_metric_id"},400);
-  if(!/^\\d+$/.test(rawLimit))return json({status:"error",error:"invalid_limit"},400);
+  if(!/^[0-9]+$/.test(rawLimit))return json({status:"error",error:"invalid_limit"},400);
   const limit=Number(rawLimit);
   if(!Number.isInteger(limit)||limit<1||limit>100)return json({status:"error",error:"limit_out_of_range",min:1,max:100},400);
   try{
