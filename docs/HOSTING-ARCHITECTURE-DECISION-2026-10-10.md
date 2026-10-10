@@ -65,7 +65,7 @@ The cutover sequence remains:
 
 - Do not add Neon-only SQL features or runtime APIs without a documented reason and a PostgreSQL compatibility test.
 - Prefer standard PostgreSQL SQL and a shared DB contract.
-- The existing `vps/shared/src/db.ts` provides a rehearsal adapter over `pg`, but the function name `neon()` is misleading. Renaming it is a separate code change and must preserve shared runtime compatibility.
+- The VPS runtime uses standard `pg` through `postgresSql()`; it has no Neon-specific SQL client dependency. The `scripts/migrate-neon.sh` filename remains a legacy operational name and is not evidence that the VPS runtime requires Neon.
 - Do not connect the read-only capture script to either database. Capture output is a reviewable artifact first.
 - No production writes or migrations in normal CI.
 - No browser-side admin secrets.

@@ -17,7 +17,7 @@ function getPool(databaseUrl: string) {
   return pool;
 }
 
-export function neon(databaseUrl: string): Sql {
+export function postgresSql(databaseUrl: string): Sql {
   if (!databaseUrl) throw new Error("DATABASE_URL is required");
   const p = getPool(databaseUrl);
   return async <T = any>(strings: TemplateStringsArray, ...values: unknown[]) => {

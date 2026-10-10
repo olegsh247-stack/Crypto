@@ -1,4 +1,5 @@
-import { neon } from "@crypto/vps-runtime";
+import { postgresSql } from "@crypto/vps-runtime";
+import { londonDayBoundary } from "./schedule.js";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
@@ -76,18 +77,6 @@ async function coingeckoUsdKlines(asset:string,days:number){
  return Array.isArray(data?.prices)?data.prices.map((r:any)=>({time:new Date(Number(r[0])).toISOString(),close:Number(r[1])})).filter((r:any)=>Number.isFinite(r.close)&&r.close>0):[];
 }
 
-function londonDayBoundary(input:Date){
- const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(input);
- const get=(type:string)=>Number(parts.find(p=>p.type===type)?.value);
- const year=get("year"),month=get("month"),day=get("day");
- const utcMidnight=Date.UTC(year,month-1,day,0,0,0);
- const offsetParts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",timeZoneName:"longOffset",hour:"2-digit"}).formatToParts(new Date(utcMidnight+12*60*60*1000));
- const offset=offsetParts.find(p=>p.type==="timeZoneName")?.value??"GMT";
- const match=offset.match(/^GMT([+-])(\\d{2}):(\\d{2})$/);
- const offsetMinutes=match?(Number(match[2])*60+Number(match[3]))*(match[1]==="-"?-1:1):0;
- return new Date(utcMidnight-offsetMinutes*60*1000);
-}
-
 function coingeckoDaily(rows:any[]){
  const byDay=new Map<string,any>();
  for(const row of rows){
@@ -107,7 +96,7 @@ async function refreshResearchReviewStatus(sql:any){
 
 export async function runScheduledIngestion(env:WorkerEnv){
   if(!env.DATABASE_URL)return {assets:0,successful:0,written:0};
-  const sql=neon(env.DATABASE_URL);
+  const sql=postgresSql(env.DATABASE_URL);
   const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
   const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
   const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);

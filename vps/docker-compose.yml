@@ -1,16 +1,17 @@
 services:
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: crypto
-      POSTGRES_USER: crypto
-      POSTGRES_PASSWORD: crypto_local_only
+      POSTGRES_DB: ${POSTGRES_DB:-crypto}
+      POSTGRES_USER: ${POSTGRES_USER:-crypto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in vps/.env}
     ports:
-      - "55432:5432"
+      - "127.0.0.1:55432:5432"
     volumes:
       - crypto-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crypto -d crypto"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crypto} -d ${POSTGRES_DB:-crypto}"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -19,28 +20,47 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
-      ADMIN_TOKEN: local-development-only
-      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crypto}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in vps/.env}@postgres:5432/${POSTGRES_DB:-crypto}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in vps/.env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       PORT: "8080"
       HOST: 0.0.0.0
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   worker:
     build:
       context: .
       dockerfile: worker/Dockerfile
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
-      WORKER_INTERVAL_MS: "86400000"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crypto}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in vps/.env}@postgres:5432/${POSTGRES_DB:-crypto}
     depends_on:
       postgres:
         condition: service_healthy
 
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
 volumes:
   crypto-postgres:
+  caddy-data:
+  caddy-config:
