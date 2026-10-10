@@ -207,3 +207,30 @@ The PR now:
 - shows the same distinction on Deep Research, clarifying that the 15 chapters are the canonical structure, not completed analysis.
 
 This is a UI-only correction. No Neon writes, schema changes, migrations, deployment, or asset-specific hardcoding were introduced. Build verification is required on the resulting PR head.
+
+
+### Follow-up API/UI consistency review — 2026-10-10
+
+The Web build after the no-snapshot Dashboard/Deep Research correction completed successfully: [Build Crypto Web #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38058753813).
+
+A second SELECT-only Neon query re-confirmed the latest published baseline and snapshot-bound section counts:
+
+| Asset | Published snapshot | Blocks / complete | Factors | Scores | Scenarios | Evidence | Scenario states |
+|---|---|---:|---:|---:|---:|---:|---:|
+| BTC | `BTC-2026-10-07-v1` | 15 / 15 | 6 | 5 | 3 | 15 | 0 |
+| ETH | `ETH-2026-10-04-v1` | 15 / 15 | 6 | 5 | 3 | 15 | 0 |
+| SOL | none | 0 / 0 | 0 | 0 | 0 | 0 | 0 |
+| CAKE | none | 0 / 0 | 0 | 0 | 0 | 0 | 0 |
+
+The API handler statically reviewed on the PR head:
+- returns a nullable published snapshot and filters blocks, factors, scores, scenarios and evidence against the published snapshot ID;
+- returns scenario states only when their `snapshot_id` matches the published snapshot;
+- keeps monitoring signals/events as separate asset-level current/history collections;
+- returns an empty published-snapshot-bound collection for SOL/CAKE rather than synthesizing analytical rows.
+
+One more UI ambiguity was found: the global research-domain registry could render six domain cards for an asset with no snapshot, each appearing to have zero mapped blocks. The Dashboard now explains that domain views cannot be populated until the asset has a published snapshot, and that the shared registry is not evidence of missing mappings. This is a presentation-only correction.
+
+Validation boundaries:
+- Web Build #121 passed on the prior UI head; the domain empty-state adjustment above is a newer commit and requires its own build.
+- Database checks are SELECT-only; no writes, migrations, or deployment were performed.
+- The API handler was statically reviewed, but a live HTTP GET/E2E against the deployed Worker has not been performed in this step. The API endpoint is not hardcoded in the repository and is supplied through deployment configuration; do not treat the database audit or Web build as a substitute for HTTP E2E.
