@@ -151,6 +151,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import copy
           import json
           artifact = {
             "schema_version": "1.0",
@@ -185,16 +186,64 @@ jobs:
               "source_block_number": 23600000,
               "source_block_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             }, {
-              "metric_id": "eth.net_supply_flow_per_interval",
+              "metric_id": "eth.gross_issuance_per_interval",
               "asset_id": "ETH",
-              "value_numeric": "-0.012345678901234567",
+              "value_numeric": "1.000000000000000000",
               "unit": "ETH/interval",
               "observed_at": "2026-09-01T00:00:00Z",
               "period_start": "2026-08-31T20:48:00Z",
               "period_end": "2026-09-01T00:00:00Z",
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
-              "methodology": "Disposable interval fixture for decimal-string precision and signed net-flow validation.",
+              "methodology": "Disposable fixture gross issuance for exact wei reconciliation.",
+              "quality": "candidate_needs_independent_cross_check"
+            }, {
+              "metric_id": "eth.execution_fee_burn_per_interval",
+              "asset_id": "ETH",
+              "value_numeric": "2.000000000000000000",
+              "unit": "ETH/interval",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-08-31T20:48:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable fixture execution fee burn for exact wei reconciliation.",
+              "quality": "candidate_needs_independent_cross_check"
+            }, {
+              "metric_id": "eth.consensus_penalties_per_interval",
+              "asset_id": "ETH",
+              "value_numeric": "0.500000000000000000",
+              "unit": "ETH/interval",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-08-31T20:48:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable fixture consensus penalties for exact wei reconciliation.",
+              "quality": "candidate_needs_independent_cross_check"
+            }, {
+              "metric_id": "eth.other_execution_burn_per_interval",
+              "asset_id": "ETH",
+              "value_numeric": "0.500000000000000000",
+              "unit": "ETH/interval",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-08-31T20:48:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable fixture other execution burn for exact wei reconciliation.",
+              "quality": "candidate_needs_independent_cross_check"
+            }, {
+              "metric_id": "eth.net_supply_flow_per_interval",
+              "asset_id": "ETH",
+              "value_numeric": "-2.000000000000000000",
+              "unit": "ETH/interval",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-08-31T20:48:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
+              "source_id": "ethsupply_fyi",
+              "source_url": "https://ethsupply.fyi/api/history?range=30d",
+              "methodology": "Disposable interval fixture; net flow equals issuance minus execution fee burn, consensus penalties and other execution burn.",
               "quality": "candidate_needs_independent_cross_check"
             }, {
               "metric_id": "eth.entry_queue_wait_seconds",
@@ -212,6 +261,10 @@ jobs:
           }
           with open("/tmp/eth-observation-artifact.json", "w") as f:
             json.dump(artifact, f)
+          mismatch = copy.deepcopy(artifact)
+          next(m for m in mismatch["metrics"] if m["metric_id"] == "eth.net_supply_flow_per_interval")["value_numeric"] = "-1.999999999999999999"
+          with open("/tmp/eth-observation-accounting-mismatch.json", "w") as f:
+            json.dump(mismatch, f)
           artifact["database_write_performed"] = True
           with open("/tmp/eth-observation-invalid-artifact.json", "w") as f:
             json.dump(artifact, f)
@@ -221,6 +274,14 @@ jobs:
           test "$unauth_code" = "401"
           invalid_code=$(curl -sS -o /tmp/observation-invalid.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-observation-invalid-artifact.json)
           test "$invalid_code" = "400"
+          accounting_code=$(curl -sS -o /tmp/observation-accounting-mismatch.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-observation-accounting-mismatch.json)
+          test "$accounting_code" = "400"
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/observation-accounting-mismatch.json'))
+          # The API rejects the inconsistent arithmetic before persistence.
+          assert d.get('error') == 'accounting_reconciliation_failed', d
+          PY
           first_code=$(curl -sS -o /tmp/observation-ingest-first.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-observation-artifact.json)
           test "$first_code" = "200"
           python3 - <<'PY'
@@ -228,9 +289,9 @@ jobs:
           d=json.load(open('/tmp/observation-ingest-first.json'))
           assert d.get('status')=='ok', d
           assert d.get('read_only') is False, d
-          assert d.get('received_count')==4 and d.get('inserted_count')==4 and d.get('duplicate_count')==0, d
-          assert len(d.get('items',[]))==4 and {i.get('metric_id') for i in d['items']}=={'eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds'}, d
-          print("VPS_API_OBSERVATION_INGEST_OK inserted=4 price=1 block=1 interval=1 queue=1")
+          assert d.get('received_count')==8 and d.get('inserted_count')==8 and d.get('duplicate_count')==0, d
+          assert len(d.get('items',[]))==8 and {i.get('metric_id') for i in d['items']}=={'eth.market_spot_price','eth.base_fee_burned_per_block','eth.gross_issuance_per_interval','eth.execution_fee_burn_per_interval','eth.consensus_penalties_per_interval','eth.other_execution_burn_per_interval','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds'}, d
+          print("VPS_API_OBSERVATION_INGEST_OK inserted=8 price=1 block=1 accounting_components=5 queue=1")
           PY
           replay_code=$(curl -sS -o /tmp/observation-ingest-replay.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-observation-artifact.json)
           test "$replay_code" = "200"
@@ -238,11 +299,11 @@ jobs:
           import json
           d=json.load(open('/tmp/observation-ingest-replay.json'))
           assert d.get('status')=='ok', d
-          assert d.get('received_count')==4 and d.get('inserted_count')==0 and d.get('duplicate_count')==4, d
-          print("VPS_API_OBSERVATION_IDEMPOTENCY_OK replay_inserted=0 duplicates=4")
+          assert d.get('received_count')==8 and d.get('inserted_count')==0 and d.get('duplicate_count')==8, d
+          print("VPS_API_OBSERVATION_IDEMPOTENCY_OK replay_inserted=0 duplicates=8")
           PY
-          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-09-01T00:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
-          test "$stored" = "4"
+          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-09-01T00:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.gross_issuance_per_interval','eth.execution_fee_burn_per_interval','eth.consensus_penalties_per_interval','eth.other_execution_burn_per_interval','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
+          test "$stored" = "8"
           echo "VPS_API_OBSERVATION_STORAGE_OK unique_natural_key_rows=$stored"
       - name: VPS live ETH capture ingestion E2E (disposable PostgreSQL)
         run: |
