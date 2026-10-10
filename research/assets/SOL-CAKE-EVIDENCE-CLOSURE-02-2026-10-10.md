@@ -97,3 +97,18 @@ SOL and CAKE remain unpublished / `not_started`. This pass creates no scores, sc
 ### Next executable action
 
 The next engineering step is to review SDA's metric schema and provider adapters against Crypto's evidence schema, then propose a minimal, tested read-only adapter only if data access is available and the source definitions fit. In parallel, obtain a fresh direct-RPC capture when workflow dispatch or an equivalent authorized execution path is available.
+
+## 6. SDA schema review — concrete integration constraints
+
+A read-only inspection of the upstream SDA repository confirms that its common metric model records `name`, `unit`, `description`, `date`, and `value`; network metrics include total stake, validator count, top-three ASN stake share and average TPS. The SDA Dune adapter includes dated SQL metrics for Solana stablecoin supply, transfers, transfer counts and active addresses. This is a useful starting point for a source adapter, but the common metric record alone does not carry the full provenance needed by Crypto (provider ID, retrieval timestamp, exact window, methodology URL, raw response, and freshness/lag), so that provenance must be retained alongside any normalized value.
+
+The upstream `.env.example` lists multiple provider credentials, including Dune, Allium, Artemis, Blockworks, Stakewiz/ValidatorsApp and others. Therefore SDA is not a keyless turnkey source pipeline. No credentials were read, requested, or changed. Do not copy secrets into the repository or workflow logs.
+
+Reviewed upstream files:
+- https://github.com/solana-foundation/solana-data-aggregator
+- https://raw.githubusercontent.com/solana-foundation/solana-data-aggregator/main/metrics/base.py
+- https://raw.githubusercontent.com/solana-foundation/solana-data-aggregator/main/metrics/network.py
+- https://raw.githubusercontent.com/solana-foundation/solana-data-aggregator/main/providers/dune.py
+- https://raw.githubusercontent.com/solana-foundation/solana-data-aggregator/main/.env.example
+
+**Implementation decision:** do not import the entire SDA project or add its dependency tree to Crypto at this stage. First define a small provider-neutral evidence envelope in Crypto, then add only a tested adapter for a metric/source whose access is explicitly configured. Keep upstream provider-specific queries outside production product code unless their terms, refresh schedule and schema are reviewed.
