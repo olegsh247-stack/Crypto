@@ -6,10 +6,12 @@
 
 ## Implemented
 
-1. `scripts/research/validate_evidence_envelope.py` — dependency-free validator for normalized JSON evidence records.
-2. `scripts/research/tests/test_validate_evidence_envelope.py` — five unit tests covering a valid decimal-string record, missing provenance, timezone-naive timestamps, inverted windows, and booleans masquerading as numeric values.
-3. `.github/workflows/research-evidence-envelope-tests.yml` — Python 3.12 compile + unit-test workflow, triggered by relevant pushes and pull requests.
-4. `docs/RESEARCH-EVIDENCE-ENVELOPE-V1.md` — contract definition, field semantics and guardrails.
+1. `scripts/research/normalize_sol_cake_rpc_capture.py` — deterministic normalizer from the existing raw RPC capture format to one metric per envelope record. It preserves the SOL context slot, CAKE block number, raw artifact reference, source and methodology URLs, units and timestamp provenance. It fails closed on missing required reads, unpinned CAKE block, or a chain ID other than BSC (56). It deliberately reports contract supply and supply-minus-burn-address separately; it does not subtract candidate locked balances or declare canonical circulating supply.
+2. `scripts/research/validate_evidence_envelope.py` — dependency-free validator for normalized JSON evidence records.
+3. `scripts/research/tests/test_validate_evidence_envelope.py` — five unit tests covering a valid decimal-string record, missing provenance, timezone-naive timestamps, inverted windows, and booleans masquerading as numeric values.
+4. `scripts/research/tests/test_normalize_sol_cake_rpc_capture.py` — fixture tests for normalized values, context preservation, wrong chain and unpinned block.
+5. `.github/workflows/research-evidence-envelope-tests.yml` — Python 3.12 compile + unit-test workflow, triggered by relevant pushes and pull requests.
+6. `docs/RESEARCH-EVIDENCE-ENVELOPE-V1.md` — contract definition, field semantics and guardrails.
 
 ## Validation history
 
@@ -17,7 +19,7 @@
 - Fix commit: `261e688d87d104549ed0eb8dee773e711e0b91be`.
 - Re-run: https://github.com/olegsh247-stack/Crypto/actions/runs/38061638525 — **success**. Python compilation and all five unit tests passed.
 
-The first failure was retained as transparent CI history; the corrected run is the current result.
+The first failure was retained as transparent CI history; the corrected validator run is green. The extended pipeline, including the normalizer and its three fixture tests, also compiled and passed in run https://github.com/olegsh247-stack/Crypto/actions/runs/38061693644.
 
 ## Contract guardrails
 
@@ -34,4 +36,4 @@ The envelope explicitly separates direct on-chain observations, provider metrics
 
 ## Next step
 
-Add a small, deterministic normalizer from the existing raw SOL/CAKE RPC capture format into this envelope, with fixture-based tests that prove source timestamps, slot/block identifiers, units and raw-artifact references survive conversion. Only after that conversion passes tests should the collection workflow validate and upload both the raw capture and normalized envelope. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
+Next, wire the tested normalizer into the read-only capture workflow so each successful run validates and uploads both the raw capture and normalized envelope. Keep publication and database writes out of that workflow. Fresh RPC execution still requires a new workflow run; no fresh capture is claimed here. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
