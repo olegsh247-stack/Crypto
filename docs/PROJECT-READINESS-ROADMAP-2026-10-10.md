@@ -298,3 +298,80 @@ Crypto is considered **product-ready** only when all of the following are eviden
 
 **Exit criterion:** one documented BTC scenario can be followed end-to-end from the published snapshot through factors, scores and dated evidence to monitoring interpretation, with all unknowns and stale/qualitative inputs clearly labelled. A scenario-state publication is a separate reviewed action, not implied by this audit.
 
+## BTC live-data audit — factors, scores, scenarios and evidence — 2026-10-11
+
+**Method:** read-only SELECT queries against the Neon Crypto production/default branch. No INSERT/UPDATE/DELETE, migrations, or publication actions were performed. Scope is the published snapshot `BTC-2026-10-07-v1`.
+
+### Verified counts and snapshot lineage
+
+- One published BTC snapshot; 15 research blocks; 6 domains; 6 critical factors; 5 scores; 3 scenario definitions; 7 monitoring signals; 15 evidence rows.
+- Zero quantitative observations linked to the 15 snapshot evidence rows; all 15 linked observations use `metric_definitions.value_type = text`.
+- Zero BTC `scenario_states` rows and zero `monitoring_events` rows. These remain missing runtime assessment/history, not grounds to synthesize records.
+- All six factors and all five scores explicitly reference `BTC-2026-10-07-v1`. The three scenario definitions also reference that snapshot. The observed snapshot lineage is internally consistent for these collections.
+
+### Critical factors — content-level review
+
+The six factors cover monetary demand, institutional allocation, network security, fee-market strength, decentralization and regulatory/custody environment. Their importance weights are 0.85–1.00; confidence values are 0.76–0.90. Factor names, descriptions and thesis-impact enums are plausible for a monetary asset.
+
+**Limitations:** factor states/trends are qualitative, and the schema has no direct evidence reference on each factor row. The current factor confidence and importance weights are stored values; the reviewed data does not expose a reproducible derivation from the 15 evidence rows. They should be treated as analyst assessments, not independently recalculated metrics.
+
+### Scores — verified values, derivation gap
+
+All five scores are on the stored 0–1 scale and use methodology version `CryptoResearch-v2-Structure1`:
+
+| Score | Value | Confidence | Current explanation |
+|---|---:|---:|---|
+| Health | 0.86 | 0.88 | Strong monetary architecture/liquidity/decentralization/institutional access; mining economics watch item |
+| Thesis | 0.88 | 0.90 | Positive monetary thesis based on scarcity, proof-of-work, decentralization and liquidity |
+| Value accrual | 0.82 | 0.84 | Monetary rather than cash-flow-based value accrual |
+| Competitive position | 0.90 | 0.92 | Strongest crypto monetary position, with non-crypto monetary alternatives |
+| Confidence | 0.88 | 0.90 | Structural thesis confidence is high; market regime remains uncertain |
+
+All values and explanations are present and tied to the published snapshot. **Not verified:** a calculation formula, factor-to-score contribution map, reproducible input set or score audit trail. Until those exist or are documented, these values are qualitative/model assessments on a numeric scale; do not imply they are computed from live quantitative inputs.
+
+### Scenarios — probabilities coherent; state and triggers incomplete
+
+The three published definitions have probabilities Base 0.50, Bull 0.30 and Bear 0.20 (sum = 1.00). All three include assumptions, a confidence value, thesis impact and textual invalidation conditions. Their snapshot IDs match the published BTC baseline.
+
+- Base invalidation: sustained loss of monetary demand or credible deterioration in security economics.
+- Bull invalidation: persistent institutional outflows, severe liquidity contraction or material security concerns.
+- Bear invalidation: renewed monetary demand and improving institutional access.
+
+**Open gaps:** supporting-evidence fields are generic prose, not IDs to specific evidence rows; invalidation conditions have no observable threshold/window; no dated `scenario_states` assessment establishes that Base is currently active. The snapshot's “current scenario” label is therefore the published research conclusion, not a separately observed live state.
+
+### Monitoring — all seven are qualitative placeholders
+
+For all seven BTC signals, `metric_id` and `critical_factor_id` are NULL; `previous_value` and thresholds are NULL; `current_value` contains a description rather than a measured value. All seven share `last_updated_at = 2026-10-08T12:30:54.538989Z`.
+
+This confirms the Monitoring Contract's caveat: these rows are a qualitative research baseline, not quantitative live monitoring. Because timestamps exist despite the absence of measurements, the UI must not present them as proof that underlying conditions were refreshed at that time. No event history is present.
+
+### Evidence and provenance — structural links exist, semantic quality remains open
+
+All 15 evidence rows have a linked observation and source, an `as_of` timestamp, and a URL resolved from the observation/source records. Their linked observations are text-valued qualitative baseline records, all stamped `2026-10-08T06:56:27.043426Z` and marked `CURRENT`. Source metadata labels five source records as official/regulator with high trust.
+
+The database relationships are populated, but **URL presence and a high trust label do not prove that a source supports the specific claim**. Examples requiring source/claim reconciliation:
+- The macro claim about liquidity, real yields and risk appetite points to an SEC crypto-asset interpretation page rather than a direct macro-data source.
+- The competition claim and scenario-baseline claim point to Bitcoin Core pages, which are not direct evidence for relative monetary demand or a current scenario probability.
+- The monitoring-method claim is a product/method rule, not an external fact about Bitcoin; it should be classified/documented as methodology rather than presented as a market fact.
+- Every evidence row is currently typed `fact`, including interpretive/methodological claims. Review whether some should be `assessment` or `hypothesis` under the existing enum; do not relabel automatically without review.
+
+The word `CURRENT` on these observations currently describes the stored freshness field, but the rows are static text baselines rather than time-sensitive quantitative measurements. Treat this as a freshness-semantics issue to resolve in the product contract, not as proof the observations are up to date.
+
+### Domain mapping
+
+Six domain records exist and block mappings are populated. The DB mapping is one-to-many across the canonical 15-block structure. However, the current DB mapping should be compared explicitly against `research/STRUCTURE-1.md` before treating it as the intended canonical mapping; the document's listed mapping for block 8 differs from the live mapping (DB currently maps block 8 to Foundation, while the Structure 1 table maps it primarily to Economics & Ecosystem with Thesis & Outlook as additional input). This is a documented mapping discrepancy to reconcile, not a reason to change production data during this audit.
+
+### Acceptance decision after live data review
+
+**BTC is structurally populated and snapshot-consistent, but the evidence chain is not yet decision-ready.** The primary blockers are not missing row counts: they are (1) quantitative inputs absent from the current evidence baseline, (2) signals disconnected from factors/metrics, (3) numeric scores without a documented reproducible derivation, (4) scenario definitions without evidence IDs or measurable trigger thresholds, and (5) source/claim and freshness semantics that need review.
+
+### Next batch
+
+1. Reconcile the block-to-domain mapping between Structure 1 and DB.
+2. Review the 15 source/claim pairs and classify facts vs assessments vs hypotheses; verify the actual linked pages before any metadata correction.
+3. Define the minimum BTC quantitative observation set for the six factors; record source, unit, observed date, update cadence and threshold methodology before wiring signals.
+4. Decide and document score methodology/reproducibility (or explicitly label scores as analyst-rated).
+5. Define scenario evaluation criteria and observable invalidation windows; only then prepare a separate dated scenario-state assessment for review.
+
+No production data changes are authorized or implied by this audit.
+
