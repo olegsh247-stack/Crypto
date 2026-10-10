@@ -69,19 +69,15 @@ def eth_call(endpoint: str, method: str, data: str, block_tag: str) -> dict[str,
     return eth_call_at(endpoint, CAKE_TOKEN, method, data, block_tag)
 
 
-def cake_pool_view_call(endpoint: str, signature: str, block_tag: str) -> dict[str, Any]:
-    # Ask the same JSON-RPC endpoint for the Keccak selector so no guessed selector is hard-coded.
-    signature_bytes = "0x" + signature.encode("ascii").hex()
-    hashed = rpc_post(endpoint, "web3_sha3", [signature_bytes])
-    if not hashed.get("ok") or not isinstance(hashed.get("result"), str) or len(hashed["result"]) < 10:
-        return {
-            "method": signature,
-            "ok": False,
-            "error": {"message": "RPC could not compute function selector via web3_sha3"},
-            "started_at_utc": hashed.get("started_at_utc"),
-            "finished_at_utc": hashed.get("finished_at_utc"),
-        }
-    selector = hashed["result"][:10]
+POOL_VIEW_SELECTORS = {
+    "total_locked_amount": ("totalLockedAmount()", "0x05a9f274"),
+    "total_shares": ("totalShares()", "0x3a98ef39"),
+    "available": ("available()", "0x48a0d754"),
+    "balance_of": ("balanceOf()", "0x722713f7"),
+}
+
+
+def cake_pool_view_call(endpoint: str, signature: str, selector: str, block_tag: str) -> dict[str, Any]:
     result = eth_call_at(endpoint, LEGACY_CAKE_POOL, signature, selector, block_tag)
     result["selector"] = selector
     result["signature"] = signature
@@ -123,13 +119,8 @@ def capture() -> dict[str, Any]:
             **{label: cake_balance_call(BSC_RPC, label, address, block_tag) for label, address in LOCKED_CANDIDATES.items()},
         },
         "cake_pool_state": {
-            key: cake_pool_view_call(BSC_RPC, signature, block_tag)
-            for key, signature in {
-                "total_locked_amount": "totalLockedAmount()",
-                "total_shares": "totalShares()",
-                "available": "available()",
-                "balance_of": "balanceOf()",
-            }.items()
+            key: cake_pool_view_call(BSC_RPC, signature, selector, block_tag)
+            for key, (signature, selector) in POOL_VIEW_SELECTORS.items()
         },
     }
 

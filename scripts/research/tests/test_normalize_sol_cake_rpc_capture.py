@@ -1,5 +1,6 @@
 import unittest
 
+from capture_sol_cake_rpc import POOL_VIEW_SELECTORS
 from normalize_sol_cake_rpc_capture import normalize
 from validate_evidence_envelope import validate_document
 
@@ -39,6 +40,12 @@ def fixture():
 
 
 class NormalizeCaptureTests(unittest.TestCase):
+    def test_legacy_pool_getter_selectors_match_verified_signatures(self):
+        self.assertEqual(POOL_VIEW_SELECTORS["total_locked_amount"], ("totalLockedAmount()", "0x05a9f274"))
+        self.assertEqual(POOL_VIEW_SELECTORS["total_shares"], ("totalShares()", "0x3a98ef39"))
+        self.assertEqual(POOL_VIEW_SELECTORS["available"], ("available()", "0x48a0d754"))
+        self.assertEqual(POOL_VIEW_SELECTORS["balance_of"], ("balanceOf()", "0x722713f7"))
+
     def test_normalizes_capture_and_preserves_context(self):
         result = normalize(fixture(), "actions-run:fixture")
         self.assertEqual(result["schema_version"], "1.0")

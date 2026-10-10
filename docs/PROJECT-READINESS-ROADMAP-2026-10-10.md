@@ -162,7 +162,7 @@ Crypto is considered **product-ready** only when all of the following are eviden
 
 ## Progress update — CAKE pool getter capture implemented (pending CI evidence)
 
-- Extended the read-only capture to query CakePool `totalLockedAmount()`, `totalShares()`, `available()`, and `balanceOf()` at the same pinned BSC block as token supply and balance observations. Selectors are derived using JSON-RPC `web3_sha3`, not guessed constants.
+- Extended the read-only capture to query CakePool `totalLockedAmount()`, `totalShares()`, `available()`, and `balanceOf()` at the same pinned BSC block as token supply and balance observations. Selectors are pinned to Keccak-256 function signatures and covered by a unit test, avoiding any runtime dependency on RPC `web3_sha3` support.
 - Extended normalization with separate pool-state observations and added fixture assertions to preserve the distinction between CAKE balances and pool-share units. No pool getter is automatically treated as burned supply.
-- Added a normalizer unit-test step to the Research On-chain Capture workflow. **Pending:** this code has not yet been validated by the next GitHub Actions run; if the public BSC RPC does not support `web3_sha3`, selector derivation will fail visibly and must be handled before accepting the capture.
+- Added a normalizer unit-test step to the Research On-chain Capture workflow. **Pending:** this code has not yet been validated by the next GitHub Actions run; the actual capture and test results still need to be checked before accepting the new fields.
 - The current CAKE methodology remains unresolved until a successful same-block capture and event/lock-state reconciliation are reviewed.
