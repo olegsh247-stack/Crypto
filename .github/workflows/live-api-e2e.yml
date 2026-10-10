@@ -1,0 +1,31 @@
+name: Live API E2E (no deploy)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Existing deployed Crypto API base URL; this workflow does not deploy"
+        required: true
+        type: string
+        default: "https://crypto-api.olegsh247.workers.dev"
+
+permissions:
+  contents: read
+
+jobs:
+  live-api-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: fix/product-contour-v1-contracts
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify existing live API and Dashboard payload contracts
+        env:
+          CRYPTO_API_URL: ${{ inputs.api_url }}
+        run: node scripts/e2e-smoke.mjs
