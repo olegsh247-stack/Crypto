@@ -91,7 +91,7 @@ def capture() -> dict[str, Any]:
         price = payload.get("price") if isinstance(payload, dict) else None
         if finite_positive(price):
             metrics.append({
-                "metric_id": "market.spot_price",
+                "metric_id": "eth.market_spot_price",
                 "asset_id": "ETH",
                 "value_numeric": float(price),
                 "unit": "USDT/ETH",
@@ -125,7 +125,7 @@ def capture() -> dict[str, Any]:
                 burned_eth = base_fee_wei * gas_used / 10**18
                 if math.isfinite(burned_eth) and burned_eth >= 0:
                     metrics.append({
-                        "metric_id": "ethereum.base_fee_burned",
+                        "metric_id": "eth.base_fee_burned_per_block",
                         "asset_id": "ETH",
                         "value_numeric": burned_eth,
                         "unit": "ETH/block",
@@ -164,23 +164,23 @@ def capture() -> dict[str, Any]:
         "requests": requests,
         "unresolved_metric_gaps": [
             {
-                "metric_id": "ethereum.net_supply_flow",
+                "metric_id": "eth.net_supply_flow",
                 "status": "not_captured",
                 "reason": "Requires verified daily issuance and burn methodology and a documented source; do not infer net flow from incomplete components."
             },
             {
-                "metric_id": "ethereum.l2_total_value_secured",
+                "metric_id": "eth.l2_total_value_secured",
                 "status": "raw_response_only",
                 "reason": "L2BEAT endpoint is documented, but its response schema, universe, time semantics and USD aggregation must be validated before numeric mapping.",
                 "source_url": "https://api.l2beat.com/docs/"
             },
             {
-                "metric_id": "ethereum.staking_entry_queue",
+                "metric_id": "eth.staking_entry_queue",
                 "status": "not_captured",
                 "reason": "A public source with verified endpoint, units and post-Pectra queue semantics has not yet been selected."
             },
             {
-                "metric_id": "ethereum.staking_exit_queue",
+                "metric_id": "eth.staking_exit_queue",
                 "status": "not_captured",
                 "reason": "Must remain separate from the entry queue; a public source with verified endpoint, units and post-Pectra queue semantics has not yet been selected."
             }
