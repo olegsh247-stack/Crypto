@@ -107,6 +107,8 @@ def _data_value_shape(value: Any) -> dict[str, Any]:
         "as_of_age_seconds": age,
         "stale_over_one_hour": age is None or age > 3600,
         "sources_count": len(value.get("sources", [])) if isinstance(value.get("sources"), list) else None,
+        "sources": value.get("sources", [])[:10] if isinstance(value.get("sources"), list) else [],
+        "sources_truncated": isinstance(value.get("sources"), list) and len(value.get("sources", [])) > 10,
     }
 
 
@@ -138,6 +140,8 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
         "generated_at_utc": generated_at_utc,
         "generated_age_seconds": generated_age,
         "stale_over_one_hour": generated_age is None or generated_age > 3600,
+        "warning_count": len(payload.get("warnings", [])) if isinstance(payload.get("warnings"), list) else None,
+        "warning_codes": sorted({str(w.get("code")) for w in payload.get("warnings", []) if isinstance(w, dict) and w.get("code")})[:20] if isinstance(payload.get("warnings"), list) else [],
     }
 
     if kind == "live":
