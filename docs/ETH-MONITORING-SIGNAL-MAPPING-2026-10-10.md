@@ -32,15 +32,15 @@ The signal names are thesis questions, not ready-to-run metric definitions. Nume
 
 ## Existing capture metrics and limitations
 
-The capture artifact now includes these 12 registered metric families:
+The capture artifact now includes these 14 registered metric families:
 
 - `eth.market_spot_price` — `USDT/ETH`; Binance lacks a provider-issued observation timestamp, so capture time is a proxy. Context only; never sufficient alone for a thesis transition.
 - `eth.base_fee_burned_per_block` — `ETH/block`; `baseFeePerGas × gasUsed` for one execution-layer block; excludes priority fees.
-- `eth.gross_issuance_per_interval`, `eth.total_burn_per_interval`, `eth.net_supply_flow_per_interval`, `eth.base_fee_burn_per_interval`, `eth.blob_fee_burn_per_interval` — `ETH/interval`; provider-reported values for one 30-epoch (960-slot) interval, not daily aggregates.
+- `eth.gross_issuance_per_interval`, `eth.execution_fee_burn_per_interval`, `eth.consensus_penalties_per_interval`, `eth.other_execution_burn_per_interval`, `eth.net_supply_flow_per_interval`, `eth.base_fee_burn_per_interval`, `eth.blob_fee_burn_per_interval` — `ETH/interval`; provider-reported values for one 30-epoch (960-slot) interval, not daily aggregates. The net-flow equation is checked on the same interval: issuance − execution fee burn − consensus penalties − other execution burn.
 - `eth.pending_deposit_queue_eth`, `eth.scheduled_activation_queue_eth`, `eth.scheduled_exit_queue_eth` — `ETH` point balances.
 - `eth.entry_queue_wait_seconds`, `eth.exit_queue_wait_seconds` — queue-wait-time point observations in seconds.
 
-The capture is now exercised against disposable PostgreSQL: a recent run produced 482 candidate rows, but that count is a capture result, not a completeness claim. Provider-reported supply/staking series remain candidates until independently cross-checked. The four unresolved gaps and L2 activity/TVS limitations remain explicit. The source/metric registry and idempotency migration are tested on disposable PostgreSQL only; no production migration or observation write has been performed.
+The capture is now exercised against disposable PostgreSQL: a recent run produced 482 candidate rows before adding the two accounting components, so the next run is expected to contain up to 578 rows. That count is a capture result, not a completeness claim. The capture now records whether `netWei = issuanceWei − burnWei − consensusPenaltiesWei − otherExecutionBurnWei` reconciles exactly over the same provider intervals; mismatches or missing components remain explicit gaps and block live-artifact ingestion in rehearsal. Provider-reported supply/staking series remain candidates until independently cross-checked. The four unresolved gaps and L2 activity/TVS limitations remain explicit. The source/metric registry and idempotency migration are tested on disposable PostgreSQL only; no production migration or observation write has been performed.
 
 ## Threshold contract — not yet populated
 
