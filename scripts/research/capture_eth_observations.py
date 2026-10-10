@@ -380,8 +380,8 @@ def reconcile_ethsupply_intervals(payload: Any, limit: int = 48) -> dict[str, An
     valid = [
         row for row in slots
         if isinstance(row, dict)
-        and iso_unix(row.get("fromTimestamp"))
-        and iso_unix(row.get("toTimestamp"))
+        and _unix_utc(row.get("fromTimestamp"))
+        and _unix_utc(row.get("toTimestamp"))
         and row.get("toTimestamp", 0) > row.get("fromTimestamp", 0)
     ]
     valid.sort(key=lambda row: row["toTimestamp"])
@@ -405,7 +405,7 @@ def reconcile_ethsupply_intervals(payload: Any, limit: int = 48) -> dict[str, An
         actual = values["netWei"]
         if expected != actual:
             mismatches.append({
-                "period_end": iso_unix(row.get("toTimestamp")) or "",
+                "period_end": _unix_utc(row.get("toTimestamp")) or "",
                 "delta_wei": str(actual - expected),
             })
     status = "exact" if checked > 0 and missing == 0 and not mismatches else ("mismatch" if mismatches else "incomplete")
