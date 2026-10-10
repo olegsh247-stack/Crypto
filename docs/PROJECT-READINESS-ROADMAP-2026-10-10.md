@@ -261,3 +261,40 @@ Crypto is considered **product-ready** only when all of the following are eviden
 1. Continue the BTC vertical slice using the existing published snapshot: inspect the actual Domains → Factors → Scores → Scenarios → Monitoring → Evidence records and validate their lineage, definitions, timestamps, and signal meaning. Do not create or publish synthetic records.
 2. Establish and verify a genuinely Preview-only Web deployment, then test the dashboard in a browser. Treat the Vercel target anomaly as a blocker until resolved.
 3. Keep the VPS migration as a separately gated hosting cutover; no purchase/provisioning or production migration is authorized by these checks.
+
+## BTC product-scenario readiness check — 2026-10-11
+
+### Evidence reviewed
+
+- Published baseline: `BTC-2026-10-07-v1`, methodology `CryptoResearch v2 / Structure 1`, 15/15 research blocks resolved.
+- Live API E2E #4 reports 6 domains, 6 critical factors, 5 scores, 3 published scenario definitions, 7 monitoring signals, 15 evidence rows and 9 sources. All 15 evidence rows had a source URL in the recorded validation.
+- The published research artifact `research/assets/BTC/BTC-RESEARCH-01-15.md` identifies the current scenario as **Base with positive institutional and regulatory catalysts**. It frames BTC as a monetary/reserve asset and highlights macro/liquidity sensitivity, institutional demand, mining security and fee-market economics as key drivers.
+- The Monitoring Contract explicitly states that current BTC signals are seeded as **qualitative baseline descriptions**, not a fully live quantitative monitoring system. The product must label this honestly.
+- Recorded live validation shows **zero scenario-state rows and zero monitoring-event rows** for BTC. This is not automatically a defect: scenario states must be separately dated, evidence-backed assessments against a specific snapshot; events must not be fabricated to populate the UI.
+- Current dashboard code keeps published Bull/Base/Bear definitions separate from observed scenario state when lineage cannot be established. This is the safer behavior while no state row exists.
+
+### Readiness decision
+
+**BTC is structurally populated but not yet accepted as a complete decision-ready product scenario.**
+
+| Requirement | Current evidence | Status |
+|---|---|---|
+| Published research baseline | Snapshot `BTC-2026-10-07-v1`, 15/15 blocks | PASS — baseline exists |
+| Domains / factors / scores | 6 / 6 / 5 returned by live E2E | PARTIAL — counts verified, underlying definitions and score rationale still need a claim-to-evidence review |
+| Bull / Base / Bear definitions | 3 published scenario definitions | PARTIAL — definitions exist; assumptions, observable thresholds and invalidation rules need to be checked against evidence |
+| Current scenario assessment | No `scenario_states` row | OPEN — do not infer a live state from the static Base thesis |
+| Monitoring | 7 signals returned, but seeded values are qualitative descriptions | OPEN — label as baseline; no claim of live quantitative evaluation |
+| Monitoring event history | 0 events | ACCEPTABLE ONLY IF no real configured trigger has fired; never synthesize events |
+| Evidence traceability | 15 evidence rows, 15 source URLs, 9 sources in recorded run | PARTIAL — URL presence is verified, not current validity, source authority, date alignment or support for every score/scenario claim |
+| Current market context | API history/ticker endpoints passed E2E | PARTIAL — market endpoint health is not the same as synchronized freshness of every analytical observation |
+
+### Next execution batch — BTC only
+
+1. Inspect the six factor definitions and five score records against their evidence, method/version, units and assessment dates.
+2. For each of the three scenarios, create a read-only acceptance matrix: thesis assumptions, measurable drivers, evidence references, confidence, what would strengthen/weaken it, and explicit invalidation conditions. Distinguish missing thresholds from real thresholds; do not invent numbers.
+3. Audit all seven monitoring signals for type (measured metric vs qualitative baseline), source/metric linkage, `last_updated_at` meaning, direction, thesis impact, confidence and baseline `snapshot_id`.
+4. Sample the 15 evidence rows and verify source identity, URL, observation date, claim supported and whether the evidence is still fit for use. URL presence alone is not evidence quality.
+5. Only after the read-only audit, propose the minimum missing data/contract work. Do not insert scenario states, monitoring events, scores or synthetic observations; no production writes or migrations are authorized.
+
+**Exit criterion:** one documented BTC scenario can be followed end-to-end from the published snapshot through factors, scores and dated evidence to monitoring interpretation, with all unknowns and stale/qualitative inputs clearly labelled. A scenario-state publication is a separate reviewed action, not implied by this audit.
+
