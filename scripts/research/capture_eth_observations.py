@@ -144,14 +144,16 @@ def capture() -> dict[str, Any]:
     else:
         requests["ethereum_block_number"]["validation_error"] = "No valid JSON-RPC block number returned."
 
-    # Preserve the documented public L2BEAT response for schema inspection. Do not
-    # turn an unknown response shape into a numeric observation.
-    l2beat = http_json(L2BEAT_TVS_URL)
-    requests["l2beat_tvs"] = {k: v for k, v in l2beat.items() if k != "payload"}
-    l2beat_payload = l2beat.get("payload")
-    l2beat_shape = type(l2beat_payload).__name__ if l2beat.get("ok") else "unavailable"
-    requests["l2beat_tvs"]["payload_shape"] = l2beat_shape
-    requests["l2beat_tvs"]["note"] = "Raw response intentionally not mapped to a numeric observation until the API schema, time range, aggregation and units are validated."
+    # Official L2BEAT API requires an API key in the query string. Do not make
+    # unauthenticated calls or place a credential in a CI artifact/log. Keep this
+    # source as an explicit gap until a reviewed secret-handling plan exists.
+    requests["l2beat_tvs"] = {
+        "ok": False,
+        "skipped": True,
+        "reason": "Official L2BEAT API requires an API key; no credential is configured for this read-only CI capture.",
+        "documentation_url": "https://api.l2beat.com/openapi",
+        "note": "Do not map TVS to a numeric observation until authenticated access, response schema, range and aggregation are validated."
+    }
 
     return {
         "schema_version": "1.0",
