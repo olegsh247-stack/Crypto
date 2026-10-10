@@ -1,0 +1,78 @@
+name: ETH Independent Interval Cross-check (research)
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/crosscheck_ethsupply_interval.py"
+      - "scripts/research/capture_eth_observations.py"
+      - ".github/workflows/eth-source-crosscheck.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eth-source-crosscheck-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crosscheck:
+    name: Read-only ethsupply interval vs Ethereum RPC
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: |
+          python -m py_compile scripts/research/capture_eth_observations.py scripts/research/crosscheck_ethsupply_interval.py
+      - name: Unit-check exact arithmetic helpers
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts/research")
+          from crosscheck_ethsupply_interval import eth_decimal_to_wei, fake_exponential, choose_window_offsets
+          assert eth_decimal_to_wei("1.000000000000000000") == 10**18
+          assert eth_decimal_to_wei("-0.000000000000000001") == -1
+          assert fake_exponential(1, 0, 3338477) == 1
+          metrics = []
+          for i in range(5):
+              start = f"2026-10-{i + 1:02d}T00:00:00Z"
+              end = f"2026-10-{i + 1:02d}T01:00:00Z"
+              for metric_id in ("eth.base_fee_burn_per_interval", "eth.blob_fee_burn_per_interval"):
+                  metrics.append({"metric_id": metric_id, "period_start": start, "period_end": end})
+          assert choose_window_offsets(metrics, 3) == [0, 2, 4]
+          assert choose_window_offsets(metrics, 1) == [0]
+          print("ETH_SOURCE_CROSSCHECK_ARITHMETIC_AND_INTERVAL_SELECTION_OK")
+          PY
+      - name: Capture public source (read-only)
+        run: |
+          mkdir -p research-crosscheck
+          python scripts/research/capture_eth_observations.py --output research-crosscheck/eth-observation-capture.json
+      - name: Cross-check the latest complete interval
+        run: |
+          python scripts/research/crosscheck_ethsupply_interval.py --artifact research-crosscheck/eth-observation-capture.json --output research-crosscheck/eth-source-crosscheck.json --interval-count 3
+          python - <<'PY'
+          import json
+          d=json.load(open('research-crosscheck/eth-source-crosscheck.json'))
+          assert d.get('database_write_performed') is False
+          assert d.get('blockchain_write_performed') is False
+          assert d.get('status') in {'matched','mismatch','not_evaluable'}, d
+          print("ETH_SOURCE_CROSSCHECK_STATUS="+str(d.get('status')))
+          if d.get('status') != 'matched':
+              print("::warning::Independent ETH source comparison is not accepted; inspect the uploaded research artifact.")
+          PY
+      - name: Upload read-only cross-check artifacts
+        if: ${{ always() && hashFiles('research-crosscheck/eth-observation-capture.json', 'research-crosscheck/eth-source-crosscheck.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eth-independent-source-crosscheck-${{ github.run_id }}
+          path: |
+            research-crosscheck/eth-observation-capture.json
+            research-crosscheck/eth-source-crosscheck.json
+          if-no-files-found: warn
+          retention-days: 7

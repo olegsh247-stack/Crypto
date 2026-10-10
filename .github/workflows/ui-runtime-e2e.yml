@@ -3,10 +3,10 @@ name: UI Runtime Contract E2E
 on:
   workflow_call:
   workflow_dispatch:
-
 jobs:
   runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: web
@@ -28,14 +28,18 @@ jobs:
           web_pid=$!
           trap 'kill "$web_pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
-            if curl -fsS "http://127.0.0.1:3000/" >/dev/null 2>&1; then break; fi
+            if curl --max-time 20 -fsS "http://127.0.0.1:3000/" >/dev/null 2>&1; then break; fi
             sleep 2
           done
-          curl -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
-          curl -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
-          curl -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-eth-research.html
-          curl -fsS "http://127.0.0.1:3000/assets/btc" >/tmp/ui-btc.html
-          curl -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/" >/tmp/ui-home.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/eth" >/tmp/ui-eth.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/eth/research" >/tmp/ui-eth-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/btc" >/tmp/ui-btc.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/btc/research" >/tmp/ui-btc-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/sol" >/tmp/ui-sol.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/sol/research" >/tmp/ui-sol-research.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/cake" >/tmp/ui-cake.html
+          curl --max-time 20 -fsS "http://127.0.0.1:3000/assets/cake/research" >/tmp/ui-cake-research.html
 
           # Product Contour v1: Home → Assets → Asset Dashboard → Deep Research.
           check() {
@@ -61,13 +65,13 @@ jobs:
           check "eth_domains" 'Research Domains' /tmp/ui-eth.html
           check "eth_factors" 'Critical Factors' /tmp/ui-eth.html
           check "eth_scores" 'Research Scores' /tmp/ui-eth.html
-          check "eth_scenarios" 'Scenario States' /tmp/ui-eth.html
+          check "eth_scenarios" 'Scenarios' /tmp/ui-eth.html
           check "eth_current_price" 'Current price' /tmp/ui-eth.html
-          check "eth_monitoring_dashboard" 'Monitoring Dashboard' /tmp/ui-eth.html
-          check "eth_current_signals" 'Current Signals' /tmp/ui-eth.html
-          check "eth_recent_events" 'Recent Events' /tmp/ui-eth.html
-          check "eth_evidence" 'Evidence & Sources' /tmp/ui-eth.html
-          check "eth_evidence_chain" 'Trace the research claim' /tmp/ui-eth.html
+          check "eth_monitoring_dashboard" 'MONITORING DASHBOARD' /tmp/ui-eth.html
+          check "eth_current_signals" 'CURRENT SIGNALS' /tmp/ui-eth.html
+          check "eth_recent_events" 'RECENT EVENTS' /tmp/ui-eth.html
+          check "eth_evidence" 'Evidence &amp; Sources' /tmp/ui-eth.html
+          check "eth_evidence_chain" 'provenance layer' /tmp/ui-eth.html
           if grep -Fq -- '>Current<' /tmp/ui-eth.html || \
              grep -Fq -- '>Update recommended<' /tmp/ui-eth.html || \
              grep -Fq -- '>Outdated<' /tmp/ui-eth.html; then
@@ -80,22 +84,90 @@ jobs:
           check "eth_research_chapters" 'Research chapters' /tmp/ui-eth-research.html
           check "eth_research_count" '15 chapters' /tmp/ui-eth-research.html
           check "eth_structure1" 'Structure 1' /tmp/ui-eth-research.html
-          check "eth_chapter_01" '01 · Essence' /tmp/ui-eth-research.html
-          check "eth_chapter_02" '02 · Technology' /tmp/ui-eth-research.html
-          check "eth_chapter_03" '03 · Tokenomics' /tmp/ui-eth-research.html
-          check "eth_chapter_04" '04 · Network' /tmp/ui-eth-research.html
-          check "eth_chapter_05" '05 · Ecosystem' /tmp/ui-eth-research.html
-          check "eth_chapter_06" '06 · Users' /tmp/ui-eth-research.html
-          check "eth_chapter_07" '07 · Institutions' /tmp/ui-eth-research.html
-          check "eth_chapter_08" '08 · Development' /tmp/ui-eth-research.html
-          check "eth_chapter_09" '09 · Macro' /tmp/ui-eth-research.html
-          check "eth_chapter_10" '10 · Competition' /tmp/ui-eth-research.html
-          check "eth_chapter_11" '11 · Risks' /tmp/ui-eth-research.html
-          check "eth_chapter_12" '12 · Catalysts' /tmp/ui-eth-research.html
-          check "eth_chapter_13" '13 · Scenarios' /tmp/ui-eth-research.html
-          check "eth_chapter_14" '14 · Conclusion' /tmp/ui-eth-research.html
-          check "eth_chapter_15" '15 · Monitoring' /tmp/ui-eth-research.html
+          check "eth_chapter_01" 'Essence and current role' /tmp/ui-eth-research.html
+          check "eth_chapter_02" 'Technology' /tmp/ui-eth-research.html
+          check "eth_chapter_03" 'Tokenomics' /tmp/ui-eth-research.html
+          check "eth_chapter_04" 'Network and on-chain state' /tmp/ui-eth-research.html
+          check "eth_chapter_05" 'Ecosystem' /tmp/ui-eth-research.html
+          check "eth_chapter_06" 'Users and activity' /tmp/ui-eth-research.html
+          check "eth_chapter_07" 'Institutional use and capital' /tmp/ui-eth-research.html
+          check "eth_chapter_08" 'Development and adoption' /tmp/ui-eth-research.html
+          check "eth_chapter_09" 'Macroeconomic context' /tmp/ui-eth-research.html
+          check "eth_chapter_10" 'Competitors and positioning' /tmp/ui-eth-research.html
+          check "eth_chapter_11" 'Risks' /tmp/ui-eth-research.html
+          check "eth_chapter_12" 'Catalysts' /tmp/ui-eth-research.html
+          check "eth_chapter_13" 'Scenarios' /tmp/ui-eth-research.html
+          check "eth_chapter_14" 'Conclusion' /tmp/ui-eth-research.html
+          check "eth_chapter_15" 'Monitoring' /tmp/ui-eth-research.html
           check "btc_identity" 'BTC' /tmp/ui-btc.html
           check "btc_dashboard" 'ASSET DASHBOARD' /tmp/ui-btc.html
           check "btc_research_chapters" 'Research chapters' /tmp/ui-btc-research.html
-          echo "UI_RUNTIME_E2E_OK contour=1 home=1 assets=1 eth=1 btc=1 dashboard=1 research=1 structure1=1"
+          check "sol_identity" 'SOL' /tmp/ui-sol.html
+          check "sol_dashboard" 'ASSET DASHBOARD' /tmp/ui-sol.html
+          check "sol_research_chapters" 'Research chapters' /tmp/ui-sol-research.html
+          check "cake_identity" 'CAKE' /tmp/ui-cake.html
+          check "cake_dashboard" 'ASSET DASHBOARD' /tmp/ui-cake.html
+          check "cake_research_chapters" 'Research chapters' /tmp/ui-cake-research.html
+
+          # Read-only API contract/data audit. This only issues GET requests.
+          node --input-type=module <<'NODE'
+          const base = process.env.CRYPTO_API_URL;
+          const fail = (message) => { console.error("API_CHECK_FAIL", message); process.exit(1); };
+          // The API is an external read-only dependency. Retry transient network/timeouts and 5xx,
+          // but fail immediately for non-retryable 4xx responses or contract mismatches.
+          const getJson = async (url, label) => {
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+                if (!response.ok) {
+                  if (response.status >= 500 && attempt < 3) {
+                    console.warn(`API_RETRY ${label} attempt=${attempt} http=${response.status}`);
+                    await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+                    continue;
+                  }
+                  fail(`${label}_http_${response.status}`);
+                }
+                return await response.json();
+              } catch (error) {
+                if (attempt === 3) throw error;
+                console.warn(`API_RETRY ${label} attempt=${attempt} error=${error.name ?? "Error"}`);
+                await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+              }
+            }
+            fail(`${label}_exhausted_retries`);
+          };
+          const listPayload = await getJson(`${base}/api/assets`, "assets_list");
+          if (!Array.isArray(listPayload.assets)) fail("assets_list_missing_array");
+          for (const symbol of ["BTC", "ETH", "SOL", "CAKE"]) {
+            const listed = listPayload.assets.find((item) => String(item.symbol).toUpperCase() === symbol);
+            if (!listed) fail(`asset_missing_from_list_${symbol}`);
+            const payload = await getJson(`${base}/api/assets/${encodeURIComponent(listed.asset_id)}`, `asset_detail_${symbol}`);
+            if (String(payload.asset?.symbol).toUpperCase() !== symbol) fail(`asset_identity_mismatch_${symbol}`);
+            const arrayKeys = ["research_blocks", "research_domains", "critical_factors", "scores", "research_scenarios", "scenario_states", "monitoring_signals", "monitoring_events", "sources", "evidence"];
+            for (const key of arrayKeys) if (!Array.isArray(payload[key])) fail(`missing_array_${symbol}_${key}`);
+            const blocks = payload.research_blocks;
+            const progress = payload.research_progress;
+            if (!progress || progress.total !== 15) fail(`invalid_progress_total_${symbol}`);
+            const resolved = new Set(blocks.filter((b) => ["complete", "n_a"].includes(String(b.status).toLowerCase())).map((b) => Number(b.block_number))).size;
+            if (resolved !== progress.resolved) fail(`resolved_count_mismatch_${symbol}_blocks_${resolved}_api_${progress.resolved}`);
+            if (String(payload.asset.research_status) !== String(listed.research_status)) fail(`lifecycle_mismatch_${symbol}_list_${listed.research_status}_detail_${payload.asset.research_status}`);
+            const snapshotId = payload.research_snapshot?.snapshot_id ?? null;
+            for (const key of ["critical_factors", "scores", "research_scenarios", "scenario_states"]) {
+              for (const row of payload[key]) {
+                if (snapshotId && row.snapshot_id && row.snapshot_id !== snapshotId) fail(`snapshot_lineage_mismatch_${symbol}_${key}`);
+              }
+            }
+            for (const state of payload.scenario_states) {
+              if (!state.scenario_id || !state.state) fail(`scenario_state_identity_missing_${symbol}`);
+              if (!state.observed_at) fail(`scenario_state_observed_at_missing_${symbol}`);
+              if (!state.snapshot_id || state.snapshot_id !== snapshotId) fail(`scenario_state_snapshot_lineage_missing_${symbol}`);
+              if (!state.rationale) fail(`scenario_state_rationale_missing_${symbol}`);
+              if (!state.indicators || typeof state.indicators !== "object" || Array.isArray(state.indicators)) fail(`scenario_state_indicators_invalid_${symbol}`);
+            }
+            const sourceUrls = payload.evidence.filter((row) => Boolean(row.source_url)).length;
+            console.log(`API_CHECK_OK ${symbol} lifecycle=${payload.asset.research_status} snapshot=${snapshotId ?? "none"} blocks=${blocks.length} resolved=${progress.resolved}/15 factors=${payload.critical_factors.length} scores=${payload.scores.length} scenarios=${payload.research_scenarios.length} scenario_states=${payload.scenario_states.length} signals=${payload.monitoring_signals.length} events=${payload.monitoring_events.length} evidence=${payload.evidence.length} evidence_source_urls=${sourceUrls} sources=${payload.sources.length}`);
+          }
+          console.log("READ_ONLY_API_CONTRACT_OK assets=BTC,ETH,SOL,CAKE");
+          NODE
+
+          echo "UI_RUNTIME_E2E_OK contour=1 home=1 assets=1 btc=1 eth=1 sol=1 cake=1 dashboard=1 research=1 structure1=1"

@@ -52,7 +52,9 @@ Research freshness is normalized as an object in asset detail responses:
 {
   status: "current" | "update_recommended" | "outdated",
   reason: string | null,
-  last_research_at: string | null
+  last_research_at: string | null,
+  last_major_update_at?: string | null,
+  next_review_at?: string | null
 }
 ```
 

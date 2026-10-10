@@ -1,0 +1,41 @@
+name: Product Contour Gate
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - "workers/**"
+      - "shared/**"
+      - "research/**"
+      - "infrastructure/neon/**"
+      - "scripts/**"
+      - "docs/PRODUCT-CONTOUR-V1*"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-contract:
+    name: Build + read-only UI/API contract
+    uses: ./.github/workflows/ui-runtime-e2e.yml
+
+  migration-rehearsal:
+    name: Disposable DB migration rehearsal
+    uses: ./.github/workflows/migration-rehearsal.yml
+
+  worker-api-build:
+    name: Cloudflare Worker API bundle (dry run only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Worker dependencies
+        working-directory: workers/crypto-api
+        run: npm install --no-audit --no-fund
+      - name: Bundle Worker without deployment
+        working-directory: workers/crypto-api
+        run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/crypto-api-worker-build

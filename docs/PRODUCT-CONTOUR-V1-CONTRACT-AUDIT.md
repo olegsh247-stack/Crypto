@@ -120,3 +120,117 @@ This audit is documentation-only. It does not authorize:
 - changes to billing or GitHub Actions settings;
 - changes to visual design;
 - production deployment.
+
+## Implementation status — Product Contour v1 contract PR
+
+**Branch:** `fix/product-contour-v1-contracts`  
+**PR:** https://github.com/olegsh247-stack/Crypto/pull/3  
+**Scope:** Static/read-only corrections only; no database migration or Neon write.
+
+| Finding | Static correction in PR | Remaining verification |
+|---|---|---|
+| Progress counts differ between Web and server | Web now exposes separate completed/resolved counts and calculates progress from resolved blocks (complete + N/A). | Compare against live API payloads and representative asset records. |
+| Factors/scores may mix snapshots | Queries are restricted to the latest published snapshot. | Confirm live row counts and snapshot IDs for BTC, ETH, SOL and CAKE. |
+| Scenario state may belong to another baseline | Scenario states are filtered to the latest published snapshot and include `snapshot_id` in the response. Dashboard no longer joins legacy `scenario_id` to `research_scenario_id`; published scenario definitions and observed state are displayed separately. | Live scenario-state rows remain empty for BTC/ETH; no database rows were changed or synthesized. |
+| Evidence-linked sources omitted from source registry | Source query includes sources referenced by observations or evidence and deduplicates them. | Confirm live payload completeness and source URL availability. |
+| Freshness contract differs between list/detail | Web freshness types now preserve optional `last_research_at`, `last_major_update_at`, and `next_review_at` fields returned by the API. | Confirm list/detail semantics and UI labels with live payloads; no freshness policy or server behavior changed. |
+
+### Follow-up implementation — 2026-10-09
+
+- Dashboard and Deep Research now render `research_scenarios` as published Bull/Base/Bear definitions, not as a fallback list of `scenario_states`.
+- Dashboard no longer treats the legacy text `scenario_states.scenario_id` as a guaranteed foreign key to `research_scenarios.research_scenario_id`.
+- Web API freshness types preserve optional review-timestamp fields. The API now selects and returns `last_major_update_at` and `next_review_at` in both list and detail freshness payloads; the detail freshness payload also preserves `last_research_at`.
+- No database schema, Neon data, production deployment, VPS, or visual design was changed.
+- Static file-content checks confirmed the unsafe scenario join was removed and the freshness fields are present. A new GitHub Actions run has not yet been observed for these latest commits; a successful Web build is not claimed.
+- Follow-up static review found additional Dashboard issues: `currentScenario.invalidation_conditions` referenced a field not present on the local state object, an undeclared `confidence` variable, and the Confidence card displayed the score record's `confidence` metadata instead of its `value`. The invalidation condition now comes from the published Base scenario, and the Confidence card now displays `confidenceScore.value` with confidence metadata/explanation as supporting text. These are source-level fixes only; no Web build is claimed.
+- Follow-up API audit found the `/api/assets` list route used a different lifecycle rule from the detail route: it counted only `complete` blocks, could mark an asset `monitoring` before all 15 blocks were resolved, and derived progress from `research_status.snapshot_id` instead of explicitly selecting the latest published snapshot. The list query now uses the same latest-published snapshot selection as the detail route, counts distinct resolved block numbers (`complete` + `n_a`), and applies `monitoring` only when all 15 are resolved and block 15 is complete. Static source correction only; runtime/build verification remains outstanding.
+- Evidence source URL resolution now falls back to `observations.source_url` when the registered `sources.base_url` is absent, so a direct source URL attached to the observation is not discarded. The freshness payload now exposes optional `last_major_update_at` and `next_review_at` on list and detail responses. Both are additive API-contract fixes; runtime/build verification remains outstanding.
+
+### Validation status
+
+- Static contract assertions on the PR branch: 10/10 passed.
+- Latest post-change source assertions: 8/8 passed for list/detail snapshot alignment, resolved-block lifecycle rules, scenario invalidation source, Confidence card value binding, and corresponding audit-document entries. These are text/source assertions, not a TypeScript build or runtime test.
+- Latest Evidence/Monitoring follow-up assertions: 10/10 passed for list/detail freshness timestamps, observation URL fallback for evidence, evidence/source snapshot scoping, factor/score snapshot scoping, API documentation, and audit notes. These are text/source assertions, not a TypeScript build or runtime test.
+- Cloudflare Worker branch build: passed; this is a preview build, not a production deployment.
+- GitHub Web build job did not execute any steps; its job record contains no steps and the known account billing/spending-limit blocker remains unresolved. This is not evidence of a TypeScript build failure.
+- Live API, Neon data, and runtime E2E validation remain outstanding. Do not merge or run migration workflows until those checks are available and safe.
+
+
+## Final Product Contour v1 acceptance review — 2026-10-09
+
+**Review type:** source-level acceptance only. No GitHub Actions run, TypeScript/Web build, live API request, Neon query, migration, or deployment was performed.
+
+### Acceptance matrix
+
+| Product block | Source-level result | Acceptance note |
+|---|---|---|
+| Home | Present | Loads assets from the API and presents the product overview plus lifecycle counts. |
+| Assets | Present as Home section | The navigation points to `/#assets`; there is no separate `/assets` listing route. This works as an in-page listing, but remains a product/navigation decision if a dedicated Assets screen is required. |
+| Asset Dashboard | Present | Asset detail route consumes the Engine response and exposes market context plus the decision view. |
+| Deep Research | Present | Both the research index and per-asset research route exist; per-asset research normalizes to the canonical 15-block structure. |
+| Domains | Present | Dashboard renders domain records and mapped Structure 1 blocks; real data coverage is not runtime-verified. |
+| Factors | Present | Dashboard and Deep Research render critical factors; current-snapshot scoping is implemented in the API source, pending runtime verification. |
+| Scores | Present | Dashboard renders scores and decision-score cards; current-snapshot scoping is implemented in the API source, pending runtime verification. |
+| Scenarios | Present with safe separation | Published definitions and observed state are kept separate where lineage cannot be proven; runtime data semantics remain unverified. |
+| Monitoring | Present | Signals, event history, direction counts and research baseline are rendered; freshness and data quality are not runtime-verified. |
+| Evidence | Present | Evidence rows and source links are rendered; source URL fallback and evidence-linked source collection are implemented in API source, pending runtime verification. |
+
+### Final static checks
+
+A fresh read of the current PR branch confirmed **10/10 source-level acceptance assertions**:
+1. Home loads the asset registry.
+2. Assets navigation resolves to the Home `#assets` section.
+3. Dashboard links to per-asset Deep Research.
+4. Dashboard contains Domains, Factors, Scores, Scenarios, Monitoring and Evidence sections.
+5. Per-asset Deep Research normalizes its content against the canonical 15-block structure.
+6. Web progress counts N/A blocks as resolved.
+7. Shared lifecycle contract defines resolved as complete + N/A.
+8. API lifecycle logic checks resolved blocks and requires completed block 15 for Monitoring.
+9. The Dashboard no longer references the invalid local `currentScenario.invalidation_conditions` field.
+10. Evidence rendering supports source URLs.
+
+These checks establish that the expected source patterns exist; they do **not** establish compilation, API compatibility at runtime, correctness of live records, or end-to-end product readiness.
+
+### Acceptance decision
+
+- **Source structure:** provisionally accepted for the defined v1 contour.
+- **Known scope clarification:** Assets is currently a Home section, not a standalone route.
+- **Build/runtime acceptance:** blocked pending a permitted Web build and read-only live API/data checks.
+- **Release acceptance:** not granted. PR remains unmerged; no production deployment or database changes are authorized by this review.
+- **Operational constraint:** GitHub Actions spending/billing limit remains the known blocker. Do not repeatedly retry Actions or use a migration workflow as a substitute for safe read-only validation.
+- **Next validation batch when available:** run Web typecheck/build, then read-only contract checks for BTC, ETH, SOL and CAKE covering list/detail lifecycle parity, latest snapshot IDs, block counts, factor/score counts, scenario lineage, monitoring signals/events, evidence counts and source URLs. Record actual outputs in this audit before changing the acceptance decision.
+
+
+### Follow-up validation attempt — 2026-10-09
+
+- Read-only GitHub status lookup for audit commit `b96a602c86732def05e9d2bad62d13cb5afaad7f` returned no combined commit statuses.
+- GitHub reports a `Build Crypto Web` workflow run (`37916647478`) as failed, but its only job has no step summaries and the log endpoint returns `BlobNotFound`. Therefore the failure does not identify a source/build error and cannot be treated as a completed build attempt.
+- Read-only Vercel project search for repository `olegsh247-stack/Crypto` returned no linked project. No project was created and no deployment was triggered.
+- As a result, there is currently no trustworthy Web build result or safe, known preview environment for live API checks. No Actions retry, Vercel deployment, database request, migration, or production operation was performed.
+
+**Current gate:** source-level contour checks passed; build/runtime gate remains blocked by unavailable CI evidence and no linked Vercel project. The next valid path is to restore/enable an authorized build runner or provide an existing non-production preview with a confirmed read-only database binding, then execute the acceptance batch. Do not merge until that gate is green.
+
+
+### UI E2E contract alignment — 2026-10-09
+
+- Read the current Dashboard source alongside `.github/workflows/ui-runtime-e2e.yml` and found five stale text expectations: `Scenario States`, title-cased `Monitoring Dashboard`, `Current Signals`, `Recent Events`, and `Trace the research claim` did not match the current rendered copy.
+- Updated only the UI E2E assertions to check the current source-backed labels: `Scenarios`, `MONITORING DASHBOARD`, `CURRENT SIGNALS`, `RECENT EVENTS`, and `provenance layer`. No product UI, design, API, or database code was changed.
+- Re-fetched the workflow file from the PR branch and confirmed the five updated assertions are present.
+- The workflow was **not run** because the GitHub Actions billing/spending blocker remains. This is a test-contract correction, not evidence that build/runtime validation now passes. Release gate remains blocked; do not merge until an authorized build and safe runtime checks succeed.
+
+
+### Superseding live validation — 2026-10-09
+
+This section supersedes earlier statements in this audit that the Web build/runtime checks were unavailable due to a GitHub Actions billing/spending blocker.
+
+- Web build passed on commit `53004ef154d1fd239a48a5552d5d3deba6884e62`: [Build Crypto Web run #104](https://github.com/olegsh247-stack/Crypto/actions/runs/37972878788).
+- UI Runtime Contract E2E passed on the same commit: [run #5](https://github.com/olegsh247-stack/Crypto/actions/runs/37972879565).
+- The runtime workflow checks Home and dashboard/Deep Research routes for BTC, ETH, SOL and CAKE, then makes GET-only requests to the public API to compare list/detail lifecycle, resolved-block counts, payload arrays and snapshot lineage.
+- BTC: published snapshot `BTC-2026-10-07-v1`; 15/15 blocks resolved; 6 factors; 5 scores; 3 scenarios; 0 scenario states; 7 signals; 0 events; 15 evidence rows with 15 source URLs; 9 sources.
+- ETH: published snapshot `ETH-2026-10-04-v1`; 15/15 blocks resolved; 6 factors; 5 scores; 3 scenarios; 0 scenario states; 6 signals; 0 events; 15 evidence rows with 15 source URLs; 3 sources.
+- SOL: API contract passed, but lifecycle is `not_started`; no published snapshot, blocks, factors, scores, scenarios, scenario states, signals, events, evidence or sources were returned.
+- CAKE: API contract passed, but lifecycle is `not_started`; no published snapshot, blocks, factors, scores, scenarios, scenario states, signals, events, evidence or sources were returned.
+- The SOL/CAKE result is a data-coverage gap, not an API-shape failure. The validation did not write or synthesize data.
+- The branch-divergence conflict was resolved by merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; the merged `.gitignore` preserves the rules from both branches. GitHub now reports the PR as mergeable.
+
+**Updated gate:** Web build PASS; UI/runtime API contract PASS; live data parity checks PASS; research coverage PARTIAL (published research exists for BTC/ETH but not SOL/CAKE); scenario-state and monitoring-event tables are empty for BTC/ETH and need confirmation as expected product behavior or separate follow-up. No production deployment, Neon write, migration, VPS operation, or design change was performed. The detailed current results are in [PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md](./PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md).

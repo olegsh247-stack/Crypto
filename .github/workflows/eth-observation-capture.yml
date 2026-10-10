@@ -1,0 +1,81 @@
+name: ETH Observation Capture
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/capture_eth_observations.py"
+      - ".github/workflows/eth-observation-capture.yml"
+      - "docs/ETH-OBSERVATION-PIPELINE-AUDIT-2026-10-10.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eth-observation-capture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Read-only ETH source capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: python -m py_compile scripts/research/capture_eth_observations.py
+      - name: Capture public source responses (read-only)
+        run: |
+          mkdir -p research-capture
+          python scripts/research/capture_eth_observations.py --output research-capture/eth-observation-capture.json
+      - name: Validate artifact guardrails
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          import re
+          from pathlib import Path
+          path = Path("research-capture/eth-observation-capture.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data["database_write_performed"] is False
+          assert data["blockchain_write_performed"] is False
+          assert isinstance(data["metrics"], list)
+          assert len(data["unresolved_metric_gaps"]) >= 1
+          for metric in data["metrics"]:
+              assert metric["asset_id"] == "ETH"
+              assert metric["source_id"] and metric["source_url"]
+              assert metric["unit"] and metric["observed_at"]
+              value = metric["value_numeric"]
+              assert (isinstance(value, (int, float)) and math.isfinite(value)) or (isinstance(value, str) and re.fullmatch(r"-?[0-9]+(?:\.[0-9]+)?", value)), metric
+          for key in ("ethsupply_live", "ethsupply_history_30d"):
+              probe = data["requests"][key]
+              assert isinstance(probe.get("ok"), bool), (key, probe)
+              assert isinstance(probe.get("http_status"), int) if probe.get("ok") else True, (key, probe)
+              assert probe.get("started_at_utc") and probe.get("finished_at_utc"), (key, probe)
+              assert isinstance(probe.get("schema_probe"), dict), (key, probe)
+              assert "payload" not in probe, "raw provider payload must not be copied into the artifact"
+              shape = probe["schema_probe"]
+              print(f"{key}: status={shape.get('status')} stale_over_one_hour={shape.get('stale_over_one_hour')} generated_at={shape.get('generated_at_utc')}")
+              if key == "ethsupply_live":
+                  print(f"ethsupply_live: head={shape.get('head')} supply_as_of={shape.get('supply_as_of')} data_value_shapes={shape.get('data_value_shapes')}")
+              else:
+                  print(f"ethsupply_history_30d: range={shape.get('range')} interval={shape.get('interval')} coverage={shape.get('coverage')} point_counts={shape.get('point_counts')}")
+                  print(f"ethsupply_history_30d: slot_sample_fields={shape.get('sample_field_names', {}).get('slot')} slot_sample_value_types={shape.get('slot_sample_value_types')} summary_keys={shape.get('summary_keys')} summary_value_types={shape.get('summary_value_types')}")
+                  reconciliation = probe.get("accounting_reconciliation", {})
+                  assert reconciliation.get("status") in {"exact", "mismatch", "incomplete"}, reconciliation
+                  print(f"ethsupply_history_30d: accounting_reconciliation={reconciliation}")
+          print(f"artifact valid: {len(data['metrics'])} numeric metrics; {len(data['unresolved_metric_gaps'])} explicit gaps; ethsupply API schema probes recorded")
+          PY
+      - name: Upload raw capture artifact
+        if: ${{ always() && hashFiles('research-capture/eth-observation-capture.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eth-observation-capture-${{ github.run_id }}
+          path: research-capture/eth-observation-capture.json
+          if-no-files-found: error
+          retention-days: 7
