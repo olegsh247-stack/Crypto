@@ -44,6 +44,8 @@ jobs:
           chmod +x scripts/migrate-neon.sh
           ./scripts/migrate-neon.sh
           ./scripts/migrate-neon.sh
+          echo "Validating canonical BTC Structure 1 domain mapping"
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --file=scripts/validate-btc-domain-mapping.sql
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='assets';" | grep -qx '1'
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select 1 from information_schema.tables where table_schema='public' and table_name='market_daily_candles';" | grep -qx '1'
           migration_count="$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;" | tr -d '[:space:]')"
