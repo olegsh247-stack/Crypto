@@ -125,3 +125,21 @@ This section is an implementation boundary, not a claim that the listed sources 
 - "Mismatch" and "not_evaluable" must remain inspectable; they must never be coerced into "matched" to keep CI green.
 - Preserve the exact source interval, RPC block range/count, schedule parameters, deltas, and read-only guardrails in artifacts.
 - No production database write, production migration, API/Worker deployment, VPS provisioning, PR merge, signal evaluation, monitoring event, or scenario-state publication is authorized by this research plan.
+
+
+## 9. Validation results — 2026-10-10 (GitHub Actions)
+
+Reviewed artifacts from [ETH Independent Interval Cross-check run 10](https://github.com/olegsh247-stack/Crypto/actions/runs/38039732906), [ETH Observation Capture run 96](https://github.com/olegsh247-stack/Crypto/actions/runs/38039732976), [Product Contour Gate run 197](https://github.com/olegsh247-stack/Crypto/actions/runs/38039733062), and [VPS API Build Rehearsal run 223](https://github.com/olegsh247-stack/Crypto/actions/runs/38039732962).
+
+### Results accepted for this research step
+
+- **Execution fee components: matched in all three sampled intervals.** The newest, middle, and oldest sampled complete intervals all matched independent Ethereum JSON-RPC recomputation exactly for both EIP-1559 base-fee burn and EIP-4844 blob-fee burn. All three also matched provider-reported block counts: 957/957, 955/955, and 957/957. Both component deltas were exactly 0 wei in every sampled interval.
+- Sampled windows: 2026-10-10 05:29:59–08:41:47 UTC; 2026-10-07 00:41:59–03:53:47 UTC; 2026-10-03 23:05:59–2026-10-04 02:17:47 UTC.
+- **Provider accounting identity: internally exact for 48/48 intervals.** The capture artifact reports zero missing component intervals and zero mismatches for `netWei = issuanceWei - burnWei - consensusPenaltiesWei - otherExecutionBurnWei`. This is an internal consistency check of the same provider payload, not independent validation of issuance, penalties, other execution burn, or net supply.
+- Capture produced 578 candidate metric observations. L2BEAT remains skipped because approved API access is not configured. Validator/operator concentration and cross-chain competitive share remain unresolved.
+- **Product Contour Gate: success** for Worker API bundle dry run, read-only UI/API contract/runtime, and disposable clean-DB migration/idempotency rehearsal.
+- **VPS API Build Rehearsal: success** for the build-and-E2E job. This is a rehearsal result, not evidence that a VPS has been provisioned or production deployed.
+
+### Scope and decision
+
+Accept only the narrow claim that the provider's interval-level base-fee and blob-fee burn fields matched the independent RPC calculation in these three sampled windows. Do not generalize this to all 48 intervals or to the provider's full accounting model. The next evidence task is independent consensus-layer issuance and penalties for exactly aligned finalized epoch/slot ranges. No evaluator thresholds are approved by these results.
