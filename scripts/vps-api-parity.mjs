@@ -20,6 +20,14 @@ function normalizeDetail(d, { requireLineage = false } = {}) {
 
   assert(Array.isArray(d.research_scenarios), "research_scenarios array missing");
   assert(Array.isArray(d.scenario_states), "scenario_states array missing");
+  assert(Array.isArray(d.critical_factors), "critical_factors array missing");
+  assert(Array.isArray(d.scores), "scores array missing");
+  for (const field of ["critical_factors", "scores"]) {
+    for (const row of d[field]) {
+      assert(!snapshotId || row.snapshot_id === snapshotId,
+        field + " row is not scoped to latest published snapshot; baseline=" + snapshotId + "; row=" + JSON.stringify(row));
+    }
+  }
   for (const scenario of scenarios) {
     assert(!snapshotId || (requireLineage
       ? scenario.snapshot_id === snapshotId
@@ -40,6 +48,14 @@ function normalizeDetail(d, { requireLineage = false } = {}) {
     snapshot_id: snapshotId,
     snapshot_status: d.research_snapshot?.status ?? null,
     block_count: Array.isArray(d.research_blocks) ? d.research_blocks.length : null,
+    critical_factors: d.critical_factors.map(row => pick(row, [
+      "name","description","importance_weight","current_state","trend","confidence",
+      "thesis_impact","monitoring_priority","snapshot_id"
+    ])).sort((a,b) => String(a.name).localeCompare(String(b.name))),
+    scores: d.scores.map(row => pick(row, [
+      "score_type","value","scale_min","scale_max","methodology_version","confidence",
+      "explanation","snapshot_id"
+    ])).sort((a,b) => String(a.score_type).localeCompare(String(b.score_type))),
     scenario_definitions: scenarios.map(s => pick(s, [
       "scenario_type","probability","assumptions",
       "supporting_evidence","invalidation_conditions","thesis_impact","confidence"
