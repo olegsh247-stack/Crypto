@@ -231,3 +231,11 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - The script covers the four pinned boundary intervals from June 1 through October 1, 2026, includes logs from start block + 1 through the end block, and separately reports dead-address inflows, outflows, and mint-to-dead transfers.
 - **Do not mark CAKE event reconciliation complete yet.** The workflow must finish and its raw artifact must be checked for RPC completeness and per-interval balance-delta identities before issuer figures can be reconciled.
 - Product release, CAKE circulating-supply approval, publication, score/scenario creation, production writes and VPS cutover remain blocked pending their respective acceptance criteria and approvals.
+
+
+## CAKE event-log provider blocker — 2026-10-10
+
+- The read-only capture script and manual workflow are in the branch, but no event artifact has been produced. Attempts against Blockmachine (range limit, then HTTP 429), official BSC dataseed (`-32005 limit exceeded`), dRPC (HTTP 400), and PublicNode (HTTP 403) did not return usable logs. See the detailed run-by-run record in [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md).
+- The independent burn tracker states that its historical log series uses an authenticated NodeReal archive node. The next valid CAKE attempt therefore needs an authorized archive/indexer endpoint; do not keep cycling unauthenticated endpoints or treat failures as zero events.
+- The workflow is now manual-only until a suitable provider is configured, avoiding a repeated failing check on every push. CAKE event reconciliation and circulating-supply approval remain open.
+- **Priority handoff:** return to Stage 1, ETH numeric evidence, as ordered in this roadmap. Do not publish CAKE/SOL research or jump to broad data expansion.
