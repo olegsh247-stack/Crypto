@@ -52,3 +52,26 @@ HTTP 200 responses were observed for health, DB health, asset registry, details 
 The API contract checks pass for all four payloads, but this does **not** mean the four assets have equally complete research. BTC and ETH have populated research data; SOL and CAKE currently return empty research collections with lifecycle `not_started`. This is a product-completeness finding, not an HTTP/API availability failure.
 
 A browser-level inspection of the deployed Dashboard is still pending because the deployed Web URL has not yet been identified from the repository configuration. No production deployment or merge was performed during this verification.
+
+
+## Release gate diagnosis — 2026-10-11
+
+### Confirmed failure
+
+[Crypto Release Gate #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38054710056) ran against `main` at `b86d91d`, not the working branch. Its database migration/contract gate passed, including clean-database bootstrap rehearsal. The Web build then failed TypeScript checking in `web/app/assets/[assetId]/page.tsx:210` with `Cannot find name 'confidence'`. The UI runtime and Worker/live E2E jobs were skipped as a consequence of the failed Web build.
+
+### Working-branch comparison
+
+The current file retrieved from `fix/product-contour-v1-contracts` uses the declared `confidenceScore` variable in the Confidence card; the exact undeclared `confidence` reference reported by #121 is not present in that retrieved version. This is evidence that #121 is stale relative to the working-branch page, **not** evidence that the working branch currently passes a production build.
+
+The latest confirmed Product Contour Gate and VPS API Build Rehearsal successes found in the Actions history are both on older commit `99fecfa` ([Contour Gate #211](https://github.com/olegsh247-stack/Crypto/actions/runs/38054184666), [Build Rehearsal #237](https://github.com/olegsh247-stack/Crypto/actions/runs/38054184377)). The successful Live API E2E #4 is on `06562d4` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38061014765)). None of these results proves that the latest working-branch head passes the full Web/runtime gate.
+
+### Release-gate status and next action
+
+- [x] Identify why Release Gate #121 failed.
+- [x] Compare the failing line with the working-branch page.
+- [ ] Obtain a fresh Web build and Product Contour/runtime validation on the current working-branch head.
+- [ ] Identify the deployed Web URL and complete browser-level runtime verification; no URL is assumed or invented.
+- [ ] Only after those checks, finalize the Product Contour v1 acceptance decision and proceed to one complete BTC scenario.
+
+No production deployment, production migration, DB write, PR merge, VPS provisioning, or cloud-provider removal was performed for this diagnosis. The unrelated CAKE Transfer Log Reconciliation failures remain attributable to public BSC RPC access/rate limits and are not treated as Product Contour gate results.
