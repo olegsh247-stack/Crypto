@@ -273,23 +273,23 @@ jobs:
             first_code=$(curl -sS -o /tmp/eth-real-ingest-first.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-real-capture-artifact.json)
             test "$first_code" = "200"
             EXPECTED_CAPTURE_COUNT="$expected" python3 - <<'PY'
-            import json, os
-            d=json.load(open('/tmp/eth-real-ingest-first.json'))
-            expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
-            assert d.get('status')=='ok', d
-            assert d.get('received_count')==expected and d.get('inserted_count')==expected and d.get('duplicate_count')==0, d
-            print(f"VPS_API_REAL_CAPTURE_INGEST_OK inserted={expected}")
-            PY
+          import json, os
+          d=json.load(open('/tmp/eth-real-ingest-first.json'))
+          expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
+          assert d.get('status')=='ok', d
+          assert d.get('received_count')==expected and d.get('inserted_count')==expected and d.get('duplicate_count')==0, d
+          print(f"VPS_API_REAL_CAPTURE_INGEST_OK inserted={expected}")
+          PY
             replay_code=$(curl -sS -o /tmp/eth-real-ingest-replay.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-real-capture-artifact.json)
             test "$replay_code" = "200"
             EXPECTED_CAPTURE_COUNT="$expected" python3 - <<'PY'
-            import json, os
-            d=json.load(open('/tmp/eth-real-ingest-replay.json'))
-            expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
-            assert d.get('status')=='ok', d
-            assert d.get('received_count')==expected and d.get('inserted_count')==0 and d.get('duplicate_count')==expected, d
-            print(f"VPS_API_REAL_CAPTURE_IDEMPOTENCY_OK replay_inserted=0 duplicates={expected}")
-            PY
+          import json, os
+          d=json.load(open('/tmp/eth-real-ingest-replay.json'))
+          expected=int(os.environ['EXPECTED_CAPTURE_COUNT'])
+          assert d.get('status')=='ok', d
+          assert d.get('received_count')==expected and d.get('inserted_count')==0 and d.get('duplicate_count')==expected, d
+          print(f"VPS_API_REAL_CAPTURE_IDEMPOTENCY_OK replay_inserted=0 duplicates={expected}")
+          PY
             stored_provider=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where source_id='ethsupply_fyi';")
             test "$stored_provider" = "$expected_provider"
             echo "VPS_API_REAL_CAPTURE_STORAGE_OK provider_rows=$stored_provider"
