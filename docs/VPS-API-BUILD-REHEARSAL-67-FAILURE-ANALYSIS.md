@@ -134,7 +134,11 @@ A review of the disposable rollback fixture also found that it used the UUID of 
 
 The preflight now additionally emits the current read-only ETH factors, scores, evidence rows (including evidence IDs and source URLs), and scenario definitions as `ETH_SCENARIO_DECISION_INPUTS`. This will let the next assessment reconcile its candidate indicators to the actual published evidence rather than relying on collection counts alone.
 
-The Product Contour Gate passed again on commit `e8200263e3d9de2e9ceb554112fdd2fec84d2aca` ([run #80](https://github.com/olegsh247-stack/Crypto/actions/runs/38031828127)). VPS API Build Rehearsal for the subsequent rollback-fixture/preflight-output changes is still running as this note is written; its result must be checked before claiming the latest head is fully green.
+The Product Contour Gate passed on commit `cbc9c0af42c39d738cd836a207fc73a3a71fd427` ([run #81](https://github.com/olegsh247-stack/Crypto/actions/runs/38032000436)), and [VPS API Build Rehearsal #112](https://github.com/olegsh247-stack/Crypto/actions/runs/38032000250) also passed on that commit. The rollback fixture uses `scenario_id='base'` and includes real baseline evidence IDs in the indicators object; the test verifies at least one evidence ID is present and that rollback leaves no persistent row.
+
+The read-only preflight now prints the actual decision inputs. It confirms that the current 14 observations are narrative text values, not numeric market metrics, all timestamped `2026-10-07T09:16:19.544Z`. The six monitoring signals also hold description-only `current_value` objects, with no previous value or threshold; their `last_updated_at` is `2026-10-08T12:30:54.538Z`. Thus the current product's `fresh` flag is based on the recent timestamp, not proof that current ETH market metrics were refreshed. The next product blocker is a proper dated numeric-observation/evidence capture and signal-evaluation path, not another scenario-state write.
+
+The latest documentation-only commits are being rechecked by Actions; use the linked successful code commit for the verified VPS runtime and disposable-database results, and do not claim that later commits have passed until their own runs finish.
 
 ## Safety / scope
 
