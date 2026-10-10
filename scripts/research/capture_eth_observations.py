@@ -285,8 +285,10 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
     methodology_base = f"ethsupply.fyi public 30d history; revision={payload.get('revision')}; generatedAt={iso_unix(generated_at)}; coverageSlots={coverage.get('fromSlot')}..{coverage.get('toSlot')}; 30-epoch aggregate (960 slots); exact integer converted with Decimal; not independently cross-checked."
     slot_specs = [
         ("issuanceWei", "eth.gross_issuance_per_interval", "ETH/interval", False, "Gross issuance reported by provider."),
-        ("burnWei", "eth.total_burn_per_interval", "ETH/interval", False, "Total burn reported by provider; component metrics remain separate."),
-        ("netWei", "eth.net_supply_flow_per_interval", "ETH/interval", True, "Provider-derived net supply flow; do not recompute across mismatched windows."),
+        ("burnWei", "eth.execution_fee_burn_per_interval", "ETH/interval", False, "Execution fee burn (base-fee plus blob-fee burn) reported by provider; excludes consensus penalties and other execution destruction."),
+        ("consensusPenaltiesWei", "eth.consensus_penalties_per_interval", "ETH/interval", False, "Consensus-layer penalties deducted from issuance in the provider interval."),
+        ("otherExecutionBurnWei", "eth.other_execution_burn_per_interval", "ETH/interval", False, "Other execution-layer ETH destruction reported for the provider interval, including proven SELFDESTRUCT destruction."),
+        ("netWei", "eth.net_supply_flow_per_interval", "ETH/interval", True, "Provider-derived net supply flow; reconcile only over the exact same interval."),
         ("baseFeeBurnWei", "eth.base_fee_burn_per_interval", "ETH/interval", False, "Base-fee burn for the provider interval."),
         ("blobBaseFeeBurnWei", "eth.blob_fee_burn_per_interval", "ETH/interval", False, "Blob base-fee burn for the provider interval."),
     ]
@@ -372,6 +374,52 @@ def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict
     return metrics, gaps
 
 
+def reconcile_ethsupply_intervals(payload: Any, limit: int = 48) -> dict[str, Any]:
+    """Check provider netWei against the exact same interval's published components."""
+    slots = payload.get("slots") if isinstance(payload, dict) and isinstance(payload.get("slots"), list) else []
+    valid = [
+        row for row in slots
+        if isinstance(row, dict)
+        and iso_unix(row.get("fromTimestamp"))
+        and iso_unix(row.get("toTimestamp"))
+        and row.get("toTimestamp", 0) > row.get("fromTimestamp", 0)
+    ]
+    valid.sort(key=lambda row: row["toTimestamp"])
+    checked = 0
+    missing = 0
+    mismatches: list[dict[str, str]] = []
+    required = ("issuanceWei", "burnWei", "consensusPenaltiesWei", "otherExecutionBurnWei", "netWei")
+    for row in valid[-limit:]:
+        values: dict[str, int] = {}
+        try:
+            for field in required:
+                raw = row.get(field)
+                if not isinstance(raw, str) or not re.fullmatch(r"-?[0-9]+", raw):
+                    raise ValueError(field)
+                values[field] = int(raw)
+        except (ValueError, TypeError):
+            missing += 1
+            continue
+        checked += 1
+        expected = values["issuanceWei"] - values["burnWei"] - values["consensusPenaltiesWei"] - values["otherExecutionBurnWei"]
+        actual = values["netWei"]
+        if expected != actual:
+            mismatches.append({
+                "period_end": iso_unix(row.get("toTimestamp")) or "",
+                "delta_wei": str(actual - expected),
+            })
+    status = "exact" if checked > 0 and missing == 0 and not mismatches else ("mismatch" if mismatches else "incomplete")
+    return {
+        "status": status,
+        "formula": "netWei = issuanceWei - burnWei - consensusPenaltiesWei - otherExecutionBurnWei",
+        "checked_intervals": checked,
+        "exact_matches": checked - len(mismatches),
+        "missing_component_intervals": missing,
+        "mismatch_count": len(mismatches),
+        "mismatches": mismatches[:5],
+    }
+
+
 def capture() -> dict[str, Any]:
     started = utc_now()
     metrics: list[dict[str, Any]] = []
@@ -381,6 +429,16 @@ def capture() -> dict[str, Any]:
     requests["ethsupply_live"], _ = probe_ethsupply(ETHSUPPLY_LIVE_URL, "live")
     requests["ethsupply_history_30d"], history_payload = probe_ethsupply(ETHSUPPLY_HISTORY_URL, "history_30d")
     history_metrics, history_gaps = capture_ethsupply_metrics(history_payload)
+    accounting_reconciliation = reconcile_ethsupply_intervals(history_payload)
+    requests["ethsupply_history_30d"]["accounting_reconciliation"] = accounting_reconciliation
+    if accounting_reconciliation["status"] != "exact":
+        history_gaps.append({
+            "metric_id": "eth.supply_accounting_reconciliation",
+            "status": accounting_reconciliation["status"],
+            "reason": "Provider netWei did not reconcile exactly to issuance, execution fee burn, consensus penalties and other execution burn for the same intervals.",
+            "details": accounting_reconciliation,
+            "source_url": "https://ethsupply.fyi/methodology/",
+        })
     metrics.extend(history_metrics)
 
     # Binance ticker/price returns a quote but no provider observation timestamp.
