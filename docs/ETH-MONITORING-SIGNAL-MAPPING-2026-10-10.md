@@ -17,7 +17,7 @@ The research artifact lists six thesis signals:
 5. Competitive share loss to alternative L1s
 6. Staking concentration
 
-The signal names are thesis questions, not ready-to-run metric definitions. Numeric thresholds must not be inferred from the qualitative words “improving”, “material”, or “on schedule”. Source candidates, API fields and access constraints are tracked separately in [ETH Metric Source Contracts](ETH-METRIC-SOURCE-CONTRACTS-2026-10-10.md).
+The signal names are thesis questions, not ready-to-run metric definitions. Numeric thresholds must not be inferred from the qualitative words “improving”, “material”, or “on schedule”. Source candidates, API fields and access constraints are tracked separately in [ETH Metric Source Contracts](ETH-METRIC-SOURCE-CONTRACTS-2026-10-10.md); the ethsupply.fyi live/30-day schema probe is now included in read-only capture CI.
 
 ## Mapping matrix
 
