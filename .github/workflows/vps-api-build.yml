@@ -269,6 +269,9 @@ jobs:
           if [ "$decision" = "ingest" ]; then
             expected=$(python3 -c "import json; print(len(json.load(open('/tmp/eth-real-capture-artifact.json'))['metrics']))")
             expected_provider=$(python3 -c "import json; print(sum(1 for m in json.load(open('/tmp/eth-real-capture-artifact.json'))['metrics'] if m['source_id']=='ethsupply_fyi'))")
+            # Count rows by DB insertion time, not observation time: a valid provider
+            # artifact can include historical points older than the CI time window.
+            ingest_started_at=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
             auth=(-H 'Authorization: Bearer local-development-only' -H 'Content-Type: application/json')
             first_code=$(curl -sS -o /tmp/eth-real-ingest-first.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/admin/observations --data-binary @/tmp/eth-real-capture-artifact.json)
             test "$first_code" = "200"
@@ -290,7 +293,7 @@ jobs:
           assert d.get('received_count')==expected and d.get('inserted_count')==0 and d.get('duplicate_count')==expected, d
           print(f"VPS_API_REAL_CAPTURE_IDEMPOTENCY_OK replay_inserted=0 duplicates={expected}")
           PY
-            stored_provider=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where source_id='ethsupply_fyi' and observed_at >= now() - interval '8 days';")
+            stored_provider=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where source_id='ethsupply_fyi' and created_at >= '$ingest_started_at'::timestamptz;")
             echo "VPS_API_REAL_CAPTURE_STORAGE_CHECK expected_provider=$expected_provider stored_provider=$stored_provider"
             test "$stored_provider" = "$expected_provider"
             echo "VPS_API_REAL_CAPTURE_STORAGE_OK provider_rows=$stored_provider"
