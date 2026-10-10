@@ -149,7 +149,7 @@ No database schema or research content was changed.
 
 ### Remaining audit items
 
-Read-only live-payload completeness checks for BTC, ETH, SOL and CAKE remain open. A SELECT-only diagnostic script is prepared at `scripts/audit-product-contour-v1-readonly.sql`; it reports latest snapshot IDs, row counts, null/link gaps, source coverage and historical/unlineaged records. It has **not** been executed against Neon, so runtime row counts, null rates and lineage across representative assets are not yet verified. Do not use the main Release Gate to run this audit: that workflow applies migrations and can deploy the Worker before its later verification steps.
+The SELECT-only database audit was executed directly against the connected Neon production branch on 2026-10-10 using read-only queries (no writes, migrations or deployments). It verified snapshot IDs, section row counts, null/link gaps and source coverage for BTC, ETH, SOL and CAKE. See the live results and scenario reconciliation below. This is a direct database audit, not a live HTTP/API E2E test. Do not use the main Release Gate to repeat it: that workflow applies migrations and can deploy the Worker before its later verification steps.
 
 ### Verification status
 
@@ -157,3 +157,37 @@ Read-only live-payload completeness checks for BTC, ETH, SOL and CAKE remain ope
 - The combined snapshot/source/freshness/type patch passed: [Build Crypto Web #114](https://github.com/olegsh247-stack/Crypto/actions/runs/38055061759).
 - Main-branch Release Gate #121 failed in the Web build because of the undefined `confidence` identifier. Its earlier database job succeeded, including a successful clean-database bootstrap rehearsal; the migration log also records `2026-09-28-engine-items` as applied on Neon. Therefore the database must not be described as untouched.
 - No deployment, new schema migration, billing change, or visual redesign was performed.
+
+
+### Live Neon read-only audit — 2026-10-10
+
+Queries were executed against the connected production branch using SELECT statements only. No database writes, schema changes, migrations, or deployments were performed.
+
+| Asset | Latest published snapshot | Research blocks | Factors | Scores | Research scenario definitions | Evidence | Scenario-state observations |
+|---|---|---:|---:|---:|---:|---:|---:|
+| BTC | `BTC-2026-10-07-v1` | 15/15 complete | 6 | 5 | 3 | 15 | 0 |
+| ETH | `ETH-2026-10-04-v1` | 15/15 complete | 6 | 5 | 3 | 15 | 0 |
+| SOL | none | — | 0 | 0 | 0 | 0 | 0 |
+| CAKE | none | — | 0 | 0 | 0 | 0 | 0 |
+
+For BTC and ETH, the 15 Evidence rows each have a non-null observation link, source link and claim; no orphaned observation links or observation records missing `source_url` were found. BTC has 5 distinct sources referenced directly by Evidence and 9 distinct source IDs across observations plus Evidence; ETH has 3 and 3 respectively. Monitoring has 7 enabled BTC signals and 6 enabled ETH signals, with statuses `active` and `watch`.
+
+#### Scenario reconciliation
+
+The live schema and seed migrations confirm two distinct concepts:
+
+- `research_scenarios` contains the Bull/Base/Bear **research definitions**, linked to an immutable published `snapshot_id`. BTC and ETH each have all three definitions; their stored probabilities are 50% Base, 30% Bull, 20% Bear.
+- `scenario_states` is a separate legacy/current-observation table. It contains zero rows for BTC and ETH, not merely zero rows linked to the latest snapshot. The published snapshot JSON already records a textual `current_scenario` for both assets.
+
+Therefore the empty `scenario_states` result is not evidence that the research scenario definitions are missing. The UI must label and render the published scenario definitions separately from live state observations, and must use the snapshot's recorded current-scenario text when no compatible live state exists. Do not create synthetic `scenario_states` rows or change the schema to make the dashboard look populated.
+
+#### Follow-up UI correction staged in PR #6
+
+- The current-scenario card now falls back to the current scenario stated in the published snapshot when no matching live state exists, and explicitly labels this as published-research context rather than a live observation.
+- The Scenarios section is titled **Research Scenarios**, shows supporting evidence, probabilities and confidence where present, and explains when separate live scenario-state observations are absent.
+- No scenario probabilities or state rows were written to Neon. No design-system or schema change was made.
+
+#### Scope limitation and remaining product work
+
+- SOL and CAKE are enabled assets but have no published research snapshot. Confirm intended Product Contour v1 scope before generating/publishing new research; do not seed placeholder research just to fill cards.
+- This audit verifies database content, not the deployed Worker HTTP payload or browser runtime. The PR Web build is the current code-level validation; a safe live API E2E check remains separate from this read-only database audit.
