@@ -436,3 +436,18 @@ Before preparing a migration, locate and verify the authoritative seed/migration
 - 15 Thesis & Outlook (Monitoring is the section/function, not a separate Domain)
 
 This is the intended contract for tests and seed reconciliation, not a statement that live database rows have already been corrected.
+
+
+## BTC domain mapping migration + regression test — 2026-10-11
+
+Implementation is now prepared in repository source, not applied to live Neon:
+
+- New idempotent migration: `infrastructure/neon/migrations/2026-10-11-btc-domain-mapping.sql`.
+- New SQL regression contract: `scripts/validate-btc-domain-mapping.sql`.
+- Disposable PostgreSQL migration rehearsal now runs that contract after applying all migrations twice: `.github/workflows/migration-rehearsal.yml`.
+
+Mapping contract: 22 links across the existing six Dashboard Domains. Primary links have relevance weight 1.0; secondary links have relevance weight 0.5. The migration deletes/rebuilds mapping rows only for `BTC-2026-10-07-v1`, asserts the expected link count, and records its migration marker. It does not update ETH or other snapshots.
+
+The regression SQL checks the exact set of block/domain/weight/order tuples, rejects unexpected links, requires six domains, and rejects a seventh `monitoring` domain.
+
+**Safety boundary:** the migration is versioned in GitHub but has not been run against production Neon. The next validation is the repository's disposable PostgreSQL Product Contour Gate. Production application remains a separate approval-gated action.
