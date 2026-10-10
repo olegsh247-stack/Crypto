@@ -49,8 +49,37 @@ assert(eth.research_blocks.every(b => ["complete", "n_a"].includes(b.status)), "
 assert(Array.isArray(eth.evidence) && eth.evidence.length > 0, "ETH evidence chain exposed");
 assert(eth.evidence.every(e => e.claim && e.source_id && e.observation_id && e.metric_id && e.thesis_impact && e.status), "ETH evidence traceability fields");
 
-const btc = await get("/api/assets/btc");
-assert(btc.asset?.asset_id === "btc", "BTC canonical detail");
+// These are the four assets explicitly covered by Product Contour v1 Dashboard review.
+// The dashboard calls GET /api/assets/:assetId and reads these fields from the same payload.
+const dashboardAssets = {};
+for (const id of ["btc", "eth", "sol", "cake"]) {
+  const detail = id === "eth" ? eth : await get("/api/assets/" + id);
+  assert(detail.asset?.asset_id === id, id.toUpperCase() + " canonical detail identity");
+  assert(detail.engine === "DynamicAssetEngine", id.toUpperCase() + " dashboard engine contract");
+  assert(detail.research_progress && typeof detail.research_progress.percentage === "number", id.toUpperCase() + " dashboard research progress");
+  for (const key of [
+    "research_blocks", "research_domains", "critical_factors", "scores",
+    "monitoring_signals", "research_scenarios", "sources", "evidence",
+    "scenario_states", "monitoring_events", "history", "metrics"
+  ]) {
+    assert(Array.isArray(detail[key]), id.toUpperCase() + " dashboard field " + key + " is an array");
+  }
+  assert(["not_started", "in_progress", "complete", "monitoring"].includes(detail.asset?.research_status), id.toUpperCase() + " lifecycle value");
+  assert(["current", "update_recommended", "outdated"].includes(detail.asset?.research_freshness?.status), id.toUpperCase() + " freshness value");
+  dashboardAssets[id] = {
+    status: detail.asset.research_status,
+    freshness: detail.asset.research_freshness.status,
+    blocks: detail.research_blocks.length,
+    domains: detail.research_domains.length,
+    factors: detail.critical_factors.length,
+    scores: detail.scores.length,
+    scenarios: detail.research_scenarios.length,
+    signals: detail.monitoring_signals.length,
+    evidence: detail.evidence.length,
+  };
+}
+assert(eth.research_snapshot?.status === "PUBLISHED", "ETH dashboard published research");
+assert(eth.research_blocks.length === 15, "ETH dashboard 15 research blocks");
 
 const pairsResponse = await get("/api/pairs");
 const pairs = pairsResponse.pairs || pairsResponse.items || [];
@@ -112,4 +141,5 @@ for (const symbol of ["BTC/USDT","ETH/USDT"]) {
   assert(Array.isArray(repeat.normalized?.relative) && repeat.normalized.relative.length >= 2, symbol + " repeat normalized history");
 }
 
-console.log("E2E_OK health=1 db=1 assets=9_exact usdt=1 eth_blocks=15 pairs=9_identity=1 histories=9 repeat=2");
+console.log("DASHBOARD_ASSET_SUMMARY " + JSON.stringify(dashboardAssets));
+console.log("E2E_OK health=1 db=1 assets=9_exact usdt=1 dashboard_details=BTC,ETH,SOL,CAKE eth_blocks=15 pairs=9_identity=1 histories=9 repeat=2");
