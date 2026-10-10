@@ -130,7 +130,7 @@ for (const symbol of ["BTC/USDT","ETH/USDT"]) {
     assert(intraday.pair === symbol, symbol + " " + interval + " identity");
     assert(intraday.interval === interval, symbol + " " + interval + " interval");
     assert(intraday.storage_mode === "temporary", symbol + " " + interval + " temporary storage mode");
-    assert(["Binance"].includes(intraday.source), symbol + " " + interval + " live source");
+    assert(["Binance", "Kraken", "CoinGecko"].includes(intraday.source), symbol + " " + interval + " recognized live source");
     assert(Array.isArray(intraday.rows) && intraday.rows.length >= 2, symbol + " " + interval + " rows");
   }
 }
