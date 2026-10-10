@@ -201,3 +201,17 @@ Official references:
 - Fork-specific consensus rules: https://ethereum.github.io/consensus-specs/
 
 **Probe result — [ETH Consensus Source Feasibility Probe #2](https://github.com/olegsh247-stack/Crypto/actions/runs/38040200736):** the workflow and script completed and uploaded artifact `eth-consensus-source-feasibility-38040200736`, but all three historical state requests returned HTTP 403 from `https://ethereum-beacon-api.publicnode.com` (slots `15354719`, `15377759`, `15399839`; epochs `479834`, `480554`, `481244`). Therefore the provider was **not evaluable from this CI environment**. Because the state/finality request failed first, the attestation-reward endpoint was not reached; no claim is made that its historical access works. The successful workflow conclusion means the probe recorded the failure correctly, not that the provider passed. No complete consensus accounting was verified. The next source decision is to obtain an explicitly documented endpoint with authorized anonymous/API access or an approved provider credential; do not retry guessed URLs, use a documentation demo as production evidence, or estimate missing totals from ethsupply.fyi.
+
+
+## 12. Second documented Beacon API endpoint candidate — 2026-10-10
+
+The first probe established that `https://ethereum-beacon-api.publicnode.com` returned HTTP 403 for all three historical state/finality requests from GitHub Actions. That result is an access blocker for this environment, not proof that historical Beacon data is unavailable in general.
+
+The probe now accepts an explicit `BEACON_API_BASE_URL` and `BEACON_API_PROVIDER` and the research workflow checks a second endpoint shown by the official Beacon API Swagger UI as its example server: `https://public-mainnet-node.ethereum.org`. The endpoint is tested only for read-only historical state/finality and one validator's attestation reward response; it is not pre-approved as a reliable or production data provider. The HTTP form shown by the Swagger UI is intentionally not used because the probe must not send unencrypted HTTP requests.
+
+The workflow uploads separate artifacts for both candidates. Inspect actual HTTP status and response metadata before declaring access confirmed. A successful endpoint probe still proves only historical endpoint accessibility and a sample reward response—not complete all-validator issuance/penalty accounting. If both candidates fail, the next viable option is a documented provider with authorized access (likely requiring a user-approved API key) or a separately scoped fork-aware replay/dataset investigation. Do not add secrets or change repository credentials without explicit approval.
+
+References:
+- Official Beacon API Swagger UI, which lists the example server `http://public-mainnet-node.ethereum.org/`: https://ethereum.github.io/beacon-APIs/?urls.primaryName=v2.3.0
+- Official API repository and public-exposure caveat: https://github.com/ethereum/beacon-APIs
+- PublicNode Ethereum gateway overview: https://ethereum.publicnode.com/
