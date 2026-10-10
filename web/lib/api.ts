@@ -1,12 +1,15 @@
 import type { AdminMutationResponse, MarketPair, PairHistoryResponse, PairTickerResponse, PairsResponse } from "../../shared/api-contract";
+import type { ResearchFreshnessStatus } from "../../shared/research-status-contract";
 export type { MarketPair } from "../../shared/api-contract";
+
+export type ResearchFreshness = { status: ResearchFreshnessStatus; reason?: string | null; last_research_at?: string | null; last_major_update_at?: string | null; next_review_at?: string | null };
 
 export type Asset = {
   asset_id: string; symbol: string; name: string; category?: string | null; research_tier?: string | null; enabled?: boolean; binance_symbol?: string | null; research_reason?: string | null;
   asset_type?: { code: string; name: string } | null;
   research_status?: "not_started" | "in_progress" | "complete" | "monitoring" | null;
-  research?: { lifecycle?: "not_started" | "in_progress" | "complete" | "monitoring" | null; freshness?: string | null };
-  research_freshness?: { status: "current" | "update_recommended" | "outdated"; reason?: string | null } | null;
+  research?: { lifecycle?: "not_started" | "in_progress" | "complete" | "monitoring" | null; freshness?: ResearchFreshnessStatus | null };
+  research_freshness?: ResearchFreshness | null;
 };
 
 export type ResearchBlock = {
@@ -40,8 +43,8 @@ export type ResearchScore = {
 export type ResearchSnapshot = { snapshot_id: string; research_version: string; methodology_version: string; research_date: string; title: string; content: Record<string, unknown>; status: "PUBLISHED" };
 
 export type AssetDetailResponse = {
-  api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: { status: "current" | "update_recommended" | "outdated"; reason?: string | null } | null };
-  research_progress: { status: string; completed: number; total: number; percent: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
+  api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: ResearchFreshness | null };
+  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
