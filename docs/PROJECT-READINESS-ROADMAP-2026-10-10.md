@@ -223,3 +223,11 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - The issuer explicitly excludes mints that directly contribute to burning and prorates weekly burns across adjacent months. Raw `totalSupply()` deltas therefore cannot be interpreted as ordinary emission without separating mint-to-dead transfers.
 - The historical state candidate changed +4,378,618.189132 CAKE between June 1 and October 1, while the four issuer reports sum to −7,402,733 CAKE. This is a reconciliation target, not a conclusion, because windows/methodology differ and September has a large sign discrepancy.
 - Next block: event-level attribution of mint-to-dead versus regular emission mints and transfers into/out of the dead address, followed by checks against the official burn proration. No canonical circulating-supply value or scores may use the candidate until that bridge closes.
+
+
+## CAKE event-level reconciliation — implementation added, result pending
+
+- Added a read-only Transfer-log capture script and dedicated GitHub Actions workflow on `fix/product-contour-v1-contracts`: [capture script](../scripts/research/capture_cake_transfer_logs.py), [workflow](../.github/workflows/cake-transfer-log-reconciliation.yml).
+- The script covers the four pinned boundary intervals from June 1 through October 1, 2026, includes logs from start block + 1 through the end block, and separately reports dead-address inflows, outflows, and mint-to-dead transfers.
+- **Do not mark CAKE event reconciliation complete yet.** The workflow must finish and its raw artifact must be checked for RPC completeness and per-interval balance-delta identities before issuer figures can be reconciled.
+- Product release, CAKE circulating-supply approval, publication, score/scenario creation, production writes and VPS cutover remain blocked pending their respective acceptance criteria and approvals.
