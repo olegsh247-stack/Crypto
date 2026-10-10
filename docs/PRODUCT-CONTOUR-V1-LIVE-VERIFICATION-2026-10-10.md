@@ -75,3 +75,27 @@ The latest confirmed Product Contour Gate and VPS API Build Rehearsal successes 
 - [ ] Only after those checks, finalize the Product Contour v1 acceptance decision and proceed to one complete BTC scenario.
 
 No production deployment, production migration, DB write, PR merge, VPS provisioning, or cloud-provider removal was performed for this diagnosis. The unrelated CAKE Transfer Log Reconciliation failures remain attributable to public BSC RPC access/rate limits and are not treated as Product Contour gate results.
+
+
+## Web/runtime follow-up — 2026-10-11
+
+### Current working-branch source inspection
+
+The current `fix/product-contour-v1-contracts` version of `web/app/assets/[assetId]/page.tsx` defines `confidenceScore` and derives `confidenceValue` from the thesis or confidence score. The Confidence card reads `confidenceScore?.value` and `confidenceScore?.confidence`; the undeclared bare identifier `confidence` reported by Release Gate #121 is absent from this version. This is a source-level comparison only, not a successful TypeScript/build result.
+
+### Hosting/runtime discovery
+
+- The repository root on the working branch contains neither `vercel.json` nor a `.vercel/project.json` link file.
+- The connected Vercel account's project listing did not contain a Crypto project. Therefore, no deployed Web URL can currently be tied to this repository from the available hosting configuration.
+- A local checkout/build could not be executed in this environment because outbound DNS resolution for `github.com` failed. No local build success is claimed.
+- The repository's Product Contour Gate is configured for pull requests and manual dispatch. The available GitHub connector exposes read and rerun operations but no workflow-dispatch operation, and the documentation commit did not produce a workflow run. A fresh CI result on the current branch therefore remains outstanding.
+
+### Release acceptance remains blocked
+
+- [x] Compare the old failing TypeScript reference with the current branch source.
+- [x] Inspect repository hosting markers and connected Vercel projects.
+- [ ] Obtain a successful Web production build and Product Contour Gate result on the current branch head.
+- [ ] Establish the actual deployed Web URL (or explicitly decide to host it later) and verify browser/runtime behavior.
+- [ ] After the gate passes, complete one end-to-end BTC product scenario.
+
+No Vercel project was created, no deployment was initiated, and no production state was changed.
