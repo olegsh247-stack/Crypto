@@ -1,6 +1,14 @@
 name: Live API E2E (no deploy)
 
 on:
+  push:
+    branches:
+      - fix/product-contour-v1-contracts
+    paths:
+      - 'scripts/e2e-smoke.mjs'
+      - '.github/workflows/live-api-e2e.yml'
+      - 'shared/**'
+      - 'workers/crypto-api/**'
   workflow_dispatch:
     inputs:
       api_url:
