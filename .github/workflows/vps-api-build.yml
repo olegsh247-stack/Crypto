@@ -31,6 +31,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+      - name: Validate VPS operations scripts and Compose
+        run: |
+          bash -n scripts/vps-backup.sh scripts/vps-restore.sh scripts/vps-restore-rehearsal.sh
+          docker compose --env-file vps/.env.example -f vps/docker-compose.yml config --quiet
       - name: Build VPS shared runtime
         working-directory: vps/shared
         run: npm install && npm run build
@@ -471,6 +475,23 @@ jobs:
           test "$monitoring_count" -gt 0
           test "$monitoring_after" = "$monitoring_before"
           echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_signals=$monitoring_count full_signal_rows_unchanged=1"
+      - name: PostgreSQL backup and isolated restore rehearsal
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+        run: |
+          set -euo pipefail
+          pg_dump --format=custom --no-owner --no-privileges "$DATABASE_URL" > /tmp/crypto-vps-rehearsal.dump
+          test -s /tmp/crypto-vps-rehearsal.dump
+          pg_restore --list /tmp/crypto-vps-rehearsal.dump >/dev/null
+          restore_db="crypto_restore_check_${GITHUB_RUN_ID}"
+          createdb "postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db"
+          cleanup_restore() { dropdb --if-exists "postgresql://postgres:postgres@127.0.0.1:55432/postgres" "$restore_db" >/dev/null 2>&1 || true; }
+          trap cleanup_restore EXIT
+          pg_restore --format=custom --no-owner --no-privileges --dbname="postgresql://postgres:postgres@127.0.0.1:55432/$restore_db" /tmp/crypto-vps-rehearsal.dump
+          table_count=$(psql "postgresql://postgres:postgres@127.0.0.1:55432/$restore_db" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE';")
+          test "$table_count" -gt 0
+          asset_count=$(psql "postgresql://postgres:postgres@127.0.0.1:55432/$restore_db" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets;")
+          echo "VPS_BACKUP_RESTORE_OK public_tables=$table_count assets=$asset_count target=isolated_database original_unchanged=1"
       - name: VPS API parity against live Worker
         env:
           LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
