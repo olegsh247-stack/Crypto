@@ -101,3 +101,11 @@ Fresh read-only preflight against the live Worker and VPS Node API matched publi
 - **End-to-end decision workflow:** runtime contracts, ETH snapshot preflight and disposable scenario-state rollback are verified; the product assessment is not complete because BTC/ETH still have no recorded scenario-state assessments and the ETH trend-evidence set remains incomplete.
 - **Self-hosted runtime:** Node API + Worker builds, clean PostgreSQL 16 bootstrap, migration idempotency, 9-asset ingestion, history, seven-endpoint Worker/VPS parity and admin boundary passed in CI. Production topology is still not accepted or deployed; no VPS has been provisioned.
 - **Release/merge:** not authorized by this audit. PR #3 remains draft; no production migration, deployment, or data mutation was performed.
+
+## Follow-up correction — monitoring freshness semantics (2026-10-10)
+
+A review of the actual Worker and VPS scheduler found a confirmed freshness-contract defect: after successfully ingesting market candles, both runtimes updated every enabled `monitoring_signals.last_updated_at` to `now()` without recalculating `current_value`, `previous_value`, direction, or threshold status. That made a recent worker run look like a fresh signal evaluation even though the signal itself had not changed.
+
+The correction removes that timestamp update from both schedulers. Candle ingestion now updates market history only; the existing research-review expiry check remains separate. Signal timestamps must not advance until a real signal-evaluation path updates the signal values. The VPS rehearsal assertion was changed accordingly: two idempotent ingestion runs must leave monitoring-signal timestamps unchanged.
+
+This is a product correctness fix, not a monitoring feature completion. The current signals still lack a complete numeric metric/evaluation path, so ETH scenario-state publication remains blocked. No production data was written and no monitoring event was created. Product Contour Gate and VPS API Build Rehearsal must pass on the resulting branch head before this correction is accepted.
