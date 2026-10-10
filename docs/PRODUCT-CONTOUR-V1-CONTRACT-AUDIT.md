@@ -120,3 +120,24 @@ This audit is documentation-only. It does not authorize:
 - changes to billing or GitHub Actions settings;
 - changes to visual design;
 - production deployment.
+
+
+## Follow-up implementation — 2026-10-10
+
+### Completed: research progress semantics
+
+The P1 progress mismatch identified above has been corrected in the Web layer:
+
+- `web/lib/research-status.ts` now calculates both `completed` (blocks with status `complete`) and `resolved` (blocks with status `complete` or `n_a`).
+- The percentage now uses `resolved / 15`, matching the server lifecycle contract.
+- Asset Dashboard and Deep Research explicitly distinguish completed blocks from resolved blocks, so N/A blocks count toward resolution without being mislabeled as completed.
+
+This change does not alter the canonical 15-block structure, database schema, research content, or lifecycle rules.
+
+### Remaining audit items
+
+The other findings remain open: snapshot scoping for factors/scores, scenario-state lineage, evidence-linked source completeness, freshness contract consistency, and representative live-payload checks. They require a read-only contract/data audit before any further code changes.
+
+### Verification status
+
+The change was committed through GitHub's contents API. A full Web build and runtime check have **not** been run in this environment; verify the GitHub Actions result before treating this fix as build-validated. No migration, deployment, billing change, or visual redesign was performed.
