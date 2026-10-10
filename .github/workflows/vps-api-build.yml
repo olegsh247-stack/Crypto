@@ -253,12 +253,16 @@ jobs:
           d=json.load(open('/tmp/eth-real-capture-artifact.json'))
           history=d.get('requests',{}).get('ethsupply_history_30d',{})
           shape=history.get('schema_probe',{})
+          reconciliation=history.get('accounting_reconciliation',{})
           metrics=d.get('metrics',[])
           eligible=(history.get('ok') is True and history.get('http_status')==200
                     and shape.get('status')=='schema_probe_only'
                     and shape.get('coverage',{}).get('complete') is True
                     and shape.get('stale_over_one_hour') is False
-                    and len(metrics)>=400 and len(metrics)<=500
+                    and reconciliation.get('status')=='exact'
+                    and reconciliation.get('checked_intervals',0)>=40
+                    and reconciliation.get('mismatch_count',-1)==0
+                    and len(metrics)>=400 and len(metrics)<=700
                     and os.path.getsize('/tmp/eth-real-capture-artifact.json')<1048576)
           if eligible:
             assert d.get('database_write_performed') is False and d.get('blockchain_write_performed') is False
