@@ -124,6 +124,18 @@ The fresh read-only ETH preflight passed against both runtimes and matched the s
 
 This confirms runtime portability and the current published data shape in the read-only check. It does **not** create or authorize a scenario state. Zero scenario states and zero monitoring events remain the truthful current state.
 
+### Follow-up contract hardening — 2026-10-10
+
+After run #102 passed, a further static comparison found that the VPS Node API queried `critical_factors` and `research_scores` by asset alone, while the live Worker scopes both collections to the latest published snapshot. The VPS queries now apply the same published-snapshot filter. The read-only preflight now fails if any factor or score row carries a different `snapshot_id`, and Worker/VPS parity compares the stable factor and score fields as well as scenario definitions/states.
+
+[VPS API Build Rehearsal #105](https://github.com/olegsh247-stack/Crypto/actions/runs/38031645980) and [Product Contour Gate #79](https://github.com/olegsh247-stack/Crypto/actions/runs/38031646136) passed with these lineage/parity assertions. The fresh preflight reported factor and score lineage as verified for both runtimes, with matching ETH collection counts.
+
+A review of the disposable rollback fixture also found that it used the UUID of a scenario definition as `scenario_states.scenario_id`. The UI treats that legacy field as the scenario label (`base`/`bull`/`bear`), not as a foreign key, so a UUID would not be recognized as a scenario type by the UI. The fixture now uses the published definition's `scenario_type` (`base`) and asserts it survives the candidate insert before rollback. This is a test-only correction; no production state was written.
+
+The preflight now additionally emits the current read-only ETH factors, scores, evidence rows (including evidence IDs and source URLs), and scenario definitions as `ETH_SCENARIO_DECISION_INPUTS`. This will let the next assessment reconcile its candidate indicators to the actual published evidence rather than relying on collection counts alone.
+
+The Product Contour Gate passed again on commit `e8200263e3d9de2e9ceb554112fdd2fec84d2aca` ([run #80](https://github.com/olegsh247-stack/Crypto/actions/runs/38031828127)). VPS API Build Rehearsal for the subsequent rollback-fixture/preflight-output changes is still running as this note is written; its result must be checked before claiming the latest head is fully green.
+
 ## Safety / scope
 
 The failed run used a disposable PostgreSQL 16 container and local test credentials. No production database write, migration, deployment, VPS provisioning or PR merge was performed.
