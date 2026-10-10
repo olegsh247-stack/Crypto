@@ -1,4 +1,4 @@
-import { neon } from "@crypto/vps-runtime";
+import { postgresSql } from "@crypto/vps-runtime";
 import { calculateResearchStatus } from "./research-status.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
@@ -110,7 +110,7 @@ function coingeckoDaily(rows:any[]){
 export default {
  
  async fetch(request:Request,env:Env):Promise<Response>{
- const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(env)});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
+ const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(env)});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=postgresSql(env.DATABASE_URL);
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/observations"){
