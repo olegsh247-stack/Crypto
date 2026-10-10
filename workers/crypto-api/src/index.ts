@@ -188,7 +188,7 @@ export default {
    if(!item||typeof item!=="object"||!Object.prototype.hasOwnProperty.call(contracts,String(item.metric_id)))return json({status:"error",error:"unsupported_metric"},400);
    const contract=contracts[item.metric_id];
    if(!["ETH","eth"].includes(item.asset_id)||item.unit!==contract.unit||item.source_id!==contract.source_id||item.source_url!==contract.source_url)return json({status:"error",error:"metric_contract_mismatch",metric_id:item.metric_id},400);
-   const numericText=typeof item.value_numeric==="string"&&/^-?[0-9]+(?:\\.[0-9]+)?$/.test(item.value_numeric);
+   const numericText=typeof item.value_numeric==="string"&&/^-?[0-9]+(?:\.[0-9]+)?$/.test(item.value_numeric);
    const numericValue=typeof item.value_numeric==="number"?item.value_numeric:numericText?Number(item.value_numeric):NaN;
    if(!Number.isFinite(numericValue)||(!contract.allowNegative&&(contract.exclusive?numericValue<=contract.minimum:numericValue<contract.minimum)))return json({status:"error",error:"invalid_numeric_value",metric_id:item.metric_id},400);
    if(typeof item.observed_at!=="string"||!Number.isFinite(Date.parse(item.observed_at))||!/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(item.observed_at)||Date.parse(item.observed_at)>now+300000)return json({status:"error",error:"invalid_observed_at",metric_id:item.metric_id},400);
