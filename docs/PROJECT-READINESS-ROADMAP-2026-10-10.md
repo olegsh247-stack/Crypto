@@ -215,3 +215,11 @@ Crypto is considered **product-ready** only when all of the following are eviden
 - Boundary deltas show candidate net changes of −2.112M, −1.111M, −2.229M, then +9.830M CAKE. This differs from the issuer-reported June–September net-mint arithmetic of −7.403M CAKE. Treat it as an open reconciliation gap until exact issuer periods, burn-recognition timing, transfer/mint/burn events, and weekly-burn proration are aligned.
 - CakePool accounting identity `balanceOf() = available() + totalBoostDebt()` reconciles exactly at every boundary. Full report: [CAKE Legacy Pool Reconciliation](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md).
 - **Closed:** historical month-boundary state capture and source-backed current/historical pool accounting. **Next:** event-level mint/burn reconciliation. Still open: canonical circulating-supply formula, SOL historical activity series, Product Contour v1 readiness. No production writes, migration, publication, merge or VPS cutover.
+
+
+## Issuer report reconciliation values recorded — 2026-10-10
+
+- Recorded the official June–September 2026 CAKE reports and their stated mint/burn/net-mint values in the [CAKE reconciliation report](../research/assets/CAKE-LEGACY-POOL-RECONCILIATION-2026-10-10.md). Reported net mint totals −7,402,733 CAKE; the June report's displayed mint and burn arithmetic differs from its stated net by one CAKE, retained as reported.
+- The issuer explicitly excludes mints that directly contribute to burning and prorates weekly burns across adjacent months. Raw `totalSupply()` deltas therefore cannot be interpreted as ordinary emission without separating mint-to-dead transfers.
+- The historical state candidate changed +4,378,618.189132 CAKE between June 1 and October 1, while the four issuer reports sum to −7,402,733 CAKE. This is a reconciliation target, not a conclusion, because windows/methodology differ and September has a large sign discrepancy.
+- Next block: event-level attribution of mint-to-dead versus regular emission mints and transfers into/out of the dead address, followed by checks against the official burn proration. No canonical circulating-supply value or scores may use the candidate until that bridge closes.
