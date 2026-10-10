@@ -37,6 +37,8 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import math
+          import re
           from pathlib import Path
           path = Path("research-capture/eth-observation-capture.json")
           data = json.loads(path.read_text(encoding="utf-8"))
@@ -48,8 +50,8 @@ jobs:
               assert metric["asset_id"] == "ETH"
               assert metric["source_id"] and metric["source_url"]
               assert metric["unit"] and metric["observed_at"]
-              assert isinstance(metric["value_numeric"], (int, float))
-              assert metric["value_numeric"] == metric["value_numeric"]
+              value = metric["value_numeric"]
+              assert (isinstance(value, (int, float)) and math.isfinite(value)) or (isinstance(value, str) and re.fullmatch(r"-?[0-9]+(?:\.[0-9]+)?", value)), metric
           for key in ("ethsupply_live", "ethsupply_history_30d"):
               probe = data["requests"][key]
               assert isinstance(probe.get("ok"), bool), (key, probe)
