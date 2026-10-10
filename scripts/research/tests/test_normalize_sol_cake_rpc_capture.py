@@ -26,6 +26,7 @@ def fixture():
             "decimals": {**rpc("0x12"), "raw_integer": 18},
             "balances": {
                 "burn_address": {**rpc("0x1bc16d674ec80000"), "raw_integer": 2000000000000000000},
+                "legacy_cake_pool_balance": {**rpc("0x29a2241af62c0000"), "raw_integer": 3000000000000000000},
             },
         },
     }
@@ -43,6 +44,8 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertIn("slot 12345", metrics["circulating_supply"]["definition"])
         self.assertEqual(metrics["contract_total_supply"]["value"], "1000")
         self.assertEqual(metrics["burn_address_balance"]["value"], "2")
+        self.assertEqual(metrics["legacy_cake_pool_balance"]["value"], "3")
+        self.assertIn("legacy CAKE Pool", metrics["legacy_cake_pool_balance"]["definition"])
         self.assertEqual(metrics["contract_supply_minus_burn_address"]["value"], "998")
         self.assertEqual(metrics["contract_total_supply"]["raw_artifact_ref"], "actions-run:fixture")
 
