@@ -169,7 +169,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
         <div><span className="muted">Thesis confidence</span><strong>{confidenceLabel(confidenceValue)}</strong></div>
         <div><span className="muted">What would change the thesis?</span><strong>{invalidation ?? mainRisk?.current_state ?? "No invalidation condition is recorded yet."}</strong></div>
       </div>
-      <div className="progress-row"><strong>{progress.completed}/{progress.total} research blocks</strong><strong>{progress.percent}%</strong></div>
+      <div className="progress-row"><strong>{progress.completed} completed · {progress.resolved}/{progress.total} resolved</strong><strong>{progress.percent}% resolved</strong></div>
       <div className="progress-track" aria-label={`Research progress ${progress.percent}%`}><div className="progress-fill" style={{width: `${progress.percent}%`}} /></div>
     </section>
 
