@@ -118,6 +118,7 @@ def capture(endpoint: str = BSC_RPC, boundaries: tuple[str, ...] = BOUNDARIES_UT
         if boundary not in locator_by_boundary:
             raise ValueError(f"no reviewed pinned block locator exists for boundary {boundary}")
         number, expected_hash = locator_by_boundary[boundary]
+        target = parse_utc_epoch(boundary)
         block = verify_pinned_boundary_block(endpoint, boundary, number, expected_hash)
         snapshot = snapshot_at_block(endpoint, block)
         snapshot["requested_boundary_utc"] = boundary
