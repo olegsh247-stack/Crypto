@@ -5,6 +5,8 @@
 **Out of scope:** Visual redesign, new database migrations, production deployment, changes to VPS or billing.  
 **Compatibility baseline:** Current Next.js Web app, canonical Crypto API, Dynamic Asset Engine, CryptoDataModel v1, and the v2 research-layer design documents.
 
+**Master readiness roadmap:** [Project Readiness Roadmap](PROJECT-READINESS-ROADMAP-2026-10-10.md) — canonical ordered plan, exit criteria, release readiness definition and reusable continuation prompt.
+
 ## 1. Product promise
 
 Crypto is a research and decision-support platform for crypto assets. It brings together:
