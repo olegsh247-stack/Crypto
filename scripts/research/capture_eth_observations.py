@@ -21,6 +21,8 @@ from typing import Any
 BINANCE_TICKER_URL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=ETHUSDT"
 ETHEREUM_RPC_URL = os.environ.get("ETHEREUM_RPC_URL", "https://ethereum-rpc.publicnode.com")
 L2BEAT_TVS_URL = "https://api.l2beat.com/v1/tvs"
+ETHSUPPLY_LIVE_URL = "https://ethsupply.fyi/api/live"
+ETHSUPPLY_HISTORY_URL = "https://ethsupply.fyi/api/history?range=30d"
 USER_AGENT = "Crypto-ETH-readonly-capture/1.0"
 
 
@@ -78,10 +80,148 @@ def finite_positive(value: Any) -> bool:
         return False
 
 
+
+def _unix_utc(value: Any) -> str | None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+        return None
+    try:
+        return dt.datetime.fromtimestamp(float(value), tz=dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
+def _data_value_shape(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {"present": value is not None, "object": False}
+    return {
+        "present": True,
+        "object": True,
+        "has_value": value.get("value") is not None,
+        "status": value.get("status"),
+        "kind": value.get("kind"),
+        "as_of_utc": _unix_utc(value.get("asOf")),
+        "sources_count": len(value.get("sources", [])) if isinstance(value.get("sources"), list) else None,
+    }
+
+
+def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
+    """Probe the documented public API without storing its full response or deriving metrics."""
+    response = http_json(url)
+    summary = {k: v for k, v in response.items() if k != "payload"}
+    if not response.get("ok"):
+        summary["schema_probe"] = {"kind": kind, "status": "unavailable"}
+        return summary
+
+    payload = response.get("payload")
+    if not isinstance(payload, dict):
+        summary["schema_probe"] = {"kind": kind, "status": "invalid_payload_type"}
+        return summary
+
+    generated_at = payload.get("generatedAt")
+    generated_at_utc = _unix_utc(generated_at)
+    generated_age = None
+    if isinstance(generated_at, (int, float)) and not isinstance(generated_at, bool) and math.isfinite(float(generated_at)):
+        generated_age = int(dt.datetime.now(dt.timezone.utc).timestamp() - float(generated_at))
+
+    probe: dict[str, Any] = {
+        "kind": kind,
+        "status": "schema_probe_only",
+        "top_level_keys": sorted(str(k) for k in payload.keys()),
+        "schema_version": payload.get("schemaVersion"),
+        "revision": payload.get("revision"),
+        "generated_at_utc": generated_at_utc,
+        "generated_age_seconds": generated_age,
+        "stale_over_one_hour": generated_age is None or generated_age > 3600,
+    }
+
+    if kind == "live":
+        head = payload.get("head") if isinstance(payload.get("head"), dict) else {}
+        finalized = payload.get("finalized") if isinstance(payload.get("finalized"), dict) else {}
+        supply = payload.get("supply") if isinstance(payload.get("supply"), dict) else {}
+        supply_as_of = supply.get("asOf") if isinstance(supply.get("asOf"), dict) else {}
+        accounting = payload.get("accounting") if isinstance(payload.get("accounting"), dict) else {}
+        issuance = accounting.get("issuance") if isinstance(accounting.get("issuance"), dict) else {}
+        burn = accounting.get("burn") if isinstance(accounting.get("burn"), dict) else {}
+        probe.update({
+            "head": {
+                "block": head.get("block"),
+                "slot": head.get("slot"),
+                "timestamp_utc": _unix_utc(head.get("timestamp")),
+            },
+            "finalized": {
+                "block": finalized.get("block"),
+                "slot": finalized.get("slot"),
+                "epoch": finalized.get("epoch"),
+            },
+            "supply_as_of": {
+                "block": supply_as_of.get("block"),
+                "slot": supply_as_of.get("slot"),
+                "timestamp_utc": _unix_utc(supply_as_of.get("timestamp")),
+            },
+            "data_value_shapes": {
+                "supply.totalWei": _data_value_shape(supply.get("totalWei")),
+                "supply.executionNetIssuanceWei": _data_value_shape(supply.get("executionNetIssuanceWei")),
+                "supply.consensusNetIssuanceWei": _data_value_shape(supply.get("consensusNetIssuanceWei")),
+                "accounting.netWei": _data_value_shape(accounting.get("netWei")),
+                "accounting.issuance.totalWei": _data_value_shape(issuance.get("totalWei")),
+                "accounting.burn.totalWei": _data_value_shape(burn.get("totalWei")),
+                "accounting.burn.baseFeeWei": _data_value_shape(burn.get("baseFeeWei")),
+                "accounting.burn.blobBaseFeeWei": _data_value_shape(burn.get("blobBaseFeeWei")),
+            },
+        })
+    else:
+        coverage = payload.get("coverage") if isinstance(payload.get("coverage"), dict) else {}
+        epochs = payload.get("epochs") if isinstance(payload.get("epochs"), list) else []
+        slots = payload.get("slots") if isinstance(payload.get("slots"), list) else []
+        staking = payload.get("staking") if isinstance(payload.get("staking"), list) else []
+        queue_waits = payload.get("queueWaits") if isinstance(payload.get("queueWaits"), list) else []
+        validator_types = payload.get("validatorTypes") if isinstance(payload.get("validatorTypes"), list) else []
+        epoch_sample = epochs[0] if epochs and isinstance(epochs[0], dict) else {}
+        staking_sample = staking[0] if staking and isinstance(staking[0], dict) else {}
+        queue_sample = queue_waits[0] if queue_waits and isinstance(queue_waits[0], dict) else {}
+        probe.update({
+            "range": payload.get("range"),
+            "interval": payload.get("interval"),
+            "interval_epochs": payload.get("intervalEpochs"),
+            "interval_slots": payload.get("intervalSlots"),
+            "coverage_keys": sorted(str(k) for k in coverage.keys()),
+            "coverage": {
+                "from_slot": coverage.get("fromSlot"),
+                "to_slot": coverage.get("toSlot"),
+                "slots": coverage.get("slots"),
+                "blocks": coverage.get("blocks"),
+                "complete": coverage.get("complete"),
+            },
+            "point_counts": {
+                "epochs": len(epochs),
+                "slots": len(slots),
+                "staking": len(staking),
+                "queue_waits": len(queue_waits),
+                "validator_types": len(validator_types),
+            },
+            "sample_field_names": {
+                "epoch": sorted(str(k) for k in epoch_sample.keys()),
+                "staking": sorted(str(k) for k in staking_sample.keys()),
+                "queue_wait": sorted(str(k) for k in queue_sample.keys()),
+            },
+            "sample_value_types": {
+                key: type(epoch_sample.get(key)).__name__ if key in epoch_sample else "missing"
+                for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blobsUsed")
+            },
+        })
+
+    summary["schema_probe"] = probe
+    return summary
+
+
 def capture() -> dict[str, Any]:
     started = utc_now()
     metrics: list[dict[str, Any]] = []
     requests: dict[str, Any] = {}
+
+    # Schema/freshness probe only: do not map provider fields into observations yet.
+    requests["ethsupply_live"] = probe_ethsupply(ETHSUPPLY_LIVE_URL, "live")
+    requests["ethsupply_history_30d"] = probe_ethsupply(ETHSUPPLY_HISTORY_URL, "history_30d")
 
     # Binance ticker/price returns a quote but no provider observation timestamp.
     ticker = http_json(BINANCE_TICKER_URL)
