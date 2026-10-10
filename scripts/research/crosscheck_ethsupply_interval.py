@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 RPC_URL = "https://ethereum-rpc.publicnode.com"
-BLOB_BASE_FEE_UPDATE_FRACTION = 3_338_477
 WEI_PER_ETH = Decimal(10**18)
 
 
@@ -231,6 +230,20 @@ def crosscheck(artifact: dict[str, Any]) -> dict[str, Any]:
     if latest_timestamp < end:
         raise RpcError("latest RPC block is earlier than the provider interval end")
 
+    # Blob fee parameters change at protocol BPO forks. Never hard-code the
+    # Cancun-era fraction: read the active schedule from EIP-7910 eth_config.
+    config = rpc_call("eth_config", [])
+    current = config.get("current") if isinstance(config, dict) else None
+    blob_schedule = current.get("blobSchedule") if isinstance(current, dict) else None
+    if not isinstance(blob_schedule, dict):
+        raise RpcError("eth_config did not provide the current blob schedule")
+    update_fraction = blob_schedule.get("baseFeeUpdateFraction")
+    schedule_activation = current.get("activationTime")
+    if not isinstance(update_fraction, int) or update_fraction <= 0 or not isinstance(schedule_activation, int):
+        raise RpcError("eth_config current blob schedule is missing valid parameters")
+    if start < schedule_activation:
+        raise RpcError("provider interval predates current blob schedule; historical schedule lookup is required")
+
     first = first_block_at_or_after(start, latest_number, cache)
     last = last_block_at_or_before(end, latest_number, cache)
     if first > last or last > latest_number:
@@ -250,7 +263,7 @@ def crosscheck(artifact: dict[str, Any]) -> dict[str, Any]:
 
         blob_gas_used = hex_int(block.get("blobGasUsed", "0x0"), "blobGasUsed")
         excess_blob_gas = hex_int(block.get("excessBlobGas", "0x0"), "excessBlobGas")
-        blob_base_fee = fake_exponential(1, excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION)
+        blob_base_fee = fake_exponential(1, excess_blob_gas, update_fraction)
         blob_burn_wei += blob_gas_used * blob_base_fee
 
     expected_blocks = base["source_interval_blocks"]
@@ -264,13 +277,15 @@ def crosscheck(artifact: dict[str, Any]) -> dict[str, Any]:
     exact = count_match and base_match and blob_match
     return {
         "status": "matched" if exact else "mismatch",
-        "method": "Ethereum JSON-RPC block headers; exact interval bounds; EIP-1559 baseFeePerGas*gasUsed; EIP-4844 fake_exponential blob base fee",
+        "method": "Ethereum JSON-RPC block headers; exact interval bounds; EIP-1559 baseFeePerGas*gasUsed; EIP-4844 fake_exponential using active eth_config blob schedule",
         "provider": "ethsupply.fyi",
         "independent_source": RPC_URL,
         "period_start": start_text,
         "period_end": end_text,
         "provider_slot_range": [base["source_from_slot"], base["source_to_slot"]],
         "provider_block_count": expected_blocks,
+        "blob_base_fee_update_fraction": update_fraction,
+        "blob_schedule_activation_time": schedule_activation,
         "rpc_block_range": [first, last],
         "rpc_block_count": len(blocks),
         "block_count_match": count_match,
