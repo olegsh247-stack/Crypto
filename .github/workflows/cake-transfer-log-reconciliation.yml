@@ -31,7 +31,8 @@ jobs:
           python-version: "3.12"
       - name: Capture CAKE dead-address Transfer logs (read-only)
         env:
-          BSC_RPC_URL: https://rpc-bnb.blockmachine.io
+          BSC_RPC_URL: https://bsc-dataseed.binance.org
+          BSC_RPC_FALLBACK_URL: https://rpc-bnb.blockmachine.io
           RPC_MIN_INTERVAL_SECONDS: "1.05"
         run: |
           python scripts/research/capture_cake_transfer_logs.py --chunk-size 10000 --output cake-transfer-log-reconciliation.json
