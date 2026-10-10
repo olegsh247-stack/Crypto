@@ -115,3 +115,30 @@ The Solana RPC capture had no reported errors. `getSupply` returned finalized co
 ### Interpretation boundary
 
 The new same-block state improves the description of the CakePool accounting, but it does **not** yet establish how much CAKE should be excluded from circulating supply. We still need the explicit boost-debt getter, relevant user-level lock-state/event history, and aligned source methodology before approving a canonical formula.
+
+
+## 9. Final verified pool-accounting check — run 38075073697
+
+**Workflow:** [Research On-chain Capture #38075073697](https://github.com/olegsh247-stack/Crypto/actions/runs/38075073697) — success. The paired [Research Evidence Envelope Tests #38075073757](https://github.com/olegsh247-stack/Crypto/actions/runs/38075073757) also passed.
+
+- Pinned BSC block: **126,874,122**, chain ID 56.
+- Raw capture SHA-256: `8f1cad22f097456c76b59ef20ba47f6ffc70d70011d377a685167887ebc1d9f3`.
+- Normalized envelope SHA-256: `09c1a3734b1adf6473ace77b5162d23d15e2e5ac809bd06eb2981707b344f58a`.
+- Capture errors: none; normalizer and envelope validation passed; artifact `sol-cake-rpc-capture-38075073697` uploaded.
+
+| CakePool getter | Value at block 126,874,122 |
+|---|---:|
+| `available()` | 13,393,658.357722 CAKE |
+| `totalBoostDebt()` | 190,357,444.623712 CAKE |
+| `balanceOf()` | 203,751,102.981434 CAKE |
+| `balanceOf() - available() - totalBoostDebt()` | **0 CAKE** |
+| `totalLockedAmount()` | 10,643,456.465049 CAKE |
+| `totalShares()` | 190,019,229.888360 shares |
+
+The key identity from the verified CakePool source is now independently checked against the same pinned block and enforced by the normalizer: `balanceOf() = available() + totalBoostDebt()`. The new getter's selector is `0xe73008bc`, computed as Keccak-256 for `totalBoostDebt()` and covered by a unit test. A deliberately inconsistent fixture is rejected. This closes the contract-state capture implementation block; it does **not** close the circulating-supply methodology question.
+
+### Next CAKE work
+
+1. Capture aligned month-end values for `totalSupply()`, dead-address balance, pool token balance, `available()`, `totalBoostDebt()`, `totalLockedAmount()`, `totalShares()`, and pool events.
+2. Inspect relevant `userInfo(address)` records and lock/unlock/withdraw history; avoid trying to enumerate all users through guessed lists.
+3. Reconcile official PancakeSwap's locked/burn treatment against the on-chain pool accounting and the independent tracker on matched dates. Publish no final circulating-supply number until this is reproducible.
