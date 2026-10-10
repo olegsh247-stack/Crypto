@@ -20,13 +20,14 @@ from capture_sol_cake_rpc import (
     rpc_post,
 )
 
-BOUNDARIES_UTC = (
-    "2026-06-01T00:00:00Z",
-    "2026-07-01T00:00:00Z",
-    "2026-08-01T00:00:00Z",
-    "2026-09-01T00:00:00Z",
-    "2026-10-01T00:00:00Z",
+BOUNDARY_BLOCK_LOCATORS = (
+    ("2026-06-01T00:00:00Z", 101590093, "0x7ec5f3aa41b23d4291504c2367b3279767230641f455c771b5966c9639b0fe62"),
+    ("2026-07-01T00:00:00Z", 107345138, "0xa8ab3a63046ba1e1826516c9af618fd2b58a0255524b204e0384b7c2aeb4728b"),
+    ("2026-08-01T00:00:00Z", 113293990, "0x9fb9ab8b77a5b803de13d434fdface1d16a7060a3fb8ccea8bc9a63370e01897"),
+    ("2026-09-01T00:00:00Z", 119243647, "0x5a12662f9527c4a5ec695e48f10465d63f408f9cdaebf068e97bea269c01df67"),
+    ("2026-10-01T00:00:00Z", 125000756, "0x8d758fa165acb0b464e9a6b77b8c060876dbe40f32de7ebfe9e7783f76101021"),
 )
+BOUNDARIES_UTC = tuple(item[0] for item in BOUNDARY_BLOCK_LOCATORS)
 
 
 def parse_utc_epoch(value: str) -> int:
@@ -62,6 +63,18 @@ def find_block_at_or_before_timestamp(endpoint: str, target_timestamp: int, late
     if best is None:
         raise ValueError(f"no BSC block found at or before Unix timestamp {target_timestamp}")
     return best
+
+
+def verify_pinned_boundary_block(endpoint: str, boundary: str, number: int, expected_hash: str) -> dict[str, Any]:
+    block = get_block(endpoint, number)
+    actual_hash = block.get("hash")
+    actual_timestamp = int(block["timestamp"], 16)
+    target_timestamp = parse_utc_epoch(boundary)
+    if actual_hash != expected_hash:
+        raise ValueError(f"block hash mismatch at {boundary}: expected {expected_hash}, got {actual_hash}")
+    if actual_timestamp != target_timestamp:
+        raise ValueError(f"block timestamp mismatch at {boundary}: expected {target_timestamp}, got {actual_timestamp}")
+    return block
 
 
 def snapshot_at_block(endpoint: str, block: dict[str, Any]) -> dict[str, Any]:
@@ -100,9 +113,12 @@ def capture(endpoint: str = BSC_RPC, boundaries: tuple[str, ...] = BOUNDARIES_UT
     latest_number = int(latest["result"], 16)
     snapshots = []
     errors: list[str] = []
+    locator_by_boundary = {boundary: (number, block_hash) for boundary, number, block_hash in BOUNDARY_BLOCK_LOCATORS}
     for boundary in boundaries:
-        target = parse_utc_epoch(boundary)
-        block = find_block_at_or_before_timestamp(endpoint, target, latest_number)
+        if boundary not in locator_by_boundary:
+            raise ValueError(f"no reviewed pinned block locator exists for boundary {boundary}")
+        number, expected_hash = locator_by_boundary[boundary]
+        block = verify_pinned_boundary_block(endpoint, boundary, number, expected_hash)
         snapshot = snapshot_at_block(endpoint, block)
         snapshot["requested_boundary_utc"] = boundary
         snapshot["boundary_offset_seconds"] = snapshot["block_timestamp_unix"] - target
@@ -127,7 +143,7 @@ def capture(endpoint: str = BSC_RPC, boundaries: tuple[str, ...] = BOUNDARIES_UT
         "cake_token": CAKE_TOKEN,
         "legacy_cake_pool": LEGACY_CAKE_POOL,
         "latest_block_at_capture": latest_number,
-        "boundary_selection": "For each UTC boundary, select the greatest BSC block whose timestamp is <= the requested boundary; preserve actual block timestamp and offset for interval alignment.",
+        "boundary_selection": "Use previously resolved UTC-boundary block numbers and hashes, verify each hash and exact timestamp against the configured RPC, then query historical state at that pinned block. The block locators were found by binary search in prior read-only runs.",
         "snapshots": snapshots,
         "errors": errors,
     }

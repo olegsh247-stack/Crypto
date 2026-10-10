@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from capture_cake_month_end_rpc import find_block_at_or_before_timestamp, parse_utc_epoch
+from capture_cake_month_end_rpc import find_block_at_or_before_timestamp, parse_utc_epoch, verify_pinned_boundary_block
 
 
 class HistoricalBlockSelectionTests(unittest.TestCase):
@@ -23,6 +23,17 @@ class HistoricalBlockSelectionTests(unittest.TestCase):
     def test_rejects_boundary_without_timezone(self):
         with self.assertRaises(ValueError):
             parse_utc_epoch("2026-06-01T00:00:00")
+
+    def test_rejects_pinned_block_hash_mismatch(self):
+        def fake_rpc(endpoint, method, params):
+            if method == "eth_getBlockByNumber":
+                return {"ok": True, "result": {"number": params[0], "timestamp": hex(parse_utc_epoch("2026-06-01T00:00:00Z")), "hash": "0xwrong"}}
+            raise AssertionError(f"unexpected RPC method: {method}")
+
+        with patch("capture_cake_month_end_rpc.rpc_post", side_effect=fake_rpc):
+            with self.assertRaisesRegex(ValueError, "block hash mismatch"):
+                verify_pinned_boundary_block("https://rpc.invalid", "2026-06-01T00:00:00Z", 101590093, "0xexpected")
+
 
 
 if __name__ == "__main__":
