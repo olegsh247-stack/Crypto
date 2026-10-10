@@ -153,6 +153,66 @@ export default {
  const url=new URL(request.url);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders});if(!env.DATABASE_URL)return json({status:"error",service:"crypto-api",database:"not_configured"},500);const sql=neon(env.DATABASE_URL);
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
+ if(url.pathname==="/api/admin/observations"){
+  if(request.method!=="POST")return json({status:"error",error:"method_not_allowed"},405);
+  const auth=requireAdmin(request,env);if(auth)return auth;
+  const declaredLength=Number(request.headers.get("content-length")??"0");
+  if(Number.isFinite(declaredLength)&&declaredLength>262144)return json({status:"error",error:"artifact_too_large",max_bytes:262144},413);
+  let artifact:any;
+  try{
+   const raw=await request.text();
+   if(new TextEncoder().encode(raw).byteLength>262144)return json({status:"error",error:"artifact_too_large",max_bytes:262144},413);
+   artifact=JSON.parse(raw);
+  }catch{return json({status:"error",error:"invalid_json"},400)}
+  if(!artifact||artifact.schema_version!=="1.0"||artifact.artifact_type!=="read_only_eth_observation_capture"||artifact.database_write_performed!==false||artifact.blockchain_write_performed!==false||!Array.isArray(artifact.metrics)||artifact.metrics.length<1||artifact.metrics.length>20){
+   return json({status:"error",error:"invalid_capture_artifact"},400);
+  }
+  const contracts:Record<string,{unit:string;source_id:string;source_url:string;minimum:number;exclusive:boolean;point:boolean}>={
+   "eth.market_spot_price":{unit:"USDT/ETH",source_id:"market_binance",source_url:"https://data-api.binance.vision/api/v3/ticker/price?symbol=ETHUSDT",minimum:0,exclusive:true,point:true},
+   "eth.base_fee_burned_per_block":{unit:"ETH/block",source_id:"ethereum_public_rpc",source_url:"https://ethereum-rpc.publicnode.com",minimum:0,exclusive:false,point:false}
+  };
+  const validated:any[]=[];
+  const seen=new Set<string>();
+  const now=Date.now();
+  for(const item of artifact.metrics){
+   if(!item||typeof item!=="object"||!Object.prototype.hasOwnProperty.call(contracts,String(item.metric_id)))return json({status:"error",error:"unsupported_metric"},400);
+   const contract=contracts[item.metric_id];
+   if(!["ETH","eth"].includes(item.asset_id)||item.unit!==contract.unit||item.source_id!==contract.source_id||item.source_url!==contract.source_url)return json({status:"error",error:"metric_contract_mismatch",metric_id:item.metric_id},400);
+   if(typeof item.value_numeric!=="number"||!Number.isFinite(item.value_numeric)||(contract.exclusive?item.value_numeric<=contract.minimum:item.value_numeric<contract.minimum))return json({status:"error",error:"invalid_numeric_value",metric_id:item.metric_id},400);
+   if(typeof item.observed_at!=="string"||!Number.isFinite(Date.parse(item.observed_at))||!/(Z|[+-]\\d{2}:\\d{2})$/.test(item.observed_at)||Date.parse(item.observed_at)>now+300000)return json({status:"error",error:"invalid_observed_at",metric_id:item.metric_id},400);
+   const validOptionalTime=(value:unknown)=>value===null||(typeof value==="string"&&Number.isFinite(Date.parse(value))&&/(Z|[+-]\\d{2}:\\d{2})$/.test(value));
+   if(!validOptionalTime(item.period_start)||!validOptionalTime(item.period_end))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
+   if(item.period_start&&item.period_end&&Date.parse(item.period_end)<Date.parse(item.period_start))return json({status:"error",error:"invalid_observation_window",metric_id:item.metric_id},400);
+   if(contract.point&&(item.period_start!==null||item.period_end!==null))return json({status:"error",error:"point_observation_must_not_have_window",metric_id:item.metric_id},400);
+   if(!contract.point&&(!item.period_start||!item.period_end||Date.parse(item.period_start)!==Date.parse(item.observed_at)||Date.parse(item.period_end)!==Date.parse(item.observed_at)))return json({status:"error",error:"block_observation_window_mismatch",metric_id:item.metric_id},400);
+   if(typeof item.methodology!=="string"||item.methodology.trim().length<10||item.methodology.length>2000||typeof item.quality!=="string"||item.quality.length>120)return json({status:"error",error:"invalid_methodology_or_quality",metric_id:item.metric_id},400);
+   let methodology=item.methodology.trim()+" Quality caveat: "+item.quality.trim()+".";
+   if(item.metric_id==="eth.base_fee_burned_per_block"){
+    if(!Number.isSafeInteger(item.source_block_number)||item.source_block_number<0||typeof item.source_block_hash!=="string"||!/^0x[0-9a-fA-F]{64}$/.test(item.source_block_hash))return json({status:"error",error:"missing_block_lineage",metric_id:item.metric_id},400);
+    methodology+=" Source block number="+item.source_block_number+"; block hash="+item.source_block_hash+".";
+   }
+   const naturalKey=[item.metric_id,"eth",item.source_id,new Date(item.observed_at).toISOString(),item.period_start?new Date(item.period_start).toISOString():null,item.period_end?new Date(item.period_end).toISOString():null,1].join("|");
+   if(seen.has(naturalKey))return json({status:"error",error:"duplicate_observation_in_artifact",metric_id:item.metric_id},400);
+   seen.add(naturalKey);
+   validated.push({metric_id:item.metric_id,asset_id:"eth",value_numeric:item.value_numeric,unit:item.unit,observed_at:new Date(item.observed_at).toISOString(),period_start:item.period_start?new Date(item.period_start).toISOString():null,period_end:item.period_end?new Date(item.period_end).toISOString():null,source_id:item.source_id,source_url:item.source_url,methodology});
+  }
+  try{
+   const activeAsset=await sql`select asset_id from assets where asset_id='eth' and enabled=true limit 1`;
+   if(!activeAsset[0])return json({status:"error",error:"asset_not_found"},404);
+   const registry=await sql`select metric_id from metric_definitions where metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block')`;
+   const sources=await sql`select source_id from sources where source_id in ('market_binance','ethereum_public_rpc')`;
+   const registeredMetrics=new Set(registry.map((row:any)=>row.metric_id));
+   const registeredSources=new Set(sources.map((row:any)=>row.source_id));
+   if(validated.some(item=>!registeredMetrics.has(item.metric_id)||!registeredSources.has(item.source_id)))return json({status:"error",error:"observation_registry_not_ready"},409);
+   const inserted=await sql`insert into observations
+    (metric_id,asset_id,value_numeric,unit,observed_at,period_start,period_end,source_id,source_url,methodology,status,freshness,revision)
+    select r.metric_id,r.asset_id,r.value_numeric,r.unit,r.observed_at::timestamptz,r.period_start::timestamptz,r.period_end::timestamptz,r.source_id,r.source_url,r.methodology,'NORMAL','CURRENT',1
+    from jsonb_to_recordset(${JSON.stringify(validated)}::jsonb) as r(metric_id text,asset_id text,value_numeric numeric,unit text,observed_at text,period_start text,period_end text,source_id text,source_url text,methodology text)
+    on conflict do nothing
+    returning observation_id,metric_id,asset_id,observed_at,revision`;
+   return json({status:"ok",read_only:false,artifact_type:artifact.artifact_type,received_count:validated.length,inserted_count:inserted.length,duplicate_count:validated.length-inserted.length,items:inserted});
+  }catch{return json({status:"error",error:"observation_ingestion_failed"},503)}
+ }
  if(url.pathname==="/api/observations"||url.pathname==="/api/observations/"){
   if(request.method!=="GET")return json({status:"error",error:"method_not_allowed"},405);
   const rawAssetId=url.searchParams.get("asset_id")?.trim().toLowerCase()??"";
