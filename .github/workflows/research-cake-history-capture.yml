@@ -29,6 +29,8 @@ jobs:
     name: Read-only CAKE month-boundary state capture
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      BSC_RPC_URL: https://bsc-rpc.publicnode.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
