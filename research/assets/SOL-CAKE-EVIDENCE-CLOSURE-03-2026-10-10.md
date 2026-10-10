@@ -6,7 +6,7 @@
 
 ## Implemented
 
-1. `scripts/research/normalize_sol_cake_rpc_capture.py` — deterministic normalizer from the existing raw RPC capture format to one metric per envelope record. It preserves the SOL context slot, CAKE block number, raw artifact reference, source and methodology URLs, units and timestamp provenance. It fails closed on missing required reads, unpinned CAKE block, or a chain ID other than BSC (56). It deliberately reports contract supply and supply-minus-burn-address separately; it does not subtract candidate locked balances or declare canonical circulating supply.
+1. `scripts/research/normalize_sol_cake_rpc_capture.py` — deterministic normalizer from the existing raw RPC capture format to one metric per envelope record. It preserves the SOL context slot, CAKE block number, raw artifact reference, source and methodology URLs, units and timestamp provenance. It converts Solana `getSupply` integer lamports to SOL by dividing by 1e9, rejecting ambiguous non-integer values. It fails closed on missing required reads, unpinned CAKE block, or a chain ID other than BSC (56). It deliberately reports contract supply and supply-minus-burn-address separately; it does not subtract candidate locked balances or declare canonical circulating supply.
 2. `scripts/research/validate_evidence_envelope.py` — dependency-free validator for normalized JSON evidence records.
 3. `scripts/research/tests/test_validate_evidence_envelope.py` — five unit tests covering a valid decimal-string record, missing provenance, timezone-naive timestamps, inverted windows, and booleans masquerading as numeric values.
 4. `scripts/research/tests/test_normalize_sol_cake_rpc_capture.py` — fixture tests for normalized values, context preservation, wrong chain and unpinned block.
@@ -31,10 +31,10 @@ The envelope explicitly separates direct on-chain observations, provider metrics
 ## Scope deliberately not yet implemented
 
 - No live provider adapter has been added: SDA providers may require API keys, and data access/terms have not been configured or reviewed.
-- The workflow integration has been committed, but a fresh SOL/CAKE RPC capture is not yet confirmed. Do not treat fixture tests as a live-source validation.
+- Workflow run #186 successfully captured fresh RPC state, normalized seven metrics and uploaded both JSON files: https://github.com/olegsh247-stack/Crypto/actions/runs/38061956090. Raw-vs-normalized comparison exposed a units bug: `getSupply` lamport counts had initially been labeled as SOL. The normalizer and fixture tests have now been corrected to divide by 1e9 and reject non-integer `getSupply` values. A new workflow run must confirm the fix against live data before considering the evidence pass closed.
 - No evidence was written to Neon; no scores, scenarios, monitoring events or published snapshots were created.
 - No deployment or merge to `main` occurred.
 
 ## Next step
 
-Next, inspect the workflow run triggered by the workflow change and confirm both artifacts are present. Then compare raw and normalized values from that same fresh capture. Keep publication and database writes out of that workflow. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
+Next, confirm the new workflow run succeeds with corrected SOL units, then compare raw and normalized values from that same capture. Keep publication and database writes out of that workflow. Historical SOL activity-provider integration and CAKE same-window supply/economics reconciliation remain separate evidence tasks.
