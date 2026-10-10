@@ -144,7 +144,9 @@ jobs:
           test "$invalid_limit_code" = "400"
           oversized_limit_code=$(curl -sS -o /tmp/observations-oversized-limit.json -w '%{http_code}' 'http://127.0.0.1:8080/api/observations?asset_id=eth&limit=101')
           test "$oversized_limit_code" = "400"
-          echo "VPS_API_OBSERVATIONS_VALIDATION_OK missing_asset=400 invalid_limit=400 oversized_limit=400"
+          unknown_asset_code=$(curl -sS -o /tmp/observations-unknown-asset.json -w '%{http_code}' 'http://127.0.0.1:8080/api/observations?asset_id=does-not-exist')
+          test "$unknown_asset_code" = "404"
+          echo "VPS_API_OBSERVATIONS_VALIDATION_OK missing_asset=400 invalid_limit=400 oversized_limit=400 unknown_asset=404"
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
