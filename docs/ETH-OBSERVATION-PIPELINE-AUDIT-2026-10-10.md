@@ -107,3 +107,19 @@ Contract:
 The VPS Build Rehearsal now checks the response contract and input validation against disposable PostgreSQL. The existing Product Contour Gate and VPS Build Rehearsal must pass on the latest branch head before this endpoint is considered validated. The public Worker endpoint has not been deployed; do not use the live production endpoint as proof of branch behavior.
 
 This is read access only. Controlled ingestion, source artifact validation, natural-key upsert, persisted observation checks, and signal evaluation remain subsequent steps. No production data was written and no production migration was run.
+## 9. Controlled artifact ingestion — implementation in review
+
+Added POST /api/admin/observations to both API runtimes. The route is protected by the existing Bearer ADMIN_TOKEN boundary and accepts the capture artifact format produced by scripts/research/capture_eth_observations.py.
+
+Fail-closed checks before persistence:
+- Maximum request body 256 KiB and at most 20 metrics per artifact.
+- Exact schema version/artifact type and both no-write guard flags must be false.
+- Only the two registered ETH metric IDs are accepted, with fixed source IDs, exact approved source URLs and exact units.
+- Numeric values must be finite and meet the metric-specific lower bound; timestamp and interval semantics are validated, including point-price versus single-block observations.
+- The block metric requires a valid block number/hash; block lineage and quality caveats are retained in methodology because the current schema has no dedicated provider-reference field.
+- Unknown metrics, mismatched source/unit, duplicate natural keys inside one artifact, malformed values, or missing registry entries fail before insert.
+- Writes are performed by one INSERT ... SELECT statement with ON CONFLICT DO NOTHING against the rehearsed natural-key index. Replaying the same artifact therefore does not duplicate a stored observation; revision 1 is assigned by this endpoint.
+
+The VPS Build Rehearsal now exercises missing authentication, rejected write-flag artifacts, one successful insert, replay idempotency and the resulting row count against disposable PostgreSQL. The numeric value in this workflow fixture is synthetic test data, not a market observation.
+
+The endpoint is not called by ordinary capture CI and has not been used against production. The new migration remains unexecuted against production. This implementation intentionally does not evaluate monitoring signals, create monitoring events, publish scenario states, or treat the capture-time ETH/USDT price as sufficient evidence for a thesis transition.
