@@ -242,14 +242,136 @@ def probe_ethsupply(url: str, kind: str) -> tuple[dict[str, Any], dict[str, Any]
     return summary, payload
 
 
+def capture_ethsupply_metrics(payload: dict[str, Any] | None) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    """Extract bounded, dated candidate observations from verified 30-epoch history points."""
+    metrics: list[dict[str, Any]] = []
+    gaps: list[dict[str, str]] = []
+    if not isinstance(payload, dict):
+        return metrics, [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "Historical source payload unavailable or invalid."}]
+    if payload.get("range") != "30d" or payload.get("interval") != "30epochs" or payload.get("intervalSlots") != 960:
+        return metrics, [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "Unexpected range/interval; expected range=30d, interval=30epochs and 960 slots."}]
+    coverage = payload.get("coverage") if isinstance(payload.get("coverage"), dict) else {}
+    warnings = payload.get("warnings") if isinstance(payload.get("warnings"), list) else []
+    generated_at = payload.get("generatedAt")
+    generated_age = int(dt.datetime.now(dt.timezone.utc).timestamp() - generated_at) if isinstance(generated_at, (int, float)) and not isinstance(generated_at, bool) else None
+    if coverage.get("complete") is not True or generated_age is None or generated_age < 0 or generated_age > 3600 or warnings:
+        return metrics, [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "History incomplete, stale, has provider warnings, or invalid generatedAt."}]
+
+    def iso_unix(value: Any) -> str | None:
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            return None
+        try:
+            return dt.datetime.fromtimestamp(value, tz=dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+        except (OverflowError, OSError, ValueError):
+            return None
+
+    def scaled_integer(value: Any, scale: int, signed: bool = False) -> str | None:
+        pattern = r"-?[0-9]+" if signed else r"[0-9]+"
+        if not isinstance(value, str) or not re.fullmatch(pattern, value):
+            return None
+        try:
+            result = Decimal(value) / Decimal(scale)
+        except (InvalidOperation, ValueError):
+            return None
+        if not result.is_finite():
+            return None
+        text_value = format(result, "f")
+        if "." in text_value:
+            text_value = text_value.rstrip("0").rstrip(".")
+        return text_value or "0"
+
+    source_url = ETHSUPPLY_HISTORY_URL
+    quality = "candidate_needs_independent_cross_check"
+    methodology_base = "ethsupply.fyi public 30d history; 30-epoch aggregate (960 slots); exact integer converted with Decimal; not independently cross-checked."
+    slot_specs = [
+        ("issuanceWei", "eth.gross_issuance_per_interval", "ETH/interval", False, "Gross issuance reported by provider."),
+        ("burnWei", "eth.total_burn_per_interval", "ETH/interval", False, "Total burn reported by provider; component metrics remain separate."),
+        ("netWei", "eth.net_supply_flow_per_interval", "ETH/interval", True, "Provider-derived net supply flow; do not recompute across mismatched windows."),
+        ("baseFeeBurnWei", "eth.base_fee_burn_per_interval", "ETH/interval", False, "Base-fee burn for the provider interval."),
+        ("blobBaseFeeBurnWei", "eth.blob_fee_burn_per_interval", "ETH/interval", False, "Blob base-fee burn for the provider interval."),
+    ]
+    slots = payload.get("slots") if isinstance(payload.get("slots"), list) else []
+    valid_slots = [x for x in slots if isinstance(x, dict) and iso_unix(x.get("fromTimestamp")) and iso_unix(x.get("toTimestamp")) and x.get("toTimestamp", 0) > x.get("fromTimestamp", 0)]
+    valid_slots.sort(key=lambda x: x["toTimestamp"])
+    recent_slots = valid_slots[-48:]
+    latest_end = iso_unix(recent_slots[-1]["toTimestamp"]) if recent_slots else None
+    if latest_end and (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(latest_end.replace("Z", "+00:00"))).total_seconds() > 3600:
+        return [], [{"metric_id": "eth.supply_history", "status": "not_captured", "reason": "Latest history interval is more than one hour behind capture time."}]
+    if not recent_slots:
+        gaps.append({"metric_id": "eth.supply_history", "status": "not_captured", "reason": "No valid interval rows were present in slots[]."})
+    for row in recent_slots:
+        start, end = iso_unix(row.get("fromTimestamp")), iso_unix(row.get("toTimestamp"))
+        if not start or not end:
+            continue
+        for field, metric_id, unit, signed, description in slot_specs:
+            value = scaled_integer(row.get(field), 10**18, signed=signed)
+            if value is None:
+                continue
+            metrics.append({
+                "metric_id": metric_id, "asset_id": "ETH", "value_numeric": value, "unit": unit,
+                "observed_at": end, "period_start": start, "period_end": end,
+                "source_id": "ethsupply_fyi", "source_url": source_url,
+                "methodology": f"{description} Source field={field}; interval bounds retained. {methodology_base}",
+                "quality": quality,
+            })
+
+    staking = payload.get("staking") if isinstance(payload.get("staking"), list) else []
+    staking_rows = [x for x in staking if isinstance(x, dict) and iso_unix(x.get("timestamp"))]
+    staking_rows.sort(key=lambda x: x["timestamp"])
+    for row in staking_rows[-48:]:
+        observed = iso_unix(row.get("timestamp"))
+        if not observed:
+            continue
+        for field, metric_id, description in (
+            ("pendingDepositsGwei", "eth.pending_deposit_queue_eth", "Pending deposit queue balance converted from Gwei to ETH."),
+            ("scheduledActivationsGwei", "eth.scheduled_activation_queue_eth", "Scheduled activation balance converted from Gwei to ETH."),
+            ("scheduledExitsGwei", "eth.scheduled_exit_queue_eth", "Scheduled exit balance converted from Gwei to ETH."),
+        ):
+            value = scaled_integer(row.get(field), 10**9)
+            if value is None:
+                continue
+            metrics.append({
+                "metric_id": metric_id, "asset_id": "ETH", "value_numeric": value, "unit": "ETH",
+                "observed_at": observed, "period_start": None, "period_end": None,
+                "source_id": "ethsupply_fyi", "source_url": source_url,
+                "methodology": f"{description} Source field={field}; point timestamp retained. {methodology_base}",
+                "quality": quality,
+            })
+
+    queue_waits = payload.get("queueWaits") if isinstance(payload.get("queueWaits"), list) else []
+    queue_rows = [x for x in queue_waits if isinstance(x, dict) and iso_unix(x.get("timestamp"))]
+    queue_rows.sort(key=lambda x: x["timestamp"])
+    for row in queue_rows[-48:]:
+        observed = iso_unix(row.get("timestamp"))
+        if not observed:
+            continue
+        for field, metric_id in (("entryQueueWaitSeconds", "eth.entry_queue_wait_seconds"), ("exitQueueWaitSeconds", "eth.exit_queue_wait_seconds")):
+            value = row.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                continue
+            metrics.append({
+                "metric_id": metric_id, "asset_id": "ETH", "value_numeric": value, "unit": "seconds",
+                "observed_at": observed, "period_start": None, "period_end": None,
+                "source_id": "ethsupply_fyi", "source_url": source_url,
+                "methodology": f"Provider historical {field}; point timestamp retained; not a queue balance or concentration metric. {methodology_base}",
+                "quality": quality,
+            })
+
+    if len(recent_slots) < 40:
+        gaps.append({"metric_id": "eth.supply_history", "status": "partial_capture", "reason": f"Only {len(recent_slots)} valid 30-epoch interval rows available; expected at least 40 for rehearsal."})
+    return metrics, gaps
+
+
 def capture() -> dict[str, Any]:
     started = utc_now()
     metrics: list[dict[str, Any]] = []
     requests: dict[str, Any] = {}
 
-    # Schema/freshness probe only: do not map provider fields into observations yet.
-    requests["ethsupply_live"] = probe_ethsupply(ETHSUPPLY_LIVE_URL, "live")
-    requests["ethsupply_history_30d"] = probe_ethsupply(ETHSUPPLY_HISTORY_URL, "history_30d")
+    # Probe the live and historical API; retain only schema metadata in requests.
+    requests["ethsupply_live"], _ = probe_ethsupply(ETHSUPPLY_LIVE_URL, "live")
+    requests["ethsupply_history_30d"], history_payload = probe_ethsupply(ETHSUPPLY_HISTORY_URL, "history_30d")
+    history_metrics, history_gaps = capture_ethsupply_metrics(history_payload)
+    metrics.extend(history_metrics)
 
     # Binance ticker/price returns a quote but no provider observation timestamp.
     ticker = http_json(BINANCE_TICKER_URL)
@@ -332,27 +454,28 @@ def capture() -> dict[str, Any]:
         "blockchain_write_performed": False,
         "metrics": metrics,
         "requests": requests,
-        "unresolved_metric_gaps": [
+        "unresolved_metric_gaps": history_gaps + [
             {
-                "metric_id": "eth.net_supply_flow",
-                "status": "not_captured",
-                "reason": "Requires verified daily issuance and burn methodology and a documented source; do not infer net flow from incomplete components."
+                "metric_id": "eth.ethsupply_series_validation",
+                "status": "candidate_needs_independent_cross_check",
+                "reason": "Dated interval, issuance, burn, net-flow and staking queue observations are captured from ethsupply.fyi but must be cross-checked independently before use in signal evaluation.",
+                "source_url": "https://ethsupply.fyi/methodology/"
             },
             {
                 "metric_id": "eth.l2_total_value_secured",
-                "status": "raw_response_only",
-                "reason": "L2BEAT endpoint is documented, but its response schema, universe, time semantics and USD aggregation must be validated before numeric mapping.",
+                "status": "not_captured",
+                "reason": "L2BEAT endpoint requires approved API access; its response schema, universe, time semantics and USD aggregation must be validated before numeric mapping.",
                 "source_url": "https://api.l2beat.com/docs/"
             },
             {
-                "metric_id": "eth.staking_entry_queue",
+                "metric_id": "eth.staking_provider_concentration",
                 "status": "not_captured",
-                "reason": "A public source with verified endpoint, units and post-Pectra queue semantics has not yet been selected."
+                "reason": "Withdrawal-credential categories and queue balances are not staking-provider/operator concentration; a separate comparable source and denominator are required."
             },
             {
-                "metric_id": "eth.staking_exit_queue",
+                "metric_id": "eth.competitive_share",
                 "status": "not_captured",
-                "reason": "Must remain separate from the entry queue; a public source with verified endpoint, units and post-Pectra queue semantics has not yet been selected."
+                "reason": "No fixed peer universe and cross-chain comparable activity/fee-share source has been selected."
             }
         ],
         "source_documentation": [
@@ -365,7 +488,7 @@ def capture() -> dict[str, Any]:
             "Ticker capture time is not represented as a provider-issued observation timestamp.",
             "USDT is not silently relabeled as USD.",
             "One block's base-fee burn is not represented as total fees or a daily fee series.",
-            "Unverified metrics remain explicit gaps; no placeholder numeric values are emitted.",
+            "Provider-derived interval series remain candidates pending independent cross-check; no placeholder numeric values are emitted.",
             "No database, production API, or blockchain writes are performed."
         ]
     }
