@@ -186,7 +186,7 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
         slot_sample = slots[0] if slots and isinstance(slots[0], dict) else {}
         staking_sample = staking[0] if staking and isinstance(staking[0], dict) else {}
         queue_sample = queue_waits[0] if queue_waits and isinstance(queue_waits[0], dict) else {}
-        summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+        history_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
         probe.update({
             "range": payload.get("range"),
             "interval": payload.get("interval"),
@@ -207,7 +207,7 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
                 "queue_waits": len(queue_waits),
                 "validator_types": len(validator_types),
             },
-            "summary_keys": sorted(str(k) for k in summary.keys()),
+            "summary_keys": sorted(str(k) for k in history_summary.keys()),
             "sample_field_names": {
                 "epoch": sorted(str(k) for k in epoch_sample.keys()),
                 "slot": sorted(str(k) for k in slot_sample.keys()),
@@ -219,7 +219,7 @@ def probe_ethsupply(url: str, kind: str) -> dict[str, Any]:
                 for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blobsUsed", "fromTimestamp", "toTimestamp", "blocks")
             },
             "summary_value_types": {
-                key: type(summary.get(key)).__name__ if key in summary else "missing"
+                key: type(history_summary.get(key)).__name__ if key in history_summary else "missing"
                 for key in ("issuanceWei", "burnWei", "netWei", "baseFeeBurnWei", "blobBaseFeeBurnWei", "gasUsed", "blocks", "fromTimestamp", "toTimestamp")
             },
         })
