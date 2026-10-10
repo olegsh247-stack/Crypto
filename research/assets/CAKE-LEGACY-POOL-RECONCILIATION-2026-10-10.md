@@ -212,3 +212,13 @@ The on-chain tracker-style candidate changed by approximately **+4,378,618.18913
 4. Use the issuer's stated as-of dates (July 6, August 3, September 7, October 5) as separate checkpoints where an exact time/block can be resolved. Do not claim calendar-month equality unless the reporting methodology establishes it.
 
 The official reports and their notes are source evidence, not permission to publish a circulating-supply figure. Until the event-level bridge is complete, keep the candidate series unapproved.
+
+
+## 12. Read-only Transfer-log reconciliation implementation — 2026-10-10
+
+- Added `scripts/research/capture_cake_transfer_logs.py`. It queries the CAKE BEP-20 `Transfer(address,address,uint256)` logs for each interval between the reviewed June 1, July 1, August 1, September 1, and October 1 boundary blocks.
+- The interval convention is explicit: when state snapshots are pinned at blocks A and B, event queries cover A+1 through B inclusive. This is the interval needed to compare log sums with the state delta between those snapshots.
+- The capture separately sums transfers into the dead address, transfers out of it, and mint-to-dead events. Mint-to-dead is a subset of transfers into the dead address and must not be counted twice. Raw logs and raw integer amounts are preserved in the JSON artifact.
+- Added workflow `.github/workflows/cake-transfer-log-reconciliation.yml`, which uses the previously successful historical RPC endpoint, paces requests at 1.05 seconds, and uploads the raw artifact for review. The workflow is read-only: it does not sign transactions, write to the chain, modify a database, publish research, or deploy.
+- **Implementation is committed; event capture is not yet accepted as evidence until the workflow completes and the artifact is inspected.** Required checks: no RPC errors/truncated ranges; no duplicate transaction/log IDs; `Δ dead-address balance = sum(to dead) − sum(from dead)` for each interval; and `Δ totalSupply − mint-to-dead` reported separately from issuer-reported mint because issuer periods and weekly-burn proration differ.
+- No circulating-supply formula, factor, score, scenario, monitoring signal, or research publication is approved by this implementation.
