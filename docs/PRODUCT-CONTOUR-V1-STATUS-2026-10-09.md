@@ -54,3 +54,9 @@ Tracking task: [Issue #4 — publish SOL/CAKE snapshots and define scenario base
 ## Safety boundary
 
 No production deployment, Neon write, schema migration, VPS operation, or visual-design change was performed in this work. The live API audit was read-only. Do not run the production Release Gate merely to test it; its first stage applies migrations to live Neon. Diagnose and rehearse migration behavior on a disposable database before any explicitly approved production release.
+
+## Follow-up product correctness fix — 2026-10-10
+
+The scheduler previously advanced `monitoring_signals.last_updated_at` after market-candle ingestion even though it did not recalculate the signals. This could make stale signal values appear fresh. Both the Cloudflare Worker and VPS Node worker now leave signal timestamps unchanged during candle ingestion; the VPS rehearsal checks this behavior across repeated ingestion runs.
+
+This fix does not complete metric-backed signal evaluation. The ETH scenario state remains unpublished until fresh numeric observations are captured, reconciled to the product's observation/evidence records, and evaluated against the published scenario assumptions. Product Contour Gate and VPS API Build Rehearsal results for this follow-up commit must be checked before treating the fix as validated. No production write, migration, deployment, or scenario-state publication was performed.
