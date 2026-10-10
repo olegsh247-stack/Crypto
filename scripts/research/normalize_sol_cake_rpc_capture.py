@@ -31,6 +31,13 @@ def decimal_text(value: Any) -> str:
     return format(result, "f")
 
 
+def lamports_to_sol(value: Any) -> str:
+    # Solana getSupply returns u64 lamport counts, not SOL-denominated decimals.
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("getSupply fields must be non-negative integer lamport counts")
+    return format(Decimal(value) / Decimal(10**9), "f")
+
+
 def make_metric(
     asset_id: str,
     metric_id: str,
@@ -93,10 +100,10 @@ def normalize(capture: Any, raw_artifact_ref: str) -> dict[str, Any]:
         if field not in supply_value:
             raise ValueError(f"getSupply value is missing {field}")
         metrics.append(make_metric(
-            "SOL", metric_id, decimal_text(supply_value[field]), "SOL",
+            "SOL", metric_id, lamports_to_sol(supply_value[field]), "SOL",
             "solana_rpc_getSupply", SOL_SUPPLY_URL, observed, finished,
             "onchain_observation", raw_artifact_ref,
-            f"getSupply {field}; finalized context slot {slot}. Raw RPC value preserved in referenced artifact.",
+            f"getSupply {field}; raw integer lamports divided by 1e9 to convert to SOL; finalized context slot {slot}. Raw RPC value preserved in referenced artifact.",
             SOL_SUPPLY_URL,
         ))
 
