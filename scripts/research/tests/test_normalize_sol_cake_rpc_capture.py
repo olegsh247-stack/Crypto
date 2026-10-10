@@ -46,7 +46,7 @@ class NormalizeCaptureTests(unittest.TestCase):
         self.assertEqual(POOL_VIEW_SELECTORS["total_shares"], ("totalShares()", "0x3a98ef39"))
         self.assertEqual(POOL_VIEW_SELECTORS["available"], ("available()", "0x48a0d754"))
         self.assertEqual(POOL_VIEW_SELECTORS["balance_of"], ("balanceOf()", "0x722713f7"))
-        self.assertEqual(POOL_VIEW_SELECTORS["total_boost_debt"], ("totalBoostDebt()", "0x7d5e81e2"))
+        self.assertEqual(POOL_VIEW_SELECTORS["total_boost_debt"], ("totalBoostDebt()", "0xe73008bc"))
 
     def test_normalizes_capture_and_preserves_context(self):
         result = normalize(fixture(), "actions-run:fixture")
