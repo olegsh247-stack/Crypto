@@ -2,6 +2,14 @@
 
 This profile is for migration rehearsal only. It does not connect to Neon and does not deploy to Cloudflare.
 
+## Configure and start the local rehearsal
+
+Copy `vps/.env.example` to `vps/.env` and set local-only values. Do not reuse example secrets on a real server.
+
+`docker compose --env-file vps/.env -f vps/docker-compose.yml up --build -d`
+
+Caddy proxies HTTP/HTTPS to the API. PostgreSQL and the direct API port are bound to loopback; do not open them to the Internet. See `docs/VPS-OPERATIONS-CADDY-BACKUP-RESTORE.md` for backup and recovery procedures.
+
 ## Start PostgreSQL
 
 `docker compose up -d postgres`
