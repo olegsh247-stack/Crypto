@@ -89,11 +89,15 @@ Batch fixes by shared contract/root cause. Do not repeatedly tweak wording or vi
 ### P3 — Expand research only after acceptance
 Resume SOL/CAKE publication work only after the ETH vertical slice passes. Draft research remains draft until evidence gaps, metric definitions and publication approval are resolved.
 
+## Latest verification update — 2026-10-09
+
+Fresh read-only preflight against the live Worker and VPS Node API matched published ETH snapshot `ETH-2026-10-04-v1` and all checked collection counts: blocks 15, domains 6, factors 6, scores 5, evidence 15, signals 6, events 0, scenario definitions 3, scenario states 0. The live Worker response does not expose definition-level snapshot lineage, while the VPS response does; the preflight records this limitation explicitly. A disposable PostgreSQL transaction inserted an evidence-linked candidate scenario-state row and verified rollback left zero rows.
+
 ## Acceptance decision
 
 - **Source structure:** present for all ten Product Contour blocks.
-- **Current code gate:** latest recorded Product Contour Gate #29 passed.
+- **Current code gate:** Product Contour Gate #76 passed on PR head `84f04cbfe86954926bcbdf2bf357a2665abaa69a`; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104882). VPS API Build Rehearsal #102 also passed on the same head; [run details](https://github.com/olegsh247-stack/Crypto/actions/runs/37992104164).
 - **Research coverage:** BTC/ETH have published baselines; SOL/CAKE are not yet published.
-- **End-to-end decision workflow:** not yet complete because BTC/ETH currently have no scenario-state assessments.
-- **Self-hosted runtime:** prepared in part, but parity and production topology are not yet accepted.
+- **End-to-end decision workflow:** runtime contracts, ETH snapshot preflight and disposable scenario-state rollback are verified; the product assessment is not complete because BTC/ETH still have no recorded scenario-state assessments and the ETH trend-evidence set remains incomplete.
+- **Self-hosted runtime:** Node API + Worker builds, clean PostgreSQL 16 bootstrap, migration idempotency, 9-asset ingestion, history, seven-endpoint Worker/VPS parity and admin boundary passed in CI. Production topology is still not accepted or deployed; no VPS has been provisioned.
 - **Release/merge:** not authorized by this audit. PR #3 remains draft; no production migration, deployment, or data mutation was performed.
