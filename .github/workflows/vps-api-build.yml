@@ -162,7 +162,7 @@ jobs:
               "asset_id": "ETH",
               "value_numeric": 2500.25,
               "unit": "USDT/ETH",
-              "observed_at": "2026-10-10T07:00:00Z",
+              "observed_at": "2026-09-01T00:00:00Z",
               "time_semantics": "capture_time_proxy; Binance ticker response has no observation timestamp",
               "period_start": None,
               "period_end": None,
@@ -175,9 +175,9 @@ jobs:
               "asset_id": "ETH",
               "value_numeric": 0.001,
               "unit": "ETH/block",
-              "observed_at": "2026-10-10T07:00:00Z",
-              "period_start": "2026-10-10T07:00:00Z",
-              "period_end": "2026-10-10T07:00:00Z",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-09-01T00:00:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
               "source_id": "ethereum_public_rpc",
               "source_url": "https://ethereum-rpc.publicnode.com",
               "methodology": "Disposable fixture for single-block base-fee burn ingestion; not actual chain data.",
@@ -189,9 +189,9 @@ jobs:
               "asset_id": "ETH",
               "value_numeric": "-0.012345678901234567",
               "unit": "ETH/interval",
-              "observed_at": "2026-10-10T07:00:00Z",
-              "period_start": "2026-10-10T03:48:00Z",
-              "period_end": "2026-10-10T07:00:00Z",
+              "observed_at": "2026-09-01T00:00:00Z",
+              "period_start": "2026-08-31T20:48:00Z",
+              "period_end": "2026-09-01T00:00:00Z",
               "source_id": "ethsupply_fyi",
               "source_url": "https://ethsupply.fyi/api/history?range=30d",
               "methodology": "Disposable interval fixture for decimal-string precision and signed net-flow validation.",
@@ -201,7 +201,7 @@ jobs:
               "asset_id": "ETH",
               "value_numeric": 3600,
               "unit": "seconds",
-              "observed_at": "2026-10-10T07:00:00Z",
+              "observed_at": "2026-09-01T00:00:00Z",
               "period_start": None,
               "period_end": None,
               "source_id": "ethsupply_fyi",
@@ -241,7 +241,7 @@ jobs:
           assert d.get('received_count')==4 and d.get('inserted_count')==0 and d.get('duplicate_count')==4, d
           print("VPS_API_OBSERVATION_IDEMPOTENCY_OK replay_inserted=0 duplicates=4")
           PY
-          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-10-10T07:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
+          stored=$(psql 'postgresql://postgres:postgres@127.0.0.1:55432/crypto_test' --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from observations where asset_id='eth' and observed_at='2026-09-01T00:00:00Z'::timestamptz and revision=1 and metric_id in ('eth.market_spot_price','eth.base_fee_burned_per_block','eth.net_supply_flow_per_interval','eth.entry_queue_wait_seconds');")
           test "$stored" = "4"
           echo "VPS_API_OBSERVATION_STORAGE_OK unique_natural_key_rows=$stored"
       - name: VPS mutation contract E2E
