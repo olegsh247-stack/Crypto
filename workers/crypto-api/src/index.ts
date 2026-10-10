@@ -130,9 +130,10 @@ function coingeckoDaily(rows:any[]){
  return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 
-async function refreshMonitoring(sql:any){
- await sql`update monitoring_signals set last_updated_at=now() where status <> 'disabled'`;
- await sql`update research_status set status='outdated',reason='Scheduled monitoring refresh: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
+async function refreshResearchReviewStatus(sql:any){
+ // Market-candle ingestion does not recalculate monitoring signals. Do not touch
+ // their last_updated_at: that timestamp must describe signal evaluation, not worker activity.
+ await sql`update research_status set status='outdated',reason='Scheduled market-data ingestion: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
 }
 
 export default {
@@ -145,7 +146,7 @@ export default {
   const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
   const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
   if(successfulIngestion.length>0){
-   try{await refreshMonitoring(sql);}catch{}
+   try{await refreshResearchReviewStatus(sql);}catch{}
   }
  },
  async fetch(request:Request,env:Env):Promise<Response>{
