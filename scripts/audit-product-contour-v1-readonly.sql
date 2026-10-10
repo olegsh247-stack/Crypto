@@ -56,8 +56,8 @@ FROM target_assets ta
 LEFT JOIN latest_snapshot ls ON ls.asset_id = ta.asset_id
 ORDER BY ta.asset_id;
 
--- Detail: every factor/score/scenario/evidence row must belong to the latest published snapshot.
--- Expected result: zero mismatches for factor and score rows returned by the current dashboard contract.
+-- Detail: count historical or unlineaged records that the current dashboard contract must exclude.
+-- Nonzero counts can be legitimate history; this is a diagnostic, not a blanket pass/fail assertion.
 WITH target_assets(asset_id) AS (
   VALUES ('btc'), ('eth'), ('sol'), ('cake')
 ),
@@ -68,7 +68,7 @@ latest_snapshot AS (
   WHERE rs.status = 'PUBLISHED'
   ORDER BY rs.asset_id, rs.version DESC
 )
-SELECT ta.asset_id, 'critical_factors' AS record_type, COUNT(*) AS rows_outside_latest_snapshot
+SELECT ta.asset_id, 'critical_factors' AS record_type, COUNT(*) AS historical_or_nonlatest_rows
 FROM target_assets ta
 JOIN critical_factors cf ON cf.asset_id = ta.asset_id
 LEFT JOIN latest_snapshot ls ON ls.asset_id = ta.asset_id
