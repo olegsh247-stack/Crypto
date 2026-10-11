@@ -68,6 +68,10 @@ Implementation status on PR branch `fix/vps-worker-london-schedule-parity`:
 
 **Rollout ordering:** apply `2026-10-11-research-scenario-evidence-links.sql` first, then the later-dated `2026-10-12-btc-scenario-evidence-links-seed.sql`, through the separately approved migration process before deploying either API version that queries `research_scenario_evidence`. The current PR is not production-applied; no production migration or deployment is authorized here.
 
+## Latest CI correction — 2026-10-11
+
+VPS Build Rehearsal #314 found a preflight ordering defect, not an Evidence-link or observation-parity defect: the script already allowed exactly four reviewed source IDs to be staged on the disposable VPS, but its later generic `registered_sources` count assertion still demanded equal raw counts (live Worker 9, VPS 13). The check now accepts that count delta only when the earlier exact-ID validation confirms the four expected sources and no extra/missing source IDs. All other structural counts remain strict. This does not change the live API, database, migrations or source data. Re-run the read-only preflight before treating the correction as validated.
+
 ## Acceptance status
 
 - Repository/API parity: PASS on the previously tested head.
