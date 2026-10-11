@@ -1,6 +1,6 @@
 # VPS worker schedule and parity gate
 
-**Status:** implementation branch `fix/vps-worker-london-schedule-parity`; CI result pending.
+**Status:** CI passed on commit `103440d8c03842b64562d62c9c5c3f147deec380`; VPS API Build Rehearsal #251 and Product Contour Gate #225 are green. No production DB or VPS was touched.
 
 ## Scope
 
@@ -30,8 +30,8 @@ This is a stronger regression check than comparing only `max(last_updated_at)`: 
 
 ## Still outstanding
 
-- Obtain a successful CI run for the exact implementation commit.
-- Confirm API/worker contract parity against the same isolated PostgreSQL database beyond the existing API route parity check.
-- Only after those gates are green, proceed to minimal runtime dependency removal and the Caddy / backup / restore operational layer.
+- CI verified GMT/BST/DST schedule cases, repeated worker ingestion, full monitoring-signal row immutability, API parity against the live Worker, and isolated PostgreSQL backup/restore.
+- Account-level Cloudflare/Neon inventory and production migration/rollback readiness remain outside this disposable CI proof.
+- The next step is a repository-level hosting dependency inventory, followed by an explicit gap list for the eventual controlled cutover.
 
 No production database or VPS has been touched by this change.
