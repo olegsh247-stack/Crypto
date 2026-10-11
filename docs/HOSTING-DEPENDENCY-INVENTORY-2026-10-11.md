@@ -74,3 +74,29 @@ These are explicit open inventory items, not assumed negatives.
 - A future date in a migration filename does not defer its execution; the migration runner processes unmarked migration files in lexical order.
 - Disposable PostgreSQL success does not prove live Neon compatibility or data parity.
 - Do not expand SOL/CAKE research before the BTC scenario is complete.
+
+
+## Read-only Neon account inventory — 2026-10-11
+
+The connected Neon management API was queried read-only for the project named `Crypto`, its project settings, branches, compute endpoints and snapshots. No connection string was requested, no SQL was run, and no account setting was changed.
+
+| Item | Observed state | Hosting implication |
+|---|---|---|
+| Project | One project named `Crypto` returned by the search. | The repository's Neon dependency corresponds to an identifiable managed project. This is a management-plane observation, not a schema/data audit. |
+| PostgreSQL version | Project metadata reports PostgreSQL 18. | The current infrastructure document proposes PostgreSQL 16 for VPS. Compatibility must be tested explicitly before choosing/downgrading the target major version; do not assume PostgreSQL 16 is equivalent to the live PostgreSQL 18 source. |
+| Region | `aws-eu-central-1`. | Target VPS region and latency/data-residency considerations should be considered in sizing; no provider selected yet. |
+| Branches | One branch named `production`, marked primary/default, state `ready`; metadata says `protected: false`. | Confirm whether branch protection is intentionally disabled. This is a configuration review item, not a change made here. |
+| Compute | One read-write endpoint; observed state `idle`/suspended at inspection. Autoscaling limits: 0.25–2 CU; suspend timeout 0 seconds. | Current compute can suspend when idle. Do not infer performance from the idle snapshot. Record actual usage/cost data before migration sizing. |
+| Connection controls | Project metadata reports `block_public_connections: false`, empty IP allow-list, and endpoint metadata `passwordless_access: true`. | **Security review required.** Confirm the exact semantics and intended posture in Neon before changing settings. Do not change access controls as part of this audit; coordinate application connectivity and rollback first. |
+| Pooler | Endpoint metadata reports pooler disabled. | Check actual connection patterns/limits before deciding whether a pooler is needed for current Worker use; the VPS target should use a normal pooled Node PostgreSQL pool. |
+| Snapshots | Snapshot listing returned an empty list. | This API listing is not proof that Neon has no point-in-time recovery or managed history. Still, no explicit project snapshot was listed. Verify the actual restore/PITR window and rehearse recovery before cutover. |
+| History retention | Project metadata reports 21,600 seconds (6 hours). | This is short relative to a full migration/rollback window. Verify what this field governs and whether plan-level recovery covers the required window; do not treat it as a backup. |
+
+### What remains unverified in Neon
+
+- Live schema, row counts, research snapshots, observations and monitoring state; those belong to the Product Contour audit step.
+- Roles and grants, extensions, actual backup/PITR availability and tested restore behavior.
+- The exact semantics of `passwordless_access`, public-connection blocking and the empty allow-list in this project configuration.
+- Whether the returned snapshot list represents all recovery capabilities exposed by the current plan.
+
+These findings are from read-only management metadata. No production SQL or write path was used.
