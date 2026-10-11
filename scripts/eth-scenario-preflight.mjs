@@ -75,7 +75,7 @@ function inspect(source, body, requireLineage) {
     published_at: snapshot.published_at ?? null,
     scenario_types: types,
     definition_lineage: scenarios.every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "not_exposed_by_runtime",
-    state_lineage: states.every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : (states.length === 0 ? "no_state_rows" : "not_exposed_by_runtime"),
+    state_lineage: states.length === 0 ? "no_state_rows" : (states.every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "not_exposed_by_runtime"),
     factor_lineage: (body.critical_factors || []).every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "mismatch",
     score_lineage: (body.scores || []).every(row => row.snapshot_id === snapshot.snapshot_id) ? "verified" : "mismatch",
     counts
