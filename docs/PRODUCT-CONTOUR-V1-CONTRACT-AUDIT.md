@@ -276,3 +276,10 @@ These gates validate builds, disposable-PostgreSQL migrations/rehearsals, UI/API
 - Follow-up adds an idempotent migration to preserve these six explicitly stale baseline observations in clean/VPS bootstraps and tightens the preflight to compare all six market metric values/provenance and source IDs. Existing observations are not overwritten. Production migration/deployment remains manual and separately confirmed.
 
 **Acceptance decision:** Product Contour v1 is **not yet fully accepted**. The next gates must prove market-metric/source parity on the branch, then continue the single-asset BTC scenario review. No scenario state is written to production by this work.
+
+
+### Follow-up — BTC preflight harness correction, 2026-10-11
+
+The first run after adding market metric/source parity checks reached the read-only BTC preflight but failed before evaluating data parity: `marketMetricIds` was declared inside the inspection function and referenced outside its scope. The VPS API build, database bootstrap, ingestion E2E, API parity and ETH scenario preflight all passed in that run; only the BTC preflight step failed with a JavaScript `ReferenceError`.
+
+Fixed in commit `b2903575690e9249c520dbfc31f1995c1927b4ef` by moving the immutable six-metric ID list to module scope. This is a test-harness correction, not a change to product data or runtime API behavior. The Product Contour Gate and VPS API Build Rehearsal must be rerun on the corrected head; BTC metric/source parity remains **unverified until that rerun passes**. No production migration, deployment, database write or scenario-state write was performed.
