@@ -260,3 +260,19 @@ These gates validate builds, disposable-PostgreSQL migrations/rehearsals, UI/API
 - Product Contour v1: **not yet fully accepted**. The available run provides BTC/ETH parity and detailed ETH counts, but does not establish the full live payload/data quality for all contour sections on BTC.
 - The next product-data step remains a read-only, single-asset BTC acceptance pass: latest published snapshot; 15-block lifecycle and progress; domains; factors and scores scoped to that snapshot; Bull/Base/Bear definitions and scenario-state lineage; monitoring signals/events; evidence-to-observation/source traceability; metric/history freshness. Do not expand to SOL/CAKE or add research scope before BTC passes this end-to-end scenario.
 - No production data, schema, deployment, design, or account settings were changed by this follow-up.
+
+
+### Superseding BTC row-level API audit — 2026-10-11
+
+**Validated current branch commit before this follow-up:** `ca000bcc929ebe1973f482fc007114cc138056ec`.
+- [VPS API Build Rehearsal #273](https://github.com/olegsh247-stack/Crypto/actions/runs/38119698027) — PASS.
+- [Product Contour Gate #275](https://github.com/olegsh247-stack/Crypto/actions/runs/38119698142) — PASS.
+- The new read-only BTC preflight confirmed snapshot `BTC-2026-10-07-v1`, status `PUBLISHED`, 15 numbered research blocks, 6 domains, 6 factors, 5 scores, 15 Evidence rows, 7 qualitative monitoring signals, 3 scenario definitions and no scenario-state rows.
+- All 15 Evidence rows in both API projections have an evidence ID, observation ID that resolves to a metric in the joined API projection, metric ID, source ID, source URL and `as_of`. This validates presence of the exposed evidence chain, not independent verification of each claim's truth.
+- Monitoring is a **qualitative research baseline**, as specified in `research/MONITORING-CONTRACT-V1.md`; current signal values are descriptions, not measured numeric values. All 7 signals have no metric/factor link and no thresholds in the exposed payload. Do not present these as fully live quantitative monitoring.
+- Scenario definitions are Base 50%, Bull 30%, Bear 20%. VPS API exposes snapshot lineage for all three; live Worker payload does not expose it, so lineage cannot be independently checked from that deployed response. No persisted scenario-state rows exist; do not claim a current scenario state has been recorded.
+- **Portability gap found:** live Worker returns 21 metrics and 9 referenced sources, while the clean VPS rehearsal database returned 15 metrics and 5 sources. The six missing rows are the initial BTC market observations: ETF net flow, spot price, block subsidy, circulating supply, max supply and hashrate. This is a clean-database seed gap, not proof of production data loss.
+- The initial values are dated 2026-09-18/19 and stale. They must be labeled as historical baseline values and must not be treated as current market readings.
+- Follow-up adds an idempotent migration to preserve these six explicitly stale baseline observations in clean/VPS bootstraps and tightens the preflight to compare all six market metric values/provenance and source IDs. Existing observations are not overwritten. Production migration/deployment remains manual and separately confirmed.
+
+**Acceptance decision:** Product Contour v1 is **not yet fully accepted**. The next gates must prove market-metric/source parity on the branch, then continue the single-asset BTC scenario review. No scenario state is written to production by this work.

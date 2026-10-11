@@ -38,6 +38,15 @@ function inspect(source, body, requireLineage) {
   const metrics = arr(body, "metrics", source);
   const sources = arr(body, "sources", source);
 
+  const marketMetricIds = [
+    "institutional.etf_net_flow",
+    "market.spot_price",
+    "monetary.block_subsidy",
+    "monetary.circulating_supply",
+    "monetary.max_supply",
+    "security.hashrate"
+  ];
+
   const blockNumbers = blocks.map(x => Number(x.block_number)).sort((a,b) => a-b);
   assert(blockNumbers.length === 15 && blockNumbers.every((n,i) => n === i + 1),
     source + " expected exactly blocks 1..15, got " + JSON.stringify(blockNumbers));
@@ -169,6 +178,25 @@ function inspect(source, body, requireLineage) {
 const [liveBody, vpsBody] = await Promise.all([get(live), get(vps)]);
 const liveResult = inspect("live_worker", liveBody, false);
 const vpsResult = inspect("vps_node", vpsBody, true);
+
+const liveMetricById = new Map(liveBody.metrics.map(row => [row.metric_id, row]));
+const vpsMetricById = new Map(vpsBody.metrics.map(row => [row.metric_id, row]));
+const marketMetricParity = marketMetricIds.map(metricId => {
+  const liveMetric = liveMetricById.get(metricId);
+  const vpsMetric = vpsMetricById.get(metricId);
+  assert(liveMetric, "live Worker is missing baseline market metric " + metricId);
+  assert(vpsMetric, "VPS API is missing baseline market metric " + metricId);
+  const fields = ["value", "unit", "observed_at", "source_id", "source_url", "status", "freshness"];
+  const differences = fields.filter(field => (liveMetric[field] ?? null) !== (vpsMetric[field] ?? null));
+  assert(differences.length === 0,
+    "market metric differs for " + metricId + " fields=" + differences.join(",") +
+    " live=" + JSON.stringify(liveMetric) + " vps=" + JSON.stringify(vpsMetric));
+  return { metric_id: metricId, value: liveMetric.value, unit: liveMetric.unit, observed_at: liveMetric.observed_at, match: true };
+});
+const liveSourceIds = liveBody.sources.map(row => row.source_id).sort();
+const vpsSourceIds = vpsBody.sources.map(row => row.source_id).sort();
+assert(JSON.stringify(liveSourceIds) === JSON.stringify(vpsSourceIds),
+  "source registry projection differs: live=" + JSON.stringify(liveSourceIds) + " vps=" + JSON.stringify(vpsSourceIds));
 assert(liveResult.result.snapshot_id === vpsResult.result.snapshot_id,
   "live/VPS published snapshot mismatch: live=" + liveResult.result.snapshot_id + " vps=" + vpsResult.result.snapshot_id);
 const countParity = Object.fromEntries(Object.keys(liveResult.result.counts).map(key => [
@@ -182,5 +210,5 @@ for (const key of ["blocks", "domains", "factors", "scores", "evidence", "signal
   assert(countParity[key].match,
     "live/VPS structural count mismatch for " + key + ": live=" + countParity[key].live + " vps=" + countParity[key].vps);
 }
-console.log("BTC_SCENARIO_PREFLIGHT_OK " + JSON.stringify({live: liveResult.result, vps: vpsResult.result, count_parity: countParity}));
+console.log("BTC_SCENARIO_PREFLIGHT_OK " + JSON.stringify({live: liveResult.result, vps: vpsResult.result, count_parity: countParity, market_metric_parity: marketMetricParity, source_ids: liveSourceIds}));
 console.log("BTC_SCENARIO_ROW_AUDIT " + JSON.stringify({live: liveResult.rowAudit, vps: vpsResult.rowAudit}));
