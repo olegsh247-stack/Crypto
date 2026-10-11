@@ -335,3 +335,28 @@ It normalizes only the seeded BTC qualitative observations with the exact baseli
 Strengthened `scripts/btc-scenario-preflight.mjs` to compare every BTC metric row across Worker and VPS by value, unit, observation time, source ID/URL, status and freshness—not only the six market metrics. It explicitly requires 15 qualitative research metrics and all six market metrics. This closes the previous blind spot where metric counts matched despite observation-time drift.
 
 **Validation status:** migration and preflight changes are code artifacts only until the new clean-PostgreSQL VPS rehearsal and Product Contour Gate pass on the resulting branch head. If they pass, full metric/provenance parity is verified for the tested projections; production remains unchanged. If they fail, inspect the specific timestamp or metadata mismatch before any further data work.
+
+
+### BTC row-level parity rerun — 2026-10-11
+
+**Corrected head:** `18536ba238e791d847b68e0923062b53965c02aa`
+- [VPS API Build Rehearsal #38122242540](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242540) — **PASS**.
+- [Product Contour Gate #38122242606](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242606) — **PASS**.
+
+The corrected read-only BTC preflight completed. Live Worker and clean disposable VPS PostgreSQL/API match on:
+- 15/15 numbered research blocks; 6 domains; 6 factors; 5 scores.
+- 15 Evidence rows; 7 monitoring signal rows; 0 monitoring events.
+- 3 scenario definitions; 0 persisted scenario-state rows.
+- 21 metrics and 9 registered sources.
+- All six historical market metric values and provenance fields: ETF net flow, spot price, block subsidy, circulating supply, maximum supply and hashrate.
+- Identical nine-source ID set and published snapshot `BTC-2026-10-07-v1`.
+
+The VPS API exposes matching snapshot lineage for all three scenario definitions. The live Worker response still does not expose `snapshot_id` on scenario definitions, so lineage cannot be independently checked from that projection. All 15 Evidence rows expose evidence ID, observation ID, metric ID, source ID, URL and `as_of`; this confirms field-level chain presence, not independent truth validation of every claim.
+
+**Product acceptance remains partial, not complete:**
+1. Six market observations are dated 2026-09-18/19 and explicitly marked stale. They are historical baseline only, not current market data.
+2. All seven monitoring signals remain qualitative descriptions: none exposes a metric link, factor link or threshold. They are not quantitative live monitoring.
+3. There are no persisted scenario-state rows and no monitoring events. The scenario definitions (Base 50%, Bull 30%, Bear 20%) exist, but no observed/current state is recorded.
+4. Research metrics dated 2026-10-08 are labeled fresh in the API; freshness semantics should be checked against the project's actual freshness policy rather than accepted by label alone.
+
+**Decision:** the clean-bootstrap portability/parity defect is resolved for the tested branch and both CI gates pass. Do not expand to SOL/CAKE. Continue the single-asset BTC scenario review, with the remaining emphasis on source/evidence quality, freshness semantics, monitoring contract, and the missing scenario-state lifecycle. No production DB mutation, production migration, deployment, VPS provisioning, or scenario-state write occurred.
