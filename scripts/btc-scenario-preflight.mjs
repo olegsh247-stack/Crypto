@@ -68,6 +68,31 @@ function inspect(source, body, requireLineage) {
         source + " exposed scenario definition snapshot mismatch: " + JSON.stringify(row));
     }
   }
+
+  const scenarioEvidenceContract = {
+    exposed: scenarios.every(row => Array.isArray(row.evidence_links)),
+    links: scenarios.reduce((total, row) => total + (Array.isArray(row.evidence_links) ? row.evidence_links.length : 0), 0),
+    unexposedScenarios: scenarios.filter(row => !Array.isArray(row.evidence_links)).map(row => row.scenario_type)
+  };
+  for (const scenario of scenarios) {
+    if (!Array.isArray(scenario.evidence_links)) continue; // older deployed API; report as a rollout gap below
+    for (const link of scenario.evidence_links) {
+      assert(link.research_scenario_id === scenario.research_scenario_id,
+        source + " evidence link attached to wrong scenario: " + JSON.stringify(link));
+      assert(link.snapshot_id === snapshot.snapshot_id && link.snapshot_id === scenario.snapshot_id,
+        source + " evidence link has mismatched snapshot lineage: " + JSON.stringify(link));
+      assert(!!link.evidence_id && ["supports", "contradicts", "invalidation", "context"].includes(link.relation_type),
+        source + " evidence link missing ID or has invalid relation type: " + JSON.stringify(link));
+      assert(typeof link.rationale === "string" && link.rationale.trim().length > 0,
+        source + " evidence link has empty rationale: " + JSON.stringify(link));
+      assert(/^https?:\\/\\//i.test(String(link.source_url || "")),
+        source + " evidence link missing a resolvable source URL: " + JSON.stringify(link));
+      if (link.observation_id) {
+        assert(!!link.observation_observed_at,
+          source + " observation-backed evidence link lacks observation timestamp: " + JSON.stringify(link));
+      }
+    }
+  }
   for (const row of states) {
     if (requireLineage) {
       assert(row.snapshot_id === snapshot.snapshot_id,
@@ -109,6 +134,7 @@ function inspect(source, body, requireLineage) {
     source, asset_id: assetId, snapshot_id: snapshot.snapshot_id, snapshot_status: snapshot.status,
     published_at: snapshot.published_at ?? null, research_lifecycle: body.asset?.research_status ?? null,
     block_numbers: blockNumbers, scenario_types: scenarioTypes,
+    scenario_evidence_contract: scenarioEvidenceContract,
     definition_lineage: scenarios.every(x => x.snapshot_id === snapshot.snapshot_id) ? "verified" : "not_exposed_by_runtime",
     state_lineage: states.length === 0 ? "no_state_rows" : (states.every(x => x.snapshot_id === snapshot.snapshot_id) ? "verified" : "not_exposed_by_runtime"),
     factor_lineage: "verified", score_lineage: "verified", counts,
@@ -159,7 +185,8 @@ function inspect(source, body, requireLineage) {
       scenario_type: x.scenario_type, probability: x.probability,
       assumptions: x.assumptions, supporting_evidence: x.supporting_evidence,
       invalidation_conditions: x.invalidation_conditions, thesis_impact: x.thesis_impact,
-      confidence: x.confidence
+      confidence: x.confidence,
+      evidence_links: Array.isArray(x.evidence_links) ? x.evidence_links : null
     })),
     scenario_states: states.map(x => ({
       scenario_state_id: x.scenario_state_id, scenario_id: x.scenario_id,
