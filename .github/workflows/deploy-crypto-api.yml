@@ -4,10 +4,39 @@ name: Deploy Crypto API
 
 on:
   workflow_call:
+    inputs:
+      confirm_production_deploy:
+        description: "Explicit approval to deploy the Crypto API to production and run live Neon-backed E2E checks"
+        required: true
+        type: boolean
   workflow_dispatch:
+    inputs:
+      confirm_production_deploy:
+        description: "Explicit approval to deploy the Crypto API to production and run live Neon-backed E2E checks"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
+  approval:
+    name: 0. Confirm production deployment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require explicit production deployment confirmation
+        env:
+          CONFIRM_PRODUCTION_DEPLOY: ${{ inputs.confirm_production_deploy }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_DEPLOY" = "true" || {
+            echo "::error::Production deployment was not explicitly confirmed. No Cloudflare deploy or Neon-backed E2E may run."
+            exit 1
+          }
+          echo "PRODUCTION_DEPLOY_CONFIRMED"
+
   deploy:
+    needs: approval
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
