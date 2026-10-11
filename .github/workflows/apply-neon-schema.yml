@@ -2,9 +2,34 @@ name: Apply Neon schema
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_production_migration:
+        description: "Explicit approval to apply schema and migrations to production Neon"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
+  approval:
+    name: 0. Confirm production migration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit production migration confirmation
+        env:
+          CONFIRM_PRODUCTION_MIGRATION: ${{ inputs.confirm_production_migration }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_MIGRATION" = "true" || {
+            echo "::error::Production migration was not confirmed. No database mutation may run."
+            exit 1
+          }
+          echo "PRODUCTION_MIGRATION_CONFIRMED"
+
   migrate:
+    needs: approval
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -21,6 +46,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
+          set -euo pipefail
           test -n "$DATABASE_URL"
           chmod +x scripts/migrate-neon.sh
           ./scripts/migrate-neon.sh
