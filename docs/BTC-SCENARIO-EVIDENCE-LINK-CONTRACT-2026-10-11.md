@@ -1,0 +1,75 @@
+# BTC scenario evidence-link contract — 2026-10-11
+
+**Status:** implementation proposal on PR branch; not production-applied.  
+**Asset in scope:** BTC only.  
+**Purpose:** make each Bull/Base/Bear definition traceable to existing evidence without pretending stale market data is current.
+
+## Key correction: freshness is runtime state, not a reason to stop building
+
+Research definitions, observations and current market readings have different lifetimes. We should not wait for every number to remain fresh while developing the product. Instead, preserve the observation's actual `observed_at`, retrieve/update data independently, and evaluate freshness at request/display time against a metric-specific policy.
+
+- **Historical research baseline:** remains tied to the published snapshot and its real research/as-of timestamp. Build time must never refresh it.
+- **Time-sensitive market observations:** display value, source, `observed_at`, age and freshness status. Stale data may remain available for portability/tests, but must be visibly marked stale and excluded from any “current market” assertion.
+- **Slow-changing protocol facts:** use a metric-specific review interval; do not apply a universal one-hour TTL to maximum supply or block subsidy.
+- **Retrieval time vs observation time:** where supported by the ingestion contract, retain both. Retrieval time says when Crypto fetched a record; it does not say when the represented event/value occurred.
+- **Decision snapshots:** any scenario assessment records the exact research snapshot and the exact observation/evidence timestamps used. A new market tick should not silently rewrite an immutable research snapshot.
+
+This means we can continue implementing contracts and tests now; live readings will be refreshed when the ingestion path runs. We should not invent freshness or move timestamps forward to make a gate pass.
+
+## Existing contract and gap
+
+The existing `research_scenarios` table has one Bull/Base/Bear definition per snapshot, a probability, assumptions, free-text `supporting_evidence`, invalidation text, thesis impact and confidence. The existing `evidence` table already has stable UUID `evidence_id`, snapshot, claim, observation/source links, as-of, status, confidence and thesis impact.
+
+The free-text `supporting_evidence` field cannot prove which rows support or contradict a scenario, so probabilities and confidence are not reproducible from the API payload alone.
+
+## Additive schema proposal
+
+Migration artifact: `infrastructure/neon/migrations/2026-10-11-research-scenario-evidence-links.sql`
+
+It introduces `research_scenario_evidence` with:
+- `snapshot_id`, `research_scenario_id`, `evidence_id`;
+- `relation_type`: `supports`, `contradicts`, `invalidation`, or `context`;
+- required human-readable `rationale`;
+- composite foreign keys that enforce scenario/evidence membership in the same snapshot.
+
+This is a link table, not a new scenario engine. It preserves current definitions and Evidence records. It does not create links automatically, alter the 50/30/20 probabilities, or create a `scenario_states` row. The migration is additive and idempotent; it has not been run against production.
+
+## Link acceptance rules
+
+A link is accepted only after a reviewer can answer:
+1. What exact claim does the Evidence row make?
+2. Does the cited source directly support that claim, and is the source time-relevant?
+3. Does the claim support, contradict, invalidate, or contextualize this specific scenario?
+4. Is its observation measured or qualitative assessment? Do not treat qualitative text as a numeric market signal.
+5. Is the observation fresh enough for the role assigned to it? Freshness is metric-specific, not a universal clock.
+6. Is the rationale explicit enough for another reviewer to reproduce the link?
+
+Do not link evidence to scenarios solely because it is from the same snapshot or has a positive thesis impact.
+
+## Probability and confidence policy
+
+The current Base 50% / Bull 30% / Bear 20% values are existing analyst judgments, not outputs derivable from the current API contract. Until a separate reviewed methodology defines how probabilities are elicited or calculated:
+- preserve existing values as **analyst-assigned scenario weights**;
+- do not label them statistically calibrated probabilities;
+- do not recalculate them from a count of positive/negative Evidence rows;
+- expose the assumptions, supporting and contradicting Evidence links, and rationale that informed the judgment;
+- record methodology/version and assessment as-of in a future scenario assessment record before claiming reproducibility over time.
+
+Confidence is also an assessment, not the probability that the scenario occurs. Keep these concepts separate.
+
+## Runtime/API follow-up
+
+The next code step after the disposable-database migration rehearsal:
+1. Extend the scenario API projection with the Evidence links and resolved claim/source/observation fields.
+2. Add read-only contract assertions for same-snapshot links, valid relation types, source URL presence, observation timestamps and empty-link handling.
+3. Review BTC evidence claims against their actual source pages and create only defensible links. Do not seed generic links just to make the counts non-zero.
+4. Add display-time freshness classification by metric policy; keep stale values visible as stale rather than silently dropping or refreshing them.
+5. Keep scenario-state creation separate and explicitly authorized after read-only scenario acceptance.
+
+## Acceptance status
+
+- Repository/API parity: PASS on the previously tested head.
+- Evidence-to-scenario reasoning: NOT ACCEPTED until specific links and rationales are reviewed.
+- Quantitative monitoring: qualitative baseline only; no invented thresholds.
+- Current market freshness: stale observations remain stale until ingestion supplies newer observations.
+- Production: no migration, deployment, database write or scenario-state write authorized by this document.
