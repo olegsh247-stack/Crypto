@@ -414,3 +414,15 @@ The read-only BTC preflight on that code commit confirms the earlier metric port
 **Source-quality decision:** the SEC custody proposal is a valid, current official source for the existence of a proposed institutional-custody catalyst, but it is not evidence of realized BTC demand or bullish price action. The public spot-check also corroborated the cited ETF flow and miner-reward figures as secondary-source observations, with explicit date/window limits. Current Base scenario still cannot be accepted as a reproducible evidence-backed assessment; the 50/30/20 values remain existing analyst-assigned weights, not calibrated probabilities.
 
 **Next BTC-only work:** resolve the remaining source-specific claims and freshness contract; keep the Worker rollout gap explicit until a deployment is separately authorized; prepare a candidate Base evaluation without writing `scenario_states`. No production migration, deployment, VPS provisioning or live database write occurred. PR #9 remains draft/unmerged.
+
+### BTC metric source reconciliation — acceptance blocker confirmed, 2026-10-11
+
+A deeper comparison of stored BTC observations against the cited historical sources found mismatches that the Worker/VPS parity gate cannot detect:
+- ETF flow: stored `324.6 USD million/day` for 2026-09-18, while Farside's all-data table reports `+433.0M` for that date.
+- Hashrate: stored `1001 EH/s` with `observed_at=2026-09-19`, while the cited Shattered article describes that estimate for 2026-09-04; Satoshi Gazette reports about `826 EH/s` for 2026-09-19.
+- Circulating supply: stored `20086198.00419505 BTC` has no observation source URL. The stated `gettxoutsetinfo` derivation measures total UTXO-set amount, not automatically circulating supply, and the stored row lacks block height/hash and reproducible derivation.
+- Spot price: the cited FinanceFeeds article does support `$81,043` at 2026-09-19 06:38 UTC, but it is a secondary article quoting CoinGecko, not an approved continuous market feed.
+
+Details and source links are recorded in [BTC-EVIDENCE-REVIEW-2026-10-11.md](./BTC-EVIDENCE-REVIEW-2026-10-11.md) and [BTC-SCENARIO-STATE-DRAFT-2026-10-11.md](../research/assets/BTC/BTC-SCENARIO-STATE-DRAFT-2026-10-11.md).
+
+**Decision update:** parity/portability is PASS, but source correctness for three of the six market observations is unresolved, and the spot-price source is historical-only. These values must not be used to justify a current scenario state. Keep all six rows stale; do not silently change values, timestamps, source URLs or production data. Next step is to recover the source/window/metric semantics and prepare a separately reviewed correction artifact if justified. Base remains a candidate, not an observed state. No production writes or migrations were performed.
