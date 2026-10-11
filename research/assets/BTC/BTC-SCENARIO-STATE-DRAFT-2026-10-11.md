@@ -114,3 +114,14 @@ Sources checked: [Investing.com BTC historical data](https://www.investing.com/c
 **Candidate Base remains under review; no current scenario state is justified for publication yet.** The external inputs are mixed, use different windows and source methodologies, and are not reconciled into the snapshot's observation/evidence records. Product monitoring remains qualitative: all seven signals have no `metric_id`, no `critical_factor_id`, and no threshold in the exposed payload. The six historical market metrics are stale. No scenario-state row should be written until a consistent, dated observation set is reconciled to the product's canonical evidence chain and the state rationale is reviewed.
 
 The remaining work is now specific: (1) confirm the product's freshness rules for research metrics labelled `fresh` at 2026-10-08; (2) define a minimal BTC monitoring evaluation using the existing metric and factor contracts, without fabricating thresholds; (3) verify whether a read-only observation-level route exists or add it only if required by the existing contract; (4) prepare a candidate Base-state rationale with explicit evidence IDs and invalidation conditions, but keep it as a draft until review and separate authorization. Do not expand to SOL/CAKE.
+
+
+### Material source conflicts discovered after the initial spot-check
+
+The stored historical metrics must not be used as evidence for a scenario state until reconciled:
+- **ETF flow:** the stored observation is +$324.6M on 18 Sep 2026, but Farside's historical total for that date is +$433.0M. The row matches between Worker and VPS, but does not match its cited source.
+- **Hashrate:** the stored 1,001 EH/s observation is dated 19 Sep, while its cited Shattered article describes approximately 1,001 EH/s on 4 Sep. Satoshi Gazette's estimate for 19 Sep is about 826 EH/s. This is a date/window mismatch, not a minor freshness issue.
+- **Circulating supply:** the stored value has no source URL. The described `gettxoutsetinfo` derivation would represent UTXO-set total amount, not automatically circulating supply, and the record has no block height/hash to reproduce the result.
+- **Spot price:** the $81,043 figure and 06:38 UTC timestamp are present in the cited 19 Sep FinanceFeeds article, attributed there to CoinGecko. This supports a historical quote, not a current feed or an approved source registry.
+
+These conflicts strengthen the BLOCKED decision. Do not repair them by changing only source URLs, moving timestamps, or overwriting observations. Recover the original query/window and metric definition, then propose a reviewed source/data correction separately. Until then, the candidate Base state remains a draft and no scenario-state row is authorized.
