@@ -36,6 +36,14 @@ On commit `103440d8c03842b64562d62c9c5c3f147deec380`:
 
 The backup/restore gate proves the dump can be restored into a separate disposable PostgreSQL database and basic schema/table/asset checks pass. It does **not** prove production-data completeness, offsite disaster recovery, VPS host operations, DNS, TLS issuance, firewall setup, production credentials, or rollback under real traffic.
 
+## Production workflow audit finding — 2026-10-11
+
+The repository audit found a release-safety gap in `.github/workflows/deploy-crypto-api.yml`: it supported direct `workflow_dispatch` without its own explicit production confirmation. That workflow deploys the Cloudflare Worker, writes the Neon connection secret to Worker configuration, and contains Neon-backed scheduled-ingestion/database verification steps. The top-level Release Gate required confirmation, but direct dispatch of the reusable deployment workflow could bypass that top-level gate.
+
+**Corrective change made on this branch:** the deployment workflow now requires `confirm_production_deploy: true` for both `workflow_dispatch` and `workflow_call`, and the actual deploy job depends on a separate approval job. The top-level Release Gate passes its already-confirmed approval into that input. This job-level dependency is intentional: the workflow contains later `if: always()` steps that could otherwise run despite a failed approval step in the same job.
+
+**Status:** code changed; current-head CI validation is pending. Do not treat this protection as verified until the workflow YAML and Product Contour Gate pass on the resulting commit. No production workflow was run.
+
 ## Gaps to close before a migration can be approved
 
 ### P0 — resolve before production cutover
@@ -57,7 +65,7 @@ The backup/restore gate proves the dump can be restored into a separate disposab
 
 ## Next step (no deployment)
 
-Continue with a **release-workflow and secret-reference audit**: map every production-capable workflow, its trigger, secrets, and side effects; verify that ordinary PR/push gates cannot accidentally run production migrations or deploy the Worker. Then document the minimal target release workflow before implementing it.
+After the approval guard passes CI, continue the **release-workflow and secret-reference audit** across all production-capable workflows and secret references. Then specify the minimal target VPS release/rollback workflow. Do not run the production Release Gate as a test.
 
 ## Explicitly not done
 
