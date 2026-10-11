@@ -1,13 +1,13 @@
 # BTC observation provenance and revision contract audit — 2026-10-11
 
 **Scope:** BTC only; ETF flow, network hashrate, circulating supply, canonical Observation → Source → Evidence lineage.
-**Repository evidence reviewed:** `infrastructure/neon/schema-v1.sql`, `infrastructure/neon/migrations/2026-10-11-btc-market-observation-baseline.sql`, `vps/worker/src/scheduler.ts`, `workers/crypto-api/src/index.ts`, and the source-reconciliation notes linked below.
+**Repository evidence reviewed:** `infrastructure/neon/schema-v1.sql`, the migration directory on `fix/product-contour-v1-contracts` including `2026-10-13-eth-observation-registry-and-idempotency.sql`, `infrastructure/neon/migrations/2026-10-11-btc-market-observation-baseline.sql`, `vps/worker/src/scheduler.ts`, `workers/crypto-api/src/index.ts`, and the source-reconciliation notes linked below.
 **Reference implementation inspected:** PR #9 head `d14a4eb02d77511a13c5ba9ffca4dc8204dd78da`.
 **Safety:** audit/documentation only. No observations, snapshots, Evidence rows, scenario states, production database, migrations, or deployments were changed.
 
 ## Decision
 
-**Do not correct the three stored market values yet.** The repository has enough fields to begin describing time windows and revisions, but it does not yet provide a complete, enforced, reproducible observation-revision contract. In addition, the inspected scheduled Worker ingestion updates market candles, not these three observation metrics.
+**Do not correct the three stored market values yet.** The repository contains a proposed observation natural-key/revision uniqueness migration, but the complete end-to-end contract still lacks explicit retrieval/capture metadata and metric-specific time-window semantics. In addition, the inspected scheduled Worker ingestion updates market candles, not these three observation metrics.
 
 ## 1. What the current schema supports
 
@@ -19,9 +19,9 @@ The base `observations` table contains:
 - `revision`: integer defaulting to 1;
 - `freshness` and `status`.
 
-The base schema's observation indexes are non-unique lookup indexes. The reviewed base schema does not itself enforce uniqueness of a logical observation/revision, or enforce that revision numbers are monotonic for a source's revised report. Before designing an index, inspect all migrations and existing duplicates on the target branch/database; this audit did not query production or claim a complete live-schema inventory.
+The base schema's observation indexes are non-unique lookup indexes. However, the reviewed migration directory already contains `2026-10-13-eth-observation-registry-and-idempotency.sql`, which proposes a unique index on `metric_id + normalized asset_id + source_id + observed_at + normalized period_start + normalized period_end + revision`. It checks for duplicate keys before creating the index. This is a useful generic idempotency foundation, and a correction can in principle append a higher revision when the event timestamp and period are held constant. It does **not** by itself establish source publication/retrieval metadata, capture identity, metric-specific window semantics, or monotonic revision assignment. Its presence in a repository branch is not proof that the migration has been applied to production; this audit did not query production.
 
-The BTC baseline migration inserts the initial values only when no row exists for the same `asset_id + metric_id + source_id`. This protects repeat application of that seed from overwriting an existing row, but it is **not** a general source-revision ingestion strategy and does not establish a natural key for revised observations.
+The BTC baseline migration inserts the initial values only when no row exists for the same `asset_id + metric_id + source_id`. This protects repeat application of that seed from overwriting an existing row, but it is **not** a general source-revision ingestion strategy. A separately reviewed correction must use the approved natural key and a deliberate higher revision, while retaining the original row. Before applying the index migration in any environment, inspect duplicates in that environment.
 
 The Worker API projection selects one row per `metric_id`, ordered by `observed_at DESC, revision DESC`. That makes a higher revision useful when the observation timestamp is identical, but it does not define how to compare different reporting windows, sources, publication times, or source corrections.
 
@@ -78,11 +78,11 @@ Acceptance rules for a future correction:
 
 Before adding a migration or ingestion code:
 
-1. Inventory every existing migration for observation uniqueness, revision semantics, and any trigger that may alter observations; inspect actual duplicate keys in a disposable database, not production writes.
+1. Rehearse `2026-10-13-eth-observation-registry-and-idempotency.sql` against a disposable PostgreSQL database and verify duplicate-key handling. Do not infer it has been applied to production.
 2. Approve a common observation contract that distinguishes event time, reporting period, retrieval time, source revision/capture, and methodology. The current table lacks an explicit retrieval timestamp and source revision/capture field.
-3. Define a logical-key/revision strategy that can retain preliminary and revised ETF rows without conflating separate hashrate windows.
+3. Define how the existing natural key/revision rule will retain preliminary and revised ETF rows without conflating separate hashrate windows. Confirm whether source revisions may change `observed_at`; if they do, the current key will not group them as versions of the same event.
 4. Decide whether circulating supply can be recovered historically or must be represented as a newly defined metric with a fresh, reproducible chain observation.
-5. Implement the schema/ingestion changes additively, add tests for repeated ingestion and revised source values, and verify API selection by metric and window in disposable PostgreSQL.
+5. Implement only the missing schema/ingestion pieces additively, add tests for repeated ingestion and revised source values, and verify API selection by metric and window in disposable PostgreSQL.
 6. Run read-only parity/preflight against Worker and VPS API. Keep all historical values visibly stale until their provenance is verified.
 
 ## Explicitly out of scope
