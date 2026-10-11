@@ -49,7 +49,9 @@ The repository audit found a release-safety gap in `.github/workflows/deploy-cry
 - `.github/workflows/apply-neon-schema.yml` allowed a direct manual migration without a confirmation input. It now requires `confirm_production_migration: true` and the migration job depends on a separate approval job.
 - `.github/workflows/seed-neon-data.yml` could write `infrastructure/neon/seed-v1.sql` to Neon on every matching push to `main`, as well as on manual dispatch. The push trigger has been removed; the workflow is now manual-only and requires `confirm_production_seed: true` before its separate seed job can run.
 - `.github/workflows/validate-neon-v2-migration.yml` also references the live Neon secret, but its migration check is wrapped in `BEGIN`/`ROLLBACK`; its other step performs reads only. It is classified as live-database validation, not an intended persistent mutation. This classification still depends on the SQL migration remaining transaction-safe.
-- `.github/workflows/apply-neon-v2.yml` runs its clean-bootstrap rehearsal against disposable PostgreSQL, then requires `confirm_production_migration: true` before applying migrations to Neon.
+- `.github/workflows/apply-neon-v2.yml` now has a separate approval job and gates the entire migration job behind `confirm_production_migration: true`. The Neon secret is scoped to the gated job, rather than being exposed to steps that run before the approval check.
+
+Additional review of the workflow directory found the research capture and source-crosscheck workflows to be public-source/read-only artifact capture; `live-api-e2e.yml` and UI runtime checks target the existing public API for validation. No production deployment, Neon mutation, or account configuration was run by this audit.
 
 These edits only change workflow source on this branch. They do not prove runtime protection until the relevant checks pass on the current HEAD.
 
