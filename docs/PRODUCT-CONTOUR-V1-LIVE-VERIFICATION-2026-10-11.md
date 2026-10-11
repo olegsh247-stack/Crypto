@@ -237,3 +237,14 @@ The duplicate groups were inspected by selecting every column in the paired rows
 - For ETF flow, define the daily reporting period explicitly before considering any revision. For hashrate, separate point snapshot vs daily estimate/rolling average and correct the observation timestamp only through a separately reviewed, source-supported correction. For circulating supply, verify the actual RPC/source field and reproducible calculation; do not assume `gettxoutsetinfo.total_amount` is automatically circulating supply.
 
 No live rows, schema objects or migration markers were changed.
+
+
+### Source-level root cause for the BTC seed duplicates
+
+Repository inspection confirmed a plausible direct cause:
+
+- `infrastructure/neon/seed-v1.sql` inserts the nine BTC numeric observations with generated `observation_id` UUIDs and ends the insert with `ON CONFLICT DO NOTHING`. Because each rerun generates new UUIDs and the live table had no natural-key unique index, the conflict clause did not suppress logical duplicates.
+- `.github/workflows/seed-neon-data.yml` runs the seed SQL on manual dispatch or on a qualifying push to `main`; it does not skip the seed when `crypto-seed-v1` is already recorded. The migration marker is therefore not an execution guard for this workflow.
+- Live `schema_migrations` records `crypto-seed-v1` at `2026-09-24T12:49:16.612Z`. One copy of the duplicated rows was created at `12:49:16.433Z`, and the second copy at `18:09:39.707Z` that same day. This timing strongly supports a repeated seed execution, although it does not independently identify the actor or workflow run.
+
+A code-only fix is proposed in [PR #12 — Fix seed-v1 observation idempotency](https://github.com/olegsh247-stack/Crypto/pull/12). It checks the logical observation key before insertion and adds a disposable PostgreSQL 16 regression rehearsal. The PR remains Draft because its new workflow has not yet run; no merge or production execution has been performed. The patch does not clean up the existing nine duplicate groups or add a production unique index.
