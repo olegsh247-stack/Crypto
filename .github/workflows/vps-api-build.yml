@@ -176,8 +176,10 @@ jobs:
           test -n "$monitoring_before"
           node dist/index.js > /tmp/crypto-vps-worker-1.log 2>&1 &
           worker_pid=$!
+          reported=0
           for attempt in $(seq 1 60); do
             if grep -q '"service":"crypto-worker-vps"' /tmp/crypto-vps-worker-1.log; then
+              reported=1
               kill -TERM "$worker_pid" 2>/dev/null || true
               wait "$worker_pid" || true
               cat /tmp/crypto-vps-worker-1.log
@@ -190,7 +192,13 @@ jobs:
             fi
             sleep 1
           done
-          grep -q '"service":"crypto-worker-vps"' /tmp/crypto-vps-worker-1.log
+          if [ "$reported" != "1" ]; then
+            kill -TERM "$worker_pid" 2>/dev/null || true
+            wait "$worker_pid" || true
+            cat /tmp/crypto-vps-worker-1.log
+            echo "VPS worker did not report ingestion result within 60 seconds" >&2
+            exit 1
+          fi
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           result=$(grep -Eo '\\{"status":"ok","service":"crypto-worker-vps"[^}]*\\}' /tmp/crypto-vps-worker-1.log | tail -1)
           test -n "$result"
@@ -209,8 +217,10 @@ jobs:
           done
           node dist/index.js > /tmp/crypto-vps-worker-2.log 2>&1 &
           worker_pid=$!
+          reported=0
           for attempt in $(seq 1 60); do
             if grep -q '"service":"crypto-worker-vps"' /tmp/crypto-vps-worker-2.log; then
+              reported=1
               kill -TERM "$worker_pid" 2>/dev/null || true
               wait "$worker_pid" || true
               cat /tmp/crypto-vps-worker-2.log
@@ -223,7 +233,13 @@ jobs:
             fi
             sleep 1
           done
-          grep -q '"service":"crypto-worker-vps"' /tmp/crypto-vps-worker-2.log
+          if [ "$reported" != "1" ]; then
+            kill -TERM "$worker_pid" 2>/dev/null || true
+            wait "$worker_pid" || true
+            cat /tmp/crypto-vps-worker-2.log
+            echo "VPS worker did not report ingestion result within 60 seconds" >&2
+            exit 1
+          fi
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;")
           test "$duplicates" = "0"
           monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select last_updated_at from monitoring_signals where asset_id='btc' and name='CI monitoring timestamp regression fixture';")
