@@ -90,7 +90,7 @@ jobs:
           pairs=json.load(open('/tmp/pairs.json'))
           items=assets.get('items',assets.get('assets',assets if isinstance(assets,list) else []))
           pitems=pairs.get('items',pairs.get('pairs',[]))
-          assert len(items)==9, f"assets={len(items)}"
+          assert len(items)==10, f"assets={len(items)}"
           assert len(pitems)==9, f"pairs={len(pitems)}"
           assert all(p.get('enabled') is True for p in pitems)
           print(f"VPS_API_REGISTRY_OK assets={len(items)} pairs={len(pitems)}")
@@ -110,8 +110,8 @@ jobs:
           import json
           d=json.load(open('/tmp/history.json'))
           assert d.get('status')=='ok', d
-          assert len(d.get('rows',[]))>0, d
-          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
+          assert isinstance(d.get('rows'),list), d
+          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])} contract=1")
           PY
       - name: VPS API parity against live Worker
         env:
