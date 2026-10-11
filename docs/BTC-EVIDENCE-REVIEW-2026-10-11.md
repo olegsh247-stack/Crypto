@@ -41,3 +41,19 @@ These gaps are intentional. Do not add links solely to make all scenarios non-em
 - Confidence remains distinct from scenario probability.
 - No scenario-state row is created by this migration.
 - Production remains untouched; schema and seed migrations require the separately approved migration process before deployment.
+
+
+## Follow-up source reconciliation — 2026-10-11
+
+An additional check against the actual historical source rows found two material mismatches. The clean-DB parity gate proves Worker/VPS reproducibility only; it does not validate these observations against their cited sources.
+
+| Stored metric | Stored observation | Source check | Decision |
+|---|---|---|---|
+| `institutional.etf_net_flow` | `324.6 USD million/day`, `2026-09-18`, source URL Farside | Farside's all-data table reports **+$433.0M** total for 18 Sep 2026. The stored value does not match the cited source/date. | Keep stale; mark source/value reconciliation unresolved. Do not silently replace the number. |
+| `security.hashrate` | `1001 EH/s`, `2026-09-19`, source URL Shattered | The cited Shattered article reports approximately 1,001 EH/s for **4 Sep 2026**, not 19 Sep. Satoshi Gazette's daily estimate for 19 Sep is about **826 EH/s**. | The stored date/value pair is inconsistent with the cited source. Keep stale/unverified until the original source/window is recovered. |
+| `monetary.circulating_supply` | `20,086,198.00419505 BTC`, `2026-09-19`, source URL missing; methodology says `gettxoutsetinfo`-derived | Bitcoin Core documents `gettxoutsetinfo.total_amount` as total BTC in the **UTXO set**, with block height and best-block hash. That is not automatically equivalent to circulating supply. The stored observation lacks height/hash and derivation metadata. | Do not attach the RPC documentation URL as if it proved this exact number. Recover the actual historical query/height/hash and define the metric correctly; otherwise retain as stale/unverified baseline. |
+| `market.spot_price` | `81,043 USD/BTC`, `2026-09-19 06:38 UTC`, FinanceFeeds article | The article itself states $81,043 at 06:38 UTC on 19 Sep and attributes it to CoinGecko. The timestamp/value is supported as a historical quote, but the source is a secondary article, not an approved continuous market feed. | Historical citation is plausible; source registry remains `to_validate` and this row must not be treated as a live quote. |
+
+Sources checked: [Farside historical BTC ETF flows](https://farside.co.uk/bitcoin-etf-flow-all-data/), [Shattered hashrate article](https://shattered.io/bitcoin-hashrate-zettahash-difficulty-2026/), [Satoshi Gazette daily hashrate estimates](https://satoshigazette.org/data/mining), [Bitcoin Core gettxoutsetinfo RPC docs](https://bitcoincore.org/en/doc/25.0.0/rpc/blockchain/gettxoutsetinfo/), [FinanceFeeds historical BTC quote](https://financefeeds.com/bitcoin-btc-price-81043-cftc-crypto-rules-white-house-bull-88000-bear-74000/).
+
+**Acceptance impact:** these discrepancies block using the six market metrics as evidence for a current Base/Bull/Bear evaluation, even though the rows match between API implementations. No values, source IDs, timestamps, statuses, or database rows were changed by this review.
