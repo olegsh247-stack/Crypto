@@ -85,7 +85,8 @@ function inspect(source, body, requireLineage) {
         source + " evidence link missing ID or has invalid relation type: " + JSON.stringify(link));
       assert(typeof link.rationale === "string" && link.rationale.trim().length > 0,
         source + " evidence link has empty rationale: " + JSON.stringify(link));
-      assert(/^https?:\\/\\//i.test(String(link.source_url || "")),
+      const sourceUrl = String(link.source_url || "");
+      assert(sourceUrl.startsWith("https://") || sourceUrl.startsWith("http://"),
         source + " evidence link missing a resolvable source URL: " + JSON.stringify(link));
       if (link.observation_id) {
         assert(!!link.observation_observed_at,
