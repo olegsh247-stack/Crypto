@@ -418,7 +418,7 @@ The read-only BTC preflight on that code commit confirms the earlier metric port
 ### BTC metric source reconciliation — acceptance blocker confirmed, 2026-10-11
 
 A deeper comparison of stored BTC observations against the cited historical sources found mismatches that the Worker/VPS parity gate cannot detect:
-- ETF flow: stored `324.6 USD million/day` for 2026-09-18, while Farside's all-data table reports `+433.0M` for that date.
+- ETF flow: stored `324.6 USD million/day` for 2026-09-18. Farside's current all-data table reports `+433.0M`, while contemporaneous reports citing Farside report `+324.6M` and say IBIT was flat. This is an unresolved source-revision/fund-inclusion conflict, not grounds to overwrite the stored value.
 - Hashrate: stored `1001 EH/s` with `observed_at=2026-09-19`, while the cited Shattered article describes that estimate for 2026-09-04; Satoshi Gazette reports about `826 EH/s` for 2026-09-19.
 - Circulating supply: stored `20086198.00419505 BTC` has no observation source URL. The stated `gettxoutsetinfo` derivation measures total UTXO-set amount, not automatically circulating supply, and the stored row lacks block height/hash and reproducible derivation.
 - Spot price: the cited FinanceFeeds article does support `$81,043` at 2026-09-19 06:38 UTC, but it is a secondary article quoting CoinGecko, not an approved continuous market feed.
