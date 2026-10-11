@@ -1,6 +1,6 @@
 # VPS operational layer: Caddy, PostgreSQL backup and restore
 
-**Status:** configuration and scripts are prepared for rehearsal; no VPS is provisioned and no production cutover is authorized. The CI backup/restore rehearsal must pass on the final commit before this layer is considered validated.
+**Status:** CI rehearsal passed on commit `103440d8c03842b64562d62c9c5c3f147deec380` (VPS API Build Rehearsal #251). The disposable database dump was restored into an isolated database and table/asset checks passed. This validates the rehearsal path only; no VPS is provisioned, no real backup was taken, and no production cutover is authorized.
 
 ## Compose configuration
 
