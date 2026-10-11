@@ -8,7 +8,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: migration-rehearsal-${{ github.event.pull_request.number || github.ref }}
+  # Reusable-workflow invocations from independent gates must not cancel each other.
+  # github.run_id is the caller's workflow-run ID for workflow_call.
+  group: migration-rehearsal-${{ github.workflow }}-${{ github.run_id }}
   cancel-in-progress: true
 
 jobs:
