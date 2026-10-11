@@ -385,3 +385,14 @@ The VPS API exposes matching snapshot lineage for all three scenario definitions
 6. There are no persisted scenario-state rows or monitoring events. The 50% Base / 30% Bull / 20% Bear probabilities sum to 100%, but the probabilities and definitions alone do not establish a currently observed scenario state.
 
 **Decision:** hosting/build/migration rehearsals and the corrected BTC preflight pass, but Product Contour v1 and the complete BTC scenario are **not accepted yet**. Next, keep the scope on BTC: resolve source provenance without inventing URLs, validate the SEC proposal and other claim-specific sources, and establish how the live Worker will expose scenario-evidence links and lineage. Then review the Base scenario's actual supporting evidence and the scenario-state lifecycle. Do not expand to SOL/CAKE. No production migration, deployment, live DB write, or scenario-state write was performed by this audit.
+
+
+### Source-provenance follow-up — circulating supply, 2026-10-11
+
+A targeted source check found official Bitcoin Core documentation for `gettxoutsetinfo`:
+- `https://bitcoincore.org/en/doc/27.0.0/rpc/blockchain/gettxoutsetinfo/`
+- `https://developer.bitcoin.org/reference/rpc/`
+
+The RPC returns a UTXO-set `total_amount`, height and best-block reference. That is useful for reproducing an on-chain UTXO amount at a specific block, but it is **not automatically interchangeable with circulating supply**. The current BTC observation says it is a `gettxoutsetinfo`-derived estimate, but lacks a source URL and does not expose the source block height/hash or calculation that produced `20086198.00419505 BTC`. Do not simply attach the documentation URL and treat the numeric observation as independently verified.
+
+**Next source task:** establish whether this field is intended to mean total UTXO amount, issued supply, or circulating-supply estimate; recover its historical block height/hash and derivation if available; then record a source URL that supports the actual observation. If that lineage cannot be recovered, retain the row as stale/unverified baseline or replace it only through an approved, separately reviewed data/migration change. Do not fabricate a source URL or silently relabel the metric.
