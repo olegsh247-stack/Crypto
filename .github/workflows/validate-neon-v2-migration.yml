@@ -2,13 +2,33 @@ name: Validate Neon Research Engine v2 migration
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'infrastructure/neon/migrations/2026-09-24-research-engine-v2.sql'
-      - '.github/workflows/validate-neon-v2-migration.yml'
+    inputs:
+      confirm_live_neon_validation:
+        description: "Confirm a rollback-only migration validation will execute against live Neon and may briefly acquire locks"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
+  approval:
+    name: 0. Confirm live Neon validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require explicit live database validation confirmation
+        env:
+          CONFIRM_LIVE_NEON_VALIDATION: ${{ inputs.confirm_live_neon_validation }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_LIVE_NEON_VALIDATION" = "true" || {
+            echo "::error::Live Neon validation was not confirmed. No database connection or migration check may run."
+            exit 1
+          }
+          echo "LIVE_NEON_VALIDATION_CONFIRMED"
+
   validate:
+    needs: approval
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
