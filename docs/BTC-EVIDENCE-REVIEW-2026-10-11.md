@@ -2,7 +2,7 @@
 
 **Scope:** BTC only; snapshot `BTC-2026-10-07-v1`.  
 **Source of row inventory:** successful read-only VPS API Build Rehearsal #294 and BTC row-level preflight.  
-**State:** review recorded on PR branch; seed migration is not production-applied.
+**State:** review recorded on PR branch; seed migration is a repository artifact only and has not been applied to any database.
 
 ## Decision
 
@@ -15,7 +15,7 @@ Only one Evidence row has a sufficiently specific source for a narrow regulatory
 
 ## Curated links in the additive seed migration
 
-Migration: `infrastructure/neon/migrations/2026-10-11-btc-scenario-evidence-links-seed.sql`
+Migration: `infrastructure/neon/migrations/2026-10-12-btc-scenario-evidence-links-seed.sql`
 
 | Scenario | Relation | Evidence | Why this link is defensible | Limitation |
 |---|---|---|---|---|
