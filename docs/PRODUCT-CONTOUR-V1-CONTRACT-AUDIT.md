@@ -283,3 +283,29 @@ These gates validate builds, disposable-PostgreSQL migrations/rehearsals, UI/API
 The first run after adding market metric/source parity checks reached the read-only BTC preflight but failed before evaluating data parity: `marketMetricIds` was declared inside the inspection function and referenced outside its scope. The VPS API build, database bootstrap, ingestion E2E, API parity and ETH scenario preflight all passed in that run; only the BTC preflight step failed with a JavaScript `ReferenceError`.
 
 Fixed in commit `b2903575690e9249c520dbfc31f1995c1927b4ef` by moving the immutable six-metric ID list to module scope. This is a test-harness correction, not a change to product data or runtime API behavior. The Product Contour Gate and VPS API Build Rehearsal must be rerun on the corrected head; BTC metric/source parity remains **unverified until that rerun passes**. No production migration, deployment, database write or scenario-state write was performed.
+
+
+### Follow-up — BTC row-level parity confirmed, scenario acceptance still blocked (2026-10-11)
+
+**Validated head:** `18536ba238e791d847b68e0923062b53965c02aa`
+- [VPS API Build Rehearsal #38122242540](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242540) — **PASS**.
+- [Product Contour Gate #38122242606](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242606) — **PASS**.
+- The earlier `marketMetricIds` scope error is fixed. The read-only BTC preflight completed and emitted both `BTC_SCENARIO_PREFLIGHT_OK` and `BTC_SCENARIO_ROW_AUDIT`.
+
+**Verified on the disposable VPS database versus the live Worker**
+- Same published snapshot: `BTC-2026-10-07-v1`; both report lifecycle `monitoring`.
+- 15/15 research blocks, 6 domains, 6 factors, 5 scores, 15 Evidence rows, 7 monitoring signals, 0 monitoring events, 3 scenario definitions and 0 scenario-state rows.
+- Metric projection: 21/21 rows; registered sources: 9/9. Every checked structural count matches.
+- All six historical market metric rows match exactly on value, unit, observation time, source ID, URL, status and freshness: ETF net flow, spot price, block subsidy, circulating supply, max supply and hashrate. Their observations are dated 2026-09-18/19 and remain stale; parity does not make them current.
+- All 15 Evidence rows in both projections expose evidence ID, source ID/URL, observation ID, metric ID and `as_of`. This confirms join-chain presence, not independent truth/quality of every claim.
+- Factor and score rows are scoped to `BTC-2026-10-07-v1`. VPS scenario definitions carry that snapshot ID. The live Worker does not expose scenario `snapshot_id`, so its definition lineage remains not independently verifiable.
+- Build, migration bootstrap/idempotency, VPS worker ingestion, API parity and ETH preflight all passed on this run.
+
+**BTC scenario review — still not accepted**
+1. There are no persisted scenario-state rows. The repository must not imply that Base is an observed/current scenario state.
+2. All seven monitoring signals have descriptive current values but no metric link, factor link or threshold. This is a qualitative research baseline, not functioning quantitative/threshold-based monitoring.
+3. Scenario definitions sum to 100% (Base 50%, Bull 30%, Bear 20%), but their `supporting_evidence` fields are generic summaries rather than explicit evidence IDs/row links. Probabilities and confidence values are therefore not reproducibly derivable from the exposed scenario payload alone.
+4. The six market observations are stale historical baseline rows. Their parity is a portability success, not freshness validation.
+5. The research-text metrics are timestamped 2026-10-08 and marked fresh in the API; source/claim verification and freshness semantics still need a separate review. Do not infer that all cited claims have been independently fact-checked.
+
+**Decision:** hosting/build gates and clean-bootstrap data parity pass. Product Contour v1 and the end-to-end BTC scenario remain **PARTIAL / NOT ACCEPTED** until evidence-backed scenario reasoning, explicit scenario-state behavior, and the monitoring contract are resolved. Next step stays on BTC only: validate source/claim quality and define the read-only acceptance criteria for a scenario state; do not add SOL/CAKE research or write scenario state to production. No production migration, deployment, production DB write or scenario-state write occurred.
