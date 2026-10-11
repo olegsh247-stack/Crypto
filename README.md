@@ -37,7 +37,7 @@
 3. **Один полный продуктовый сценарий на BTC.** Проверить связный путь от источников и observations до Evidence, Domains, Factors, Scores, Bull/Base/Bear Scenarios, Monitoring, API и UI.
 4. **Расширение данных и исследований.** Только после подтверждения BTC-сценария и закрытия блокирующих дефектов переходить к расширению покрытия других активов.
 
-Подробный мастер-план: [ПЛАН-ФИНАЛ — Full Audit & Repair](docs/PLAN-FINAL-AUDIT-AND-REPAIR.md). Инфраструктурный план: [INFRASTRUCTURE-PLAN-FINAL](docs/INFRASTRUCTURE-PLAN-FINAL.md). Матрица открытых PR и порядок безопасного разбора: [OPEN-PR-INVENTORY](docs/OPEN-PR-INVENTORY-AND-MERGE-SEQUENCE-2026-10-11.md).
+Подробный мастер-план: [ПЛАН-ФИНАЛ — Full Audit & Repair](docs/PLAN-FINAL-AUDIT-AND-REPAIR.md). Инфраструктурный план: [INFRASTRUCTURE-PLAN-FINAL](docs/INFRASTRUCTURE-PLAN-FINAL.md). Матрица открытых PR и порядок безопасного разбора: [OPEN-PR-INVENTORY](docs/OPEN-PR-INVENTORY-AND-MERGE-SEQUENCE-2026-10-11.md). Инвентаризация hosting-зависимостей: [HOSTING-DEPENDENCY-INVENTORY](docs/HOSTING-DEPENDENCY-INVENTORY-2026-10-11.md).
 
 ## Первый продуктовый сценарий
 
