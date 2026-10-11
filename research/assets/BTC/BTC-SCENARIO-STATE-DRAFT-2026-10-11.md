@@ -119,7 +119,7 @@ The remaining work is now specific: (1) confirm the product's freshness rules fo
 ### Material source conflicts discovered after the initial spot-check
 
 The stored historical metrics must not be used as evidence for a scenario state until reconciled:
-- **ETF flow:** the stored observation is +$324.6M on 18 Sep 2026, but Farside's historical total for that date is +$433.0M. The row matches between Worker and VPS, but does not match its cited source.
+- **ETF flow:** the stored observation is +$324.6M on 18 Sep 2026. Farside's current historical table shows +$433.0M, while contemporaneous reports citing Farside show +$324.6M and say IBIT was flat. The row matches between Worker and VPS, but the source revision / fund-inclusion discrepancy remains unresolved.
 - **Hashrate:** the stored 1,001 EH/s observation is dated 19 Sep, while its cited Shattered article describes approximately 1,001 EH/s on 4 Sep. Satoshi Gazette's estimate for 19 Sep is about 826 EH/s. This is a date/window mismatch, not a minor freshness issue.
 - **Circulating supply:** the stored value has no source URL. The described `gettxoutsetinfo` derivation would represent UTXO-set total amount, not automatically circulating supply, and the record has no block height/hash to reproduce the result.
 - **Spot price:** the $81,043 figure and 06:38 UTC timestamp are present in the cited 19 Sep FinanceFeeds article, attributed there to CoinGecko. This supports a historical quote, not a current feed or an approved source registry.
