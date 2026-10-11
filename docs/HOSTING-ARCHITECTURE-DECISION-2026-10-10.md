@@ -103,4 +103,8 @@ Validated on commit `103440d8c03842b64562d62c9c5c3f147deec380`:
 
 This is CI proof only. It does not establish production-data parity, account-level configuration, off-host backup recovery, actual Caddy TLS/DNS behavior, or a real deployment/rollback. The Cloudflare Worker and Neon remain the live operational path.
 
-The next hosting task is to audit every production-capable workflow and secret reference, confirm which triggers can mutate Neon or deploy Cloudflare, and specify a controlled target release/rollback path. Do not run the production Release Gate as a test.
+The repository-level production workflow and secret-reference audit is documented in [HOSTING-DEPENDENCY-INVENTORY-2026-10-11.md](./HOSTING-DEPENDENCY-INVENTORY-2026-10-11.md). The manual, explicitly approved VPS release and rollback design is documented in [VPS-RELEASE-ROLLBACK-DESIGN.md](./VPS-RELEASE-ROLLBACK-DESIGN.md).
+
+On commit `4e17e7d0ee8c890b0de39b7e936d623c39f46dde`, [VPS API Build Rehearsal #264](https://github.com/olegsh247-stack/Crypto/actions/runs/38114284938) and [Product Contour Gate #238](https://github.com/olegsh247-stack/Crypto/actions/runs/38114285018) both passed. A subsequent change removed automatic live-Neon validation on push and added a separate approval job; its CI result is pending.
+
+The next step is to validate that final workflow guard, then close the repository-level hosting audit with remaining account-level blockers clearly listed. Do not run the production Release Gate as a test.
