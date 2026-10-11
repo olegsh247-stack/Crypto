@@ -58,3 +58,16 @@ It does not calculate signal values, compare current metrics with signal thresho
 ## Safety boundary
 
 This audit did not execute SQL against Neon, apply production migrations, deploy code, change live observations, publish snapshots, or write scenario/event rows. The next work remains on the existing order: close API/UI and evaluator contract gaps, then complete one BTC scenario. Do not expand SOL/CAKE research or begin VPS deployment yet.
+
+
+## Follow-up rehearsal findings — 2026-10-11 evening
+
+The first three runs of [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38172372874) were useful contract checks, not evidence of a production failure:
+
+- On run #337, shared runtime, VPS Worker build, VPS API build, clean PostgreSQL bootstrap and DB-health passed.
+- Registry contract passed after aligning the expected enabled asset count with the canonical API response (10 enabled assets, 9 registered market pairs). The earlier assertion of 9 assets was stale.
+- The ETH lifecycle/freshness contract passed.
+- The empty clean-database persisted-history request returned HTTP 503 with `persisted_market_history_unavailable`, as implemented by the API when no daily candles exist yet. This is an explicit no-data response, not an API crash. The rehearsal assertion was updated to check this precise status/error/storage mode instead of demanding HTTP 200 with nonexistent rows.
+- Run #337 then failed at the history assertion before worker-ingestion E2E. Therefore the monitoring timestamp regression assertion has **not yet run** and PR #13 is not accepted. Latest follow-up workflow execution has not yet appeared for the most recent commit; do not describe it as passed.
+
+Next validation must run the latest PR #13 head and confirm all of: API contract, expected explicit empty-history response on a clean DB, Worker ingestion, candle natural-key idempotency, and unchanged monitoring evaluation timestamps. In particular, the monitoring timestamp test should include at least one existing signal fixture; otherwise comparing the maximum timestamp on an empty signal table is vacuous. The fixture must live only in disposable PostgreSQL, never Neon.
