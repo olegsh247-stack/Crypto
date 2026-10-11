@@ -44,6 +44,15 @@ The repository audit found a release-safety gap in `.github/workflows/deploy-cry
 
 **Status:** code changed; current-head CI validation is pending. Do not treat this protection as verified until the workflow YAML and Product Contour Gate pass on the resulting commit. No production workflow was run.
 
+### Additional production-write paths found in the same audit
+
+- `.github/workflows/apply-neon-schema.yml` allowed a direct manual migration without a confirmation input. It now requires `confirm_production_migration: true` and the migration job depends on a separate approval job.
+- `.github/workflows/seed-neon-data.yml` could write `infrastructure/neon/seed-v1.sql` to Neon on every matching push to `main`, as well as on manual dispatch. The push trigger has been removed; the workflow is now manual-only and requires `confirm_production_seed: true` before its separate seed job can run.
+- `.github/workflows/validate-neon-v2-migration.yml` also references the live Neon secret, but its migration check is wrapped in `BEGIN`/`ROLLBACK`; its other step performs reads only. It is classified as live-database validation, not an intended persistent mutation. This classification still depends on the SQL migration remaining transaction-safe.
+- `.github/workflows/apply-neon-v2.yml` runs its clean-bootstrap rehearsal against disposable PostgreSQL, then requires `confirm_production_migration: true` before applying migrations to Neon.
+
+These edits only change workflow source on this branch. They do not prove runtime protection until the relevant checks pass on the current HEAD.
+
 ## Gaps to close before a migration can be approved
 
 ### P0 — resolve before production cutover
@@ -65,7 +74,7 @@ The repository audit found a release-safety gap in `.github/workflows/deploy-cry
 
 ## Next step (no deployment)
 
-After the approval guard passes CI, continue the **release-workflow and secret-reference audit** across all production-capable workflows and secret references. Then specify the minimal target VPS release/rollback workflow. Do not run the production Release Gate as a test.
+Validate all workflow approval guards and current-head CI, then finish the **release-workflow and secret-reference audit** across all production-capable workflows. Next specify the minimal target VPS release/rollback workflow. Do not run production workflows as tests.
 
 ## Explicitly not done
 
