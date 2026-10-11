@@ -105,13 +105,15 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
-          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          history_code=$(curl -sS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d')
+          test "$history_code" = "503"
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/history.json'))
-          assert d.get('status')=='ok', d
-          assert isinstance(d.get('rows'),list), d
-          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])} contract=1")
+          assert d.get('status')=='error', d
+          assert d.get('error')=='persisted_market_history_unavailable', d
+          assert d.get('storage_mode')=='persisted', d
+          print("VPS_API_HISTORY_OK empty_persisted_history=503 explicit_error=1")
           PY
       - name: VPS API parity against live Worker
         env:
