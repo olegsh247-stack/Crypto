@@ -2,15 +2,34 @@ name: Seed Neon data
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "infrastructure/neon/seed-v1.sql"
-      - ".github/workflows/seed-neon-data.yml"
+    inputs:
+      confirm_production_seed:
+        description: "Explicit approval to write seed data to production Neon"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
+  approval:
+    name: 0. Confirm production seed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit production seed confirmation
+        env:
+          CONFIRM_PRODUCTION_SEED: ${{ inputs.confirm_production_seed }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_SEED" = "true" || {
+            echo "::error::Production seed was not confirmed. No database mutation may run."
+            exit 1
+          }
+          echo "PRODUCTION_SEED_CONFIRMED"
+
   seed:
+    needs: approval
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -27,5 +46,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
+          set -euo pipefail
           test -n "$DATABASE_URL"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f infrastructure/neon/seed-v1.sql
