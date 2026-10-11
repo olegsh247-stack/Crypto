@@ -74,9 +74,16 @@ on conflict (source_id) do update set
   trust_level=excluded.trust_level,description=excluded.description,updated_at=now();
 
 -- Initial BTC research observations with canonical source mapping.
+-- Use the observation's logical key before inserting. A generated observation_id
+-- is different on every execution, so ON CONFLICT DO NOTHING alone does not make
+-- these seed rows idempotent. Existing rows are preserved; this only prevents
+-- subsequent sequential seed runs from adding another copy.
 insert into observations
-  (metric_id,asset_id,value_numeric,unit,observed_at,source_id,source_url,methodology,status,freshness,revision)
-values
+  (metric_id,asset_id,value_numeric,unit,observed_at,period_start,period_end,source_id,source_url,methodology,status,freshness,revision)
+select seed.metric_id,seed.asset_id,seed.value_numeric,seed.unit,seed.observed_at::timestamptz,
+       null::timestamptz,null::timestamptz,seed.source_id,seed.source_url,seed.methodology,
+       seed.status,seed.freshness,seed.revision
+from (values
   ('market.spot_price','btc',81043,'USD/BTC','2026-09-19T06:38:00Z','market.primary',
    'https://financefeeds.com/bitcoin-btc-price-81043-cftc-crypto-rules-white-house-bull-88000-bear-74000/',
    'Initial research snapshot; mapped from the initial dataset source. Production market feed not yet authoritative for this observation.',
@@ -113,6 +120,17 @@ values
    'https://farside.co.uk/btc/',
    'Daily US spot Bitcoin ETF net flow.',
    'WATCH','STALE',1)
+) as seed(metric_id,asset_id,value_numeric,unit,observed_at,source_id,source_url,methodology,status,freshness,revision)
+where not exists (
+  select 1 from observations existing
+  where existing.metric_id=seed.metric_id
+    and existing.asset_id is not distinct from seed.asset_id
+    and existing.source_id=seed.source_id
+    and existing.observed_at=seed.observed_at::timestamptz
+    and existing.period_start is null
+    and existing.period_end is null
+    and existing.revision=seed.revision
+)
 on conflict do nothing;
 
 insert into schema_migrations(version)
