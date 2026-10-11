@@ -142,3 +142,18 @@ Before adding fields, inspect all existing insert paths and consumers. If reposi
 4. Implement the source-specific BTC adapters only after the hashrate and supply metric definitions are settled.
 5. Run read-only API contract/parity checks.
 6. Only then consider a separate production migration/deployment decision. No scenario-state creation is part of this gate.
+
+
+## 8. Migration-runner safety finding
+
+The repository's `scripts/migrate-neon.sh` iterates over **every** `infrastructure/neon/migrations/*.sql` file in lexical filename order and applies any file whose version marker is absent. The date in a migration filename is descriptive ordering; it is **not** a scheduling guard.
+
+Consequences:
+
+- The presence of `2026-10-13-eth-observation-registry-and-idempotency.sql` on a branch does not prove it has run anywhere.
+- Conversely, once that file is included in a commit that is passed to `scripts/migrate-neon.sh`, it will be applied on that target database unless its `schema_migrations` marker already exists. It is not automatically held until October 13.
+- The same rule applies to the Oct 11–15 BTC scenario/evidence migrations in PR #9. They are executable migrations, not inert future plans, when included in the migration set.
+- Do not merge a broad migration-bearing PR merely because each file has a later date. Before any production-targeting run, review the entire migration set and the exact target/ref; require the explicitly approved migration/cutover process.
+- The documented disposable PostgreSQL rehearsal is valuable, but passing it proves clean-bootstrap/re-run behavior in that disposable database only. It is not evidence of production application or production data compatibility.
+
+This is a rollout-control finding, not a request to alter the runner or execute migrations. No migration was run by this audit.
