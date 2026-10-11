@@ -242,7 +242,7 @@ const reviewedSourcePrecision = {
     next: { source_id: "bitcoin_faq_primary", source_url: "https://bitcoin.org/en/faq" }
   },
   btc_research_technology: {
-    old: { source_id: "bitcoin_org_development", source_url: "https://developer.bitcoin.org/" },
+    old: { source_id: "bitcoin_org_development", source_url: "https://bitcoin.org/en/development" },
     next: { source_id: "bitcoin_devguide_blockchain", source_url: "https://developer.bitcoin.org/devguide/block_chain.html" }
   },
   btc_research_network: {
