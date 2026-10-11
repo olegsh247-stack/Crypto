@@ -2,7 +2,7 @@
 
 **Scope:** repository-level audit of the current Cloudflare/Neon runtime and the prepared VPS target.
 **Branch:** `fix/vps-worker-london-schedule-parity`
-**Validated commit:** `4e17e7d0ee8c890b0de39b7e936d623c39f46dde` (latest fully green run at the time of this update; the additional live-Neon validation guard below is newer and awaiting its own CI result).
+**Last fully green code commit:** `7a9d09246f653614fd25a6467e803425d7bd0319` (VPS API Build Rehearsal #268 and Product Contour Gate #242 both passed). Follow-up changes after that commit correct the ETH preflight's empty scenario-state lineage label and document current contour findings; their CI is pending.
 **Safety:** read-only inspection plus documentation only. No production secret was read, no live migration/deployment was run, and no infrastructure was changed.
 
 ## Executive result
@@ -55,7 +55,7 @@ Additional review of the workflow directory found the research capture and sourc
 
 The repeated PR runs also exposed a CI orchestration issue: `migration-rehearsal.yml` keyed concurrency only by PR/ref, so independent reusable-workflow callers could cancel each other's disposable DB rehearsal. Its key now includes caller workflow and run ID so separate gates can execute independently. This change was included in commit `4e17e7d0ee8c890b0de39b7e936d623c39f46dde`, whose two primary gates both passed.
 
-The full repository-level release design is recorded in [VPS release and rollback design](./VPS-RELEASE-ROLLBACK-DESIGN.md). It remains a design only: no SSH deploy workflow, protected production environment, VPS, off-host backup, or cutover has been configured. The live-Neon validation workflow has since been changed to manual-only with a separate approval job; its new CI result is pending.
+The full repository-level release design is recorded in [VPS release and rollback design](./VPS-RELEASE-ROLLBACK-DESIGN.md). It remains a design only: no SSH deploy workflow, protected production environment, VPS, off-host backup, or cutover has been configured. The live-Neon validation workflow is manual-only with a separate approval job. The two current-head gates at `7a9d09246f653614fd25a6467e803425d7bd0319` passed, including the disposable DB migration rehearsal and Worker dry-run; no live-Neon validation or production migration was run.
 
 These edits only change workflow source on this branch. They do not prove runtime protection until the relevant checks pass on the current HEAD.
 
