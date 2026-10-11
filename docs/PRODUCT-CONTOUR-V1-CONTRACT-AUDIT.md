@@ -309,3 +309,16 @@ Fixed in commit `b2903575690e9249c520dbfc31f1995c1927b4ef` by moving the immutab
 5. The research-text metrics are timestamped 2026-10-08 and marked fresh in the API; source/claim verification and freshness semantics still need a separate review. Do not infer that all cited claims have been independently fact-checked.
 
 **Decision:** hosting/build gates and clean-bootstrap data parity pass. Product Contour v1 and the end-to-end BTC scenario remain **PARTIAL / NOT ACCEPTED** until evidence-backed scenario reasoning, explicit scenario-state behavior, and the monitoring contract are resolved. Next step stays on BTC only: validate source/claim quality and define the read-only acceptance criteria for a scenario state; do not add SOL/CAKE research or write scenario state to production. No production migration, deployment, production DB write or scenario-state write occurred.
+
+
+### Follow-up — external source/claim spot-check for BTC (2026-10-11)
+
+A public-source spot-check was performed after the row-level parity pass. It is a relevance check, not a complete independent fact audit of all 15 Evidence claims.
+
+- The SEC custody-proposal URL resolves to an official SEC release dated **2026-10-01**, release 2026-100. It describes a **proposal** that would change custody rules for registered investment advisers and regulated funds. It supports the existence of a regulatory catalyst, but does not establish that access has already broadened or that institutional demand has increased. Claims and signals must preserve the distinction between a proposal and an implemented rule or measured capital flow.
+- The SEC S7-2026-09 URL resolves to an official interpretive release dated March 17, 2026, effective March 23, 2026. It is relevant to the regulatory framework, but a generic reference to it does not by itself establish the direction or magnitude of BTC price sensitivity to liquidity, real yields or risk appetite.
+- Bitcoin.org's Version History page lists Bitcoin Core releases through 2026 and supports the narrow claim that releases continue. Bitcoin.org's Development page explains open-source contribution and review; it is useful background but is not direct evidence for market demand, hashrate, miner economics or institutional allocation.
+- Several research metrics reuse general Bitcoin pages as provenance for broad claims (monetary role, ecosystem depth, competition, scarcity, security). The URL chain is present, but the claim-to-source specificity is weak and needs tightening with claim-specific primary sources or explicit rationale.
+- The SEC custody-proposal evidence should be described as a **proposed regulatory catalyst**, not as realized adoption. Current institutional demand must be supported by observed flow/adoption data separately.
+
+**Decision:** no source URL was found invalid in this spot-check; however, source presence is not sufficient for Evidence acceptance. The BTC scenario cannot yet be accepted as reproducible because scenario definitions do not expose evidence-row references, their supporting-evidence fields are generic, monitoring signals are qualitative/unlinked, and no scenario-state row exists. Next step is to strengthen the BTC evidence-to-scenario mapping and source specificity in the research artifact/contract before any production write or scenario-state creation.
