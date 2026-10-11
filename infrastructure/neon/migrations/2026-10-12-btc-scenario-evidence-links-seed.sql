@@ -13,7 +13,7 @@ SELECT s.snapshot_id, s.research_scenario_id, e.evidence_id, 'supports',
 FROM research_scenarios s
 JOIN evidence e
   ON e.snapshot_id = s.snapshot_id
- AND e.evidence_id = 'cb2704be-210b-42e2-925f-977d5889acdd'::uuid
+ AND e.claim = 'Regulatory and custody improvements can expand institutional access.' AND e.source_id = 'sec_custody_2026'
 WHERE s.snapshot_id = 'BTC-2026-10-07-v1'
   AND s.scenario_type = 'bull'
 ON CONFLICT (snapshot_id, research_scenario_id, evidence_id, relation_type)
@@ -26,7 +26,7 @@ SELECT s.snapshot_id, s.research_scenario_id, e.evidence_id, 'context',
 FROM research_scenarios s
 JOIN evidence e
   ON e.snapshot_id = s.snapshot_id
- AND e.evidence_id = 'cb2704be-210b-42e2-925f-977d5889acdd'::uuid
+ AND e.claim = 'Regulatory and custody improvements can expand institutional access.' AND e.source_id = 'sec_custody_2026'
 WHERE s.snapshot_id = 'BTC-2026-10-07-v1'
   AND s.scenario_type = 'bear'
 ON CONFLICT (snapshot_id, research_scenario_id, evidence_id, relation_type)
