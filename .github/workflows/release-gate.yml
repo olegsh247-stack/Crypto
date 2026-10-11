@@ -52,6 +52,8 @@ jobs:
     name: 3. Worker deploy and live E2E gate
     needs: build-web
     uses: ./.github/workflows/deploy-crypto-api.yml
+    with:
+      confirm_production_deploy: ${{ inputs.confirm_production_release }}
     secrets: inherit
 
   ui-runtime-e2e:
