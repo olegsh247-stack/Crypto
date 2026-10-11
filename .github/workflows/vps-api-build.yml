@@ -506,6 +506,12 @@ jobs:
           VPS_API_URL: http://127.0.0.1:8080
         run: node scripts/eth-scenario-preflight.mjs
 
+      - name: BTC row-level scenario and evidence preflight (read-only)
+        env:
+          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
+          VPS_API_URL: http://127.0.0.1:8080
+        run: node scripts/btc-scenario-preflight.mjs
+
       - name: VPS admin boundary E2E
         run: |
           set -euo pipefail
