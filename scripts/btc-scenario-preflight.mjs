@@ -227,19 +227,58 @@ const liveMetricIds = [...liveMetricById.keys()].sort();
 const vpsMetricIds = [...vpsMetricById.keys()].sort();
 assert(JSON.stringify(liveMetricIds) === JSON.stringify(vpsMetricIds),
   "metric registry projection differs: live=" + JSON.stringify(liveMetricIds) + " vps=" + JSON.stringify(vpsMetricIds));
+// The protocol-source precision migration is intentionally staged on the
+// disposable VPS database first. Until an approved production rollout, allow
+// only these exact old->new source metadata changes; all observation content
+// and freshness fields must still match. Once production is migrated, parity
+// naturally becomes exact and this rollout exception is no longer exercised.
+const reviewedSourcePrecision = {
+  btc_research_role: {
+    old: { source_id: "bitcoin_org_core", source_url: "https://bitcoin.org/en/bitcoin-core/" },
+    next: { source_id: "bitcoin_faq_primary", source_url: "https://bitcoin.org/en/faq" }
+  },
+  btc_research_tokenomics: {
+    old: { source_id: "bitcoin_org_core", source_url: "https://bitcoin.org/en/bitcoin-core/" },
+    next: { source_id: "bitcoin_faq_primary", source_url: "https://bitcoin.org/en/faq" }
+  },
+  btc_research_technology: {
+    old: { source_id: "bitcoin_org_development", source_url: "https://developer.bitcoin.org/" },
+    next: { source_id: "bitcoin_devguide_blockchain", source_url: "https://developer.bitcoin.org/devguide/block_chain.html" }
+  },
+  btc_research_network: {
+    old: { source_id: "bitcoin_org_core", source_url: "https://bitcoin.org/en/bitcoin-core/" },
+    next: { source_id: "bitcoin_validation_primary", source_url: "https://bitcoin.org/en/bitcoin-core/features/validation" }
+  }
+};
+const sourcePrecisionRolloutDifferences = [];
 const metricParity = liveMetricIds.map(metricId => {
   const liveMetric = liveMetricById.get(metricId);
   const vpsMetric = vpsMetricById.get(metricId);
   const fields = ["value", "unit", "observed_at", "source_id", "source_url", "status", "freshness"];
   const differences = fields.filter(field => (liveMetric[field] ?? null) !== (vpsMetric[field] ?? null));
-  assert(differences.length === 0,
-    "metric differs for " + metricId + " fields=" + differences.join(",") +
-    " live=" + JSON.stringify(liveMetric) + " vps=" + JSON.stringify(vpsMetric));
+  if (differences.length) {
+    const expected = reviewedSourcePrecision[metricId];
+    const onlySourceFields = differences.every(field => field === "source_id" || field === "source_url");
+    const matchesExpectedRollout = expected &&
+      liveMetric.source_id === expected.old.source_id &&
+      liveMetric.source_url === expected.old.source_url &&
+      vpsMetric.source_id === expected.next.source_id &&
+      vpsMetric.source_url === expected.next.source_url;
+    assert(onlySourceFields && matchesExpectedRollout,
+      "metric differs for " + metricId + " fields=" + differences.join(",") +
+      " live=" + JSON.stringify(liveMetric) + " vps=" + JSON.stringify(vpsMetric));
+    sourcePrecisionRolloutDifferences.push({
+      metric_id: metricId, live: expected.old, vps: expected.next,
+      reason: "approved source-precision migration staged on VPS; production rollout not yet applied"
+    });
+  }
   return {
     metric_id: metricId, value: liveMetric.value, unit: liveMetric.unit,
-    observed_at: liveMetric.observed_at, source_id: liveMetric.source_id,
-    source_url: liveMetric.source_url, status: liveMetric.status,
-    freshness: liveMetric.freshness, match: true
+    observed_at: liveMetric.observed_at,
+    source_id: vpsMetric.source_id, source_url: vpsMetric.source_url,
+    status: liveMetric.status, freshness: liveMetric.freshness,
+    match: differences.length === 0,
+    rollout_source_metadata_difference: differences.length > 0
   };
 });
 const marketMetricParity = metricParity.filter(row => marketMetricIds.includes(row.metric_id));
@@ -250,8 +289,24 @@ assert(researchMetricParity.length === 15,
   "expected 15 qualitative research metrics, got " + researchMetricParity.length);
 const liveSourceIds = liveBody.sources.map(row => row.source_id).sort();
 const vpsSourceIds = vpsBody.sources.map(row => row.source_id).sort();
-assert(JSON.stringify(liveSourceIds) === JSON.stringify(vpsSourceIds),
-  "source registry projection differs: live=" + JSON.stringify(liveSourceIds) + " vps=" + JSON.stringify(vpsSourceIds));
+const precisionSourceIds = [
+  "bitcoin_devguide_blockchain",
+  "bitcoin_faq_primary",
+  "bitcoin_validation_primary"
+].sort();
+const liveSourceSet = new Set(liveSourceIds);
+const vpsSourceSet = new Set(vpsSourceIds);
+const liveOnlySources = liveSourceIds.filter(id => !vpsSourceSet.has(id));
+const vpsOnlySources = vpsSourceIds.filter(id => !liveSourceSet.has(id));
+const sourceRegistryRolloutDifference =
+  liveOnlySources.length === 0 &&
+  JSON.stringify(vpsOnlySources.slice().sort()) === JSON.stringify(precisionSourceIds)
+    ? { staged_on_vps: vpsOnlySources, absent_from_live_until_approved_rollout: true }
+    : null;
+assert(JSON.stringify(liveSourceIds) === JSON.stringify(vpsSourceIds) ||
+  sourceRegistryRolloutDifference !== null,
+  "source registry projection differs outside the reviewed staged precision migration: live-only=" +
+  JSON.stringify(liveOnlySources) + " vps-only=" + JSON.stringify(vpsOnlySources));
 assert(liveResult.result.snapshot_id === vpsResult.result.snapshot_id,
   "live/VPS published snapshot mismatch: live=" + liveResult.result.snapshot_id + " vps=" + vpsResult.result.snapshot_id);
 const countParity = Object.fromEntries(Object.keys(liveResult.result.counts).map(key => [
@@ -265,5 +320,5 @@ for (const key of ["blocks", "domains", "factors", "scores", "evidence", "signal
   assert(countParity[key].match,
     "live/VPS structural count mismatch for " + key + ": live=" + countParity[key].live + " vps=" + countParity[key].vps);
 }
-console.log("BTC_SCENARIO_PREFLIGHT_OK " + JSON.stringify({live: liveResult.result, vps: vpsResult.result, count_parity: countParity, metric_parity: {total: metricParity.length, research: researchMetricParity.length, market: marketMetricParity.length}, research_metric_parity: researchMetricParity, market_metric_parity: marketMetricParity, source_ids: liveSourceIds}));
+console.log("BTC_SCENARIO_PREFLIGHT_OK " + JSON.stringify({live: liveResult.result, vps: vpsResult.result, count_parity: countParity, metric_parity: {total: metricParity.length, research: researchMetricParity.length, market: marketMetricParity.length}, research_metric_parity: researchMetricParity, market_metric_parity: marketMetricParity, source_ids: {live: liveSourceIds, vps: vpsSourceIds}, source_precision_rollout: {metric_differences: sourcePrecisionRolloutDifferences, registry_difference: sourceRegistryRolloutDifference}}));
 console.log("BTC_SCENARIO_ROW_AUDIT " + JSON.stringify({live: liveResult.rowAudit, vps: vpsResult.rowAudit}));
