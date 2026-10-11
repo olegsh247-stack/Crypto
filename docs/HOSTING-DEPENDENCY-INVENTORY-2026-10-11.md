@@ -53,6 +53,8 @@ The repository audit found a release-safety gap in `.github/workflows/deploy-cry
 
 Additional review of the workflow directory found the research capture and source-crosscheck workflows to be public-source/read-only artifact capture; `live-api-e2e.yml` and UI runtime checks target the existing public API for validation. No production deployment, Neon mutation, or account configuration was run by this audit.
 
+The repeated PR runs also exposed a CI orchestration issue: `migration-rehearsal.yml` keyed concurrency only by PR/ref, so independent reusable-workflow callers could cancel each other's disposable DB rehearsal. Its key now includes caller workflow and run ID so separate gates can execute independently. Current-head validation is pending.
+
 These edits only change workflow source on this branch. They do not prove runtime protection until the relevant checks pass on the current HEAD.
 
 ## Gaps to close before a migration can be approved
