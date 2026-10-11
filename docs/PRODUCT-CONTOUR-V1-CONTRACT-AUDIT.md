@@ -396,3 +396,21 @@ A targeted source check found official Bitcoin Core documentation for `gettxouts
 The RPC returns a UTXO-set `total_amount`, height and best-block reference. That is useful for reproducing an on-chain UTXO amount at a specific block, but it is **not automatically interchangeable with circulating supply**. The current BTC observation says it is a `gettxoutsetinfo`-derived estimate, but lacks a source URL and does not expose the source block height/hash or calculation that produced `20086198.00419505 BTC`. Do not simply attach the documentation URL and treat the numeric observation as independently verified.
 
 **Next source task:** establish whether this field is intended to mean total UTXO amount, issued supply, or circulating-supply estimate; recover its historical block height/hash and derivation if available; then record a source URL that supports the actual observation. If that lineage cannot be recovered, retain the row as stale/unverified baseline or replace it only through an approved, separately reviewed data/migration change. Do not fabricate a source URL or silently relabel the metric.
+
+
+### Latest scenario-evidence code rehearsal — 2026-10-11
+
+**Latest tested code commit:** `9fdc0270ca96099fd162cfb634711c6198807f3a`
+- [VPS API Build Rehearsal #38159782685](https://github.com/olegsh247-stack/Crypto/actions/runs/38159782685) — **PASS**.
+- [Product Contour Gate #38159782922](https://github.com/olegsh247-stack/Crypto/actions/runs/38159782922) — **PASS**.
+
+The read-only BTC preflight on that code commit confirms the earlier metric portability fix and the new scenario-evidence-link implementation:
+- Both projections have the same published BTC snapshot, all 15 research blocks, 6 domains, 6 factors, 5 scores, 15 Evidence rows, 7 qualitative signals, 3 scenario definitions and 21 metric rows.
+- Six stale market metrics match exactly by value, unit, observation time, source ID/URL, status and freshness.
+- The VPS Node API exposes snapshot-scoped scenario-evidence links with explicit relation/rationale: one Bull `supports` link and one Bear `context` link to the SEC custody proposal. Base intentionally has no evidence link because the existing Base support text is generic and the stored claims do not yet directly substantiate the central thesis.
+- The live Worker response still exposes neither `evidence_links` nor definition-level `snapshot_id`. The preflight correctly reports this as an older-runtime rollout gap, not as parity. The VPS disposable database stages four reviewed source-precision IDs beyond the nine IDs exposed by the deployed Worker; the preflight allows only this documented exact-ID delta (9 vs 13), while all other contour counts remain strict.
+- `scenario_states` remains empty, by design; no state was manufactured.
+
+**Source-quality decision:** the SEC custody proposal is a valid, current official source for the existence of a proposed institutional-custody catalyst, but it is not evidence of realized BTC demand or bullish price action. The public spot-check also corroborated the cited ETF flow and miner-reward figures as secondary-source observations, with explicit date/window limits. Current Base scenario still cannot be accepted as a reproducible evidence-backed assessment; the 50/30/20 values remain existing analyst-assigned weights, not calibrated probabilities.
+
+**Next BTC-only work:** resolve the remaining source-specific claims and freshness contract; keep the Worker rollout gap explicit until a deployment is separately authorized; prepare a candidate Base evaluation without writing `scenario_states`. No production migration, deployment, VPS provisioning or live database write occurred. PR #9 remains draft/unmerged.
