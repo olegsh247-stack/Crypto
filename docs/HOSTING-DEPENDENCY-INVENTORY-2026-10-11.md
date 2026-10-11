@@ -100,3 +100,17 @@ The connected Neon management API was queried read-only for the project named `C
 - Whether the returned snapshot list represents all recovery capabilities exposed by the current plan.
 
 These findings are from read-only management metadata. No production SQL or write path was used.
+
+
+## Release Gate execution evidence — latest main run inspected
+
+The GitHub Actions run list and job logs were checked read-only on 2026-10-11.
+
+- Latest `Crypto Release Gate` run on `main`: run **#121**, ID `38054710056`, commit `b86d91da2859be427d5862f36da508643215ecf4`, concluded **failure** on 2026-10-10.
+- Its **Database migration and contract gate passed first**, including `Apply schema and versioned migrations` and the disposable PostgreSQL bootstrap rehearsal.
+- The next **Web build gate failed** at TypeScript checking: `web/app/assets/[assetId]/page.tsx:210`, `Cannot find name 'confidence'`. The Worker deploy and UI E2E jobs were skipped as downstream jobs.
+- Thus, the observed failure was not a migration failure: the workflow completed its live Neon migration step before the Web build failed. The run did not reach Worker deployment, based on its job statuses.
+- PR #6 addresses this exact undefined `confidence` identifier and the latest Web build on its current head `151c6b42b8b6dd1bd133fabb9ce3f07ebe1cb1d8` passed in run `38059633575`. That does **not** establish that PR #6 is fully validated: no current-head Worker build was found in the inspected run list, and a production Release Gate must not be used to obtain that check because it invokes the live migration workflow.
+- The latest inspected PR #9 checks passed on head `d14a4eb02d77511a13c5ba9ffca4dc8204dd78da`: Product Contour Gate run `38169350816` and VPS API Build Rehearsal run `38169350566`. These are branch-specific checks and do not establish that `main` is green or make PR #9 safe to merge; its broad diff still contains migrations despite the PR description.
+
+**Decision:** do not dispatch the Release Gate, do not use it to test the Web fix, and do not infer a current production-green state from PR branch checks. Review and repair the release workflow's safety ordering in an isolated, separately reviewed change before any future production-affecting run.
