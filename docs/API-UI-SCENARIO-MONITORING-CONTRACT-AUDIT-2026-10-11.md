@@ -71,3 +71,8 @@ The first three runs of [VPS API Build Rehearsal](https://github.com/olegsh247-s
 - Run #337 then failed at the history assertion before worker-ingestion E2E. Therefore the monitoring timestamp regression assertion has **not yet run** and PR #13 is not accepted. Latest follow-up workflow execution has not yet appeared for the most recent commit; do not describe it as passed.
 
 Next validation must run the latest PR #13 head and confirm all of: API contract, expected explicit empty-history response on a clean DB, Worker ingestion, candle natural-key idempotency, and unchanged monitoring evaluation timestamps. In particular, the monitoring timestamp test should include at least one existing signal fixture; otherwise comparing the maximum timestamp on an empty signal table is vacuous. The fixture must live only in disposable PostgreSQL, never Neon.
+
+
+### Monitoring regression test tightened
+
+PR #13 now inserts a dedicated `monitoring_signals` fixture in disposable PostgreSQL with a fixed `last_updated_at` value and compares that exact row before/after two Worker ingestion runs. This avoids a vacuous timestamp check if a clean bootstrap has no signal rows. The fixture is not inserted into Neon. The latest code head is `19a443a6f7b7c9c5ca5c860411776e11996f83ba`; a passing CI run for this exact head has not yet been observed, so the regression is still unaccepted.
