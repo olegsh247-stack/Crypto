@@ -360,3 +360,28 @@ The VPS API exposes matching snapshot lineage for all three scenario definitions
 4. Research metrics dated 2026-10-08 are labeled fresh in the API; freshness semantics should be checked against the project's actual freshness policy rather than accepted by label alone.
 
 **Decision:** the clean-bootstrap portability/parity defect is resolved for the tested branch and both CI gates pass. Do not expand to SOL/CAKE. Continue the single-asset BTC scenario review, with the remaining emphasis on source/evidence quality, freshness semantics, monitoring contract, and the missing scenario-state lifecycle. No production DB mutation, production migration, deployment, VPS provisioning, or scenario-state write occurred.
+
+
+### BTC scenario-evidence rollout preflight — latest tested head 2026-10-11
+
+**Current tested head:** `ab63291c33211bbdbfcf57bb750e4c97002f1770`
+- [VPS API Build Rehearsal #38155136613](https://github.com/olegsh247-stack/Crypto/actions/runs/38155136613) — **PASS**.
+- [Product Contour Gate #38155136848](https://github.com/olegsh247-stack/Crypto/actions/runs/38155136848) — **PASS**.
+- The earlier `marketMetricIds` scope error is resolved; the read-only BTC preflight now completes.
+
+**Parity result on the tested disposable database**
+- Same published snapshot: `BTC-2026-10-07-v1`; 15/15 blocks, 6 domains, 6 factors, 5 scores, 15 Evidence rows, 7 monitoring signals, 0 monitoring events, 3 scenario definitions, 0 scenario-state rows and 21 metrics on both APIs.
+- All six historical market metric values and fields exposed by the API (unit, observation time, source ID/URL, status and freshness) match. They are all marked `stale`, with observations dated 2026-09-18/19; this proves reproducible historical baseline parity, not current market data.
+- Evidence rows have all expected exposed links (evidence ID, observation ID, metric ID, source ID, URL and `as_of`) in both projections. This is referential-field presence, not independent validation of every claim.
+- The VPS response exposes the scenario-evidence relation for two reviewed links: one `supports` link for Bull and one `context` link for Bear, both tied to the SEC custody proposal and the published snapshot. Base remains unlinked because its generic supporting-evidence text is not yet claim-specific. The live Worker response does not expose `evidence_links` or scenario `snapshot_id`, so scenario-evidence/lineage parity across the two API projections is **not yet established**.
+- The VPS rehearsal now has four additional reviewed source-registry IDs staged beyond the nine IDs exposed by the live Worker. The preflight allows this exact documented rollout delta; it does not treat the raw source counts (13 vs 9) as identical. This is test-database staging, not a production source-registry change.
+
+**Source-quality blockers found during row review**
+1. `monetary.circulating_supply` has `source_id=network.primary` but its observation `source_url` is null. Do not fill this with a guessed URL; identify the actual source/derivation first.
+2. `market.primary` still has no registry `base_url` and is marked `trust_level=to_validate`; its spot-price observation uses a third-party article and is stale. This is not an approved live market-data feed.
+3. The hashrate observation points to a secondary article, not a clearly documented first-party network endpoint. Treat the 1001 EH/s value as historical baseline only until provenance is independently checked.
+4. The 15 qualitative research metrics now retain the intended 2026-10-08 baseline timestamp in the clean rehearsal. Their `fresh` label means the API freshness policy still needs explicit review; a recent seed/refresh timestamp must not be mistaken for new factual evidence.
+5. All seven monitoring signals remain qualitative descriptions without metric/factor links or thresholds. They are not quantitative live monitoring.
+6. There are no persisted scenario-state rows or monitoring events. The 50% Base / 30% Bull / 20% Bear probabilities sum to 100%, but the probabilities and definitions alone do not establish a currently observed scenario state.
+
+**Decision:** hosting/build/migration rehearsals and the corrected BTC preflight pass, but Product Contour v1 and the complete BTC scenario are **not accepted yet**. Next, keep the scope on BTC: resolve source provenance without inventing URLs, validate the SEC proposal and other claim-specific sources, and establish how the live Worker will expose scenario-evidence links and lineage. Then review the Base scenario's actual supporting evidence and the scenario-state lifecycle. Do not expand to SOL/CAKE. No production migration, deployment, live DB write, or scenario-state write was performed by this audit.
