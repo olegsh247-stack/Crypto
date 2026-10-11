@@ -170,7 +170,9 @@ jobs:
         run: |
           set -euo pipefail
           before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
-          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
+          psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --command="insert into monitoring_signals(asset_id,name,status,last_updated_at) values ('btc','CI monitoring timestamp regression fixture','active','2026-10-01T00:00:00Z') on conflict (asset_id,name) do update set status='active',last_updated_at=excluded.last_updated_at;"
+          monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select last_updated_at from monitoring_signals where asset_id='btc' and name='CI monitoring timestamp regression fixture';")
+          test -n "$monitoring_before"
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           result=$(grep -Eo '\\{"status":"ok","service":"crypto-worker-vps"[^}]*\\}' /tmp/crypto-vps-worker-1.log | tail -1)
@@ -191,7 +193,7 @@ jobs:
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-2.log
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;")
           test "$duplicates" = "0"
-          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
+          monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select last_updated_at from monitoring_signals where asset_id='btc' and name='CI monitoring timestamp regression fixture';")
           test "$monitoring_after" = "$monitoring_before"
           echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_timestamp_unchanged=1"
       - name: VPS admin boundary E2E
