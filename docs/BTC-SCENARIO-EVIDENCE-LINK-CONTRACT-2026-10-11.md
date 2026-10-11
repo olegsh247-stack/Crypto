@@ -72,10 +72,12 @@ Implementation status on PR branch `fix/vps-worker-london-schedule-parity`:
 
 VPS Build Rehearsal #314 found a preflight ordering defect, not an Evidence-link or observation-parity defect: the script already allowed exactly four reviewed source IDs to be staged on the disposable VPS, but its later generic `registered_sources` count assertion still demanded equal raw counts (live Worker 9, VPS 13). The check now accepts that count delta only when the earlier exact-ID validation confirms the four expected sources and no extra/missing source IDs. All other structural counts remain strict. This does not change the live API, database, migrations or source data. Re-run the read-only preflight before treating the correction as validated.
 
-## Acceptance status
+## Acceptance status — updated 2026-10-11
 
-- Repository/API parity: PASS on the previously tested head.
-- Evidence-to-scenario reasoning: NOT ACCEPTED until specific links and rationales are reviewed.
-- Quantitative monitoring: qualitative baseline only; no invented thresholds.
-- Current market freshness: stale observations remain stale until ingestion supplies newer observations.
-- Production: no migration, deployment, database write or scenario-state write authorized by this document.
+- **Disposable migration/build rehearsal:** PASS on code commit `9fdc0270ca96099fd162cfb634711c6198807f3a`: [VPS API Build Rehearsal #38159782685](https://github.com/olegsh247-stack/Crypto/actions/runs/38159782685), [Product Contour Gate #38159782922](https://github.com/olegsh247-stack/Crypto/actions/runs/38159782922).
+- **VPS implementation:** the two reviewed SEC-proposal links pass the row-level contract (Bull `supports`, Bear `context`); Base deliberately remains unlinked. These are narrow, claim-specific links, not proof that the scenarios are quantitatively calibrated.
+- **Deployed Worker parity:** NOT COMPLETE. The live Worker still does not expose `evidence_links` or scenario-definition `snapshot_id`; the preflight reports the rollout gap rather than treating the projections as equal. Production rollout requires a separate explicit approval.
+- **Source/evidence quality:** NOT ACCEPTED for a current BTC scenario state. The ETF-flow source has conflicting historical totals; the stored hashrate value/date does not match the cited article; circulating supply lacks a reproducible source and may be mislabeled UTXO-set amount. See `docs/BTC-EVIDENCE-REVIEW-2026-10-11.md`.
+- **Quantitative monitoring:** qualitative baseline only; no metric/factor links or thresholds are exposed. No thresholds are invented.
+- **Scenario state:** zero persisted rows; no state write is authorized by this document.
+- **Production:** no production migration, deployment, database write or scenario-state write was performed or authorized. PR #9 remains draft/unmerged.
