@@ -1,6 +1,6 @@
 # Crypto Hosting Architecture Decision — 2026-10-10
 
-**Status:** Architecture decided; migration not authorized or deployed.  
+**Status:** Architecture decided; VPS compatibility rehearsal and isolated PostgreSQL backup/restore passed in CI; migration not authorized or deployed.  
 **Supersedes:** Any ambiguity about whether Cloudflare Workers and Neon are intended as permanent dependencies.  
 **Related:** `docs/INFRASTRUCTURE-PLAN-FINAL.md`, `docs/INFRA-BATCH-1.md`, Issue #5.
 
@@ -91,3 +91,16 @@ The cutover sequence remains:
 - [ ] Rollback is rehearsed.
 - [ ] Cutover is explicitly approved and completed.
 - [ ] Cloudflare/Neon decommissioned only after the rollback window.
+
+
+## Hosting verification update — 2026-10-11
+
+The repository-level dependency and cutover gap inventory is documented in [HOSTING-DEPENDENCY-INVENTORY-2026-10-11.md](./HOSTING-DEPENDENCY-INVENTORY-2026-10-11.md).
+
+Validated on commit `103440d8c03842b64562d62c9c5c3f147deec380`:
+- [VPS API Build Rehearsal #251 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38093843668), including PostgreSQL dump creation and restore into a separate disposable database.
+- [Product Contour Gate #225 — PASS](https://github.com/olegsh247-stack/Crypto/actions/runs/38093843795), including Web/runtime contract and clean disposable-DB migration rehearsal.
+
+This is CI proof only. It does not establish production-data parity, account-level configuration, off-host backup recovery, actual Caddy TLS/DNS behavior, or a real deployment/rollback. The Cloudflare Worker and Neon remain the live operational path.
+
+The next hosting task is to audit every production-capable workflow and secret reference, confirm which triggers can mutate Neon or deploy Cloudflare, and specify a controlled target release/rollback path. Do not run the production Release Gate as a test.
