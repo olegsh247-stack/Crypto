@@ -204,9 +204,9 @@ const countParity = Object.fromEntries(Object.keys(liveResult.result.counts).map
   { live: liveResult.result.counts[key], vps: vpsResult.result.counts[key],
     match: liveResult.result.counts[key] === vpsResult.result.counts[key] }
 ]));
-// API projections can expose different numbers of market metric rows. Preserve
-// the discrepancy in the audit output; only fail on core Product Contour counts.
-for (const key of ["blocks", "domains", "factors", "scores", "evidence", "signals", "events", "scenario_definitions", "scenario_states"]) {
+// Once the clean-bootstrap market baseline is applied, both the contour and its
+// metric/source projections must match; never hide a count discrepancy.
+for (const key of ["blocks", "domains", "factors", "scores", "evidence", "signals", "events", "scenario_definitions", "scenario_states", "metrics", "registered_sources"]) {
   assert(countParity[key].match,
     "live/VPS structural count mismatch for " + key + ": live=" + countParity[key].live + " vps=" + countParity[key].vps);
 }
