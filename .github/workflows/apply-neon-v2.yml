@@ -20,7 +20,25 @@ permissions:
   contents: read
 
 jobs:
+  approval:
+    name: 0. Confirm production migration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require explicit production migration confirmation
+        env:
+          CONFIRM_PRODUCTION_MIGRATION: ${{ inputs.confirm_production_migration }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_PRODUCTION_MIGRATION" = "true" || {
+            echo "::error::Production migration was not explicitly confirmed. No production migration or verification may run."
+            exit 1
+          }
+          echo "PRODUCTION_MIGRATION_CONFIRMED"
+
   migrate:
+    needs: approval
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
@@ -56,17 +74,6 @@ jobs:
           test "$migration_count" -gt 0
           test "$duplicate_markers" = "0"
           echo "CLEAN_BOOTSTRAP_OK migrations=$migration_count duplicate_markers=0 rerun=1"
-
-      - name: Require explicit production migration confirmation
-        env:
-          CONFIRM_PRODUCTION_MIGRATION: ${{ inputs.confirm_production_migration }}
-        run: |
-          set -euo pipefail
-          test "$CONFIRM_PRODUCTION_MIGRATION" = "true" || {
-            echo "::error::Production migration was not explicitly confirmed. Live Neon will not be changed."
-            exit 1
-          }
-          echo "PRODUCTION_MIGRATION_CONFIRMED"
 
       - name: Apply schema and versioned migrations
         env:
