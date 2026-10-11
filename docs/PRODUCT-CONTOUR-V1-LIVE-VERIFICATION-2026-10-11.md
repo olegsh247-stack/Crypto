@@ -121,3 +121,35 @@ Two specific provenance issues are visible in the current rows:
 - No connection string or credential was requested or written.
 - This check used the Neon management API and live database metadata; it did not inspect Cloudflare account-level settings.
 - Live API/UI access was not confirmed, so those checks remain explicitly open.
+
+
+## Additional all-asset registry and market-history checks — 2026-10-11
+
+The read-only SQL audit was extended to the full enabled-asset registry, market pairs, daily candle coverage and monitoring freshness.
+
+- **Asset registry:** 10 enabled canonical lowercase asset IDs; no uppercase duplicates were returned by the registry query.
+- **Market pairs:** 9 enabled pairs, one for each non-stablecoin asset, all quoted in `usdt`; no orphan base/quote assets and no duplicate `(exchange, symbol)` keys were found. USDT itself has no market pair, which is expected for this registry role and should not be interpreted as missing base-asset coverage.
+- **Market history:** 90 daily candles total, 10 for each of the 9 paired assets. All series run from `2026-09-29T00:00:00Z` through `2026-10-08T00:00:00Z`. No candle is within the last three days at the time of the audit on 2026-10-11; market history is stale by a three-day recency check.
+- **Observation duplicates across all assets:** the natural-key duplicate query found nine duplicate groups, all in BTC. No duplicates were returned for other assets in this grouping.
+- **Monitoring freshness:** both BTC and ETH signals have `last_updated_at=2026-10-08T12:30:54.538Z`; the live DB has 7 BTC signals (4 active, 3 watch) and 6 ETH signals (3 active, 3 watch). There are no monitoring-event rows anywhere in the live table, and no scenario-state rows anywhere in the live table.
+
+### Asset-by-asset snapshot/status matrix
+
+| Asset | Enabled | Pair | Daily candles | Published snapshot | Research status |
+|---|---:|---|---:|---:|---|
+| BTC | Yes | BTC/USDT | 10 | 1 | current |
+| ETH | Yes | ETH/USDT | 10 | 1 | current |
+| SOL | Yes | SOL/USDT | 10 | 0 | none |
+| CAKE | Yes | CAKE/USDT | 10 | 0 | none |
+| BCH | Yes | BCH/USDT | 10 | 0 | none |
+| DASH | Yes | DASH/USDT | 10 | 0 | none |
+| LTC | Yes | LTC/USDT | 10 | 0 | none |
+| TRX | Yes | TRX/USDT | 10 | 0 | none |
+| XRP | Yes | XRP/USDT | 10 | 0 | none |
+| USDT | Yes | quote asset | 0 | 0 | none |
+
+This matrix describes the database at inspection time only. It does not imply that every 10-candle series is complete or sufficient for the eventual product.
+
+## Live API/UI verification status
+
+A direct public fetch of `https://crypto-api.olegsh247.workers.dev/` could not be completed by the available web retrieval path in this run. Therefore the live API root, asset detail endpoints, and UI rendering have **not** been independently confirmed here. The API/UI part remains OPEN; do not mark the entire Product Contour green on the basis of database rows or CI reports alone.
