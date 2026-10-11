@@ -234,3 +234,29 @@ This section supersedes earlier statements in this audit that the Web build/runt
 - The branch-divergence conflict was resolved by merge commit `88ddf3ff45a6af8315bc827ad664ccb20cbcf8a4`; the merged `.gitignore` preserves the rules from both branches. GitHub now reports the PR as mergeable.
 
 **Updated gate:** Web build PASS; UI/runtime API contract PASS; live data parity checks PASS; research coverage PARTIAL (published research exists for BTC/ETH but not SOL/CAKE); scenario-state and monitoring-event tables are empty for BTC/ETH and need confirmation as expected product behavior or separate follow-up. No production deployment, Neon write, migration, VPS operation, or design change was performed. The detailed current results are in [PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md](./PRODUCT-CONTOUR-V1-STATUS-2026-10-09.md).
+
+
+### Follow-up validation — 2026-10-11: current-head release and contour checks
+
+**Reviewed code commit:** `7a9d09246f653614fd25a6467e803425d7bd0319`
+**Latest completed gates for that commit:**
+- [VPS API Build Rehearsal #268](https://github.com/olegsh247-stack/Crypto/actions/runs/38114733998) — PASS.
+- [Product Contour Gate #242](https://github.com/olegsh247-stack/Crypto/actions/runs/38114734111) — PASS.
+
+These gates validate builds, disposable-PostgreSQL migrations/rehearsals, UI/API runtime contracts, Worker bundle dry run, VPS API E2E, and read-only comparison against the live Worker. They do not constitute production deployment or a full live Product Contour acceptance run.
+
+**Read-only parity evidence from VPS API Build Rehearsal #268**
+- Live Worker and VPS Node API matched on seven checked routes, including `/api/assets/btc` and `/api/assets/eth`.
+- The parity check compared published snapshot IDs, factor/score snapshot scoping, scenario definitions and states, and the selected history response. It completed with `VPS_API_PARITY_OK`; no mismatch was reported for the compared fields.
+- This is useful parity evidence, but the parity helper does not check the complete Dashboard contract for BTC and does not cover SOL/CAKE in that run.
+
+**Read-only ETH scenario preflight**
+- Both implementations reported published snapshot `ETH-2026-10-04-v1`, with matching counts: 15 blocks, 6 domains, 6 factors, 5 scores, 15 evidence rows, 6 monitoring signals, 0 monitoring events, 3 scenario definitions and 0 scenario-state rows.
+- The live Worker did not expose `snapshot_id` on its scenario-definition rows, so definition lineage is **not independently verifiable from the live payload**. The VPS payload did expose and verify the lineage.
+- Zero `scenario_states` rows mean there is no observed state to validate; this must not be reported as verified lineage. The preflight helper's empty-array branch incorrectly returned `verified` because `[].every(...)` is true. Fixed in commit `d7267c2a44fad27ed24af40dcb2c47c50762dbba` to report `no_state_rows` when the array is empty. CI for this helper correction must pass before it is treated as validated.
+
+**Acceptance decision**
+- Hosting workflow safety and repository-level rehearsal: current code commit passed the two gates above; no production workflow, migration, deployment, or VPS provisioning was run.
+- Product Contour v1: **not yet fully accepted**. The available run provides BTC/ETH parity and detailed ETH counts, but does not establish the full live payload/data quality for all contour sections on BTC.
+- The next product-data step remains a read-only, single-asset BTC acceptance pass: latest published snapshot; 15-block lifecycle and progress; domains; factors and scores scoped to that snapshot; Bull/Base/Bear definitions and scenario-state lineage; monitoring signals/events; evidence-to-observation/source traceability; metric/history freshness. Do not expand to SOL/CAKE or add research scope before BTC passes this end-to-end scenario.
+- No production data, schema, deployment, design, or account settings were changed by this follow-up.
