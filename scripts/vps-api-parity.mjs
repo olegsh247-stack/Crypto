@@ -56,10 +56,18 @@ for (const path of paths) {
     left = (l.assets || []).map(x => pick(x, ["asset_id","symbol","name","enabled","research_status"])).sort((a,b)=>a.asset_id.localeCompare(b.asset_id));
     right = (v.assets || []).map(x => pick(x, ["asset_id","symbol","name","enabled","research_status"])).sort((a,b)=>a.asset_id.localeCompare(b.asset_id));
   } else if (path === "/api/pairs") {
-    left = (l.pairs || l.items || []).map(x => pick(x, ["id","symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
-    right = (v.pairs || v.items || []).map(x => pick(x, ["id","symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+    // Database-generated pair IDs are environment-local and are not part of API parity.
+    // Compare the stable logical registry contract instead.
+    const pairKeys = ["symbol","base_asset_id","base_asset","quote_asset_id","quote_asset","exchange","enabled"];
+    left = (l.pairs || l.items || []).map(x => pick(x, pairKeys)).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+    right = (v.pairs || v.items || []).map(x => pick(x, pairKeys)).sort((a,b)=>a.symbol.localeCompare(b.symbol));
   }
-  assert(JSON.stringify(left) === JSON.stringify(right), path);
+  if (JSON.stringify(left) !== JSON.stringify(right)) {
+    console.error("PARITY_MISMATCH", path);
+    console.error("LIVE_NORMALIZED", JSON.stringify(left));
+    console.error("VPS_NORMALIZED", JSON.stringify(right));
+    assert(false, path);
+  }
   console.log("PARITY_OK", path);
 }
 console.log("VPS_API_PARITY_OK endpoints=7 volatile_fields_normalized=1");
