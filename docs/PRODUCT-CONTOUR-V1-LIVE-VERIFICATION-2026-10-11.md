@@ -153,3 +153,59 @@ This matrix describes the database at inspection time only. It does not imply th
 ## Live API/UI verification status
 
 A direct public fetch of `https://crypto-api.olegsh247.workers.dev/` could not be completed by the available web retrieval path in this run. Therefore the live API root, asset detail endpoints, and UI rendering have **not** been independently confirmed here. The API/UI part remains OPEN; do not mark the entire Product Contour green on the basis of database rows or CI reports alone.
+
+
+## Second pass: all-asset Product Contour audit matrix — 2026-10-11
+
+This pass extends the initial BTC-focused check to every enabled asset and validates the published snapshot structure for both assets that currently have a published snapshot. All queries were SELECT-only.
+
+### Per-asset research structure
+
+| Asset | Tier | Published snapshots | Published blocks | Domains used | Factors | Scores | Scenarios | Evidence | Research status |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| BTC | A | 1 | 15/15 complete | 6 | 6 | 5 | 3 | 15 | current |
+| ETH | A | 1 | 15/15 complete | 6 | 6 | 5 | 3 | 15 | current |
+| BCH | B | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| CAKE | C | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| DASH | B | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| LTC | B | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| SOL | A | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| TRX | B | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| USDT | A | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| XRP | B | 0 | 0 | 0 | 0 | 0 | 0 | 0 | none |
+
+For BTC and ETH, the published snapshots each have exactly 15 distinct block numbers, 1 through 15, all marked `complete`. Both have six global research domains represented in the block-domain mappings, six factors, five scores, one each of Bull/Base/Bear definitions and 15 Evidence rows. Each Evidence row has source, observation, block, domain and `as_of` populated. The score records are linked to the respective snapshot and use `CryptoResearch-v2-Structure1`.
+
+**Interpretation:** this establishes that BTC and ETH have populated research baselines. It does not prove the correctness of the scores, the evidence claims, API/UI delivery, or a complete scenario lifecycle. ETH remains a compatibility/regression asset; BTC remains the first scenario to finish. The other eight enabled assets have registry/market-history records but no published research snapshot or research-status row in the inspected database.
+
+### All-asset observation and monitoring matrix
+
+| Asset | Observation rows | Distinct metrics | Stale observations | Missing source URL | Missing period start/end | Latest observation |
+|---|---:|---:|---:|---:|---:|---|
+| BTC | 33 | 21 | 18 | 2 | 33 / 33 | 2026-10-08 06:56 UTC |
+| ETH | 14 | 14 | 0 | 0 | 14 / 14 | 2026-10-07 09:16 UTC |
+| BCH, CAKE, DASH, LTC, SOL, TRX, USDT, XRP | 0 each | 0 each | 0 each | 0 each | n/a | n/a |
+
+The live observation table contains 47 rows total for BTC and ETH. The period fields are null for all 47 rows. Whether this is acceptable must be defined per metric: point observations may not require an interval, while daily flows/averages do. The absence of observations for other enabled assets is a coverage gap, not permission to generate or publish research for them in this phase.
+
+Monitoring has 13 signals in total: BTC 7 (4 active, 3 watch), ETH 6 (3 active, 3 watch). All signal rows were last updated at `2026-10-08T12:30:54.538Z`. There are zero `scenario_states` and zero `monitoring_events` rows across the entire database, not only for BTC. This is a systemic lifecycle gap.
+
+### Product Contour v1 acceptance status after this pass
+
+| Acceptance area | Result | Decision |
+|---|---|---|
+| Registry / asset IDs | 10 enabled assets; canonical lowercase IDs | Pass for basic registry shape |
+| Market pairs | 9 enabled asset/USDT pairs; no orphan assets or duplicate exchange-symbol keys | Pass for pair referential integrity |
+| Daily market candles | 10 per paired asset, Sep 29–Oct 8; none in the last three days as of Oct 11 | Fail for current freshness/coverage expectation; verify ingestion cadence and API semantics |
+| Published research baseline | BTC and ETH have 15/15 complete blocks; eight assets have no published snapshot | Partial, consistent with BTC-first scope; do not expand research yet |
+| Domains / Factors / Scores / scenario definitions | Structurally populated and snapshot-aligned for BTC and ETH | Structural pass; content/claim validation remains |
+| Evidence links | 15/15 complete linkage for each published snapshot | Structural pass; provenance/content review remains |
+| Scenario-state evaluation | Zero rows globally | **Fail / blocking for a complete scenario** |
+| Monitoring event lifecycle | Zero rows globally; signals stale since Oct 8 | **Fail / blocking for demonstrated monitoring** |
+| Observation provenance / idempotency | BTC natural-key duplicate groups; no live natural-key unique index; periods absent | **Fail / blocking until semantics and migration are rehearsed** |
+| API / UI | Not independently verified | Open |
+| Hosting portability / schema parity | PostgreSQL 18 source vs PostgreSQL 16 proposal; production migration workflow safety issue documented | Open; no cutover |
+
+### Next work item
+
+The broad database inventory is now documented. The next task is not to expand SOL/CAKE research. It is to close the remaining evidence gaps for the BTC path in this order: (1) exact BTC duplicate row/provenance comparison, (2) metric-specific period/revision contract and isolated idempotency rehearsal, (3) read-only API endpoint verification, (4) scenario-state and monitoring evaluation contract/tests without writing fabricated live rows, and (5) UI/API parity checks. Any production data correction or migration remains prohibited until separately reviewed and explicitly approved.
