@@ -2,6 +2,14 @@
 // Read-only, row-level BTC Product Contour preflight. No database writes.
 const live = (process.env.LIVE_API_URL || "").replace(/\/$/, "");
 const vps = (process.env.VPS_API_URL || "").replace(/\/$/, "");
+const marketMetricIds = [
+  "institutional.etf_net_flow",
+  "market.spot_price",
+  "monetary.block_subsidy",
+  "monetary.circulating_supply",
+  "monetary.max_supply",
+  "security.hashrate"
+];
 if (!live || !vps) throw new Error("LIVE_API_URL and VPS_API_URL are required");
 
 function assert(condition, message) {
@@ -38,16 +46,7 @@ function inspect(source, body, requireLineage) {
   const metrics = arr(body, "metrics", source);
   const sources = arr(body, "sources", source);
 
-  const marketMetricIds = [
-    "institutional.etf_net_flow",
-    "market.spot_price",
-    "monetary.block_subsidy",
-    "monetary.circulating_supply",
-    "monetary.max_supply",
-    "security.hashrate"
-  ];
-
-  const blockNumbers = blocks.map(x => Number(x.block_number)).sort((a,b) => a-b);
+    const blockNumbers = blocks.map(x => Number(x.block_number)).sort((a,b) => a-b);
   assert(blockNumbers.length === 15 && blockNumbers.every((n,i) => n === i + 1),
     source + " expected exactly blocks 1..15, got " + JSON.stringify(blockNumbers));
   assert(blocks.every(x => ["complete","n_a"].includes(String(x.status).toLowerCase())),
