@@ -84,3 +84,33 @@ This draft can be considered for publication only when all are true:
 - the state write, if ultimately authorized, is a separate deliberate action with verification and rollback/recovery awareness.
 
 Until then, no production data, schema, deployment, or monitoring configuration should be changed.
+
+
+## 6. Follow-up verification — row-level parity and external source spot-check (2026-10-11)
+
+The read-only checks that were still pending above have now been completed on branch commit `18536ba238e791d847b68e0923062b53965c02aa`:
+
+- [VPS API Build Rehearsal #38122242540](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242540) — PASS.
+- [Product Contour Gate #38122242606](https://github.com/olegsh247-stack/Crypto/actions/runs/38122242606) — PASS.
+- Live Worker and disposable VPS API match on snapshot `BTC-2026-10-07-v1`, 15 blocks, 6 domains, 6 factors, 5 scores, 15 evidence rows, 7 qualitative signals, 3 scenario definitions, 21 metrics and 9 registered sources.
+- All six baseline market metrics match exactly across implementations, including value, unit, observation timestamp, source ID/URL, status and freshness. They are still marked stale and dated 18–19 September; this is parity, not freshness.
+- The three VPS scenario definitions expose the expected snapshot lineage. The live Worker does not expose `snapshot_id` on those definition rows, so cross-runtime lineage cannot be independently verified from the Worker projection.
+- All 15 Evidence rows expose evidence ID, observation ID, metric ID, source ID, source URL and `as_of`. The API projection supplies the joined metric/source fields, but the preflight does not independently query a separate observation endpoint; do not overstate this as independent validation of every source claim.
+
+### External-source spot-check
+
+The following candidate inputs from sections 2–4 were spot-checked against public pages. They remain external corroboration, not rows linked to the published snapshot:
+
+- Investing.com now shows an Oct 11 BTC daily row around **$83,036.7**; because Oct 11 was still in progress at retrieval, treat it as a partial/current-session reading, not a completed UTC close. The earlier ~$82,879 figure is not a canonical close.
+- Alpha Finance's BTC ETF dashboard shows **+$21.1M** for the 9 Oct session and about **-$386.3M** over the latest seven sessions through 9 Oct. This is a secondary aggregator and must retain its stated session window.
+- Satoshi Gazette's mining page reports a three-complete-UTC-day estimated hashrate mean of about **967 EH/s** and daily estimates that vary materially. This is a derived estimate, not a direct measurement of deployed mining equipment.
+- Maketo reports **$36.03M** total miner reward on 8 Oct, of which about **$246K (0.68%)** came from fees. This is a secondary calculation for one day, suitable as a flagged research input, not by itself a live trigger.
+- The linked SEC custody proposal page is real and dated 1 Oct 2026; it describes a **proposal**, not a final implemented rule. The SEC interpretation at S7-2026-09 is also a real March 2026 interpretive release. Do not conflate either with proof of realized BTC inflows or adoption.
+
+Sources checked: [Investing.com BTC historical data](https://www.investing.com/crypto/bitcoin/historical-data), [Alpha Finance BTC ETF dashboard](https://alphafinance.io/etf/bitcoin/), [Satoshi Gazette mining estimates](https://satoshigazette.org/data/mining), [Maketo miner revenue](https://maketo.com/bitcoin/miner-earnings), [SEC custody proposal](https://www.sec.gov/newsroom/press-releases/2026-100-sec-proposal-would-address-how-investment-advisers-and-funds-can-custody-crypto-assets-under-federal), [SEC crypto-asset interpretation](https://www.sec.gov/rules-regulations/2026/03/s7-2026-09).
+
+### Updated decision
+
+**Candidate Base remains under review; no current scenario state is justified for publication yet.** The external inputs are mixed, use different windows and source methodologies, and are not reconciled into the snapshot's observation/evidence records. Product monitoring remains qualitative: all seven signals have no `metric_id`, no `critical_factor_id`, and no threshold in the exposed payload. The six historical market metrics are stale. No scenario-state row should be written until a consistent, dated observation set is reconciled to the product's canonical evidence chain and the state rationale is reviewed.
+
+The remaining work is now specific: (1) confirm the product's freshness rules for research metrics labelled `fresh` at 2026-10-08; (2) define a minimal BTC monitoring evaluation using the existing metric and factor contracts, without fabricating thresholds; (3) verify whether a read-only observation-level route exists or add it only if required by the existing contract; (4) prepare a candidate Base-state rationale with explicit evidence IDs and invalidation conditions, but keep it as a draft until review and separate authorization. Do not expand to SOL/CAKE.
