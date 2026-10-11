@@ -74,6 +74,21 @@ function inspect(source, body, requireLineage) {
     links: scenarios.reduce((total, row) => total + (Array.isArray(row.evidence_links) ? row.evidence_links.length : 0), 0),
     unexposedScenarios: scenarios.filter(row => !Array.isArray(row.evidence_links)).map(row => row.scenario_type)
   };
+  if (requireLineage) {
+    assert(scenarioEvidenceContract.exposed,
+      source + " scenario evidence_links must be exposed by the VPS API");
+    assert(scenarioEvidenceContract.links === 2,
+      source + " expected exactly two reviewed BTC scenario evidence links, got " + scenarioEvidenceContract.links);
+    const byType = new Map(scenarios.map(row => [String(row.scenario_type).toLowerCase(), row]));
+    assert((byType.get("base")?.evidence_links || []).length === 0,
+      source + " Base must remain unlinked until claim-specific evidence is available");
+    const bullLinks = byType.get("bull")?.evidence_links || [];
+    assert(bullLinks.length === 1 && bullLinks[0].evidence_id === "cb2704be-210b-42e2-925f-977d5889acdd" && bullLinks[0].relation_type === "supports",
+      source + " Bull must expose only the reviewed SEC custody proposal support link");
+    const bearLinks = byType.get("bear")?.evidence_links || [];
+    assert(bearLinks.length === 1 && bearLinks[0].evidence_id === "cb2704be-210b-42e2-925f-977d5889acdd" && bearLinks[0].relation_type === "context",
+      source + " Bear must expose only the reviewed SEC custody proposal context link");
+  }
   for (const scenario of scenarios) {
     if (!Array.isArray(scenario.evidence_links)) continue; // older deployed API; report as a rollout gap below
     for (const link of scenario.evidence_links) {
