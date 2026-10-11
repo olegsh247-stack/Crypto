@@ -9,6 +9,7 @@ on:
       - "infrastructure/neon/**"
       - "scripts/migrate-neon.sh"
       - "scripts/vps-api-parity.mjs"
+      - "scripts/btc-scenario-preflight.mjs"
       - ".github/workflows/vps-api-build.yml"
   pull_request:
     paths:
@@ -17,6 +18,7 @@ on:
       - "infrastructure/neon/**"
       - "scripts/migrate-neon.sh"
       - "scripts/vps-api-parity.mjs"
+      - "scripts/btc-scenario-preflight.mjs"
       - ".github/workflows/vps-api-build.yml"
   workflow_dispatch:
 
