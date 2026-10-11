@@ -322,3 +322,16 @@ A public-source spot-check was performed after the row-level parity pass. It is 
 - The SEC custody-proposal evidence should be described as a **proposed regulatory catalyst**, not as realized adoption. Current institutional demand must be supported by observed flow/adoption data separately.
 
 **Decision:** no source URL was found invalid in this spot-check; however, source presence is not sufficient for Evidence acceptance. The BTC scenario cannot yet be accepted as reproducible because scenario definitions do not expose evidence-row references, their supporting-evidence fields are generic, monitoring signals are qualitative/unlinked, and no scenario-state row exists. Next step is to strengthen the BTC evidence-to-scenario mapping and source specificity in the research artifact/contract before any production write or scenario-state creation.
+
+
+### Follow-up — correct false freshness on qualitative BTC baseline (2026-10-11)
+
+The row audit showed a timestamp discrepancy not covered by the earlier count/market-only parity check: the live Worker’s newest BTC metric was `2026-10-08T06:56:27.043Z`, while the clean VPS rehearsal’s newest metric was `2026-10-11T07:42:30.364Z`. The 15 qualitative research metric values were seed-generated from static text, but the original BTC Asset Card migration assigned `observed_at = now()`. This made clean bootstrap time look like observation time and could incorrectly refresh the baseline.
+
+Added an **additive corrective migration artifact**:
+`infrastructure/neon/migrations/2026-10-11-btc-research-baseline-timestamps.sql`.
+It normalizes only the seeded BTC qualitative observations with the exact baseline methodology to the existing published research as-of `2026-10-08T06:56:27.043Z`, aligns linked Evidence `as_of`, and normalizes score/snapshot/research-status timestamps only when they match the original seed timestamp. It does not refresh claims, fabricate measurements or overwrite a score with a different timestamp. It has not been run against production.
+
+Strengthened `scripts/btc-scenario-preflight.mjs` to compare every BTC metric row across Worker and VPS by value, unit, observation time, source ID/URL, status and freshness—not only the six market metrics. It explicitly requires 15 qualitative research metrics and all six market metrics. This closes the previous blind spot where metric counts matched despite observation-time drift.
+
+**Validation status:** migration and preflight changes are code artifacts only until the new clean-PostgreSQL VPS rehearsal and Product Contour Gate pass on the resulting branch head. If they pass, full metric/provenance parity is verified for the tested projections; production remains unchanged. If they fail, inspect the specific timestamp or metadata mismatch before any further data work.
