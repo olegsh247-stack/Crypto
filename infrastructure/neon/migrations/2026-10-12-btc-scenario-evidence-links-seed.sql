@@ -32,4 +32,8 @@ WHERE s.snapshot_id = 'BTC-2026-10-07-v1'
 ON CONFLICT (snapshot_id, research_scenario_id, evidence_id, relation_type)
 DO NOTHING;
 
+INSERT INTO schema_migrations (version)
+VALUES ('2026-10-12-btc-scenario-evidence-links-seed')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;
