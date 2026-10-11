@@ -83,10 +83,10 @@ function inspect(source, body, requireLineage) {
     assert((byType.get("base")?.evidence_links || []).length === 0,
       source + " Base must remain unlinked until claim-specific evidence is available");
     const bullLinks = byType.get("bull")?.evidence_links || [];
-    assert(bullLinks.length === 1 && bullLinks[0].evidence_id === "cb2704be-210b-42e2-925f-977d5889acdd" && bullLinks[0].relation_type === "supports",
+    assert(bullLinks.length === 1 && bullLinks[0].claim === "Regulatory and custody improvements can expand institutional access." && bullLinks[0].source_id === "sec_custody_2026" && bullLinks[0].relation_type === "supports",
       source + " Bull must expose only the reviewed SEC custody proposal support link");
     const bearLinks = byType.get("bear")?.evidence_links || [];
-    assert(bearLinks.length === 1 && bearLinks[0].evidence_id === "cb2704be-210b-42e2-925f-977d5889acdd" && bearLinks[0].relation_type === "context",
+    assert(bearLinks.length === 1 && bearLinks[0].claim === "Regulatory and custody improvements can expand institutional access." && bearLinks[0].source_id === "sec_custody_2026" && bearLinks[0].relation_type === "context",
       source + " Bear must expose only the reviewed SEC custody proposal context link");
   }
   for (const scenario of scenarios) {
