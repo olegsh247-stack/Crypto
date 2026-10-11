@@ -209,3 +209,31 @@ Monitoring has 13 signals in total: BTC 7 (4 active, 3 watch), ETH 6 (3 active, 
 ### Next work item
 
 The broad database inventory is now documented. The next task is not to expand SOL/CAKE research. It is to close the remaining evidence gaps for the BTC path in this order: (1) exact BTC duplicate row/provenance comparison, (2) metric-specific period/revision contract and isolated idempotency rehearsal, (3) read-only API endpoint verification, (4) scenario-state and monitoring evaluation contract/tests without writing fabricated live rows, and (5) UI/API parity checks. Any production data correction or migration remains prohibited until separately reviewed and explicitly approved.
+
+
+## Exact comparison of BTC duplicate observation rows — 2026-10-11
+
+The duplicate groups were inspected by selecting every column in the paired rows, including the payload, metric, source, timestamps, provenance, status and freshness. This was read-only.
+
+**Result:** the two rows in each duplicate group have identical metric payload and metadata. Their `observation_id` UUIDs differ, and `created_at` differs by exactly 5 hours 20 minutes 23.274 seconds. No differing value, source URL, methodology, status, freshness, period or revision was found in the nine pairs. That pattern is consistent with the same seed batch being inserted twice, but the database rows alone do not prove the precise write path.
+
+| Metric / observation day | Value in both rows | Source | Both row IDs end with / start with | Finding |
+|---|---:|---|---|---|
+| `institutional.etf_net_flow` / Sep 15 | -450.4 USD million/day | Farside | IDs `0e57557d…` and `5e9cd812…` | Payloads identical; revision 1 |
+| `institutional.etf_net_flow` / Sep 16 | -295.9 USD million/day | Farside | `13aabdb6…` and `fbe07d8f…` | Payloads identical; revision 1 |
+| `institutional.etf_net_flow` / Sep 17 | +159.5 USD million/day | Farside | `004137c9…` and `2ae6d871…` | Payloads identical; revision 1 |
+| `institutional.etf_net_flow` / Sep 18 | +324.6 USD million/day | Farside | `1332b192…` and `b4b74ec7…` | Payloads identical; revision 1; stale and WATCH |
+| `market.spot_price` / Sep 19 06:38 UTC | 81,043 USD/BTC | Market data provider | `b6b5bcde…` and `f3e5f06e…` | Payloads identical; initial source mapping is not authoritative production feed |
+| `security.hashrate` / Sep 19 | 1,001 EH/s | Mempool label; source URL points to a third-party article | `a1b632b4…` and `f111b9a0…` | Payloads identical; source/date/metric semantics need review |
+| `monetary.block_subsidy` / Sep 19 | 3.125 BTC/block | Bitcoin Developer Reference label | `bbd74e3c…` and `ef701390…` | Payloads identical |
+| `monetary.circulating_supply` / Sep 19 | 20,086,198.00419505 BTC | Mempool.space label; URL missing | `908e9174…` and `f8d9722b…` | Payloads identical; provenance incomplete and metric definition needs review |
+| `monetary.max_supply` / Sep 19 | 21,000,000 BTC | Bitcoin Developer Reference label | `645af9d7…` and `96c9cf6a…` | Payloads identical |
+
+### Decision
+
+- Do **not** delete one row from each pair. There is no deletion/cleanup in this audit.
+- Do **not** create the natural-key unique index in production yet: the exact intended natural key must include the chosen source/reporting-window/revision semantics, and a duplicate cleanup would be required before such an index could succeed.
+- Next, reproduce the duplicate insert in a disposable PostgreSQL database using the repository's actual seed/ingestion path; then test idempotency under a repeated run and a legitimate revision. Compare exact rows and ensure that legitimate revised observations remain representable.
+- For ETF flow, define the daily reporting period explicitly before considering any revision. For hashrate, separate point snapshot vs daily estimate/rolling average and correct the observation timestamp only through a separately reviewed, source-supported correction. For circulating supply, verify the actual RPC/source field and reproducible calculation; do not assume `gettxoutsetinfo.total_amount` is automatically circulating supply.
+
+No live rows, schema objects or migration markers were changed.
