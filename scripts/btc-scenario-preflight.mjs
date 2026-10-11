@@ -322,6 +322,18 @@ const countParity = Object.fromEntries(Object.keys(liveResult.result.counts).map
 // Once the clean-bootstrap market baseline is applied, both the contour and its
 // metric/source projections must match; never hide a count discrepancy.
 for (const key of ["blocks", "domains", "factors", "scores", "evidence", "signals", "events", "scenario_definitions", "scenario_states", "metrics", "registered_sources"]) {
+  if (key === "registered_sources" && sourceRegistryRolloutDifference !== null) {
+    // Four explicitly reviewed precision sources are intentionally staged on
+    // the disposable VPS database. Validate exact source IDs above, then accept
+    // only this known registry-count delta until a separately approved rollout.
+    const expectedVpsCount = countParity[key].live + precisionSourceIds.length;
+    assert(countParity[key].vps === expectedVpsCount,
+      "registered-source rollout count mismatch: expected VPS=" + expectedVpsCount +
+      " from live=" + countParity[key].live + " plus " + precisionSourceIds.length +
+      " reviewed staged sources, got VPS=" + countParity[key].vps);
+    countParity[key].rollout_exception = "four reviewed source-precision IDs staged on disposable VPS";
+    continue;
+  }
   assert(countParity[key].match,
     "live/VPS structural count mismatch for " + key + ": live=" + countParity[key].live + " vps=" + countParity[key].vps);
 }
