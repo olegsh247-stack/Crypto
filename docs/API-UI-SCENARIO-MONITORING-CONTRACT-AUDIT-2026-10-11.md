@@ -25,16 +25,11 @@ The API chooses the latest observation per `metric_id` ordered by `observed_at D
 
 The UI sets `scenarios = data.research_scenarios ?? data.scenario_states ?? []` and separately builds `currentScenario` from `data.scenario_states`. This distinction is important: scenario definitions are not equivalent to an evaluated current scenario state. With no persisted state rows, the UI can list Bull/Base/Bear definitions while the Current Scenario card still correctly reports no current state.
 
-### Monitoring timestamp semantics — confirmed static defect
+### Monitoring timestamp semantics — confirmed static defect, regression now passed
 
-In `vps/worker/src/scheduler.ts`, `runScheduledIngestion` calls `refreshMonitoring` whenever at least one asset's candle ingestion succeeds. `refreshMonitoring` currently executes:
+Before PR #13, `vps/worker/src/scheduler.ts` refreshed every non-disabled monitoring signal's `last_updated_at` after successful candle ingestion, without evaluating signal values, thresholds, scenarios, or recording events. That made monitoring appear freshly evaluated when it was not. PR #13 removes that misleading timestamp refresh and keeps due research-review expiration separate.
 
-- `UPDATE monitoring_signals SET last_updated_at=now() WHERE status <> 'disabled'`;
-- a research-status expiration update for due `current` research.
-
-It does not calculate signal values, compare current metrics with signal thresholds, evaluate a scenario, or append a monitoring event before refreshing signal timestamps. Thus successful market-candle ingestion can make monitoring signals look freshly evaluated when their values/state have not been evaluated. The existing VPS rehearsal's check that `last_updated_at` changes after ingestion only proves timestamp mutation, not monitoring correctness.
-
-**Acceptance requirement:** do not refresh a signal's evaluation timestamp merely because market candles were ingested. A timestamp should advance only when the corresponding signal was actually evaluated against its defined inputs/rules, and a state transition/event should be persisted only when supported by the evaluator's explicit contract. No production writes or code changes were made during this audit.
+**Acceptance requirement:** do not refresh a signal's evaluation timestamp merely because market candles were ingested. A timestamp should advance only when the corresponding signal was actually evaluated against its defined inputs/rules, and a state transition/event should be persisted only when supported by the evaluator's explicit contract.
 
 ## 3. Scenario and monitoring data contract
 
@@ -49,9 +44,9 @@ It does not calculate signal values, compare current metrics with signal thresho
 | Area | Current status | Next acceptance evidence |
 |---|---|---|
 | Seed rerun idempotency | **Passed** on disposable PostgreSQL 16 | Review patch; existing live duplicates remain untouched |
-| Live API contract | Static shape inspected; live HTTP not yet independently verified in this audit | Read-only endpoint payload checks against the expected contract |
+| Live API contract | Rehearsal API contract and live Worker parity passed on PR #13 head | Independent read-only payload review for the full Product Contour |
 | Web UI / TypeScript | `main` has a known undefined `confidence` reference | Build and render checks on one exact candidate commit |
-| Monitoring freshness | Static defect found: ingestion refreshes timestamps without signal evaluation | Separate ingestion from evaluation; regression test proving candles alone do not refresh signals |
+| Monitoring freshness | **Regression passed** in PR #13 exact-head rehearsal | Review patch; keep PR Draft until planned integration/merge sequence |
 | Scenario evaluator | Not demonstrated; no live scenario-state rows | Written contract and disposable-DB tests; no fabricated production state |
 | Full BTC scenario | Not complete | Evidence-backed definitions, evaluator output, monitoring semantics and UI/API parity |
 
@@ -59,36 +54,16 @@ It does not calculate signal values, compare current metrics with signal thresho
 
 This audit did not execute SQL against Neon, apply production migrations, deploy code, change live observations, publish snapshots, or write scenario/event rows. The next work remains on the existing order: close API/UI and evaluator contract gaps, then complete one BTC scenario. Do not expand SOL/CAKE research or begin VPS deployment yet.
 
-
 ## Follow-up rehearsal findings — 2026-10-11 evening
 
-The first three runs of [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38172372874) were useful contract checks, not evidence of a production failure:
+The initial runs surfaced and resolved rehearsal-only issues; they were not evidence of production failure:
 
-- On run #337, shared runtime, VPS Worker build, VPS API build, clean PostgreSQL bootstrap and DB-health passed.
-- Registry contract passed after aligning the expected enabled asset count with the canonical API response (10 enabled assets, 9 registered market pairs). The earlier assertion of 9 assets was stale.
-- The ETH lifecycle/freshness contract passed.
-- The empty clean-database persisted-history request returned HTTP 503 with `persisted_market_history_unavailable`, as implemented by the API when no daily candles exist yet. This is an explicit no-data response, not an API crash. The rehearsal assertion was updated to check this precise status/error/storage mode instead of demanding HTTP 200 with nonexistent rows.
-- Run #337 then failed at the history assertion before worker-ingestion E2E. Therefore the monitoring timestamp regression assertion has **not yet run** and PR #13 is not accepted. Latest follow-up workflow execution has not yet appeared for the most recent commit; do not describe it as passed.
+- Run [#337](https://github.com/olegsh247-stack/Crypto/actions/runs/38172372874): shared runtime, Worker/API builds, clean PostgreSQL bootstrap and DB health passed. Registry contract passed after correcting the expectation to 10 enabled assets and 9 registered pairs. ETH lifecycle/freshness passed. The clean database correctly returned HTTP 503 `persisted_market_history_unavailable` because it had no candles; the assertion was aligned to that explicit no-data contract.
+- Run [#340](https://github.com/olegsh247-stack/Crypto/actions/runs/38174209573) passed builds, bootstrap, API contract, and stable-field parity through health, DB health, asset/pair registries and BTC/ETH detail. It failed because the parity helper incorrectly treated the explicit empty-history 503 as fatal; the helper was fixed.
+- Run [#342](https://github.com/olegsh247-stack/Crypto/actions/runs/38174307848) passed builds, bootstrap, API contracts, parity and mutation contract. Worker ingestion emitted `successful=9,written=72`, but the Node process remained alive due to DB client resources. The harness was changed to run Worker in the background, wait for result JSON, then send SIGTERM.
+- Run [#344](https://github.com/olegsh247-stack/Crypto/actions/runs/38176308109) passed builds, bootstrap, API contracts, parity and mutation E2E. It then failed in shell result extraction due to an over-escaped regular expression despite a successful Worker result. Extraction was changed to use a fixed JSON marker.
+- Exact latest PR #13 head `70fe14ee128b4731f262809e419c9e046e5b24ef` passed in [VPS API Build Rehearsal #345](https://github.com/olegsh247-stack/Crypto/actions/runs/38176380849). All steps concluded successfully: shared runtime, Worker and API builds; PostgreSQL bootstrap; API contract; live Worker parity; mutation contract; Worker ingestion; admin-boundary E2E; cleanup.
+- Crucially, the Worker ingestion E2E completed both passes and the fixed-timestamp monitoring fixture assertion, along with candle natural-key idempotency and admin-boundary assertions, without failure. The earlier harness issues are resolved for this exact head. This validates the regression in disposable PostgreSQL only; it does not evaluate or create real monitoring events/states in production.
+- PR #13 remains Draft and is not merged. No production writes, migrations, deployment, or cutover occurred. The PostgreSQL rehearsal is disposable, and live Worker parity uses read-only GET requests.
 
-Next validation must run the latest PR #13 head and confirm all of: API contract, expected explicit empty-history response on a clean DB, Worker ingestion, candle natural-key idempotency, and unchanged monitoring evaluation timestamps. In particular, the monitoring timestamp test should include at least one existing signal fixture; otherwise comparing the maximum timestamp on an empty signal table is vacuous. The fixture must live only in disposable PostgreSQL, never Neon.
-
-
-### Monitoring regression test tightened
-
-PR #13 now inserts a dedicated `monitoring_signals` fixture in disposable PostgreSQL with a fixed `last_updated_at` value and compares that exact row before/after two Worker ingestion runs. This avoids a vacuous timestamp check if a clean bootstrap has no signal rows. The fixture is not inserted into Neon. The latest code head is `19a443a6f7b7c9c5ca5c860411776e11996f83ba`; a passing CI run for this exact head has not yet been observed, so the regression is still unaccepted.
-
-
-
-### Follow-up rehearsal findings — runs #340–#344
-
-- Run [#340](https://github.com/olegsh247-stack/Crypto/actions/runs/38174209573) passed builds, disposable DB bootstrap, API contract, and stable-field parity through health, DB health, asset registry, pair registry, and BTC/ETH detail. It then failed because the parity helper treated the clean VPS database's explicit `503 persisted_market_history_unavailable` response as fatal. The parity script now accepts the explicit no-data contract and does not claim row parity when only one environment has stored candles.
-- Run [#342](https://github.com/olegsh247-stack/Crypto/actions/runs/38174307848) passed builds, disposable DB bootstrap, API contracts, API parity, and mutation contract E2E. Worker ingestion emitted a successful result (`successful=9`, `written=72`) but the Node worker process remained alive because its DB client resources kept the event loop open. The shell waited for process exit and the step failed before timestamp/idempotency assertions ran. This was a test-harness lifecycle issue, not evidence that ingestion itself failed.
-- PR #13 now launches the worker in the background for each ingestion pass, waits up to 60 seconds for its result JSON, sends SIGTERM so the worker's shutdown handler can close the process, and reports logs/fails if no result arrives. The timestamp fixture and duplicate-key assertions remain in the disposable PostgreSQL job.
-- The current exact-head rehearsal is [#344](https://github.com/olegsh247-stack/Crypto/actions/runs/38176308109), head `4922508ae98f531bbea280e1c3d5e6a4bd84a3bf`. At the last check, builds passed and PostgreSQL rehearsal startup was in progress; no final conclusion yet. Runs #343 and #344 may overlap because two workflow-triggering commits were pushed in sequence; accept only a passing result for the latest PR head.
-- PR #13 remains Draft. The monitoring regression is not accepted until the exact latest head passes the worker timestamp-unchanged assertion, candle natural-key idempotency, and admin-boundary E2E.
-
-No production writes, migrations, or deployment occurred during these rehearsals; their PostgreSQL state is disposable, and the parity comparison uses read-only live Worker GET requests.
-
-
-- Run [#344](https://github.com/olegsh247-stack/Crypto/actions/runs/38176308109) passed builds, PostgreSQL bootstrap, API contracts, API parity, and mutation E2E. The worker harness now stopped the process after its successful result, but the following shell extraction still used an over-escaped regular expression, so it failed before per-asset freshness, second-pass idempotency, and timestamp assertions. The log confirms the worker result was `{"status":"ok","service":"crypto-worker-vps","assets":10,"successful":9,"written":72}`; this is a harness parsing failure, not a failed ingestion result. PR #13 now extracts the result using a fixed JSON marker instead of the escaped regex.
-- Latest head is `70fe14ee128b4731f262809e419c9e046e5b24ef`; rehearsal [#345](https://github.com/olegsh247-stack/Crypto/actions/runs/38176380849) is queued. Do not accept the monitoring regression until that exact head reaches the timestamp-unchanged, duplicate-key, and admin-boundary assertions and the run concludes successfully.
+The next step is to review the now-green PR #13 change in context, then continue the canonical sequence: hosting dependency decisions and Product Contour audit, followed by the full evidence-backed BTC scenario. Do not expand SOL/CAKE or deploy to a VPS yet.
