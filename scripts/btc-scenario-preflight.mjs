@@ -248,6 +248,10 @@ const reviewedSourcePrecision = {
   btc_research_network: {
     old: { source_id: "bitcoin_org_core", source_url: "https://bitcoin.org/en/bitcoin-core/" },
     next: { source_id: "bitcoin_validation_primary", source_url: "https://bitcoin.org/en/bitcoin-core/features/validation" }
+  },
+  btc_research_monitoring: {
+    old: { source_id: "bitcoin_org_development", source_url: "https://bitcoin.org/en/development" },
+    next: { source_id: "crypto_research_methodology", source_url: "https://github.com/olegsh247-stack/Crypto/blob/main/docs/RESEARCH_METHOD.md" }
   }
 };
 const sourcePrecisionRolloutDifferences = [];
@@ -292,7 +296,8 @@ const vpsSourceIds = vpsBody.sources.map(row => row.source_id).sort();
 const precisionSourceIds = [
   "bitcoin_devguide_blockchain",
   "bitcoin_faq_primary",
-  "bitcoin_validation_primary"
+  "bitcoin_validation_primary",
+  "crypto_research_methodology"
 ].sort();
 const liveSourceSet = new Set(liveSourceIds);
 const vpsSourceSet = new Set(vpsSourceIds);
