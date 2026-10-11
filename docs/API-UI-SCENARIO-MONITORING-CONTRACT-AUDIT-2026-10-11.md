@@ -76,3 +76,15 @@ Next validation must run the latest PR #13 head and confirm all of: API contract
 ### Monitoring regression test tightened
 
 PR #13 now inserts a dedicated `monitoring_signals` fixture in disposable PostgreSQL with a fixed `last_updated_at` value and compares that exact row before/after two Worker ingestion runs. This avoids a vacuous timestamp check if a clean bootstrap has no signal rows. The fixture is not inserted into Neon. The latest code head is `19a443a6f7b7c9c5ca5c860411776e11996f83ba`; a passing CI run for this exact head has not yet been observed, so the regression is still unaccepted.
+
+
+
+### Follow-up rehearsal findings — runs #340–#344
+
+- Run [#340](https://github.com/olegsh247-stack/Crypto/actions/runs/38174209573) passed builds, disposable DB bootstrap, API contract, and stable-field parity through health, DB health, asset registry, pair registry, and BTC/ETH detail. It then failed because the parity helper treated the clean VPS database's explicit `503 persisted_market_history_unavailable` response as fatal. The parity script now accepts the explicit no-data contract and does not claim row parity when only one environment has stored candles.
+- Run [#342](https://github.com/olegsh247-stack/Crypto/actions/runs/38174307848) passed builds, disposable DB bootstrap, API contracts, API parity, and mutation contract E2E. Worker ingestion emitted a successful result (`successful=9`, `written=72`) but the Node worker process remained alive because its DB client resources kept the event loop open. The shell waited for process exit and the step failed before timestamp/idempotency assertions ran. This was a test-harness lifecycle issue, not evidence that ingestion itself failed.
+- PR #13 now launches the worker in the background for each ingestion pass, waits up to 60 seconds for its result JSON, sends SIGTERM so the worker's shutdown handler can close the process, and reports logs/fails if no result arrives. The timestamp fixture and duplicate-key assertions remain in the disposable PostgreSQL job.
+- The current exact-head rehearsal is [#344](https://github.com/olegsh247-stack/Crypto/actions/runs/38176308109), head `4922508ae98f531bbea280e1c3d5e6a4bd84a3bf`. At the last check, builds passed and PostgreSQL rehearsal startup was in progress; no final conclusion yet. Runs #343 and #344 may overlap because two workflow-triggering commits were pushed in sequence; accept only a passing result for the latest PR head.
+- PR #13 remains Draft. The monitoring regression is not accepted until the exact latest head passes the worker timestamp-unchanged assertion, candle natural-key idempotency, and admin-boundary E2E.
+
+No production writes, migrations, or deployment occurred during these rehearsals; their PostgreSQL state is disposable, and the parity comparison uses read-only live Worker GET requests.
