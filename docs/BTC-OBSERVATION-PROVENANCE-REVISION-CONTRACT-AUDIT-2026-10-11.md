@@ -88,3 +88,57 @@ Before adding a migration or ingestion code:
 ## Explicitly out of scope
 
 No market-value replacement, automatic observation refresh, published-snapshot mutation, Evidence-link expansion beyond the reviewed SEC proposal links, scenario-probability recalculation, scenario-state creation, production migration, PR #9 merge, or deployment is authorized by this audit.
+
+
+## 7. Proposed v1 observation provenance contract — implementation-ready acceptance rules
+
+This section narrows the next implementation step; it is a **proposal for review**, not a schema change or permission to run a migration.
+
+### Field semantics
+
+- `observed_at`: the time the represented point observation applies to. For interval aggregates, use the source-defined event/reporting anchor consistently; do not substitute fetch time.
+- `period_start` / `period_end`: the actual source reporting window, in UTC. For daily aggregates, persist the UTC interval represented by the value, not an assumed midnight timestamp alone. A point observation may leave both null only when it genuinely has no reporting interval.
+- **Proposed additive `retrieved_at`**: timestamp when this system successfully captured the source response. It is ingestion provenance, not the observation time.
+- **Proposed additive `source_revision`**: nullable source-issued revision/edition/version identifier when the provider supplies one. Never synthesize a provider revision from our database revision.
+- **Proposed additive `capture_hash`**: SHA-256 of the normalized source response/record used to derive the value, where a stable, documented canonicalization is available. A hash proves byte/content identity only; it does not prove source correctness.
+- `revision`: our monotonic revision number for the same logical observation key, incremented only after a reviewed correction. Retry of the same captured value must not increment it.
+- `methodology`: exact transformation/aggregation explanation; where the method can evolve, include a stable methodology version in the description or a future dedicated field.
+- `source_url`: exact source page/API endpoint used, not merely a homepage when a claim-specific URL is available.
+
+Before adding fields, inspect all existing insert paths and consumers. If repository-wide compatibility cannot be maintained additively, split the work into a migration and a subsequent ingestion/API change rather than combining a schema cutover with value corrections.
+
+### Versioning and idempotency rules
+
+1. Same logical observation key + same capture hash: idempotent no-op; preserve the existing revision.
+2. Same logical observation key + materially changed source content: retain the prior row and append the next revision after review.
+3. Different reporting windows or different aggregation methods: separate logical observations; do not disguise them as revisions of one value.
+4. A corrected source row whose event/reporting window is unchanged should normally keep the same `observed_at` and window, then increment revision. If a provider corrects the event date/window itself, record the source correction explicitly and do not rely on the existing natural key alone to infer lineage.
+5. “Latest” selection must not be a blind `MAX(observed_at)` across incompatible windows/methods. API selection must be tested against the metric's declared temporal semantics and source policy.
+6. Historical corrections retain their real event/reporting time and are not marked fresh merely because they were retrieved recently.
+
+### BTC-specific acceptance fixtures
+
+- **ETF flow:** preserve the original +324.6 USD million/day capture; represent the reviewed +433.0 value as a later revision only if source evidence confirms the same 2026-09-18 reporting window and the project can retain both captures. Both remain historical/stale.
+- **Hashrate:** reject any fixture that treats 1001 EH/s for 2026-09-04 and approximately 826 EH/s for 2026-09-19 as competing revisions of the same observation. First define whether the metric is a point estimate, daily estimate, or rolling average and store its actual window/method.
+- **Supply:** reject an observation labeled circulating supply if its only reproducible input is a UTXO-set total without an approved definition/derivation. A new UTXO-set metric is an option, but must not silently overwrite the existing metric's meaning.
+
+### Required automated tests before ingestion changes are accepted
+
+- migration applies twice on a clean disposable PostgreSQL database;
+- migration fails safely with a useful message if natural-key duplicates exist before unique-index creation;
+- retrying an identical source capture creates no duplicate and does not increase revision;
+- a reviewed changed capture appends a higher revision while retaining the original;
+- same-day but different reporting windows/methods remain distinct;
+- latest-row selection is deterministic and respects metric/window semantics;
+- missing source URL, retrieval timestamp, or required period metadata fails validation for metrics that require it;
+- API output exposes observation time, reporting window, retrieval time, revision, method, source URL, status and freshness without claiming a historical value is current;
+- read-only Worker/VPS parity passes before any rollout decision.
+
+### Gate order
+
+1. Review and approve these semantics.
+2. Rehearse an additive schema migration and duplicate preflight in disposable PostgreSQL.
+3. Add ingestion and selection tests with synthetic fixtures; do not use synthetic values as production observations.
+4. Implement the source-specific BTC adapters only after the hashrate and supply metric definitions are settled.
+5. Run read-only API contract/parity checks.
+6. Only then consider a separate production migration/deployment decision. No scenario-state creation is part of this gate.
