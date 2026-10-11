@@ -88,3 +88,7 @@ PR #13 now inserts a dedicated `monitoring_signals` fixture in disposable Postgr
 - PR #13 remains Draft. The monitoring regression is not accepted until the exact latest head passes the worker timestamp-unchanged assertion, candle natural-key idempotency, and admin-boundary E2E.
 
 No production writes, migrations, or deployment occurred during these rehearsals; their PostgreSQL state is disposable, and the parity comparison uses read-only live Worker GET requests.
+
+
+- Run [#344](https://github.com/olegsh247-stack/Crypto/actions/runs/38176308109) passed builds, PostgreSQL bootstrap, API contracts, API parity, and mutation E2E. The worker harness now stopped the process after its successful result, but the following shell extraction still used an over-escaped regular expression, so it failed before per-asset freshness, second-pass idempotency, and timestamp assertions. The log confirms the worker result was `{"status":"ok","service":"crypto-worker-vps","assets":10,"successful":9,"written":72}`; this is a harness parsing failure, not a failed ingestion result. PR #13 now extracts the result using a fixed JSON marker instead of the escaped regex.
+- Latest head is `70fe14ee128b4731f262809e419c9e046e5b24ef`; rehearsal [#345](https://github.com/olegsh247-stack/Crypto/actions/runs/38176380849) is queued. Do not accept the monitoring regression until that exact head reaches the timestamp-unchanged, duplicate-key, and admin-boundary assertions and the run concludes successfully.
