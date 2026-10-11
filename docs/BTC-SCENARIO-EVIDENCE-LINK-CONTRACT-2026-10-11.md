@@ -59,12 +59,14 @@ Confidence is also an assessment, not the probability that the scenario occurs. 
 
 ## Runtime/API follow-up
 
-The next code step after the disposable-database migration rehearsal:
-1. Extend the scenario API projection with the Evidence links and resolved claim/source/observation fields.
-2. Add read-only contract assertions for same-snapshot links, valid relation types, source URL presence, observation timestamps and empty-link handling.
-3. Review BTC evidence claims against their actual source pages and create only defensible links. Do not seed generic links just to make the counts non-zero.
-4. Add display-time freshness classification by metric policy; keep stale values visible as stale rather than silently dropping or refreshing them.
-5. Keep scenario-state creation separate and explicitly authorized after read-only scenario acceptance.
+Implementation status on PR branch `fix/vps-worker-london-schedule-parity`:
+1. **Implemented in code:** both Worker API and VPS API project `research_scenario_evidence` into each scenario as `evidence_links`, including relation/rationale, claim, Evidence assessment, source URL, observation value/unit and actual observation timestamp. Empty links are returned as `[]`, not omitted.
+2. **Read-only preflight extended:** `scripts/btc-scenario-preflight.mjs` validates snapshot lineage, relation types, non-empty rationale, source URL and observation timestamps when the new field is exposed. It explicitly reports older deployed APIs that do not yet expose the field instead of misreporting them as a passing implementation.
+3. **Still outstanding:** review BTC Evidence claims against their actual source pages and create only defensible links. No generic links are seeded just to make the counts non-zero.
+4. **Still outstanding:** display-time freshness classification by metric policy; stale values must remain visibly stale rather than silently dropped or refreshed.
+5. Scenario-state creation remains separate and requires explicit authorization after read-only scenario acceptance.
+
+**Rollout ordering:** apply the additive migration through the separately approved migration process before deploying either API version that queries `research_scenario_evidence`. The current PR is not production-applied; no production migration or deployment is authorized here.
 
 ## Acceptance status
 
