@@ -263,14 +263,16 @@ jobs:
           evidence=d.get('evidence')
           assert isinstance(evidence,list) and len(evidence) >= 15, f'evidence={evidence}'
           assert all(e.get('snapshot_id') == sid for e in evidence), 'cross-snapshot evidence'
-          assert all(e.get('claim') and e.get('source_id') and e.get('source_url') and e.get('observation_id') and e.get('metric_id') and e.get('block_number') for e in evidence), 'evidence provenance incomplete'
+          assert all(e.get('claim') and e.get('source_id') and e.get('source_url') and e.get('observation_id') and e.get('metric_id') and e.get('block_number') and (e.get('observation_value') is not None or e.get('data_summary') is not None) for e in evidence), 'evidence provenance/value incomplete'
           assert len({e['block_number'] for e in evidence}) == 15, 'evidence does not cover all 15 blocks'
           assert len(d.get('critical_factors',[])) == 6, 'BTC current snapshot factors'
+          assert all(f.get('snapshot_id') == sid for f in d.get('critical_factors',[])), 'cross-snapshot factor'
           assert len(d.get('scores',[])) == 5, 'BTC current snapshot scores'
+          assert all(s.get('snapshot_id') == sid for s in d.get('scores',[])), 'cross-snapshot score'
           scenarios=d.get('research_scenarios',[])
           assert {s.get('scenario_type') for s in scenarios} == {'bull','base','bear'}, 'scenario set incomplete'
           assert round(sum(float(s.get('probability',0)) for s in scenarios), 6) == 1, 'scenario probabilities do not sum to 1'
-          assert all(s.get('snapshot_id',sid)==sid for s in scenarios), 'cross-snapshot scenario'
+          assert all(s.get('snapshot_id') == sid for s in scenarios), 'cross-snapshot scenario'
           states=d.get('scenario_states',[])
           assert all(s.get('snapshot_id') == sid for s in states), 'cross-snapshot scenario state'
           print(f'VPS_BTC_RESEARCH_CHAIN_OK snapshot={sid} evidence={len(evidence)} blocks={len(set(e["block_number"] for e in evidence))} factors=6 scores=5 scenarios=3')
