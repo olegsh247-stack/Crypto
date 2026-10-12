@@ -244,3 +244,8 @@ The old release workflow's live scheduled-ingestion test updated BTC's monitorin
 3. Define a deterministic Base/Bull/Bear evaluation rule using only validated inputs and explicit freshness requirements.
 4. Only then create a snapshot-linked scenario-state record and evidence-backed event in a controlled, approved migration/release.
 5. Defer SOL/CAKE and broader research expansion until this BTC path is complete.
+
+
+### Follow-up: seed idempotency
+
+PR #22 was merged after both the disposable PostgreSQL seed-idempotency rehearsal and the VPS API rehearsal passed. The seed now checks the logical key before inserting the targeted BTC numeric observations. It preserves existing records and revisions and does not clean up the nine existing duplicate groups. The production seed workflow is manual-only, so merging the seed change did not execute it against the live database.
