@@ -49,7 +49,7 @@ Kraken's BTC/USD source selection is explicit in the repository registry, but no
 
 ## 3. Candidate refresh review — 2026-10-12
 
-These are source-review candidates only. They have **not** been inserted into the database.
+These are source-review candidates only. They have **not** been inserted into the database. The five ETF session values are also captured in the reproducible review artifact [`docs/data-review/BTC-ETF-FLOW-STAGING-2026-10-12.json`](data-review/BTC-ETF-FLOW-STAGING-2026-10-12.json); it deliberately leaves `observed_at` null until a defensible publication/observation timestamp is confirmed.
 
 | Metric | Candidate evidence found | Source / timestamp semantics | Decision |
 |---|---|---|---|
