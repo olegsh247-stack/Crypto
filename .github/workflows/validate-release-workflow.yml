@@ -7,6 +7,7 @@ on:
       - ".github/workflows/vps-api-build.yml"
       - ".github/workflows/validate-release-workflow.yml"
       - ".github/workflows/production-readonly-health.yml"
+      - ".github/workflows/ui-runtime-e2e.yml"
   push:
     branches: [main]
     paths:
@@ -14,6 +15,7 @@ on:
       - ".github/workflows/vps-api-build.yml"
       - ".github/workflows/validate-release-workflow.yml"
       - ".github/workflows/production-readonly-health.yml"
+      - ".github/workflows/ui-runtime-e2e.yml"
 
 permissions:
   contents: read
@@ -28,4 +30,4 @@ jobs:
         with:
           go-version: "stable"
       - name: Lint VPS release workflow definitions
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/release-gate.yml .github/workflows/vps-api-build.yml .github/workflows/validate-release-workflow.yml .github/workflows/production-readonly-health.yml
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/release-gate.yml .github/workflows/vps-api-build.yml .github/workflows/validate-release-workflow.yml .github/workflows/production-readonly-health.yml .github/workflows/ui-runtime-e2e.yml
