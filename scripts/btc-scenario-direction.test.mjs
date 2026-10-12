@@ -61,3 +61,23 @@ test("fee ratio is context only", () => {
   assert.equal(a.directional_score, b.directional_score);
   assert.equal(b.context.fee_subsidy_ratio_used_as_directional_signal, false);
 });
+
+test("source-reviewed October 12 fixture remains Base under rule v1", () => {
+  // Values are source-reviewed candidate inputs, not database observations.
+  const priceReturn = ((83679.46 / 86480.30) - 1) * 100;
+  const etfFiveSessions = -89.8 + 118.8 - 484.9 - 244.1 + 21.1;
+  const r = evaluateBtcScenarioV1({
+    readiness_status: "ready_for_rule_evaluation",
+    price_return_7d_pct: priceReturn,
+    etf_net_flow_5d_usd_millions: etfFiveSessions,
+    hashrate_change_7d_pct: 1,
+    dxy_change_5d_pct: ((102.39 / 102.24) - 1) * 100,
+    fee_subsidy_ratio: 0.0129 / 3.125,
+  });
+  assert.ok(priceReturn > -5 && priceReturn < 5);
+  assert.equal(etfFiveSessions, -678.9);
+  assert.ok(r.signals.some(s => s.input === "etf_net_flow_5d_usd_millions" && s.score === -1));
+  assert.equal(r.directional_score, -1);
+  assert.equal(r.scenario_type, "base");
+  assert.equal(r.can_persist_scenario_state, false);
+});
