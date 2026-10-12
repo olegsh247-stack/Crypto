@@ -45,7 +45,7 @@ The repository registry has now been inspected directly:
 - `macro.dxy` currently points to generic `macro.primary` (Treasury/Federal Reserve/BLS) rather than a specific registered DXY data endpoint and close-time convention. This input is **blocked by source specificity**.
 - The canonical metric registry defines freshness windows of 1 h, 48 h, 48 h, 48 h and 36 h for the five gates respectively. The readiness implementation and SQL audit have been aligned to those windows. For ETF history, the latest observation must pass the 36-hour gate; the five-session sample is validated as a traceable 14-day historical series, not by requiring every historical day to remain a fresh latest observation.
 
-No source registry was silently rewritten to select an exchange or DXY vendor without validating the actual pair/endpoint and observation semantics.
+Kraken's BTC/USD source selection is explicit and documented from its public API contract; the source adapter and database registry must still be verified. No DXY vendor has been selected because its endpoint and observation-time convention remain unresolved.
 
 ## 3. Candidate refresh review — 2026-10-12
 
@@ -62,7 +62,7 @@ These are source-review candidates only. They have **not** been inserted into th
 ## 4. Freshness and provenance review result
 
 - **ETF flows:** five distinct completed dates are visible, but the latest confirmed value is 9 Oct. The 12 Oct displayed 0.0 is not a valid observation because the individual fund cells are dashes. The latest-row freshness gate must decide whether the 9 Oct record is still within 36 hours at evaluation time; never fabricate a 12 Oct zero.
-- **Spot price:** an up-to-date quote is visible publicly, but the current source candidate is not yet the project's selected registered exchange source with an auditable timestamp. It is not ready for production ingestion.
+- **Spot price:** Kraken is now the selected registered BTC/USD source, but the latest raw trade has not yet been fetched and staged, and the database source registry/adapter path still needs verification. It is not ready for production ingestion.
 - **Hashrate:** dated data and methodology exist, but the series needs refreshing through the latest complete UTC day and ingestion with its aggregation method.
 - **Fee/subsidy:** the existing point estimate is not enough to satisfy the required rolling-series definition.
 - **DXY:** provider/time disagreement must be resolved by selecting one canonical source and observation convention.
