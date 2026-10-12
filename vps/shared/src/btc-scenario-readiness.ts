@@ -5,10 +5,10 @@
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const REQUIRED = [
-  { metricId: "market.spot_price", maxAgeHours: 24, label: "spot price" },
-  { metricId: "security.hashrate", maxAgeHours: 168, label: "network hashrate" },
-  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 168, label: "fee-market/security economics" },
-  { metricId: "macro.dxy", maxAgeHours: 120, label: "macro liquidity proxy (DXY)" },
+  { metricId: "market.spot_price", maxAgeHours: 24, unit: "USD/BTC", label: "spot price" },
+  { metricId: "security.hashrate", maxAgeHours: 168, unit: "EH/s", label: "network hashrate" },
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 168, unit: "ratio", label: "fee-market/security economics" },
+  { metricId: "macro.dxy", maxAgeHours: 120, unit: "index", label: "macro liquidity proxy (DXY)" },
 ];
 
 function dateMs(value: unknown): number {
@@ -16,7 +16,7 @@ function dateMs(value: unknown): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function validObservation(row: any, nowMs: number, maxAgeHours: number): boolean {
+function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string): boolean {
   const observedMs = dateMs(row?.observed_at);
   const value = row?.value_numeric ?? row?.value_integer;
   return Number.isFinite(observedMs)
@@ -25,7 +25,10 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number): boolean
     && String(row?.freshness ?? "").toUpperCase() === "CURRENT"
     && value !== null && value !== undefined && Number.isFinite(Number(value))
     && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
-    && typeof row?.source_id === "string" && row.source_id.trim().length > 0;
+    && typeof row?.source_id === "string" && row.source_id.trim().length > 0
+    && row?.source_registered === true
+    && typeof row?.unit === "string" && row.unit.trim().length > 0
+    && (!expectedUnit || (row.unit === expectedUnit && row.expected_unit === expectedUnit));
 }
 
 export function assessBtcScenarioReadiness(observations: unknown, now: Date | string = new Date()) {
@@ -45,12 +48,20 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       blockers.push({ metric_id: requirement.metricId, reason: "missing" });
       continue;
     }
-    if (!validObservation(latest, nowMs, requirement.maxAgeHours)) {
+    if (!validObservation(latest, nowMs, requirement.maxAgeHours, requirement.unit)) {
       blockers.push({
         metric_id: requirement.metricId,
         reason: String(latest.freshness ?? "").toUpperCase() !== "CURRENT"
           ? "not_marked_current"
-          : "stale_or_untraceable",
+          : latest.source_registered !== true
+            ? "source_not_registered"
+            : typeof latest.unit !== "string" || !latest.unit.trim()
+              ? "unit_missing"
+              : requirement.unit && latest.expected_unit !== requirement.unit
+              ? "metric_unit_contract_mismatch"
+              : requirement.unit && latest.unit !== requirement.unit
+                ? "unit_mismatch"
+                : "stale_or_untraceable",
       });
       continue;
     }
@@ -58,6 +69,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       observed_at: latest.observed_at,
       source_id: latest.source_id,
       source_url: latest.source_url,
+      unit: latest.unit,
       revision: Number(latest.revision ?? 1),
       value: Number(latest.value_numeric ?? latest.value_integer),
     };
@@ -69,7 +81,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
   if (!latestEtf
-      || !validObservation(latestEtf, nowMs, 168)
+      || !validObservation(latestEtf, nowMs, 168, "USD million/day")
       || nowMs - dateMs(latestEtf.observed_at) > 48 * 3600000) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
@@ -78,7 +90,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   }
 
   // Never silently fall back to older rows if the latest source row is invalid.
-  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 168));
+  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 168, "USD million/day"));
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.observed_at)).toISOString().slice(0, 10);
@@ -97,6 +109,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
         value: Number(row.value_numeric ?? row.value_integer),
         source_id: row.source_id,
         source_url: row.source_url,
+        unit: row.unit,
         revision: Number(row.revision ?? 1),
         observed_at: row.observed_at,
       }));
