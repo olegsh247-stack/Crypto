@@ -60,7 +60,7 @@ async function responseJson(fetchImpl: Fetcher, url: string): Promise<any> {
 export function parseHashratePayload(payload: unknown, now: Date): BtcObservationCandidate | null {
   const rows = (payload as any)?.hashrates;
   if (!Array.isArray(rows)) throw new Error("hashrate_series_missing");
-  const candidates = rows.map((row: any) => {
+  const mapped: Array<BtcObservationCandidate | null> = rows.map((row: any) => {
     const observedAt = toDateFromSeconds(row?.timestamp);
     const rawHashrate = finitePositive(row?.avgHashrate ?? row?.hashrate);
     if (!observedAt || !rawHashrate) return null;
@@ -82,8 +82,9 @@ export function parseHashratePayload(payload: unknown, now: Date): BtcObservatio
       status: "NORMAL" as const,
       freshness: freshnessFor(observedAt, now),
     };
-  }).filter((x: BtcObservationCandidate | null): x is BtcObservationCandidate => x !== null)
-    .sort((a: BtcObservationCandidate, b: BtcObservationCandidate) => b.observedAt.getTime() - a.observedAt.getTime());
+  });
+  const candidates = mapped.filter((x): x is BtcObservationCandidate => x !== null)
+    .sort((a, b) => b.observedAt.getTime() - a.observedAt.getTime());
   return candidates[0] ?? null;
 }
 
