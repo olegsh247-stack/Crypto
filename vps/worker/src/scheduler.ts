@@ -86,7 +86,7 @@ export function londonDayBoundary(input:Date){
  const offsetParts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",timeZoneName:"longOffset",hour:"2-digit"}).formatToParts(new Date(utcMidnight));
  const offset=offsetParts.find(p=>p.type==="timeZoneName")?.value??"GMT";
  if(offset==="GMT")return new Date(utcMidnight);
- const match=offset.match(/^GMT([+-])(\\d{2}):(\\d{2})$/);
+ const match=offset.match(/^GMT([+-])(\d{2}):(\d{2})$/);
  if(!match)throw new Error(`Unsupported Europe/London UTC offset: ${offset}`);
  const offsetMinutes=(Number(match[2])*60+Number(match[3]))*(match[1]==="-"?-1:1);
  return new Date(utcMidnight-offsetMinutes*60*1000);
