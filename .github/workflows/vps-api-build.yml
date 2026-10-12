@@ -41,6 +41,22 @@ jobs:
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
+      - name: Validate production Compose network boundaries
+        run: |
+          set -euo pipefail
+          docker compose --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
+          python3 - <<'PY'
+          import json
+          config=json.load(open('/tmp/crypto-production-compose.json'))
+          services=config['services']
+          assert not services['postgres'].get('ports'), services['postgres'].get('ports')
+          assert not services['api'].get('ports'), services['api'].get('ports')
+          assert not services['worker'].get('ports'), services['worker'].get('ports')
+          caddy_ports={str(p['published']) for p in services['caddy'].get('ports',[])}
+          assert {'80','443'} <= caddy_ports, caddy_ports
+          assert services['worker']['environment']['WORKER_SCHEDULE_UTC']=='00:30'
+          print('VPS_PRODUCTION_COMPOSE_OK public_ports=80,443 postgres_private=1 api_private=1 worker_private=1')
+          PY
       - name: Start PostgreSQL rehearsal
         run: |
           docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16

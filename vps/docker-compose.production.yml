@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: crypto
+      POSTGRES_USER: crypto
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - crypto-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto -d crypto"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - backend
+
+  migrate:
+    image: postgres:16
+    profiles: ["ops"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
+    volumes:
+      - ../infrastructure:/repo/infrastructure:ro
+      - ../scripts/migrate-postgres.sh:/repo/scripts/migrate-postgres.sh:ro
+    working_dir: /repo
+    command: ["bash", "scripts/migrate-postgres.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env.production}
+      CORS_ORIGIN: ${CORS_ORIGIN:?Set CORS_ORIGIN in .env.production}
+      PORT: "8080"
+      HOST: 0.0.0.0
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+      - edge
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
+      WORKER_SCHEDULE_UTC: ${WORKER_SCHEDULE_UTC:-00:30}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:?Set CADDY_DOMAIN in .env.production}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    networks:
+      - edge
+
+networks:
+  backend:
+    driver: bridge
+  edge:
+    driver: bridge
+
+volumes:
+  crypto-postgres-data:
+  caddy-data:
+  caddy-config:
