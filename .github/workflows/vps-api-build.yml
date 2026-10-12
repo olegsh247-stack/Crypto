@@ -9,6 +9,8 @@ on:
       - "infrastructure/postgres/**"
       - "scripts/migrate-postgres.sh"
       - "scripts/backup-postgres.sh"
+      - "scripts/check-vps-only-repository.mjs"
+      - ".gitignore"
       - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
