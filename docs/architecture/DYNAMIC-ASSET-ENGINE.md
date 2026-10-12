@@ -6,7 +6,7 @@ The site must render Assets from database data rather than hardcoded BTC/ETH/SOL
 
 ## Canonical flow
 
-`Neon → Asset API → Dynamic Asset Engine → UI`
+`PostgreSQL → VPS Asset API → Dynamic Asset Engine → UI`
 
 An Asset is a database entity. A card, detail page, research panel, score panel, and monitoring panel are UI components that render an Asset.
 
