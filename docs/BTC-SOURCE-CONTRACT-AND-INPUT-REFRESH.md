@@ -70,6 +70,26 @@ These are source-review candidates only. They have **not** been inserted into th
 - **Repeated observations:** do not delete duplicate history. First export every row in each logical-key group; classify exact duplicates, revisions, conflicting values, and missing provenance. Define a deterministic winner/retention rule, preserve audit lineage, and only then propose a separate reviewed remediation.
 - **Readiness:** because current price/source selection, the current hashrate series, a valid rolling fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
 
+## 4A. Read-only database audit — 2026-10-12 18:20 UTC
+
+A read-only query was executed against the currently connected `Crypto` production branch. No rows were inserted, updated, or deleted.
+
+| Check | Result | Interpretation |
+|---|---|---|
+| `market.spot_price` latest row | 81,043 USD/BTC at 2026-09-19 06:38 UTC; age 563.70 h; source `market.primary`; `STALE` | Fails the 1 h gate and does not use the selected Kraken source |
+| `security.hashrate` latest row | 1,001 EH/s at 2026-09-19 00:00 UTC; age 570.33 h; `STALE` | Fails the 48 h gate |
+| `security.fee_subsidy_ratio` | No observation | Fails the required-input gate |
+| `macro.dxy` | No observation | Fails the required-input gate |
+| `institutional.etf_net_flow` latest row | 324.6 USD million/day at 2026-09-18 00:00 UTC; age 594.33 h; `STALE` | Fails the 36 h gate |
+| Source registry in the live database | `market.kraken` absent; `market.primary` remains present with no base URL | The repository seed correction has not been deployed to the database; production source registration remains unverified |
+| Duplicate observation groups | 9 groups, 18 rows, 9 extra rows; all 9 groups have identical payloads and 0 conflicting groups | Exact-duplicate candidates are identified; all rows must be preserved pending a separately reviewed remediation |
+| Published snapshot evidence | `BTC-2026-10-07-v1`: 15 evidence rows across 15 blocks; 0 missing registered sources, observations, or source URLs | Evidence linkage check passes for this snapshot |
+| Scenario/monitoring persistence | 0 snapshot-linked scenario states; 0 BTC monitoring events; 0 monitoring signals linked to a metric or critical factor | No current persisted scenario/monitoring output was found by this query |
+
+The nine exact-duplicate groups cover spot price, hashrate, block subsidy, circulating supply, maximum supply, and four ETF flow dates (15–18 September). This is a classification result only. No deduplication was performed.
+
+**Current readiness: `not_evaluable`.** The source seed mismatch is corrected in GitHub only. The production database remains unchanged, and current inputs still fail freshness/completeness checks. The Kraken API page could be opened but the web retrieval returned no readable trade payload, so no current trade price or trade timestamp has been fabricated or staged.
+
 ## 5. Safe ingestion and duplicate-control procedure
 
 1. Fetch source payloads with a retrieval timestamp and preserve the raw response or immutable review artifact.
