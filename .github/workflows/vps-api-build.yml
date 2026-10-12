@@ -92,6 +92,10 @@ jobs:
           test "$count" -gt 0
           test "$duplicates" = "0"
           echo "VPS_DB_BOOTSTRAP_OK migrations=$count duplicate_markers=0 rerun=1"
+      - name: BTC input provenance audit (read-only)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-btc-input-provenance.sql
       - name: PostgreSQL backup and restore rehearsal
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
