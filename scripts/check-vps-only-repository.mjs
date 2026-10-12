@@ -24,8 +24,11 @@ function inspect(path, relativePath) {
     }
   }
 
+  // Governance Markdown may name retired providers when documenting decisions and audit history.
+  // Keep path checks for every file, but scan executable/configuration and other text contents.
+  if (relativePath.toLowerCase().endsWith(".md")) return;
   const bytes = readFileSync(path);
-  // Binary assets are not source text; text files of every extension are scanned.
+  // Binary assets are not source text.
   if (bytes.includes(0)) return;
   const content = bytes.toString("utf8");
   checked += 1;
