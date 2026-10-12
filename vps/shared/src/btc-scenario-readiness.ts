@@ -1,14 +1,15 @@
 /**
  * Read-only BTC scenario input-quality gate.
  *
+ * Freshness limits mirror data/CryptoDataModel/registry/metric-registry.json.
  * This decides whether source observations are fit for a reviewed research
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const REQUIRED = [
-  { metricId: "market.spot_price", maxAgeHours: 24, unit: "USD/BTC", label: "spot price" },
-  { metricId: "security.hashrate", maxAgeHours: 168, unit: "EH/s", label: "network hashrate" },
-  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 168, unit: "ratio", label: "fee-market/security economics" },
-  { metricId: "macro.dxy", maxAgeHours: 120, unit: "index", label: "macro liquidity proxy (DXY)" },
+  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", label: "spot price" },
+  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", label: "network hashrate" },
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", label: "fee-market/security economics" },
+  { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", label: "macro liquidity proxy (DXY)" },
 ];
 
 function dateMs(value: unknown): number {
@@ -81,19 +82,18 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
   if (!latestEtf
-      || !validObservation(latestEtf, nowMs, 168, "USD million/day")
-      || nowMs - dateMs(latestEtf.observed_at) > 48 * 3600000) {
+      || !validObservation(latestEtf, nowMs, 36, "USD million/day")) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
-      reason: "latest_observation_must_be_current_traceable_and_within_48_hours",
+      reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
     });
   }
 
   // Never silently fall back to older rows if the latest source row is invalid.
-  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 168, "USD million/day"));
+  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 36, "USD million/day"));
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
-    const day = new Date(dateMs(row.observed_at)).toISOString().slice(0, 10);
+    const day = new Date(dateMs(row.period_start ?? row.observed_at)).toISOString().slice(0, 10);
     if (!uniqueByDay.has(day)) uniqueByDay.set(day, row);
   }
   if (uniqueByDay.size < 5) {
