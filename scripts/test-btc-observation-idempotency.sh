@@ -15,7 +15,7 @@ INSERT INTO observations (
   metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
   methodology, status, freshness, revision
 ) VALUES (
-  'market.spot_price', 'btc', 80000, 'USD/BTC', now() - interval '1 hour',
+  'market.spot_price', 'btc', 80000, 'USD/BTC', date_trunc('minute', now()) - interval '1 hour',
   'market_binance', 'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT',
   'Disposable idempotency test fixture', 'NORMAL', 'CURRENT', 1
 ) RETURNING observation_id;
@@ -101,4 +101,30 @@ SQL
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-13-btc-observation-natural-key.sql
 index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_natural_key_revision_uq') IS NOT NULL")"
 test "$index_exists" = "t"
+observed_at="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_char(observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') FROM observations WHERE observation_id='$base_id'::uuid")"
+DATABASE_URL="$DATABASE_URL" BTC_TEST_OBSERVED_AT="$observed_at" node --input-type=module <<'NODE'
+import assert from "node:assert/strict";
+import { persistBtcObservation } from "./vps/worker/dist/btc-observations.js";
+
+const candidate = {
+  metricId: "market.spot_price",
+  sourceId: "market_binance",
+  sourceUrl: "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT",
+  valueNumeric: 80000,
+  unit: "USD/BTC",
+  observedAt: new Date(process.env.BTC_TEST_OBSERVED_AT),
+  periodStart: null,
+  periodEnd: null,
+  methodology: "Disposable idempotency test fixture",
+  status: "NORMAL",
+  freshness: "CURRENT",
+};
+assert.equal((await persistBtcObservation(process.env.DATABASE_URL, candidate)).action, "unchanged");
+const revised = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
+assert.deepEqual(revised, { action: "revised", revision: 2 });
+const unchanged = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
+assert.deepEqual(unchanged, { action: "unchanged", revision: 2 });
+console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
+NODE
+
 echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"
