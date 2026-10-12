@@ -83,3 +83,23 @@ On the Asset Dashboard:
 - [ ] Populate monitoring events only from material, traceable observations.
 
 **Conclusion:** BTC now has a clear, honest published Base scenario presentation. It is not yet a live-evaluated scenario engine; that remaining distinction is explicit rather than hidden.
+
+
+## Live-data gate — read-only check on 2026-10-12
+
+The published BTC snapshot and scenario definitions were checked against the current database:
+
+- Snapshot `BTC-2026-10-07-v1` is `PUBLISHED`; all 15 blocks are complete and all 15 blocks have a domain link.
+- The snapshot has 6 Critical Factors, 5 Scores, 3 Scenario definitions and 15 Evidence rows covering all 15 blocks.
+- Scenario probabilities are Base 50%, Bull 30%, Bear 20%.
+- There are 7 monitoring signals, but **zero scenario-state rows and zero monitoring-event rows**.
+- There are 33 observation rows across 21 metrics; 18 rows are marked stale.
+- Nine duplicate logical-key groups exist in the observations table, each with identical payload/provenance. Two rows lack a source URL.
+- The numeric spot-price, hash-rate, circulating-supply, subsidy and ETF-flow observations are dated September 18–19 and marked stale. Fresh market candles do not make these separate observations fresh.
+- The persisted research review state remains `current` until its scheduled review date, but that does not override per-metric stale flags.
+
+### Evaluation decision
+
+**Do not calculate or persist a live Bull/Base/Bear state from these inputs yet.** The current Base remains the published research baseline only. A live evaluation requires refreshed, source-verified values for the existing BTC inputs, a documented deterministic rule, and explicit data-freshness gates. The duplicate observation rows are preserved; the seed script is now idempotent for future reruns, but the existing rows were not deleted or rewritten.
+
+The idempotency regression passed in disposable PostgreSQL on [PR #22](https://github.com/olegsh247-stack/Crypto/pull/22). That proves reruns will not add another copy of the targeted seed observations; it does not repair the existing live duplicates or refresh stale values.
