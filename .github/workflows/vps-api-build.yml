@@ -123,7 +123,7 @@ jobs:
         run: |
           nohup node dist/server.js > /tmp/crypto-vps-api.log 2>&1 &
           echo $! > /tmp/crypto-vps-api.pid
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             curl -fsS http://127.0.0.1:8080/api/health >/dev/null && break
             sleep 2
           done
