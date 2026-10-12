@@ -270,6 +270,13 @@ jobs:
           assert all(e.get('snapshot_id') == sid for e in evidence), 'cross-snapshot evidence'
           assert all(e.get('claim') and e.get('source_id') and e.get('source_url') and e.get('observation_id') and e.get('metric_id') and e.get('block_number') and (e.get('observation_value') is not None or e.get('data_summary') is not None) for e in evidence), 'evidence provenance/value incomplete'
           assert len({e['block_number'] for e in evidence}) == 15, 'evidence does not cover all 15 blocks'
+          readiness=d.get('scenario_readiness') or {}
+          assert readiness.get('status') == 'not_evaluable', f"unexpected readiness={readiness}"
+          assert readiness.get('can_persist_scenario_state') is False, 'input gate must never authorize persistence'
+          blockers=readiness.get('blockers',[])
+          assert any(x.get('metric_id') == 'security.fee_subsidy_ratio' and x.get('reason') == 'missing' for x in blockers), 'missing fee/subsidy metric must block readiness'
+          assert any(x.get('metric_id') == 'macro.dxy' and x.get('reason') == 'missing' for x in blockers), 'missing DXY metric must block readiness'
+          assert any(x.get('metric_id') == 'institutional.etf_net_flow' and x.get('reason') == 'latest_observation_must_be_current_traceable_and_within_48_hours' for x in blockers), 'stale latest ETF flow must block readiness'
           assert len(d.get('critical_factors',[])) == 6, 'BTC current snapshot factors'
           assert all(f.get('snapshot_id') == sid for f in d.get('critical_factors',[])), 'cross-snapshot factor'
           assert len(d.get('scores',[])) == 5, 'BTC current snapshot scores'
