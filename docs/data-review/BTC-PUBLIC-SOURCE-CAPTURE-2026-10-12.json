@@ -1,15 +1,15 @@
 {
   "review_date": "2026-10-12",
-  "capture_time_utc": "2026-10-12T18:22:31.400Z",
+  "capture_time_utc": "2026-10-12T18:24:27.046Z",
   "capture_workflow": {
     "name": "BTC Public Source Staging (Read Only)",
-    "run_id": 38290463774,
-    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38290463774",
-    "artifact_id": 11766385034,
+    "run_id": 38290669941,
+    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38290669941",
+    "artifact_id": 11766330405,
     "artifact_name": "btc-public-source-review",
-    "artifact_expires_at": "2026-10-19T18:22:32Z",
-    "outcome": "FAILED_EXPECTED_SOURCE_BLOCK",
-    "note": "Latest capture run: Kraken and both Mempool endpoints returned HTTP 200; Farside returned HTTP 403. Raw responses and manifest uploaded as a short-lived GitHub Actions artifact."
+    "artifact_expires_at": "2026-10-19T18:24:28Z",
+    "outcome": "SUCCESS_CAPTURED_PUBLIC_APIS_WITH_FARSIDE_BLOCKED",
+    "note": "The capture step and artifact upload succeeded. Kraken, both Mempool endpoints, and TFTC JSON returned HTTP 200; Farside returned HTTP 403. The artifact contains raw responses and the manifest; it expires after seven days."
   },
   "safety": {
     "production_database_accessed_by_capture_script": false,
@@ -25,12 +25,12 @@
       "url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
       "pair": "XBTUSD",
       "response_pair_key": "XXBTZUSD",
-      "value": 82422.2,
+      "value": 82419.6,
       "unit": "USD/BTC",
-      "observed_at": "2026-10-12T18:22:30.137Z",
-      "retrieved_at": "2026-10-12T18:22:31.401Z",
-      "age_at_retrieval_seconds": 1.264,
-      "raw_response_sha256": "a4587dd79079a8a701f3ebec3888c7ea231a10c53b812fc931a62f671ea86d8e",
+      "observed_at": "2026-10-12T18:24:24.922Z",
+      "retrieved_at": "2026-10-12T18:24:27.046Z",
+      "age_at_retrieval_seconds": 2.124,
+      "raw_response_sha256": "9da190ec1f08b4ea4fe2eab3c9dec8983727c2d8518689dba3d03e4d26af6201",
       "raw_trade_rows": 1000,
       "decision": "HOLD_NOT_INGESTED",
       "blockers": [
@@ -88,7 +88,7 @@
       "source_id": "institutional.primary",
       "url": "https://farside.co.uk/btc/",
       "http_status": 403,
-      "raw_response_sha256": "b14573c9073c81d534c0feacf82cd7a44f84bdbd405b6068a5519e916719b5a9",
+      "raw_response_sha256": "7dd9db1a6ba98acd024a23a26cff4887d567ae37537745a20255481290d819ad",
       "decision": "BLOCKED_SOURCE_ACCESS",
       "note": "The existing five-session historical staging remains separate; this capture did not refresh ETF values or provide a publication timestamp."
     },
@@ -96,10 +96,88 @@
       "metric_id": "macro.dxy",
       "decision": "BLOCKED_SOURCE_SPECIFICITY",
       "note": "No canonical accessible DXY feed and daily observation-time convention has been approved."
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.tftc",
+      "url": "https://www.tftc.io/bitcoin-etf-flows/data.json",
+      "http_status": 200,
+      "raw_response_sha256": "dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e",
+      "updated_through": "2026-10-09",
+      "retrieved_at": "2026-10-12T18:24:28.021Z",
+      "license": "CC BY 4.0",
+      "source_lineage": "SoSoValue (daily aggregates and per-fund flows); issuer disclosures as tabulated by Farside Investors (per-fund history through mid-2026); mempool.space (BTC price, ~21:00 UTC mark).",
+      "historical_candidate_series_usd_million_per_day": [
+        {
+          "date": "2026-10-05",
+          "value": -89.897783
+        },
+        {
+          "date": "2026-10-06",
+          "value": 118.86245188
+        },
+        {
+          "date": "2026-10-07",
+          "value": -487.0674115
+        },
+        {
+          "date": "2026-10-08",
+          "value": -244.125629175
+        },
+        {
+          "date": "2026-10-09",
+          "value": 21.12807855
+        }
+      ],
+      "comparison_to_farside_rounded_values_usd_million_per_day": [
+        {
+          "date": "2026-10-05",
+          "farside": -89.8,
+          "tftc": -89.897783,
+          "delta": -0.097783,
+          "decision": "rounding-compatible"
+        },
+        {
+          "date": "2026-10-06",
+          "farside": 118.8,
+          "tftc": 118.86245188,
+          "delta": 0.06245188,
+          "decision": "rounding-compatible"
+        },
+        {
+          "date": "2026-10-07",
+          "farside": -484.9,
+          "tftc": -487.0674115,
+          "delta": -2.1674115,
+          "decision": "material discrepancy; reconcile"
+        },
+        {
+          "date": "2026-10-08",
+          "farside": -244.1,
+          "tftc": -244.125629175,
+          "delta": -0.025629175,
+          "decision": "rounding-compatible"
+        },
+        {
+          "date": "2026-10-09",
+          "farside": 21.1,
+          "tftc": 21.12807855,
+          "delta": 0.02807855,
+          "decision": "rounding-compatible"
+        }
+      ],
+      "decision": "HOLD_NOT_CANONICAL",
+      "blockers": [
+        "No exact observation/publication timestamp is provided; updatedThrough is a date only.",
+        "The latest session is 2026-10-09 and fails the 36-hour freshness gate at capture time.",
+        "TFTC lineage mixes SoSoValue aggregates and Farside issuer-history; Oct 7 differs from Farside's rounded aggregate by about -2.17 million USD.",
+        "The candidate source is registered in repository files but has not been registered in the live production database or added to metric source_priority."
+      ]
     }
   ],
   "overall_readiness": "not_evaluable",
   "next_actions": [
+    "Reconcile TFTC candidate ETF totals against Farside, especially 2026-10-07, and establish a publication/observation-time contract before selecting a canonical series.",
     "Resolve production source registration/adapter parity for market.kraken without applying changes to production until separately approved.",
     "Verify Mempool hashrate bucket semantics.",
     "Verify fee endpoint units and aggregation before calculating a documented rolling ratio.",
