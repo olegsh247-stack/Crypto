@@ -10,8 +10,10 @@ async function run(){
   try{
     const result=await runScheduledIngestion(env);
     console.log(JSON.stringify({status:"ok",service:"crypto-worker-vps",...result}));
+    return true;
   }catch(error){
     console.error(JSON.stringify({status:"error",service:"crypto-worker-vps",error:error instanceof Error?error.message:"worker_failed"}));
+    return false;
   }
 }
 
@@ -21,10 +23,14 @@ function nextRunAt(now=new Date()){
   return next;
 }
 
+const runOnce=process.env.WORKER_RUN_ONCE==="1";
 let timer:NodeJS.Timeout|undefined;
 let stopped=false;
+if(runOnce){
+  void run().then(ok=>{process.exitCode=ok?0:1;});
+}
 function scheduleNext(){
-  if(stopped)return;
+  if(stopped||runOnce)return;
   const next=nextRunAt();
   const delay=Math.max(1,next.getTime()-Date.now());
   console.log(JSON.stringify({status:"scheduled",service:"crypto-worker-vps",schedule_utc:scheduleUtc,next_run_at:next.toISOString()}));
