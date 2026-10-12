@@ -31,7 +31,7 @@ docker compose --env-file vps/.env.production -f vps/docker-compose.production.y
 docker compose --env-file vps/.env.production -f vps/docker-compose.production.yml up -d --build api worker caddy
 ```
 
-The migration command applies the repository's versioned migrations. On a new empty database it also bootstraps the base schema. Do not point this command at source database or any other production database as a rehearsal. Production migration is a separate approved operation governed by `source database-TO-POSTGRES-MIGRATION-RUNBOOK.md`.
+The migration command applies the repository's versioned migrations. On a new empty database it also bootstraps the base schema. Do not point this command at source database or any other production database as a rehearsal. Production migration is a separate approved operation governed by `POSTGRES-MIGRATION-RUNBOOK.md`.
 
 ## Verify
 
