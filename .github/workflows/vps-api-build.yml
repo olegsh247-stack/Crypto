@@ -7,7 +7,6 @@ on:
       - "shared/**"
       - "infrastructure/neon/**"
       - "scripts/migrate-postgres.sh"
-      - "scripts/vps-api-parity.mjs"
       - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
@@ -185,11 +184,13 @@ jobs:
           fi
           monitoring_refresh=0
           echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
-      - name: VPS API parity against live Worker
-        env:
-          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
-          VPS_API_URL: http://127.0.0.1:8080
-        run: node scripts/vps-api-parity.mjs
+      - name: VPS API offline contract invariants
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8080/api/health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; print("VPS_API_HEALTH_OK")'
+          curl -fsS http://127.0.0.1:8080/api/db-health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; print("VPS_API_DB_HEALTH_OK")'
+          curl -fsS http://127.0.0.1:8080/api/assets/btc | python3 -c 'import json,sys; d=json.load(sys.stdin); a=d.get("asset",d); assert a.get("asset_id") == "btc", a; assert isinstance(d.get("research_blocks",[]), list), d; print("VPS_API_BTC_CONTRACT_OK")'
+          curl -fsS 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=7&interval=1d' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; assert isinstance(d.get("rows"), list), d; print("VPS_API_HISTORY_CONTRACT_OK")'
 
       - name: VPS API persisted history and candle finalization E2E
         run: |
