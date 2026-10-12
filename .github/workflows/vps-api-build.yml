@@ -249,6 +249,32 @@ jobs:
           curl -fsS http://127.0.0.1:8080/api/assets/btc | python3 -c 'import json,sys; d=json.load(sys.stdin); a=d.get("asset",d); assert a.get("asset_id") == "btc", a; assert isinstance(d.get("research_blocks",[]), list), d; print("VPS_API_BTC_CONTRACT_OK")'
           curl -fsS 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=7&interval=1d' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; assert isinstance(d.get("rows"), list), d; print("VPS_API_HISTORY_CONTRACT_OK")'
 
+      - name: VPS BTC research evidence and snapshot lineage E2E
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8080/api/assets/btc > /tmp/btc-research.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/btc-research.json'))
+          snapshot=d.get('research_snapshot') or {}
+          sid=snapshot.get('snapshot_id')
+          assert sid == 'BTC-2026-10-07-v1', snapshot
+          assert snapshot.get('status') == 'PUBLISHED', snapshot
+          evidence=d.get('evidence')
+          assert isinstance(evidence,list) and len(evidence) >= 15, f'evidence={evidence}'
+          assert all(e.get('snapshot_id') == sid for e in evidence), 'cross-snapshot evidence'
+          assert all(e.get('claim') and e.get('source_id') and e.get('source_url') and e.get('observation_id') and e.get('metric_id') and e.get('block_number') for e in evidence), 'evidence provenance incomplete'
+          assert len({e['block_number'] for e in evidence}) == 15, 'evidence does not cover all 15 blocks'
+          assert len(d.get('critical_factors',[])) == 6, 'BTC current snapshot factors'
+          assert len(d.get('scores',[])) == 5, 'BTC current snapshot scores'
+          scenarios=d.get('research_scenarios',[])
+          assert {s.get('scenario_type') for s in scenarios} == {'bull','base','bear'}, 'scenario set incomplete'
+          assert round(sum(float(s.get('probability',0)) for s in scenarios), 6) == 1, 'scenario probabilities do not sum to 1'
+          assert all(s.get('snapshot_id',sid)==sid for s in scenarios), 'cross-snapshot scenario'
+          states=d.get('scenario_states',[])
+          assert all(s.get('snapshot_id') == sid for s in states), 'cross-snapshot scenario state'
+          print(f'VPS_BTC_RESEARCH_CHAIN_OK snapshot={sid} evidence={len(evidence)} blocks={len(set(e["block_number"] for e in evidence))} factors=6 scores=5 scenarios=3')
+          PY
       - name: VPS API persisted history and candle finalization E2E
         run: |
           set -euo pipefail
