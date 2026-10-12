@@ -62,3 +62,12 @@ These changes do not switch the public production endpoint or mutate production 
 ## Safety boundary
 
 The target host has not yet been purchased, so the public endpoint is still the already-deployed service and has not been switched. Do not change its secrets, run production ingestion for tests, or switch public traffic. All rehearsal tests use disposable PostgreSQL. The next production-changing step is a controlled data export/restore and cutover after the target host exists.
+
+
+## Verified checkpoint — 2026-10-12
+
+- The target API now returns the current published snapshot's evidence rows with observation and source provenance, and scopes factors, scores and scenario states to that same snapshot.
+- The VPS Release Gate passed after the evidence contract change: [run 38286407510](https://github.com/olegsh247-stack/Crypto/actions/runs/38286407510). The BTC E2E verifies 15 research blocks, 6 current-snapshot factors, 5 current-snapshot scores, the Bull/Base/Bear set, 15 evidence rows and no fabricated snapshot-linked scenario state.
+- The PostgreSQL rehearsal now uses a Docker-assigned ephemeral loopback port, avoiding fixed-port collisions between concurrent workflows. The Build Rehearsal passed after this change: [run 38286818304](https://github.com/olegsh247-stack/Crypto/actions/runs/38286818304).
+- A read-only BTC input provenance audit is available at `scripts/audit-btc-input-provenance.sql`. It reports freshness, source links, duplicate logical keys and snapshot/monitoring coverage without modifying data. Compare its output before and after a future database restore.
+- Production readiness remains blocked on the real host and data: the VPS has not been provisioned, numeric BTC observations need source-verified refresh/reconciliation, and no live scenario-state or monitoring-event row may be fabricated to make the dashboard appear current.
