@@ -1,8 +1,0 @@
-name = "crypto-api"
-main = "workers/crypto-api/src/index.ts"
-compatibility_date = "2026-09-20"
-
-# Production deployment uses this repository-root config.
-# Keep workers/crypto-api/wrangler.toml in sync.
-[triggers]
-crons = ["30 0 * * *"]
