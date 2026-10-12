@@ -79,3 +79,11 @@ The target host has not yet been purchased, so the public endpoint is still the 
 - PR #62 merged as `763e4750e129ae7d961a4f452927fbeada7253d1`. The API does not treat an HTTPS URL alone as provenance: the source must exist in the registry, and both the stored unit and the metric registry's canonical unit must match the readiness contract.
 - The next safe data-integrity step is to expose full payloads for the known duplicate BTC observation groups so exact duplicates can be distinguished from conflicting revisions before designing any cleanup. The enhanced audit remains read-only; no observation rows have been changed.
 - A legacy external build check still appears on commits even though the target repository workflows are VPS-only. Its failed build is outside the VPS test pipeline; disconnecting the obsolete repository integration remains a final retirement task. Do not shut down the currently serving public API before VPS cutover approval.
+
+
+## Source-data audit checkpoint — 2026-10-12
+
+- A SELECT-only audit of the source database found three stale required BTC inputs (spot price, hashrate and ETF flow) and two missing required inputs (fee/subsidy ratio and DXY). ETF flow has zero distinct current source-linked days in the last 14 days.
+- The duplicate-row audit found nine logical-key groups / 18 rows; every group has identical payload/provenance fields, with only row ID and created timestamp differing. The circulating-supply row separately lacks a source URL.
+- Results and a proposed **target-copy-only** reconciliation rule are documented in [BTC Source Data Audit](./BTC-SOURCE-DATA-AUDIT-2026-10-12.md). No source rows were modified. Do not run cleanup or add the uniqueness migration before the final dump is restored to the target and the duplicate report is rechecked.
+- The next data task is source-backed observation refresh and revision/idempotency contract work, starting with source/metric definitions and tests; do not fabricate observations or persist a live scenario state.
