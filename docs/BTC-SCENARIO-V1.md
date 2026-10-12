@@ -159,3 +159,21 @@ This is a source review, not a production data update. The values below are cand
 4. The latest ETF-flow date found in Farside's table is 9 Oct. On 12 Oct this is still within the 48-hour gate, but the series has to be inserted with correct UTC dates, freshness, and source provenance before it can pass the database gate.
 5. Spot price requires a canonical USD exchange observation with an explicit timestamp. Do not turn a cross-source price range into one synthetic observation.
 6. Even when refreshed observations pass the quality gate, the directional Bull/Base/Bear scoring rule remains a separate review gate; no scenario state or probability update is authorized by this source review.
+
+
+## Deterministic directional rule — BTC-Scenario-Rule-v1 (not yet applied to live data)
+
+A pure, unit-tested rule makes scenario transitions reproducible. It is separate from the published 30% / 50% / 20% research probabilities. It does not persist state or modify those probabilities.
+
+| Signal | Bull point | Bear point | Neutral band |
+|---|---:|---:|---|
+| BTC spot-price return over 7 complete UTC days | at least +5% | at most −5% | Between −5% and +5% |
+| Sum of US spot BTC ETF net flows over latest 5 distinct trading days | at least +$500m | at most −$500m | Between −$500m and +$500m |
+| Network hashrate: latest 7-day mean versus previous 7-day mean | at least +3% | at most −3% | Between −3% and +3% |
+| DXY change over 5 complete UTC days | at most −0.5% | at least +0.5% | Between −0.5% and +0.5% |
+
+Each directional signal contributes +1, 0, or −1. The result is Bull at a score of +3 or +4, Bear at −3 or −4, and Base for all scores from −2 through +2. The confidence band is descriptive only: high at absolute score 4, medium at absolute score 3, and low for Base. It does not change scenario probabilities.
+
+The fee/subsidy ratio (`security.fee_subsidy_ratio`) is a required security-economics context input, but is not a directional vote in v1: a higher ratio alone can reflect stronger fee demand or temporary congestion.
+
+These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale inputs block evaluation before this rule is called. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
