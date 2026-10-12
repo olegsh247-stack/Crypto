@@ -196,3 +196,22 @@ Sources: [StatMuse BTC historical closes](https://www.statmuse.com/money/ask/bit
 The resulting directional score is **−1**, so the rule returns **Base** (the ETF-flow signal is negative, while the other three directional signals are within their neutral bands). This is consistent with the rule's 3-of-4 threshold and does not prove the rule has predictive value.
 
 Limitations: source timestamps and aggregation windows are not yet ingested into the database with a canonical shared data contract; the source review is a candidate fixture, not an approved production input set. The fee/subsidy ratio is a recent 144-block value, not a validated 7-day series. Therefore this dry-run does **not** satisfy the input-quality gate and must not be presented as a live-evaluated state.
+
+
+## Scope correction — research scenario, not a trading signal
+
+The directional rule described above is an **offline engineering prototype**, not an approved Crypto product feature. Its thresholds are not statistically calibrated, and the source-reviewed fixture is not a live database evaluation. It must not be presented as a trading recommendation, market-timing signal, or probability forecast.
+
+For Product Contour v1, the intended BTC scenario is an evidence-backed research object:
+
+1. Preserve the published Base / Bull / Bear research definitions and their stated assumptions.
+2. Connect each material assumption and invalidation condition to a metric or evidence source, including source timestamp, method and freshness.
+3. Monitor whether the observed evidence confirms, weakens or invalidates those assumptions.
+4. Emit an explainable research event only when a documented condition is met; include the observation, source, condition, snapshot and methodology version.
+5. Keep baseline probabilities as authored research judgments unless a separately reviewed research methodology explicitly revises them.
+
+**Out of scope for Product Contour v1:** buy/sell/entry/exit signals, position sizing, order execution, price-target forecasting, portfolio allocation, and uncalibrated automatic Bull/Base/Bear scoring. The offline directional-rule prototype is not wired to production, does not change scenario probabilities, and must not be used as the acceptance criterion for the product scenario.
+
+### Revised BTC completion criterion
+
+The BTC scenario is complete when the published research scenario, its evidence, input freshness/provenance, explicit confirmation/invalidation conditions, and snapshot-linked monitoring evaluation form one auditable chain. This does not require a trading strategy or an asserted predictive edge.
