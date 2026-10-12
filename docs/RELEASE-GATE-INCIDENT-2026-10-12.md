@@ -4,29 +4,40 @@
 
 Run [38252098393](https://github.com/olegsh247-stack/Crypto/actions/runs/38252098393) completed the database migration/contract job and web build successfully, then failed in the Worker deploy job at **Configure database secret**.
 
-The exact Cloudflare error in the job log was:
+The Cloudflare error was:
 
 > Secret edit failed. You attempted to modify a secret, but the latest version of your Worker isn't currently deployed.
 
-This was not evidence that the database URL value itself was invalid. The workflow attempted to rewrite the runtime `DATABASE_URL` secret before deploying the Worker version. The subsequent Worker deploy and live API E2E steps were skipped. A direct Engine contract check was nevertheless configured with `always()`, so it ran after the deployment failure. The run also executed a scheduled-ingestion/idempotency step from the workflow version used by that run; this must not be allowed to run after a failed deployment in future release runs.
+This did not establish that the database URL value was invalid. The workflow attempted to rewrite the runtime `DATABASE_URL` secret before deploying the Worker version. Worker deploy and live API E2E were skipped. The historical workflow version also ran a scheduled-ingestion/idempotency step and a direct DB contract check after deployment failure; that behavior is removed/guarded in the current workflow.
 
-## Changes in this fix
+## Fixes merged and follow-up hardening
 
-- Stop rewriting the already configured runtime `DATABASE_URL` secret during each Worker deployment. A deployment should not require the original database URL to be copied into GitHub Actions if the runtime secret is already configured in Cloudflare.
-- Keep the existing runtime secret untouched. This patch does not change the database provider or detach the current Worker from its existing database.
-- Run the post-deployment database contract check only when all preceding deployment and E2E steps succeed; it must not run as an unconditional `always()` side path after failure.
-- Keep the Release Gate manual-only. Validate this workflow change in GitHub before any new production run.
+PR [#29](https://github.com/olegsh247-stack/Crypto/pull/29) was merged as [`8916112`](https://github.com/olegsh247-stack/Crypto/commit/8916112f0034d63d8823886a5553719219debbda). It:
+- Stops rewriting the already configured runtime `DATABASE_URL` during deploy.
+- Makes direct DB contract verification conditional on successful preceding steps.
+- Documents that the existing runtime database and provider are unchanged.
 
-## Production state and safe recovery
+A second secret mutation remained in the deploy workflow: optional `ADMIN_TOKEN` configuration. The same Cloudflare deployment-version constraint could affect this step too. The follow-up branch `fix/release-gate-preserve-worker-secrets` removes all runtime-secret writes from the release workflow. Secret rotation is a separate, explicit operation.
 
-The failed run did **not** deploy the Worker code because the deploy step was skipped. The migration/contract job and web build did complete. No automatic rollback was run, because the database migration job may have applied valid, forward-compatible migrations and blind rollback would be unsafe.
+The current release workflow must remain manual-only. A successful build/test run is not proof that the production Worker has been deployed.
 
-The run's ingestion/idempotency step did execute and may have changed live candle rows and monitoring timestamps. Do not rerun it to "repair" the state. Before the next production release:
-1. Review the current production data for the affected time window using read-only queries and compare with available run logs.
-2. Confirm the currently deployed Worker health and runtime behavior.
-3. Merge and validate this workflow guard fix.
-4. Only then, with an explicitly approved release, deploy the Worker and run read-only API/contract checks. Do not execute ingestion as a deployment side effect.
+## Production state and data-integrity status
+
+- In run 38252098393, the migration/contract job and web build succeeded.
+- Worker deploy and live API E2E were skipped.
+- No automatic rollback was run; valid forward-compatible migrations must not be blindly reversed.
+- The old workflow's scheduled-ingestion/idempotency step did run despite the deployment failure. It may have changed live candle rows and monitoring timestamps. This is an **unverified possible side effect**, not proof of corruption.
+- A read-only comparison of affected candle rows and monitoring timestamps against run logs is still required. Do not rerun ingestion to repair it and do not delete or rewrite rows without identifying exact affected records and agreeing on a correction.
+
+## Safe recovery sequence
+
+1. Merge the release-workflow hardening that preserves both runtime secrets.
+2. Run CI validation for the workflow change; do not trigger the production Release Gate merely to test it.
+3. Inspect current Worker health and API behavior read-only.
+4. Inspect the affected production candle and monitoring records read-only, comparing observed timestamps and values with the failed run's logs.
+5. Review the current production schema/migration state. Do not roll back migrations without evidence.
+6. Only after the above checks, explicitly authorize a manual production release. That release must not run ingestion as a side effect and must end with live API and read-only contract verification.
 
 ## Architecture boundary
 
-The current public API is still the existing Worker and depends on its configured runtime database secret. The target architecture remains VPS + self-hosted PostgreSQL. This incident fix is a narrow release-safety correction; it does not claim that the self-hosted cutover is complete or that the old database project has been deleted.
+The current public API is still the existing Cloudflare Worker and depends on its configured runtime database secret. The target architecture remains VPS + self-hosted PostgreSQL. This incident fix does not complete that cutover and does not authorize deleting the existing database project.
