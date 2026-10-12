@@ -249,3 +249,26 @@ The old release workflow's live scheduled-ingestion test updated BTC's monitorin
 ### Follow-up: seed idempotency
 
 PR #22 was merged after both the disposable PostgreSQL seed-idempotency rehearsal and the VPS API rehearsal passed. The seed now checks the logical key before inserting the targeted BTC numeric observations. It preserves existing records and revisions and does not clean up the nine existing duplicate groups. The production seed workflow is manual-only, so merging the seed change did not execute it against the live database.
+
+
+## VPS API follow-up verification — 2026-10-12
+
+### Resolved in the target API (verified in disposable PostgreSQL)
+
+- **Snapshot scope for critical factors and scores:** both collections are queried only for the latest published snapshot.
+- **Scenario-state lineage:** scenario states returned to the current dashboard are restricted to the active published snapshot. The clean BTC seed has no state row, so the UI continues to label Base as a published baseline.
+- **Evidence payload and source registry:** the API returns evidence rows for the active snapshot with source, observation, metric, block, claim, observed value/unit, assessment, confidence and thesis impact. The source registry includes sources linked directly from Evidence as well as observations.
+- **Scenario definitions:** each definition exposes `snapshot_id`; E2E verifies the Bull/Base/Bear set, probability sum and snapshot lineage.
+- **No fabricated monitoring result:** E2E asserts that the clean BTC baseline has no scenario-state or monitoring-event rows and that its seven monitoring signals remain descriptive, not numeric live measurements.
+
+Evidence: [VPS Build Rehearsal #38286251489](https://github.com/olegsh247-stack/Crypto/actions/runs/38286251489) and the subsequent green release-gate run after these checks were added. These tests run against disposable PostgreSQL; they do not validate the current public endpoint or repair production observations.
+
+### Still open
+
+- Live read-only payload verification against the actual VPS endpoint, after the host is provisioned and the controlled data migration is complete.
+- Canonical freshness contract parity between API and Web types, including metric-level freshness rather than only research review schedule.
+- Reconciliation of the nine historical duplicate observation-key groups and two rows missing source URLs; do not delete or rewrite them without a reviewed cleanup plan.
+- Source-backed refresh of BTC spot price, hashrate, ETF flow, fee/subsidy economics and DXY, with fixed UTC windows and provenance.
+- Confirmation/invalidation rules and monitoring event contract; no live scenario-state or event persistence until reviewed gates pass.
+
+The detailed BTC factor-to-input mapping and acceptance gates are in [BTC-MONITORING-READINESS-MATRIX.md](./BTC-MONITORING-READINESS-MATRIX.md). No production data, schema or public routing was changed by this follow-up.
