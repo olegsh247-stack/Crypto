@@ -215,3 +215,8 @@ For Product Contour v1, the intended BTC scenario is an evidence-backed research
 ### Revised BTC completion criterion
 
 The BTC scenario is complete when the published research scenario, its evidence, input freshness/provenance, explicit confirmation/invalidation conditions, and snapshot-linked monitoring evaluation form one auditable chain. This does not require a trading strategy or an asserted predictive edge.
+
+
+## Input-gate correction — 2026-10-12
+
+The ETF-flow readiness gate now checks the newest recorded ETF-flow row before filtering for valid observations. If that newest row is stale, future-dated, malformed, or lacks current freshness/provenance, readiness fails closed; it cannot silently fall back to older rows even when five older days pass the individual row checks. A regression test covers a stale newest row with five older current rows. This is a pure rule/test change: no database reads or writes, no scenario state, and no monitoring event.
