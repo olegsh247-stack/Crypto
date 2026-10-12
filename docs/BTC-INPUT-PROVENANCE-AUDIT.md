@@ -35,3 +35,10 @@ The same command can be run against source and restored target; save each output
 ## Current BTC boundary
 
 The published snapshot remains the research baseline. The existing source review identified stale numeric observations, duplicate logical-key groups, missing source URLs, and no snapshot-linked scenario-state or monitoring-event rows. Until the audit passes against verified, refreshed inputs and a reviewed evidence-based monitoring rule, do not label the scenario as live-evaluated.
+
+
+## BTC natural-key migration and target-only reconciliation
+
+The target migration `2026-10-13-btc-observation-natural-key.sql` adds a partial unique index for BTC observation natural keys and revisions, but **fails closed** if any duplicate logical-key group remains. It does not delete rows. The separate `scripts/reconcile-btc-exact-duplicates-target.sh` requires both an explicit allow flag and the exact expected database name; its SQL refuses to reconcile conflicting payload groups and only removes rows whose full payload/provenance matches. Use it only on a verified restored target copy, after backup checksum and duplicate audit review. It is not called by the migration runner.
+
+The VPS Build Rehearsal tests the guard on disposable PostgreSQL: missing confirmation is rejected, exact duplicate payloads are deduplicated, conflicting payloads are preserved and rejected, and the unique index is then recreated. No source database cleanup is performed by CI.
