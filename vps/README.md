@@ -1,6 +1,6 @@
 # VPS local rehearsal
 
-This profile is for migration rehearsal only. It does not connect to Neon and does not deploy to Cloudflare.
+This profile runs the API and Worker against self-hosted PostgreSQL for local rehearsal. It does not deploy to production.
 
 ## Start PostgreSQL
 
@@ -10,9 +10,9 @@ This profile is for migration rehearsal only. It does not connect to Neon and do
 
 From the repository root:
 
-`DATABASE_URL=postgresql://crypto:crypto_local_only@127.0.0.1:55432/crypto ./scripts/migrate-neon.sh`
+`DATABASE_URL=postgresql://crypto:crypto_local_only@127.0.0.1:55432/crypto ./scripts/migrate-postgres.sh`
 
-The existing migration runner is intentionally reused. This proves that the VPS PostgreSQL target can consume the same schema and migrations.
+The provider-neutral migration runner applies the repository's current PostgreSQL schema and versioned migrations to the selected DATABASE_URL. Run only against the intended target.
 
 ## Build and start the Node API and worker
 
