@@ -36,8 +36,16 @@ export type MonitoringSignal = {
 };
 
 export type ResearchScenario = {
-  research_scenario_id: string; scenario_type: "bull" | "base" | "bear"; probability?: number | null; assumptions: string;
+  research_scenario_id: string; snapshot_id: string; scenario_type: "bull" | "base" | "bear"; probability?: number | null; assumptions: string;
   supporting_evidence?: string | null; invalidation_conditions?: string | null; thesis_impact?: "positive" | "neutral" | "negative" | "mixed" | null; confidence?: number | null;
+};
+
+export type BtcScenarioReadiness = {
+  status: "ready_for_rule_evaluation" | "not_evaluable";
+  can_persist_scenario_state: false;
+  blockers: Array<{ metric_id: string; reason: string }>;
+  selected_inputs: Record<string, unknown>;
+  note: string;
 };
 
 export type ResearchScore = {
@@ -52,6 +60,7 @@ export type AssetDetailResponse = {
   research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
+  scenario_readiness?: BtcScenarioReadiness;
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
   monitoring_signals: MonitoringSignal[]; monitoring_events: Array<Record<string, unknown>>;
   sources: Array<{ source_id: string; name: string; source_type: string; base_url?: string | null; trust_level?: string | null }>;
