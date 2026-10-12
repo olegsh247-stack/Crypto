@@ -61,17 +61,21 @@ export function assessBtcScenarioReadiness(observations, now = new Date()) {
     };
   }
 
-  const etfRows = rows
+  const allEtfRows = rows
     .filter(row => row?.metric_id === "institutional.etf_net_flow")
-    .filter(row => validObservation(row, nowMs, 168))
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at));
-  const latestEtf = etfRows[0];
-  if (!latestEtf || nowMs - dateMs(latestEtf.observed_at) > 48 * 3600000) {
+  const latestEtf = allEtfRows[0];
+  if (!latestEtf
+      || !validObservation(latestEtf, nowMs, 168)
+      || nowMs - dateMs(latestEtf.observed_at) > 48 * 3600000) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
-      reason: "latest_observation_must_be_within_48_hours",
+      reason: "latest_observation_must_be_current_traceable_and_within_48_hours",
     });
   }
+  // Never silently fall back to an older valid flow row when the latest source row is stale,
+  // malformed, future-dated, or otherwise fails the freshness/provenance gate.
+  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 168));
   const uniqueByDay = new Map();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.observed_at)).toISOString().slice(0, 10);
