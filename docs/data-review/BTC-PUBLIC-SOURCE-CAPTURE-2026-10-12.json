@@ -172,7 +172,10 @@
         "The latest session is 2026-10-09 and fails the 36-hour freshness gate at capture time.",
         "TFTC lineage mixes SoSoValue aggregates and Farside issuer-history; Oct 7 differs from Farside's rounded aggregate by about -2.17 million USD.",
         "The candidate source is registered in repository files but has not been registered in the live production database or added to metric source_priority."
-      ]
+      ],
+      "five_session_sum_usd_million": -681.100293265,
+      "farside_displayed_five_session_sum_usd_million": -678.9,
+      "sum_delta_vs_farside_usd_million": -2.200293265
     }
   ],
   "overall_readiness": "not_evaluable",
