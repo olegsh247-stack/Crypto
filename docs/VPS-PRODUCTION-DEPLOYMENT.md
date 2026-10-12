@@ -43,6 +43,23 @@ curl --fail --silent --show-error "https://${CADDY_DOMAIN}/api/db-health"
 
 Also verify the API asset/pair contracts and the BTC research response. Check that port 5432 is not listening on the public interface and that only the intended public API route is reachable. Inspect Worker logs; the first scheduled run should be at the next configured UTC occurrence, not immediately after startup.
 
+## Local backup schedule
+
+Create the configured host directory with restrictive permissions before enabling the timer:
+
+```bash
+sudo install -d -m 700 -o root -g root /var/backups/crypto
+docker compose --env-file vps/.env.production -f vps/docker-compose.production.yml --profile ops run --rm backup
+sudo install -m 644 vps/systemd/crypto-backup.service /etc/systemd/system/crypto-backup.service
+sudo install -m 644 vps/systemd/crypto-backup.timer /etc/systemd/system/crypto-backup.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now crypto-backup.timer
+systemctl list-timers crypto-backup.timer
+```
+
+The timer runs at 02:00 UTC with a small randomized delay and retains 14 days by default. Test the service manually and verify the generated checksum/archive before enabling the timer. This is a **local VPS backup only**; configure an encrypted independent off-host copy and test restoration before production cutover.
+
+
 ## Data and backups
 
 This Compose file defines persistence volumes but does not, by itself, provide an off-host backup or a proven restore. Configure encrypted off-host backups and perform a restore test before production cutover. Use the gated migration runbook for the Neon dump, target restore, row-count/integrity comparison, final write freeze, acceptance, and rollback conditions.
