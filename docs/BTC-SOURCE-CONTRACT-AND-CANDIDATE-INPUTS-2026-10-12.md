@@ -64,3 +64,37 @@ For each candidate observation, require all of the following:
 - DXY source contract remains open and blocks the scenario input contract.
 - Spot price, hashrate and fee/subsidy ratio still need actual timestamped, source-linked payloads validated against their canonical units and freshness windows.
 - Do not calculate scenario probabilities, write scenario state, update monitoring timestamps, or touch production until all required inputs pass and the user explicitly approves any write operation.
+
+## Follow-up verification — 2026-10-12
+
+### DXY source decision
+
+The exact named benchmark is ICE U.S. Dollar Index (symbol DXY), administered by ICE Data Indices. ICE documents intraday, daily, delayed and historical delivery through its licensed products, including ICE Data API and ICE Data Files:
+- Official product/specification: https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices
+- ICE licensing information: https://www.ice.com/iba/about
+
+This resolves the identity of the benchmark, but **does not resolve permission or a usable endpoint for this project**. ICE describes licensed delivery and requires an appropriate licence for use/redistribution of its benchmarks. No ICE credential, licence, or approved feed is established in the repository. Therefore DXY remains blocked for automated ingestion; do not scrape a chart, infer a value from futures, or silently replace DXY with a different dollar index. To close the contract, either establish permitted access to the exact DXY series or explicitly approve a metric/methodology change.
+
+### Actual payload validation status
+
+The public endpoint documentation supports the intended adapter design:
+- Kraken Trades endpoint: https://api.kraken.com/0/public/Trades?pair=XBTUSD — trade rows include individual prices and Unix timestamps; preserve raw pair, raw response and selected trade timestamp.
+- Mempool hashrate endpoint: https://mempool.space/api/v1/mining/hashrate/1m — preserve the source's period/aggregation and response timestamps; do not label a period average as an instantaneous measurement.
+- Mempool fee series: https://mempool.space/api/v1/mining/blocks/fees/24h
+- Mempool reward series: https://mempool.space/api/v1/mining/blocks/rewards/24h
+
+The API JSON response bodies were not captured in an auditable form during this verification. Consequently **no current spot price, hashrate, or fee/subsidy ratio is accepted into the candidate package**. The endpoint URLs and their documentation are not substitutes for the raw observations. No value or retrieval timestamp has been fabricated. For the ratio, collect fee and total reward observations for the same 24-hour window, retain both components and calculate fees / (total_reward - fees); reject the result if the source windows, units, or timestamps cannot be reconciled.
+
+### Candidate snapshot manifest and duplicate policy
+
+The companion file data/CryptoDataModel/candidates/btc-input-snapshot-2026-10-12.json is an explicitly incomplete, read-only manifest. It includes only the transcribed ETF daily totals and marks raw payload fingerprints/retrieval timestamps as unavailable where they were not captured. Missing required inputs remain missing; the file is not an ingestion payload and must not be applied to a database.
+
+Duplicate review remains bounded to available evidence:
+- The Farside page rows listed above have one row per period date in the inspected table.
+- This is not a live database duplicate audit. The earlier repository audit identified 9 logical-key duplicate groups (18 rows); none is deleted or reconciled by this work.
+- Candidate logical key: asset_id + metric_id + source_id + period_start. Same-key identical payloads should be classified as exact duplicates; same-key differing values or fingerprints are revisions/conflicts requiring explicit review, never silent overwrite.
+- A source correction must preserve the prior revision and record the revised source value/fingerprint and retrieval time. A blank/unreported source cell is a missing observation, not zero.
+
+### Gate result
+
+As of this review, the BTC input contract is **not complete**: current timestamped Kraken/Mempool payloads have not been captured and validated; DXY access is not licensed/confirmed; and the latest reported Farside flow remains outside the 36-hour freshness gate. Therefore there is no complete candidate input set and no scenario evaluation should run yet. No database writes, migrations, scenario-state writes, monitoring changes, production deployment, or merge were performed.
