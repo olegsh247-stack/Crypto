@@ -272,3 +272,34 @@ Evidence: [VPS Build Rehearsal #38286251489](https://github.com/olegsh247-stack/
 - Confirmation/invalidation rules and monitoring event contract; no live scenario-state or event persistence until reviewed gates pass.
 
 The detailed BTC factor-to-input mapping and acceptance gates are in [BTC-MONITORING-READINESS-MATRIX.md](./BTC-MONITORING-READINESS-MATRIX.md). No production data, schema or public routing was changed by this follow-up.
+
+
+## Current-main verification update — 2026-10-13
+
+**Evidence baseline:** current target-stack Build Rehearsal [#458](https://github.com/olegsh247-stack/Crypto/actions/runs/38309007906) passed against commit `dca1b3b78552b43246f05be8cf7c9c17b92bd56b`. The test database was disposable PostgreSQL; no production observations were refreshed.
+
+### Verified by the current-main rehearsal
+
+- Clean PostgreSQL bootstrap and safe migration rerun completed; the canonical BTC input registry contract passed.
+- Read-only BTC provenance audit and duplicate/idempotency rehearsal completed.
+- Backup/restore rehearsal completed.
+- API contract, mutation boundary, Worker ingestion, offline contract invariants, BTC research evidence/snapshot lineage, persisted history/candle finalization, and admin boundary E2E all passed.
+- These results validate the repository target implementation in CI, not the currently serving public endpoint or a deployed VPS.
+
+### Current disposition by contour area
+
+| Area | Current evidence | Status |
+|---|---|---|
+| API / database / migration contract | Current-main rehearsal passed clean bootstrap, API contract and boundary E2E. | CI verified; live endpoint not verified. |
+| Worker / ingestion | Current-main Worker ingestion E2E and migration/rehearsal checks passed. | CI verified; deployed runtime not verified because VPS is not provisioned. |
+| Domains / factors / scores | Disposable-PostgreSQL API E2E checks active published snapshot scope. | CI verified; live data payload still unverified. |
+| Scenarios / snapshot lineage | E2E checks scenario definitions and active snapshot lineage; clean BTC rehearsal has no evaluated scenario state. | CI verified; no scenario state is fabricated. |
+| Monitoring / events | API and offline invariants passed; scenario/monitoring-event persistence is not used to make the clean baseline appear current. | CI verified; production freshness and live event semantics remain unverified. |
+| Evidence / source registry | E2E checks evidence lineage and source registry coverage. | CI verified; underlying production observations still require provenance/freshness review. |
+| Web / API response typing | The current Web type for `research_progress` still differs from the API's `status, completed, resolved, total, percentage` shape. PR #73 contains a focused fix and passed its recorded checks, but its branch is stale relative to current main. | OPEN; compare/rebase and validate before merge. A current-main Web build is not covered by Build Rehearsal #458. |
+
+### Blocking live-data findings — not accepted
+
+The read-only source-data audit dated 2026-10-12 recorded spot price, hashrate and ETF net flow as stale; fee/subsidy ratio and DXY as missing; and nine duplicate logical-key groups / eighteen rows. These are historical audit results and must be refreshed before any input acceptance. They are not repaired by a green CI run.
+
+The actual public endpoint has not been verified through this audit path, and the target VPS does not yet exist. Stage 3 therefore remains **IN PROGRESS**. Do not proceed to visual redesign, scenario persistence, production ingestion or asset expansion on the strength of CI alone.
