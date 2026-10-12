@@ -9,8 +9,9 @@ const env={DATABASE_URL:process.env.DATABASE_URL??"",BTC_OBSERVATION_INGESTION_E
 async function run(){
   try{
     const result=await runScheduledIngestion(env);
-    console.log(JSON.stringify({status:"ok",service:"crypto-worker-vps",...result}));
-    return true;
+    const partial=(result as any).btc_observations?.status==="partial";
+    console.log(JSON.stringify({status:partial?"partial":"ok",service:"crypto-worker-vps",...result}));
+    return !partial;
   }catch(error){
     console.error(JSON.stringify({status:"error",service:"crypto-worker-vps",error:error instanceof Error?error.message:"worker_failed"}));
     return false;
