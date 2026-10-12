@@ -15,11 +15,11 @@ This document is an execution tracker, not approval to modify the currently serv
 |---|---|---|---|
 | API runtime | `vps/api` Node.js HTTP server | Complete contract parity, security, lifecycle and history E2E | In progress |
 | Database driver | `vps/shared/src/db.ts` PostgreSQL pool | Target code scan confirms standard PostgreSQL pool only; retain bounded pool and graceful shutdown | Passed |
-| Scheduled worker | `vps/worker` | Verify UTC schedule, no overlapping runs, idempotency and monitoring gate | Local E2E exists; repeat in release gate |
-| Database schema | PostgreSQL SQL schema and versioned migrations | Moved to `infrastructure/postgres/`; preserve migration order and checksums | Done; CI recheck pending |
+| Scheduled worker | `vps/worker` | Verify UTC schedule, no overlapping runs, idempotency and monitoring gate | VPS Release Gate passed |
+| Database schema | PostgreSQL SQL schema and versioned migrations | Moved to `infrastructure/postgres/`; preserve migration order and checksums | Done; VPS Build Rehearsal passed |
 | Local migration runner | `scripts/migrate-postgres.sh` | Sole runner is `scripts/migrate-postgres.sh`; duplicate runner removed | Done; CI recheck pending |
-| Compose | `vps/docker-compose.production.yml` | Keep DB/API/worker private; expose only Caddy 80/443; validate backups and restore | CI rehearsal exists |
-| CI release gate | `release-gate.yml` | Run VPS build, disposable PostgreSQL migration, backup/restore, API and worker E2E only | Updated; CI verification running |
+| Compose | `vps/docker-compose.production.yml` | Keep DB/API/worker private; expose only Caddy 80/443; validate backups and restore | VPS Release Gate passed |
+| CI release gate | `release-gate.yml` | Run VPS build, disposable PostgreSQL migration, backup/restore, API and worker E2E only | Updated; VPS Release Gate passed |
 | Deployment | VPS SSH/deploy path | Build immutable image, backup, migrate, health check, API E2E, UI E2E, rollback | Not enabled until VPS exists |
 | Production health | Manual GET-only check | Require the actual VPS API URL; never fall back to a hard-coded legacy endpoint | Updated |
 | Secrets | GitHub Actions and host runtime | Inventory names only; provision VPS credentials after host purchase; rotate admin token; never commit values | Pending host |
@@ -43,7 +43,7 @@ These changes do not switch the public production endpoint or mutate production 
 
 1. Complete final repository-wide scan of source imports, package manifests, runtime entrypoints, schedule config, workflow calls, environment variables, secret references, docs, and URLs.
 2. Re-run CI after the schema/migration move and verify clean PostgreSQL 16 bootstrap twice.
-3. Complete API and worker E2E entirely against disposable PostgreSQL; verify backup checksum and restore counts.
+3. API and worker E2E against disposable PostgreSQL, backup checksum, restore, table counts, and web build passed in [VPS Release Gate #38272645153](https://github.com/olegsh247-stack/Crypto/actions/runs/38272645153). Repeat after future runtime changes.
 4. Finish BTC's complete product scenario and evidence contracts on the target API; do not expand to more assets yet.
 5. After the user purchases the VPS: secure SSH/firewall, configure DNS and Caddy, create least-privilege DB roles, configure off-host backups and deploy secrets.
 6. Take a final source database dump, restore it to the VPS, compare schema, row counts, constraints, registries, candles, research, evidence, scenarios, and monitoring.
