@@ -56,8 +56,7 @@ Do not add ingestion to the release workflow. Release and scheduled ingestion re
 
 - Exact before/after values for any pre-existing candle rows updated by upsert.
 - Independent parity of the three completed candles (2026-10-09, 10, 11) against the source's historical response at the time of ingestion. The current DB values and OHLCV structure are available, but no before-image/source-response archive was found in the incident log.
-- Current live Worker/API health and the API's handling of the in-progress 2026-10-12 candle.
-- Current live Worker/API health and the cron configuration active on the deployed Worker; the repository now consistently specifies daily at 00:30 UTC, but production has not yet been redeployed to confirm it.
+- Current live Worker/API health, the API's handling of the in-progress 2026-10-12 candle, and the cron configuration active on the deployed Worker. The repository now consistently specifies daily at 00:30 UTC, but production has not yet been redeployed to confirm it.
 
 Do **not** roll back migrations, delete rows, rewrite candle values, or rerun ingestion as a repair without identifying exact records and agreeing on a correction. The evidence so far does not establish corruption, but it also does not prove complete row-level correctness.
 
