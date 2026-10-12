@@ -85,3 +85,8 @@ The published snapshot `BTC-2026-10-07-v1` still has 15 evidence rows covering a
 ### Decision
 
 BTC scenario readiness is **BLOCKED**, not ready for rule evaluation. Next: obtain current, source-verifiable inputs; define and approve fee/subsidy and DXY metric contracts; then prepare a separate duplicate-reconciliation plan. Do not insert candidate values, change freshness flags, delete duplicate rows or persist a scenario state as part of this audit.
+
+
+## Source acquisition next step
+
+Candidate providers, sample observations, provenance requirements and the unresolved DXY/ETF/fee methodology decisions are tracked in [BTC Input Source Review — 2026-10-12](./BTC-INPUT-SOURCE-REVIEW-2026-10-12.md). The listed values are not approved inputs and must not be inserted into production.
