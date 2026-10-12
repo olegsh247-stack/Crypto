@@ -98,7 +98,7 @@ This document records findings and a plan only. It does not authorize code fixes
 The current `vps/worker/src/scheduler.ts` parses the `Intl.DateTimeFormat` offset with this regular expression:
 
 ```ts
-/^GMT([+-])(\\\\d{2}):(\\\\d{2})$/
+/^GMT([+-])(\d{2}):(\d{2})$/
 ```
 
 The pattern contains doubled backslashes in the regular-expression literal, so it looks for a literal backslash followed by `d` instead of matching numeric digits. For an offset such as `GMT+01:00`, the match fails and the code falls back to zero offset. During British Summer Time this shifts the intended London-midnight candle boundary to UTC midnight (one hour early). This is a concrete target-Worker defect, not merely a choice between UTC and London calendar semantics.
