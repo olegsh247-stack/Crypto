@@ -5,7 +5,7 @@
 **Актуальность снимка:** 13 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Проверенный SHA `main` на 2026-10-13:** `dca1b3b78552b43246f05be8cf7c9c17b92bd56b`  
+**Проверенный SHA `main` на 2026-10-13:** `b9f9b8d1913280e789488607b003153d7c9b8cb8`  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -17,7 +17,7 @@
 
 **Обязательный порядок приоритетов:**
 
-1. **Hosting architecture и зависимости** — завершить карту Neon/Cloudflare и связанных интеграций; отделить факты репозитория от внешнего состояния аккаунтов и работающего публичного endpoint.
+1. **Hosting architecture и зависимости** — закрепить self-hosted целевую архитектуру в репозитории и CI. Внешнюю проверку Cloudflare/GitHub App/DNS вести отдельно и не блокировать разработку продуктового пути BTC; закрыть её до отключения legacy-сервиса или cutover.
 2. **Сверка всех открытых PR с `main`** — установить, что уже реализовано, что дублируется, что устарело, что действительно нужно; ничего автоматически не объединять и не закрывать.
 3. **Полный Product Contour v1 audit** — проверить фактические контракты API, Web, Worker, источников, факторов, scores, сценариев, monitoring и Evidence на актуальном коде и доступных read-only данных.
 4. **Один полный воспроизводимый сценарий BTC** — только после проверки происхождения, свежести, единиц, временных интервалов, revision/lineage и конфликтов входов. Сначала offline/read-only воспроизведение. Не создавать автоматически состояние сценария или monitoring event.
@@ -527,10 +527,12 @@ The live GitHub query returned eight open PRs. Their ahead/behind counts below w
 
 ### Stage 3 — Product Contour v1 audit evidence
 
+**Update after main commit `b9f9b8d`:** Web build #137 and VPS Build Rehearsal #468 both passed. The Web/API `research_progress` declaration is now aligned. This closes the specific compile-time mismatch but does not close the full contour audit: metric-level freshness, current live payload, and evidence-backed data quality remain open.
+
 - Latest target-stack verification run [Build Rehearsal #462](https://github.com/olegsh247-stack/Crypto/actions/runs/38309250517) succeeded end-to-end after the Product Contour audit update. Its successful steps include: clean PostgreSQL bootstrap and migration rerun, canonical BTC input registry, read-only provenance audit, duplicate/idempotency rehearsal, backup/restore, API contract and mutation-contract E2E, Worker ingestion E2E, offline API invariants, BTC research evidence/snapshot lineage, persisted history/candle finalization and admin boundary E2E.
 - This is CI against disposable PostgreSQL and current repository code. It is not a live production API/DB verification and does not refresh production BTC observations.
 - Existing audit documentation still records BTC spot, hashrate and ETF flows as stale, fee/subsidy ratio and DXY as missing, and nine duplicate logical-key groups / eighteen rows from the 2026-10-12 read-only source audit. Those observations must be rechecked before use; duplicates are not authorized for deletion.
-- The API/Web `research_progress` response type discrepancy was corrected directly on current `main` in commit [`ee9614a`](https://github.com/olegsh247-stack/Crypto/commit/ee9614ab0f68ebde80fb9198f9c3b190fe63d5a7): Web now declares `resolved` and `percentage`, matching `calculateResearchStatus()` in the VPS API. The Web build triggered by this change is pending at the time of this update; do not mark the contract fully accepted until it passes. The live public endpoint is not reachable through the current audit path and the actual VPS has not been provisioned, so live payload/UI acceptance remains open.
+- The API/Web `research_progress` response type discrepancy was corrected on `main` in commit [`ee9614a`](https://github.com/olegsh247-stack/Crypto/commit/ee9614ab0f68ebde80fb9198f9c3b190fe63d5a7): Web declares `resolved` and `percentage`, matching the VPS API. The Web build passed in [Build Crypto Web #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055); VPS API Build Rehearsal passed in [#468](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894021). This resolves the type/build check for this mismatch. Live public endpoint payload and UI against real serving data remain unverified; no VPS has been provisioned.
 - No production writes, ingestion, migration, secret/DNS changes, deployments, traffic cutover, PR merge/closure, or history rewrite was performed by this reconciliation.
 
 
@@ -538,9 +540,9 @@ The live GitHub query returned eight open PRs. Their ahead/behind counts below w
 
 | Этап | Статус на 2026-10-13 | Следующее действие |
 |---|---|---|
-| 1. Hosting architecture | `IN PROGRESS / external checks BLOCKED` | Repo-side target stack and scanner verified in CI; [hosting dependency map](./HOSTING-DEPENDENCY-MAP-2026-10-13.md) is documented; public endpoint still not switched and VPS not provisioned. Need authorized account-level check for Cloudflare/GitHub App/legacy routing. |
+| 1. Hosting architecture | `REPO AUDIT ACCEPTED; cutover facts deferred` | Self-hosted target stack and scanner verified in CI. Cloudflare/GitHub App/legacy endpoint account-level inspection is deferred and does not block BTC product development; it remains required before disabling legacy resources or switching traffic. No VPS provisioned. |
 | 2. PR audit | `IN PROGRESS` | All 8 currently open PRs refreshed and reviewed for scope/checks; document per-PR disposition below. No PR merged or closed. Finish full patch overlap/base-ancestry reconciliation before recommending any merge. |
-| 3. Product Contour v1 | `IN PROGRESS` | Current-main Build Rehearsal [#465](https://github.com/olegsh247-stack/Crypto/actions/runs/38309458613) passes the disposable PostgreSQL target-stack rehearsal. The Web/API `research_progress` type mismatch has been corrected on `main` in commit [`ee9614a`](https://github.com/olegsh247-stack/Crypto/commit/ee9614ab0f68ebde80fb9198f9c3b190fe63d5a7); the resulting Web build is pending. Live public endpoint payload remains unverified, and no actual VPS has been provisioned. |
+| 3. Product Contour v1 | `IN PROGRESS` | The latest relevant main checks passed: [Web build #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055), [VPS Build Rehearsal #468](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894021), and [Release Gate #193](https://github.com/olegsh247-stack/Crypto/actions/runs/38310847972). The progress type/build mismatch is fixed. Continue with remaining freshness/type/data lineage checks; live endpoint payload is not verifiable until the legacy endpoint is available through an approved read-only path or VPS is provisioned. |
 | 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Проверить raw artifact, источники, freshness, units, duplicates и manifest. |
 | 5. BTC reproducible scenario | `BLOCKED` | Не начинать до закрытия входных blockers и contract audit. |
 | 6. BTC end-to-end acceptance | `NOT STARTED` | После воспроизводимой оценки. |
