@@ -1,8 +1,0 @@
-name = "crypto-api"
-main = "src/index.ts"
-compatibility_date = "2026-09-20"
-# Local/nested config mirrors the production daily schedule.
-# Production deployment is configured from the repository root.
-
-[triggers]
-crons = ["30 0 * * *"]
