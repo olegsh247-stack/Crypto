@@ -24,14 +24,16 @@ This document is an execution tracker, not approval to modify the currently serv
 | Production health | Manual GET-only check | Require the actual VPS API URL; never fall back to a hard-coded legacy endpoint | Updated |
 | Secrets | GitHub Actions and host runtime | Inventory names only; provision VPS credentials after host purchase; rotate admin token; never commit values | Pending host |
 | Frontend | `web/` | Keep API base configurable; verify same-origin/CORS and production build | Build gate retained |
-| Legacy runtime code/config | `workers/`, root runtime config and old package | Remove after VPS acceptance and verified cutover; no new features there | Pending cutover |
+| Previous runtime source/config | Removed from the repository; the already-deployed public service has not yet been switched | Do not deploy to or mutate the old service; complete target-host migration and controlled cutover after VPS purchase | Source cleanup done; cutover pending |
 | Documentation | `docs/`, `README.md`, infrastructure notes | Make current run instructions VPS-only; remove obsolete docs and all retired-platform mentions in final cleanup | In progress |
 
 ## Completed in this batch
 
 - Replaced the manual production release gate with a VPS-only build and test gate.
 - Made the VPS rehearsal reusable by the release gate.
-- Removed old workflows that could migrate production data, deploy the old runtime, seed production, or validate against the old live database.
+- Removed old workflows that could mutate production data, deploy the former runtime, seed production, or validate against the old live database.
+- Removed the former runtime source, package dependency, and deployment configuration from the current repository tree.
+- Moved the canonical schema, seed, and all versioned migrations into `infrastructure/postgres/`; the single supported runner is `scripts/migrate-postgres.sh`.
 - Changed the read-only health workflow to require an explicitly supplied target API URL.
 - Added static workflow validation and fixed ShellCheck warnings discovered by it.
 
@@ -51,4 +53,4 @@ These changes do not switch the public production endpoint or mutate production 
 
 ## Safety boundary
 
-Until the target host exists and the data copy is accepted, do not delete the only available production data source, change production secrets, run production ingestion for tests, or switch public traffic. All rehearsal tests use disposable PostgreSQL. The final goal remains full removal, not indefinite coexistence.
+The target host has not yet been purchased, so the public endpoint is still the already-deployed service and has not been switched. Do not change its secrets, run production ingestion for tests, or switch public traffic. All rehearsal tests use disposable PostgreSQL. The next production-changing step is a controlled data export/restore and cutover after the target host exists.
