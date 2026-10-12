@@ -3,9 +3,17 @@ import assert from "node:assert/strict";
 import { assessBtcScenarioReadiness } from "./btc-scenario-readiness.mjs";
 
 const now = new Date("2026-10-12T12:00:00.000Z");
+const units = {
+  "market.spot_price": "USD/BTC",
+  "security.hashrate": "EH/s",
+  "security.fee_subsidy_ratio": "ratio",
+  "macro.dxy": "index",
+  "institutional.etf_net_flow": "USD million/day",
+};
 const row = (metric_id, observed_at, value_numeric = 1) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
   source_id: "source.test", source_url: "https://example.com/data",
+  source_registered: true, unit: units[metric_id],
 });
 
 function completeInputs() {
@@ -86,4 +94,21 @@ test("untraceable observations are rejected", () => {
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"));
+});
+
+
+test("unregistered source cannot pass even with an HTTPS URL", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "security.hashrate"
+    ? { ...x, source_registered: false } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "security.hashrate" && x.reason === "source_not_registered"));
+});
+
+test("non-canonical unit cannot pass readiness", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, unit: "USDT/BTC" } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price" && x.reason === "unit_mismatch"));
 });
