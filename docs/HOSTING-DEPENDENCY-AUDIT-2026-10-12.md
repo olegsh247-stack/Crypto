@@ -89,3 +89,20 @@ The retired edge-runtime platform and hosted database are not part of the desire
 ## Change control
 
 This document records findings and a plan only. It does not authorize code fixes, PR merges, production queries/writes, migrations, secret changes, deployment, DNS changes, or deletion of any hosted service or database.
+
+
+## Additional code-review finding — Worker London-day boundary
+
+**Status: confirmed from source; fix not applied pending approval.**
+
+The current `vps/worker/src/scheduler.ts` parses the `Intl.DateTimeFormat` offset with this regular expression:
+
+```ts
+/^GMT([+-])(\\\\d{2}):(\\\\d{2})$/
+```
+
+The pattern contains doubled backslashes in the regular-expression literal, so it looks for a literal backslash followed by `d` instead of matching numeric digits. For an offset such as `GMT+01:00`, the match fails and the code falls back to zero offset. During British Summer Time this shifts the intended London-midnight candle boundary to UTC midnight (one hour early). This is a concrete target-Worker defect, not merely a choice between UTC and London calendar semantics.
+
+The inspected VPS Build Rehearsal exercises ingestion and idempotency but does not assert the London boundary across GMT/BST transitions; no dedicated scheduler test file was found at the checked conventional paths. The current successful gate therefore does not establish this conversion is correct.
+
+**Required next action:** add a minimal unit-level regression test for representative winter and summer dates and both DST transition boundaries, verify the expected UTC instants, then propose a narrow source-and-test patch on a branch based on current `main`. No runtime code was changed in this audit. Do not merge the stale scheduler PR as a substitute for a focused fix.
