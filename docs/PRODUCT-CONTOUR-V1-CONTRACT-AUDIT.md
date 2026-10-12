@@ -162,3 +162,30 @@ The Asset Dashboard referenced an undefined `confidence` variable although the s
 - Does not create `scenario_states` or `monitoring_events` rows and does not modify production data.
 - The qualitative BTC evidence chain must not be presented as fresh quantitative monitoring.
 - Remaining P1/P2 findings—factor/score snapshot scoping, broader source registry completeness, freshness contract consistency and live payload audit—remain open for the full contour audit.
+
+
+## Follow-up implementation — 2026-10-12: snapshot lineage and monitoring semantics
+
+The static API audit confirmed these contract gaps in the main branch:
+
+- Critical factors and scores were queried by asset only, allowing records from older published snapshots to be mixed with the current snapshot.
+- Scenario states were queried by asset and observation time only, allowing a state from an older snapshot to appear current.
+- The top-level source registry included observation-linked sources only, although Evidence can reference sources directly.
+- Scheduled market ingestion advanced every active monitoring signal's `last_updated_at` even though it did not evaluate those signals. That falsely represented ingestion as monitoring evaluation.
+
+The audit-fix branch changes the queries to scope factors, scores and scenario states to the latest published snapshot; includes sources referenced by either observations or evidence; and stops advancing monitoring timestamps during ingestion. Research freshness can still move to `outdated` when a persisted review deadline has actually passed.
+
+A dedicated `worker-build.yml` workflow performs a Wrangler dry-run build for pull requests without deploying. Production release is manual-dispatch only after safety PR #17.
+
+### Release-gate incident record
+
+On 2026-10-12, merging Web code triggered the former automatic Release Gate. The production migration runner reported the latest migration markers as already applied and skipped them. The subsequent live scheduled-ingestion E2E nevertheless ran with the production database URL after the deployment-secret step failed. Logs show fresh market candles for the nine enabled non-quote assets and `monitoring_refresh=1`; this means candle upserts and monitoring timestamps were changed. The Worker deployment itself did not occur because secret configuration failed. No blind rollback was attempted.
+
+Safety PR #17 removed the automatic push trigger and removed live-database scheduled ingestion from the release workflow. Scheduled-ingestion/idempotency tests belong to the disposable-PostgreSQL rehearsal. No further production release run should be started without explicit approval.
+
+### Remaining audit scope
+
+- Validate the API query changes and Worker bundle in CI.
+- Confirm the live BTC/ETH/SOL/CAKE payload contract through an approved read-only route; this environment cannot directly reach the public API endpoint.
+- Verify the freshness response types and UI parity.
+- Keep the BTC Base scenario labeled as a published research baseline until a snapshot-linked evaluated state and deterministic input rule exist.
