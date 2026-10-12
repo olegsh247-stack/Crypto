@@ -6,6 +6,7 @@ on:
       - ".github/workflows/deploy-crypto-api.yml"
       - ".github/workflows/release-gate.yml"
       - ".github/workflows/validate-release-workflow.yml"
+      - ".github/workflows/production-readonly-health.yml"
   push:
     branches:
       - main
@@ -13,6 +14,7 @@ on:
       - ".github/workflows/deploy-crypto-api.yml"
       - ".github/workflows/release-gate.yml"
       - ".github/workflows/validate-release-workflow.yml"
+      - ".github/workflows/production-readonly-health.yml"
 
 permissions:
   contents: read
@@ -31,4 +33,4 @@ jobs:
           go-version: "stable"
 
       - name: Lint release workflow definitions
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/deploy-crypto-api.yml .github/workflows/release-gate.yml .github/workflows/validate-release-workflow.yml
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/deploy-crypto-api.yml .github/workflows/release-gate.yml .github/workflows/validate-release-workflow.yml .github/workflows/production-readonly-health.yml
