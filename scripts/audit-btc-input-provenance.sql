@@ -78,6 +78,59 @@ GROUP BY metric_id, observed_at, source_id, period_start, period_end, revision
 HAVING count(*) > 1
 ORDER BY observed_at DESC, metric_id;
 
+\echo 'Duplicate BTC observation rows with full payload/provenance (read-only; review before any cleanup):'
+WITH duplicate_keys AS (
+  SELECT
+    metric_id, asset_id, source_id, observed_at, period_start, period_end, revision,
+    count(*) AS group_row_count,
+    count(DISTINCT jsonb_build_object(
+      'value_numeric', value_numeric, 'value_integer', value_integer,
+      'value_boolean', value_boolean, 'value_text', value_text,
+      'value_json', value_json, 'unit', unit, 'source_url', source_url,
+      'methodology', methodology, 'status', status, 'freshness', freshness
+    )::text) AS distinct_payloads
+  FROM observations
+  WHERE asset_id = 'btc'
+  GROUP BY metric_id, asset_id, source_id, observed_at, period_start, period_end, revision
+  HAVING count(*) > 1
+)
+SELECT
+  o.observation_id,
+  o.metric_id,
+  o.asset_id,
+  o.value_numeric,
+  o.value_integer,
+  o.value_boolean,
+  o.value_text,
+  o.value_json,
+  o.unit,
+  o.observed_at,
+  o.period_start,
+  o.period_end,
+  o.source_id,
+  o.source_url,
+  o.methodology,
+  o.status,
+  o.freshness,
+  o.revision,
+  o.created_at,
+  d.group_row_count,
+  d.distinct_payloads,
+  CASE WHEN d.distinct_payloads = 1
+       THEN 'EXACT_DUPLICATE_REVIEW_CANDIDATE'
+       ELSE 'CONFLICTING_DUPLICATE_REVIEW_REQUIRED'
+  END AS review_class
+FROM observations o
+JOIN duplicate_keys d
+  ON o.metric_id = d.metric_id
+ AND o.asset_id IS NOT DISTINCT FROM d.asset_id
+ AND o.source_id = d.source_id
+ AND o.observed_at IS NOT DISTINCT FROM d.observed_at
+ AND o.period_start IS NOT DISTINCT FROM d.period_start
+ AND o.period_end IS NOT DISTINCT FROM d.period_end
+ AND o.revision = d.revision
+ORDER BY o.metric_id, o.observed_at DESC, o.created_at, o.observation_id;
+
 \echo 'Current published snapshot evidence/monitoring coverage:'
 WITH current_snapshot AS (
   SELECT snapshot_id

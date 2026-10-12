@@ -28,7 +28,7 @@ The same command can be run against source and restored target; save each output
 
 - `BLOCKED_*` means that the latest row for that required metric fails at least one individual gate.
 - `INDIVIDUAL_INPUT_CHECKS_PASS` is not proof that the complete scenario is evaluable: the ETF series still needs five distinct days and a latest point within 48 hours, and derived values must use consistent UTC windows.
-- Duplicate logical keys are evidence to reconcile, not permission to delete rows. Compare payload, revision, provenance, and source timestamps before deciding on a repair.
+- Duplicate logical keys are evidence to reconcile, not permission to delete rows. Compare payload, revision, provenance, and source timestamps before deciding on a repair. The audit prints every row in each duplicate group with observation ID, full value fields, unit, source URL, status, freshness, revision, created timestamp, and a review class distinguishing identical payloads from conflicts. It never chooses or deletes a survivor.
 - Evidence count/coverage is distinct from live scenario evaluation. A published qualitative evidence row does not imply a current numeric input or a snapshot-linked scenario state.
 - This audit does not authorize scenario-state persistence or monitoring-event creation.
 

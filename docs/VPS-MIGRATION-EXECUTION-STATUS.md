@@ -71,3 +71,11 @@ The target host has not yet been purchased, so the public endpoint is still the 
 - The PostgreSQL rehearsal now uses a Docker-assigned ephemeral loopback port, avoiding fixed-port collisions between concurrent workflows. The Build Rehearsal passed after this change: [run 38286818304](https://github.com/olegsh247-stack/Crypto/actions/runs/38286818304).
 - A read-only BTC input provenance audit is available at `scripts/audit-btc-input-provenance.sql`. It reports freshness, source links, duplicate logical keys and snapshot/monitoring coverage without modifying data. Compare its output before and after a future database restore.
 - Production readiness remains blocked on the real host and data: the VPS has not been provisioned, numeric BTC observations need source-verified refresh/reconciliation, and no live scenario-state or monitoring-event row may be fabricated to make the dashboard appear current.
+
+
+## BTC data-integrity follow-up — 2026-10-12
+
+- The BTC readiness gate now requires canonical registry-backed sources and exact units, and the latest VPS Build Rehearsal passed after the change: [run 38287989090](https://github.com/olegsh247-stack/Crypto/actions/runs/38287989090). Unit and Web builds also passed: [readiness tests](https://github.com/olegsh247-stack/Crypto/actions/runs/38287989009), [Web build](https://github.com/olegsh247-stack/Crypto/actions/runs/38287989006).
+- PR #62 merged as `763e4750e129ae7d961a4f452927fbeada7253d1`. The API does not treat an HTTPS URL alone as provenance: the source must exist in the registry, and both the stored unit and the metric registry's canonical unit must match the readiness contract.
+- The next safe data-integrity step is to expose full payloads for the known duplicate BTC observation groups so exact duplicates can be distinguished from conflicting revisions before designing any cleanup. The enhanced audit remains read-only; no observation rows have been changed.
+- A legacy external build check still appears on commits even though the target repository workflows are VPS-only. Its failed build is outside the VPS test pipeline; disconnecting the obsolete repository integration remains a final retirement task. Do not shut down the currently serving public API before VPS cutover approval.
