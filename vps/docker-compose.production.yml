@@ -33,6 +33,25 @@ services:
     networks:
       - backend
 
+  backup:
+    image: postgres:16
+    profiles: ["ops"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ../scripts/backup-postgres.sh:/repo/scripts/backup-postgres.sh:ro
+      - ${BACKUP_DIR_HOST:?Set BACKUP_DIR_HOST in .env.production}:/backups
+    working_dir: /repo
+    command: ["bash", "scripts/backup-postgres.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
   api:
     build:
       context: .

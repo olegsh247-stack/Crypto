@@ -45,7 +45,7 @@ jobs:
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
-          docker compose --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
+          docker compose --profile ops --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
           python3 - <<'PY'
           import json
           config=json.load(open('/tmp/crypto-production-compose.json'))
@@ -53,6 +53,8 @@ jobs:
           assert not services['postgres'].get('ports'), services['postgres'].get('ports')
           assert not services['api'].get('ports'), services['api'].get('ports')
           assert not services['worker'].get('ports'), services['worker'].get('ports')
+          assert not services['backup'].get('ports'), services['backup'].get('ports')
+          assert 'ops' in services['backup'].get('profiles',[]), services['backup'].get('profiles')
           caddy_ports={str(p['published']) for p in services['caddy'].get('ports',[])}
           assert {'80','443'} <= caddy_ports, caddy_ports
           assert services['worker']['environment']['WORKER_SCHEDULE_UTC']=='00:30'

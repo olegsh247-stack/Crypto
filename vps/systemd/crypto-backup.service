@@ -1,0 +1,10 @@
+[Unit]
+Description=Crypto PostgreSQL backup
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/crypto
+ExecStart=/usr/bin/docker compose --env-file vps/.env.production -f vps/docker-compose.production.yml --profile ops run --rm backup
