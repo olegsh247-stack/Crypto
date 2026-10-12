@@ -42,13 +42,20 @@ Queries were executed against the existing Neon `Crypto` project, default `produ
 - All 13 non-disabled monitoring signals (7 `active`, 6 `watch`) currently have `last_updated_at=2026-10-12 12:57:52.197804+00`. Their stored values are descriptive thesis text, and `previous_value` is null. No rows were found in `observations` created during the incident window, and no `monitoring_events` rows were found in that window.
 - The schema's `market_daily_candles` table has `created_at` but no `updated_at`. Therefore the current table can identify the 36 new rows but cannot identify every pre-existing row that may have been overwritten by an upsert or recover its before-image. Current values cannot be declared fully correct solely from structural checks.
 - The migration ledger was inspected read-only. No migration rollback or schema mutation was performed.
-- A direct independent live API health check has **not** been confirmed. The public endpoint was inaccessible from the available web fetch path; that is not evidence by itself that the Worker is down.
+- A direct independent live API health check has **not** been confirmed. The public endpoint was inaccessible from the available web fetch path and DNS lookup from the current environment failed; that is not evidence by itself that the Worker is down.
+
+### Additional deployment configuration finding
+
+The release workflow deploys from the repository root (`workingDirectory: "."`), and the Worker dry-run build also uses the root `wrangler.toml`. That file sets the cron to `30 0 * * *` (daily at 00:30 UTC). The nested `workers/crypto-api/wrangler.toml` sets `0 * * * *` (hourly). These schedules disagree.
+
+The root configuration was introduced with the commit message “add daily market ingestion schedule”; the nested schedule was added later with a commit message referring to “daily market ingestion”, but its cron expression is hourly. The repo therefore does not provide a consistent single source of truth for the intended cadence. **No cron schedule was changed as part of this incident fix.** Since the failed Gate never deployed, the currently active production schedule also has not been independently confirmed. Resolve the intended cadence and consolidate the configuration before the next approved deployment; do not silently switch production from daily to hourly (or vice versa).
 
 ### What remains unknown
 
 - Exact before/after values for any pre-existing candle rows updated by upsert.
 - Independent parity of the three completed candles (2026-10-09, 10, 11) against the source's historical response at the time of ingestion. The current DB values and OHLCV structure are available, but no before-image/source-response archive was found in the incident log.
 - Current live Worker/API health and the API's handling of the in-progress 2026-10-12 candle.
+- Intended scheduled ingestion cadence and the cron configuration currently active on the deployed Worker.
 
 Do **not** roll back migrations, delete rows, rewrite candle values, or rerun ingestion as a repair without identifying exact records and agreeing on a correction. The evidence so far does not establish corruption, but it also does not prove complete row-level correctness.
 
@@ -56,10 +63,11 @@ Do **not** roll back migrations, delete rows, rewrite candle values, or rerun in
 
 1. Preserve the merged workflow hardening: no runtime secret mutation and no ingestion in the production release workflow.
 2. Keep the successful static validation as the CI baseline; validate any further workflow changes without triggering production release.
-3. Verify current Worker health and API behavior through an independent read-only request path.
-4. Inspect and document the current candle source parity, especially completed dates 2026-10-09 through 2026-10-11. If historical before-images are unavailable, record that limitation rather than guessing or reverting.
-5. Ensure API responses distinguish the in-progress 2026-10-12 candle from finalized daily candles; do not alter production data as part of this check.
-6. Only after these checks, explicitly authorize a manual production release. That release must not run ingestion as a side effect and must end with live API and read-only contract verification.
+3. Resolve the single source of truth for the Worker cron cadence before the next deployment; no schedule change is authorized by this audit.
+4. Verify current Worker health and API behavior through an independent read-only request path.
+5. Inspect and document current candle source parity, especially completed dates 2026-10-09 through 2026-10-11. If historical before-images are unavailable, record that limitation rather than guessing or reverting.
+6. Ensure API responses distinguish the in-progress 2026-10-12 candle from finalized daily candles; do not alter production data as part of this check.
+7. Only after these checks, explicitly authorize a manual production release. That release must not run ingestion as a side effect and must end with live API and read-only contract verification.
 
 ## Architecture boundary
 
