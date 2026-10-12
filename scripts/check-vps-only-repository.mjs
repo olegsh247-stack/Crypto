@@ -9,7 +9,7 @@ const forbidden = [
   ["N", "ton"].join(""),
   ["wrang", "ler"].join(""),
   ["workers", ".dev"].join(""),
-  ["@", "neondatabase/serverless"].join("")
+  ["@ne", "ondatabase/serverless"].join("")
 ].map((value) => value.toLowerCase());
 const ignoredDirs = new Set([".git", "node_modules", ".next", ".vercel", "coverage"]);
 const violations = [];
