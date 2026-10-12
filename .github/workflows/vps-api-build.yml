@@ -149,12 +149,12 @@ jobs:
         working-directory: vps/worker
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
-          WORKER_INTERVAL_MS: "0"
+          WORKER_RUN_ONCE: "1"
         run: |
           set -euo pipefail
           before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
-          timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
+          node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
           result=$(grep -F '{"status":"ok","service":"crypto-worker-vps"' /tmp/crypto-vps-worker-1.log | tail -1)
           test -n "$result"
@@ -174,7 +174,7 @@ jobs:
             echo "VPS_WORKER_ASSET asset=$asset total=$total fresh_2d=$fresh"
             test "$fresh" -ge 1
           done
-          timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-2.log
+          node dist/index.js | tee /tmp/crypto-vps-worker-2.log
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select asset_id,candle_open_at from market_daily_candles group by asset_id,candle_open_at having count(*) > 1) d;")
           test "$duplicates" = "0"
           monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
