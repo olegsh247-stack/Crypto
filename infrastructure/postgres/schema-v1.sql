@@ -1,5 +1,5 @@
 -- CryptoDataModel v1 — PostgreSQL schema
--- Target: Neon Postgres
+-- Target: PostgreSQL Postgres
 -- Source of truth remains the normalized observation model.
 
 create extension if not exists pgcrypto;
