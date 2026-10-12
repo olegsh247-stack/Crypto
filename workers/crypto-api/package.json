@@ -1,8 +1,0 @@
-{
-  "name": "crypto-api",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@neondatabase/serverless": "^1.1.0"
-  }
-}
