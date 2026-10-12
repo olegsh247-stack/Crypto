@@ -28,6 +28,9 @@ jobs:
       - name: Build VPS worker
         working-directory: vps/worker
         run: npm install && npm run build
+      - name: Test VPS Worker London day boundaries
+        working-directory: vps/worker
+        run: npm test
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
