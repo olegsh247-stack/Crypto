@@ -191,16 +191,34 @@ jobs:
           VPS_API_URL: http://127.0.0.1:8080
         run: node scripts/vps-api-parity.mjs
 
-      - name: VPS API persisted history after ingestion E2E
+      - name: VPS API persisted history and candle finalization E2E
         run: |
           set -euo pipefail
           curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          curl -fsS -o /tmp/eth.json http://127.0.0.1:8080/api/assets/eth
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/history.json'))
-          assert d.get('status')=='ok', d
-          assert len(d.get('rows',[]))>0, d
-          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
+          from datetime import datetime, timezone
+          history=json.load(open('/tmp/history.json'))
+          asset=json.load(open('/tmp/eth.json'))
+          assert history.get('status')=='ok', history
+          rows=history.get('rows',[])
+          assert rows, history
+          candles=asset.get('history',[])
+          assert candles, asset
+          now=datetime.now(timezone.utc)
+          finalized_times=set()
+          for candle in candles:
+              close_at=datetime.fromisoformat(candle['candle_close_at'].replace('Z','+00:00'))
+              expected=close_at <= now
+              assert candle.get('is_finalized') is expected, candle
+              if expected:
+                  finalized_times.add(datetime.fromisoformat(candle['candle_open_at'].replace('Z','+00:00')).isoformat())
+          assert finalized_times, candles
+          for row in rows:
+              row_time=datetime.fromisoformat(row['time'].replace('Z','+00:00')).isoformat()
+              assert row_time in finalized_times, row
+          print(f"VPS_API_HISTORY_OK rows={len(rows)} candles={len(candles)} finalized={len(finalized_times)} in_progress={sum(1 for c in candles if c.get('is_finalized') is False)}")
           PY
       - name: VPS admin boundary E2E
         run: |
