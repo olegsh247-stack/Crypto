@@ -1,4 +1,4 @@
-import { createSqlClient } from "@crypto/vps-runtime";
+import { closePool, createSqlClient } from "@crypto/vps-runtime";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
@@ -107,11 +107,15 @@ async function refreshMonitoring(sql:any){
 export async function runScheduledIngestion(env:WorkerEnv){
   if(!env.DATABASE_URL)return {assets:0,successful:0,written:0};
   const sql=createSqlClient(env.DATABASE_URL);
-  const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
-  const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
-  const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
-  if(successfulIngestion.length>0){
-    try{await refreshMonitoring(sql);}catch{}
+  try {
+    const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
+    const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
+    const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+    if(successfulIngestion.length>0){
+      try{await refreshMonitoring(sql);}catch{}
+    }
+    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0)};
+  } finally {
+    await closePool();
   }
-  return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0)};
 }
