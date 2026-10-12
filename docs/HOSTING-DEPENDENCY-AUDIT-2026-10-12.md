@@ -218,3 +218,24 @@ The project owner inspected the Cloudflare dashboard for Worker `crypto-api` and
 4. Do not enable the Worker, delete it, change the secret, edit routes/DNS, or switch traffic as part of this audit. First inspect the deployment status and Domains & Routes, then establish whether the public API resolves to this Worker and where its `DATABASE_URL` points, without exposing the secret value.
 
 This evidence narrows the external blocker but does not close it. Cloudflare account state is now **partially evidenced**; active deployment/route state and runtime-to-database mapping remain unknown. No Cloudflare settings were changed by this audit.
+
+
+## Follow-up — Cloudflare URL and deployment-history evidence (2026-10-12)
+
+The owner inspected the Worker URL and deployment/build history in the Cloudflare dashboard and supplied these details:
+
+- Production URL: `https://crypto-api.olegsh247.workers.dev`; the dashboard says anyone with this URL can visit.
+- Preview URL pattern: `https://*-crypto-api.olegsh247.workers.dev`; the dashboard also says anyone with this URL can visit.
+- The visible deployment-history rows show nine Wrangler entries marked **Manually deployed**, all dated approximately four hours earlier, each displaying `100%`. The pasted view does not identify which version is currently active, nor does it provide a stable active-deployment identifier/rollback target.
+- Several Cloudflare Build rows are marked **Skipped** (not Failed): the London boundary regression rehearsal on branch `fix/worker-london-day-boundary-2026-10-12`; two BTC ETF/source changes on `main`; and BTC observation idempotency changes on `feat/btc-observation-idempotency-guard-v2`. These skipped rows do not establish that the Worker runtime is stopped or that the corresponding code is deployed.
+- This is consistent with a public Worker URL still being configured, but does not prove whether requests currently reach a working deployment or which deployment is serving them.
+
+### Interpretation and remaining verification
+
+1. **Do not click “Enable Access” or change access settings as part of this audit.** The visible wording indicates the Production and Preview URLs are currently publicly reachable by URL; whether that is intended must be decided separately.
+2. The list of historical manual deployments is not enough to identify the current production version. Need the dashboard's explicit **Active** deployment/details (version ID, creation time, traffic allocation and rollback target). If the UI only shows a list, open the deployment detail for the one explicitly marked active/current; do not guess based on time or commit.
+3. **Domains & Routes** is still unverified beyond the two `workers.dev` URL patterns. This does not reveal custom domains, route mappings or whether another edge route fronts the public API.
+4. The Worker has a Production `DATABASE_URL` secret, but the secret value must not be copied or exposed. Its database target is not established by the dashboard label alone. Verify only through safe metadata/configuration and read-only health/parity evidence.
+5. The Worker remains a legacy public endpoint pending a verified cutover. Do not delete it, alter its access, rotate secrets, disable triggers, or switch traffic until the self-hosted target, backup/restore, data parity, rollback and explicit approval gates are satisfied.
+
+**Disposition:** hosting audit remains **BLOCKED** on active deployment identity, full route mapping, secret target/usage, and live public API-to-runtime-to-database mapping. No settings, access controls, secrets, deployments, traffic, DNS, migrations or database records were changed by this pass.
