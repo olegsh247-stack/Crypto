@@ -1,0 +1,190 @@
+{
+  "schema_version": "1.0.0",
+  "asset_id": "btc",
+  "snapshot_id": "btc-input-snapshot-2026-10-12",
+  "review_date": "2026-10-12",
+  "purpose": "Read-only candidate manifest for source-contract and input-quality review; not an ingestion payload.",
+  "write_authorized": false,
+  "scenario_evaluation_authorized": false,
+  "retrieval_timestamp_utc": null,
+  "raw_payload_fingerprint": null,
+  "completeness": "incomplete",
+  "required_inputs": [
+    {
+      "metric_id": "market.spot_price",
+      "source_id": "market.kraken",
+      "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+      "unit": "USD/BTC",
+      "expected_unit": "USD/BTC",
+      "value": null,
+      "observed_at": null,
+      "retrieved_at": null,
+      "raw_payload_fingerprint": null,
+      "status": "blocked_payload_not_captured",
+      "notes": "Do not substitute ticker fetch time for a trade timestamp. Preserve raw XBT pair and selected trade row."
+    },
+    {
+      "metric_id": "security.hashrate",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/hashrate/1m",
+      "unit": "EH/s",
+      "expected_unit": "EH/s",
+      "value": null,
+      "observed_at": null,
+      "retrieved_at": null,
+      "raw_payload_fingerprint": null,
+      "status": "blocked_payload_not_captured",
+      "notes": "Preserve returned averaging period and unit/scale; no value accepted without raw response."
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/blocks/fees/24h",
+      "companion_source_url": "https://mempool.space/api/v1/mining/blocks/rewards/24h",
+      "unit": "ratio",
+      "expected_unit": "ratio",
+      "value": null,
+      "observed_at": null,
+      "retrieved_at": null,
+      "raw_payload_fingerprint": null,
+      "status": "blocked_components_not_captured",
+      "formula": "fees / (total_reward - fees)",
+      "formula_version": null,
+      "window": "24h (must be identical for both components)",
+      "notes": "Requires matched source windows and auditable raw fee/reward components."
+    },
+    {
+      "metric_id": "macro.dxy",
+      "source_id": "macro.primary",
+      "source_url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices",
+      "unit": "index",
+      "expected_unit": "index",
+      "value": null,
+      "observed_at": null,
+      "retrieved_at": null,
+      "raw_payload_fingerprint": null,
+      "status": "blocked_license_and_endpoint_unconfirmed",
+      "notes": "ICE U.S. Dollar Index is the exact named benchmark; no project licence, credential, or approved feed established. Do not substitute another index."
+    }
+  ],
+  "historical_candidate_series": {
+    "metric_id": "institutional.etf_net_flow",
+    "source_id": "institutional.primary",
+    "source_url": "https://farside.co.uk/btc/",
+    "unit": "USD million/day",
+    "expected_unit": "USD million/day",
+    "period_semantics": "US trading-day date from source table; separate from retrieval time",
+    "retrieved_at": null,
+    "raw_payload_fingerprint": null,
+    "status": "historical_candidates_only_latest_fails_freshness",
+    "observations": [
+      {
+        "period_start": "2026-09-28",
+        "value": 31,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-09-29",
+        "value": 66.2,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-09-30",
+        "value": -148.7,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-01",
+        "value": 102.7,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-02",
+        "value": 189.9,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-05",
+        "value": -89.8,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-06",
+        "value": 118.8,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-07",
+        "value": -484.9,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-08",
+        "value": -244.1,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      },
+      {
+        "period_start": "2026-10-09",
+        "value": 21.1,
+        "source_status": "reported",
+        "observed_at": null,
+        "revision": null
+      }
+    ],
+    "excluded_rows": [
+      {
+        "period_start": "2026-10-12",
+        "displayed_total": 0,
+        "value": null,
+        "source_status": "unreported_placeholder",
+        "reason": "Fund-level cells are blank; displayed 0.0 is not accepted as a measured zero."
+      }
+    ],
+    "freshness_gate": {
+      "max_age_hours": 36,
+      "latest_reported_period": "2026-10-09",
+      "eligible_as_of_review": false
+    }
+  },
+  "duplicate_review": {
+    "source_table_period_date_duplicates_found": 0,
+    "scope": "Inspected Farside table only; not a database audit.",
+    "previously_identified_database_duplicate_groups": 9,
+    "previously_identified_rows_in_groups": 18,
+    "automatic_deletion_or_reconciliation": false,
+    "proposed_logical_key": [
+      "asset_id",
+      "metric_id",
+      "source_id",
+      "period_start"
+    ],
+    "policy": "Identical same-key payloads are exact duplicates; differing same-key values/fingerprints are revisions or conflicts requiring review. Never silently overwrite."
+  },
+  "decision": "not_evaluable",
+  "blockers": [
+    "No auditable current Kraken trade payload captured.",
+    "No auditable current Mempool hashrate payload captured.",
+    "Fee and total-reward components for a matched window not captured.",
+    "DXY ICE access licence and approved endpoint/feed unconfirmed.",
+    "Latest reported ETF flow is outside the 36-hour freshness gate.",
+    "Retrieval timestamps and payload fingerprints are absent from this snapshot."
+  ]
+}
