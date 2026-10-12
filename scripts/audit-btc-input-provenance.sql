@@ -1,12 +1,12 @@
 \echo 'BTC_INPUT_PROVENANCE_AUDIT — READ ONLY; no rows are inserted, updated, or deleted.'
 \echo 'Required input freshness/source inventory (limits aligned to metric-registry.json; ETF count is distinct recent days):'
-WITH required(metric_id, label, max_age_hours) AS (
+WITH required(metric_id, label, max_age_hours, expected_unit) AS (
   VALUES
-    ('market.spot_price', 'BTC spot price', 1),
-    ('security.hashrate', 'Network hashrate', 48),
-    ('security.fee_subsidy_ratio', 'Fee/subsidy ratio', 48),
-    ('macro.dxy', 'DXY macro proxy', 48),
-    ('institutional.etf_net_flow', 'US spot BTC ETF net flow', 36)
+    ('market.spot_price', 'BTC spot price', 1, 'USD/BTC'),
+    ('security.hashrate', 'Network hashrate', 48, 'EH/s'),
+    ('security.fee_subsidy_ratio', 'Fee/subsidy ratio', 48, 'ratio'),
+    ('macro.dxy', 'DXY macro proxy', 48, 'index'),
+    ('institutional.etf_net_flow', 'US spot BTC ETF net flow', 36, 'USD million/day')
 ),
 btc_observations AS (
   SELECT o.*
@@ -52,6 +52,8 @@ SELECT
   CASE WHEN l.observed_at IS NULL THEN 'BLOCKED_MISSING'
        WHEN l.observed_at > now() THEN 'BLOCKED_FUTURE_TIMESTAMP'
        WHEN l.freshness <> 'CURRENT' THEN 'BLOCKED_NOT_CURRENT'
+       WHEN l.value_numeric IS NULL AND l.value_integer IS NULL THEN 'BLOCKED_MISSING_NUMERIC_VALUE'
+       WHEN l.unit IS DISTINCT FROM r.expected_unit THEN 'BLOCKED_UNIT_MISMATCH'
        WHEN l.source_url IS NULL OR btrim(l.source_url) = '' THEN 'BLOCKED_NO_SOURCE_URL'
        WHEN NOT EXISTS (SELECT 1 FROM sources s WHERE s.source_id = l.source_id) THEN 'BLOCKED_UNREGISTERED_SOURCE'
        WHEN now() - l.observed_at > make_interval(hours => r.max_age_hours) THEN 'BLOCKED_STALE'
