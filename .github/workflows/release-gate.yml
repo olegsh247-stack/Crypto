@@ -1,9 +1,20 @@
-name: Crypto Release Gate
+name: Crypto VPS Release Gate
 
-# Production migration/deploy gate is intentionally manual.
-# Pull requests and ordinary pushes must use disposable-database validation only.
+# This gate is safe before a VPS is purchased: it builds and tests the target
+# stack only. It does not deploy, mutate production data, or use production secrets.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "vps/**"
+      - "shared/**"
+      - "web/**"
+      - "infrastructure/**"
+      - "scripts/migrate-postgres.sh"
+      - "scripts/backup-postgres.sh"
+      - ".github/workflows/release-gate.yml"
+      - ".github/workflows/vps-api-build.yml"
 
 permissions:
   contents: read
@@ -13,25 +24,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  migrate:
-    name: 1. Database migration and contract gate
-    uses: ./.github/workflows/apply-neon-v2.yml
-    secrets: inherit
+  vps-api:
+    name: VPS API, worker, PostgreSQL, backup and E2E
+    uses: ./.github/workflows/vps-api-build.yml
 
-  build-web:
-    name: 2. Web build gate
-    needs: migrate
+  web:
+    name: Web build
+    needs: vps-api
     uses: ./.github/workflows/web-build.yml
-    secrets: inherit
-
-  deploy-api:
-    name: 3. Worker deploy and live E2E gate
-    needs: build-web
-    uses: ./.github/workflows/deploy-crypto-api.yml
-    secrets: inherit
-
-  ui-runtime-e2e:
-    name: 4. UI runtime contract E2E
-    needs: deploy-api
-    uses: ./.github/workflows/ui-runtime-e2e.yml
-    secrets: inherit
