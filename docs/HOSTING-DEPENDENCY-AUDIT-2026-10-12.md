@@ -93,7 +93,7 @@ This document records findings and a plan only. It does not authorize code fixes
 
 ## Additional code-review finding — Worker London-day boundary
 
-**Status: confirmed from source; fix not applied pending approval.**
+**Status: defect confirmed; narrow fix implemented and validated in [PR #71](https://github.com/olegsh247-stack/Crypto/pull/71), pending review/merge.**
 
 The current `vps/worker/src/scheduler.ts` parses the `Intl.DateTimeFormat` offset with this regular expression:
 
@@ -105,4 +105,4 @@ The pattern contains doubled backslashes in the regular-expression literal, so i
 
 The inspected VPS Build Rehearsal exercises ingestion and idempotency but does not assert the London boundary across GMT/BST transitions; no dedicated scheduler test file was found at the checked conventional paths. The current successful gate therefore does not establish this conversion is correct.
 
-**Required next action:** add a minimal unit-level regression test for representative winter and summer dates and both DST transition boundaries, verify the expected UTC instants, then propose a narrow source-and-test patch on a branch based on current `main`. No runtime code was changed in this audit. Do not merge the stale scheduler PR as a substitute for a focused fix.
+**Follow-up completed in PR #71:** six regression tests cover winter, summer, both DST transition dates, and the days immediately after. The focused Worker patch and test step are on a branch based on current `main`; VPS Build Rehearsal and workflow static validation passed. The PR remains unmerged and no production deployment occurred. Do not merge the stale scheduler PR as a substitute for the focused fix.
