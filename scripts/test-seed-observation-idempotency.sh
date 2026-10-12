@@ -3,7 +3,7 @@ set -euo pipefail
 
 : "${DATABASE_URL:?DATABASE_URL must point to a disposable PostgreSQL database}"
 
-seed_file="infrastructure/neon/seed-v1.sql"
+seed_file="infrastructure/postgres/seed-v1.sql"
 psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --file="$seed_file"
 
 target_count() {
