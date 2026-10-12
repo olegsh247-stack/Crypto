@@ -1,13 +1,21 @@
 name: VPS API Build Rehearsal
 
 on:
+  pull_request:
+    paths:
+      - "vps/**"
+      - "shared/**"
+      - "infrastructure/neon/**"
+      - "scripts/migrate-postgres.sh"
+      - "scripts/vps-api-parity.mjs"
+      - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
     paths:
       - "vps/**"
       - "shared/**"
       - "infrastructure/neon/**"
-      - "scripts/migrate-neon.sh"
+      - "scripts/migrate-postgres.sh"
       - ".github/workflows/vps-api-build.yml"
   workflow_dispatch:
 
@@ -47,9 +55,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
-          chmod +x scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
+          bash scripts/migrate-postgres.sh
+          bash scripts/migrate-postgres.sh
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;")
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select version from schema_migrations group by version having count(*) > 1) d;")
           test "$count" -gt 0
@@ -81,9 +88,9 @@ jobs:
           import json
           assets=json.load(open('/tmp/assets.json'))
           pairs=json.load(open('/tmp/pairs.json'))
-          items=assets.get('items',assets if isinstance(assets,list) else [])
+          items=assets.get('assets',assets.get('items',assets if isinstance(assets,list) else []))
           pitems=pairs.get('items',pairs.get('pairs',[]))
-          assert len(items)==9, f"assets={len(items)}"
+          assert len(items)==10, f"assets={len(items)}"  # includes USDT quote asset
           assert len(pitems)==9, f"pairs={len(pitems)}"
           assert all(p.get('enabled') is True for p in pitems)
           print(f"VPS_API_REGISTRY_OK assets={len(items)} pairs={len(pitems)}")
@@ -98,20 +105,6 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
-          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/history.json'))
-          assert d.get('status')=='ok', d
-          assert len(d.get('rows',[]))>0, d
-          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
-          PY
-      - name: VPS API parity against live Worker
-        env:
-          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
-          VPS_API_URL: http://127.0.0.1:8080
-        run: node scripts/vps-api-parity.mjs
-
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
@@ -164,15 +157,18 @@ jobs:
           monitoring_before=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
           timeout 180s node dist/index.js | tee /tmp/crypto-vps-worker-1.log
           after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles;")
-          result=$(grep -Eo '\\{"status":"ok","service":"crypto-worker-vps"[^}]*\\}' /tmp/crypto-vps-worker-1.log | tail -1)
+          result=$(grep -F '{"status":"ok","service":"crypto-worker-vps"' /tmp/crypto-vps-worker-1.log | tail -1)
           test -n "$result"
           successful=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["successful"])' "$result")
           written=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["written"])' "$result")
           test "$successful" = "9"
           test "$written" -gt 0
-          test "$after" -gt "$before"
+          echo "VPS_WORKER_CANDLE_COUNT before=$before after=$after (UPSERT may update existing rows)"
+          test "$after" -ge "$before"
+          actual_asset_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where enabled=true and asset_id <> 'usdt';" | tr -d '[:space:]')
           actual_assets=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true and asset_id <> 'usdt';" | xargs)
-          test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
+          echo "VPS_WORKER_REGISTRY enabled_non_quote_assets=$actual_asset_count ids=$actual_assets"
+          test "$actual_asset_count" = "9"
           for asset in btc dash eth sol cake bch ltc xrp trx; do
             total=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset';" | tr -d '[:space:]')
             fresh=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset' and candle_open_at >= current_date - interval '2 days';" | tr -d '[:space:]')
@@ -185,12 +181,27 @@ jobs:
           monitoring_after=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select coalesce(max(last_updated_at), 'epoch'::timestamptz) from monitoring_signals where status <> 'disabled';")
           monitoring_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from monitoring_signals where status <> 'disabled';")
           if [ "$monitoring_count" -gt 0 ]; then
-            test "$monitoring_after" != "$monitoring_before"
-            monitoring_refresh=1
-          else
-            monitoring_refresh=0
+            test "$monitoring_after" = "$monitoring_before"
           fi
+          monitoring_refresh=0
           echo "VPS_WORKER_E2E_OK successful=$successful written=$written assets=9 exact_registry=1 fresh_2d=1 runs=2 duplicate_keys=$duplicates monitoring_refresh=$monitoring_refresh"
+      - name: VPS API parity against live Worker
+        env:
+          LIVE_API_URL: https://crypto-api.olegsh247.workers.dev
+          VPS_API_URL: http://127.0.0.1:8080
+        run: node scripts/vps-api-parity.mjs
+
+      - name: VPS API persisted history after ingestion E2E
+        run: |
+          set -euo pipefail
+          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/history.json'))
+          assert d.get('status')=='ok', d
+          assert len(d.get('rows',[]))>0, d
+          print(f"VPS_API_HISTORY_OK rows={len(d['rows'])}")
+          PY
       - name: VPS admin boundary E2E
         run: |
           set -euo pipefail

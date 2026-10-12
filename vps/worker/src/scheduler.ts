@@ -1,4 +1,4 @@
-import { neon } from "@crypto/vps-runtime";
+import { closePool, createSqlClient } from "@crypto/vps-runtime";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
@@ -97,21 +97,24 @@ function coingeckoDaily(rows:any[]){
  return [...byDay.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 
-async function refreshMonitoring(sql:any){
- await sql`update monitoring_signals set last_updated_at=now() where status <> 'disabled'`;
- await sql`update research_status set status='outdated',reason='Scheduled monitoring refresh: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
+async function refreshResearchReviewStatus(sql:any){
+ await sql`update research_status set status='outdated',reason='Scheduled ingestion review: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
 }
 
 
 
 export async function runScheduledIngestion(env:WorkerEnv){
   if(!env.DATABASE_URL)return {assets:0,successful:0,written:0};
-  const sql=neon(env.DATABASE_URL);
-  const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
-  const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
-  const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
-  if(successfulIngestion.length>0){
-    try{await refreshMonitoring(sql);}catch{}
+  const sql=createSqlClient(env.DATABASE_URL);
+  try {
+    const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
+    const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
+    const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+    if(successfulIngestion.length>0){
+      try{await refreshResearchReviewStatus(sql);}catch{}
+    }
+    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0)};
+  } finally {
+    await closePool();
   }
-  return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0)};
 }
