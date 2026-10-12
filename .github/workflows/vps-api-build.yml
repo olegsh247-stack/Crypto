@@ -246,7 +246,31 @@ jobs:
           set -euo pipefail
           curl -fsS http://127.0.0.1:8080/api/health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; print("VPS_API_HEALTH_OK")'
           curl -fsS http://127.0.0.1:8080/api/db-health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; print("VPS_API_DB_HEALTH_OK")'
-          curl -fsS http://127.0.0.1:8080/api/assets/btc | python3 -c 'import json,sys; d=json.load(sys.stdin); a=d.get("asset",d); assert a.get("asset_id") == "btc", a; assert isinstance(d.get("research_blocks",[]), list), d; print("VPS_API_BTC_CONTRACT_OK")'
+          curl -fsS http://127.0.0.1:8080/api/assets/btc > /tmp/btc-contract.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/btc-contract.json'))
+          a=d.get('asset',d)
+          assert a.get('asset_id')=='btc', a
+          snapshot=d.get('research_snapshot')
+          assert snapshot and snapshot.get('snapshot_id')=='BTC-2026-10-07-v1', snapshot
+          sid=snapshot['snapshot_id']
+          blocks=d.get('research_blocks',[])
+          factors=d.get('critical_factors',[])
+          scores=d.get('scores',[])
+          scenarios=d.get('research_scenarios',[])
+          evidence=d.get('evidence')
+          assert len(blocks)==15, len(blocks)
+          assert len(factors)==6 and all(x.get('snapshot_id')==sid for x in factors), factors
+          assert len(scores)==5 and all(x.get('snapshot_id')==sid for x in scores), scores
+          assert len(scenarios)==3, scenarios
+          assert len(evidence)==15, len(evidence) if isinstance(evidence,list) else evidence
+          assert all(x.get('snapshot_id')==sid for x in evidence), evidence
+          source_ids={x.get('source_id') for x in d.get('sources',[])}
+          assert all(not x.get('source_id') or x['source_id'] in source_ids for x in evidence), source_ids
+          assert not d.get('scenario_states'), d.get('scenario_states')
+          print('VPS_API_BTC_CONTOUR_OK blocks=15 factors=6 scores=5 scenarios=3 evidence=15 snapshot_lineage=1')
+          PY
           curl -fsS 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=7&interval=1d' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; assert isinstance(d.get("rows"), list), d; print("VPS_API_HISTORY_CONTRACT_OK")'
 
       - name: VPS API persisted history and candle finalization E2E
