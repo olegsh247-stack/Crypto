@@ -1,12 +1,18 @@
-# INFRASTRUCTURE-PLAN-FINAL — аудит и решение по Cloudflare / Neon / VPS
+# INFRASTRUCTURE-PLAN-FINAL — обязательный переход на автономный VPS
 
-Статус: AUDIT BASELINE / MIGRATION PLAN
-Дата: 2026-10-06
+Статус: AUTHORITATIVE MIGRATION PLAN — PRIORITY 1
+Дата обновления: 2026-10-12
 Связан с: ПЛАН-ФИНАЛ — Full Audit & Repair
 
-## 0. Решение на этом этапе
+## ПРИОРИТЕТ № 1 — ПОЛНОСТЬЮ УБРАТЬ ВНЕШНИЕ RUNTIME/DATABASE-ПЛАТФОРМЫ
 
-**Не мигрировать прямо сейчас. Сначала зафиксировать инфраструктурный baseline и подготовить перенос.**
+**Обязательное целевое состояние репозитория Crypto: VPS + Docker Compose + PostgreSQL 16 + Caddy. В завершённом репозитории не должно остаться зависимостей от Cloudflare и Neon ни в коде, ни в конфигурациях, package manifests, workflows/secrets references, deployment, документации и инструкциях.**
+
+Это решение принято и не является предметом повторного обсуждения. Все остальные задачи выполняются с учётом этого приоритета. Переход проводится безопасно: сначала готовятся и тестируются VPS API/worker, PostgreSQL, миграции, backup/restore, CI/CD и rollback; затем выполняется контролируемый cutover; после проверки удаляются все оставшиеся legacy-компоненты и ссылки. До отдельного подтверждения не выполнять production cutover, не менять production secrets и не запускать production ingestion.
+
+## 0. Текущий baseline и обязательный результат
+
+Текущие компоненты перечислены ниже только для инвентаризации и удаления. Это не рекомендация их сохранять. Цель — полностью заменить их целевым VPS-стеком.
 
 По текущему репозиторию подтверждено:
 - API работает как Cloudflare Worker: `workers/crypto-api/wrangler.toml`.
@@ -15,9 +21,7 @@
 - Основная схема БД находится в `infrastructure/neon/migrations/`.
 - Текущий deployment/migration контур завязан на Cloudflare Workers + Neon PostgreSQL.
 
-**Предварительная рекомендация для личного проекта:** после полного аудита перейти на один VPS с Docker Compose и PostgreSQL, если VPS обеспечивает стабильные snapshots/backups. Это упростит архитектуру и снизит количество внешних инфраструктурных границ.
-
-Но перенос должен быть отдельным пакетным этапом после завершения текущего FULL AUDIT.
+**Решение окончательное: переход на VPS — приоритет № 1 и начинается сейчас параллельно с безопасной проверкой целевого runtime.** Product Contour v1 аудит продолжается после/параллельно с инфраструктурными работами без расширения числа активов.
 
 ---
 
@@ -441,23 +445,21 @@ Executable gated checklist: [`NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md`](./NEON-TO-
 
 ---
 
-## 15. Что НЕ делать
+## 15. Ограничения и порядок безопасного перехода
 
-Не делать сейчас:
-- не покупать VPS до завершения infrastructure inventory;
-- не переписывать API прямо сейчас;
-- не удалять Neon;
-- не удалять Cloudflare;
-- не менять database schema ради миграции;
+Не делать до готовности и явного подтверждения cutover:
+- не переключать production API на VPS вслепую;
+- не удалять текущий источник данных до проверки dump/restore и rollback;
+- не менять production secrets;
+- не запускать production ingestion для тестирования;
+- не менять database schema без необходимости.
 - не добавлять Redis без необходимости;
 - не усложнять Kubernetes;
 - не делать multi-server architecture.
 
 ---
 
-## 16. Migration Batch
-
-После FULL AUDIT создать отдельный batch:
+## 16. Migration Batch — PRIORITY 1, выполнять сейчас
 
 ### INFRA-BATCH-1
 
@@ -472,7 +474,8 @@ Executable gated checklist: [`NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md`](./NEON-TO-
 9. Smoke/E2E checks.
 10. Controlled cutover.
 11. Rollback window.
-12. Decommission Cloudflare/Neon только после подтверждения стабильности.
+12. Удалить все runtime-, database-, CI/CD-, config-, dependency- и documentation-ссылки на Cloudflare/Neon после успешного cutover и подтверждения rollback window.
+13. Провести финальный repository-wide scan: названия сервисов допустимы только в историческом incident/migration audit, если это нужно для аудита; в инструкциях актуального запуска, manifests, code, configs, workflows и active docs — ноль зависимостей.
 
 ---
 
