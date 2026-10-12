@@ -189,3 +189,58 @@ Safety PR #17 removed the automatic push trigger and removed live-database sched
 - Confirm the live BTC/ETH/SOL/CAKE payload contract through an approved read-only route; this environment cannot directly reach the public API endpoint.
 - Verify the freshness response types and UI parity.
 - Keep the BTC Base scenario labeled as a published research baseline until a snapshot-linked evaluated state and deterministic input rule exist.
+
+
+## Read-only BTC live-data audit — 2026-10-12
+
+The current BTC database contract was checked with SELECT-only queries. No data was modified by this audit.
+
+### Published research structure
+
+| Check | Result | Interpretation |
+|---|---:|---|
+| Published snapshot | `BTC-2026-10-07-v1` | One current published BTC research baseline |
+| Research blocks | 15/15 complete, 15 distinct block numbers | Structure 1 block coverage is complete |
+| Block-to-domain links | 15 | All blocks have a domain link |
+| Research domains | 6 | Expected domain universe present |
+| Critical factors | 6 on the active snapshot | Snapshot-linked |
+| Scores | 5 on the active snapshot | Snapshot-linked |
+| Scenario definitions | 3 | Bull / Base / Bear exist |
+| Scenario probabilities | 30% / 50% / 20% | Sum to 100% |
+| Evidence | 15 rows covering 15 blocks | Required observation/source/claim links present; no orphan observation links |
+| Monitoring signals | 7 | Qualitative baseline descriptions |
+| Scenario states | 0 | No evaluated scenario state exists |
+| Monitoring events | 0 | No event history exists |
+
+### Market observation quality
+
+- 33 observation rows across 21 distinct metric IDs.
+- 18 rows are marked `STALE`.
+- 2 rows have no `source_url`; both are duplicate circulating-supply observations.
+- 9 duplicate natural-key groups were found. Each group has two rows with identical payload/provenance and different row IDs. The groups cover four ETF-flow dates plus spot price, block subsidy, circulating supply, maximum supply and hash rate.
+- The newest observations are the qualitative research baseline at `2026-10-08T06:56:27Z`; key numeric market/network observations are from 2026-09-18/19 and marked stale.
+- Market candles were refreshed through 2026-10-12 during the release-workflow incident, but that does not refresh the separate `observations` records or prove monitoring evaluation.
+
+The persisted `research_status` is `current` with a next review date of 2026-11-07. This is a review-schedule state; it must not be read as proof that every metric is fresh.
+
+### Scenario readiness conclusion
+
+The published Base scenario is well-formed as a **research definition**: assumptions, invalidation conditions, probability and confidence exist. It is not yet an evaluated live scenario because:
+- there is no `scenario_states` row linked to `BTC-2026-10-07-v1`;
+- the scenario's `supporting_evidence` text is generic, while linked Evidence is qualitative baseline material;
+- market observations required to evaluate current macro/institutional/security conditions are stale;
+- no `monitoring_events` history exists.
+
+The dashboard therefore presents Base as a clearly labeled published research baseline. Do not synthesize a scenario-state row, a probability update, or an event from the available baseline.
+
+### Monitoring timestamp integrity after release-workflow incident
+
+The old release workflow's live scheduled-ingestion test updated BTC's monitoring signal `last_updated_at` values to approximately `2026-10-12T12:57:52Z` without evaluating signal conditions. These timestamps are not trustworthy as evidence of monitoring evaluation. No manual timestamp rollback was performed because it would not restore the prior state reliably. The code path was corrected to stop future ingestion runs from changing monitoring freshness; that change is in main but is not deployed to the live Worker.
+
+### Remaining BTC-only work
+
+1. Preserve and document the nine duplicate observation groups; do not delete them without a separate reviewed data-cleanup plan.
+2. Keep stale metric freshness visible; do not refresh values from guesses or unverified sources.
+3. Define a deterministic Base/Bull/Bear evaluation rule using only validated inputs and explicit freshness requirements.
+4. Only then create a snapshot-linked scenario-state record and evidence-backed event in a controlled, approved migration/release.
+5. Defer SOL/CAKE and broader research expansion until this BTC path is complete.
