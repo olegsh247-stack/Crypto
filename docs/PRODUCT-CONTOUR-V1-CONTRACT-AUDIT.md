@@ -249,3 +249,21 @@ The old release workflow's live scheduled-ingestion test updated BTC's monitorin
 ### Follow-up: seed idempotency
 
 PR #22 was merged after both the disposable PostgreSQL seed-idempotency rehearsal and the VPS API rehearsal passed. The seed now checks the logical key before inserting the targeted BTC numeric observations. It preserves existing records and revisions and does not clean up the nine existing duplicate groups. The production seed workflow is manual-only, so merging the seed change did not execute it against the live database.
+
+
+## Follow-up static contract findings — 2026-10-12
+
+The VPS API implementation was rechecked after the runtime migration. The dashboard already expects `evidence` and `sources`, but the VPS asset-detail handler did not return an `evidence` collection at all. It also returned critical factors and scores across all snapshots for an asset, and scenario states without limiting them to the active published snapshot.
+
+### Correction in review
+
+The associated API patch now:
+- returns evidence rows only for the latest published snapshot, with block/domain, observation metric/value/unit, source metadata, URL, confidence, signal, assessment, thesis impact, status and as-of timestamp;
+- builds the top-level source registry from both observation-linked sources and sources linked directly to evidence;
+- limits critical factors and scores to the latest published snapshot;
+- limits the asset-detail scenario-state collection to the same published snapshot, preventing old states from being presented alongside current definitions;
+- adds a disposable-PostgreSQL E2E assertion for BTC's 15 blocks, 6 factors, 5 scores, 3 scenario definitions, 15 evidence rows, and matching snapshot lineage.
+
+The test intentionally asserts **zero** scenario-state rows for the BTC seed baseline. The product contract must not fabricate a live state merely to fill the Scenarios section. The published Base definition remains a research baseline until a separately reviewed, traceable monitoring evaluation exists.
+
+This patch does not change schema, seed production data, refresh observations, create monitoring events, or persist scenario states. Acceptance depends on the VPS Build Rehearsal passing before merge.
