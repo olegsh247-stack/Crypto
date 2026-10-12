@@ -18,3 +18,7 @@ This branch aligns the Web asset-detail response types with the existing VPS API
 The checks are configured in GitHub Actions but must be observed on this PR before calling the patch validated. CI will build/test against repository code and an isolated runner; it is not a live public API or production deployment test.
 
 No database changes, migrations, production writes, UI redesign, deployment, or merge are included.
+
+## CI finding and correction
+
+The first Web build caught that the `web/lib/api.ts` edit had omitted existing pair/commodity helper exports (`getPairs`, `getPairHistory`, `getPairTicker`, `getCommodities` and related mutation helpers), breaking existing pages. Those exports and the `AssetTab` type have been restored on this branch in a follow-up commit. The initial API build and response contract test passed; the Web build must pass again on the updated head before this PR is considered validated.
