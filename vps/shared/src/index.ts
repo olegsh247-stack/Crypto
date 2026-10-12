@@ -17,3 +17,5 @@ export type {
   ResearchLifecycleStatus,
   ResearchFreshnessStatus
 } from "./research-status-contract.js";
+
+export { assessBtcScenarioReadiness } from "./btc-scenario-readiness.js";
