@@ -1,5 +1,5 @@
 -- CryptoDataModel v2 — Research Engine Layer
--- Safe additive migration on top of infrastructure/neon/schema-v1.sql.
+-- Safe additive migration on top of infrastructure/PostgreSQL/schema-v1.sql.
 -- No v1 table is dropped or renamed. Existing data is preserved.
 -- The caller controls the transaction so validation can run and roll back safely.
 
