@@ -26,7 +26,7 @@ counts AS (
   GROUP BY metric_id
 ),
 etf_days AS (
-  SELECT count(DISTINCT coalesce(period_start::date, observed_at::date)) AS distinct_current_days
+  SELECT count(DISTINCT coalesce(period_start::date, observed_at::date)) AS distinct_traceable_days
   FROM btc_observations
   WHERE metric_id = 'institutional.etf_net_flow'
     AND observed_at <= now()
@@ -45,10 +45,14 @@ SELECT
        ELSE round((extract(epoch FROM (now() - l.observed_at)) / 3600)::numeric, 2)
   END AS latest_age_hours,
   l.freshness AS latest_freshness,
+  l.unit AS latest_unit,
+  r.expected_unit,
+  (l.unit = r.expected_unit) AS unit_matches_contract,
+  (l.value_numeric IS NOT NULL OR l.value_integer IS NOT NULL) AS has_numeric_value,
   l.source_id AS latest_source_id,
   (l.source_url IS NOT NULL AND btrim(l.source_url) <> '') AS has_source_url,
   (l.source_id IS NOT NULL AND EXISTS (SELECT 1 FROM sources s WHERE s.source_id = l.source_id)) AS source_registered,
-  CASE WHEN r.metric_id = 'institutional.etf_net_flow' THEN (SELECT distinct_current_days FROM etf_days) ELSE NULL END AS distinct_current_etf_days_14d,
+  CASE WHEN r.metric_id = 'institutional.etf_net_flow' THEN (SELECT distinct_traceable_days FROM etf_days) ELSE NULL END AS distinct_traceable_etf_days_14d,
   CASE WHEN l.observed_at IS NULL THEN 'BLOCKED_MISSING'
        WHEN l.observed_at > now() THEN 'BLOCKED_FUTURE_TIMESTAMP'
        WHEN l.freshness <> 'CURRENT' THEN 'BLOCKED_NOT_CURRENT'
