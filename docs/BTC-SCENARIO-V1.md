@@ -137,3 +137,25 @@ The unit tests cover fresh traceable inputs, missing fee-market data, stale and 
 2. Specify and review the directional rule that maps those inputs to Bull/Base/Bear, including how contradictory inputs and invalidation events are handled.
 3. Validate the rule against fixtures and historical cases without writing to production.
 4. Only after those gates pass, plan the controlled persistence of a snapshot-linked scenario state and traceable monitoring events.
+
+
+## Source review for candidate input refresh — 2026-10-12
+
+This is a source review, not a production data update. The values below are candidate observations for the next controlled refresh; they have not been written to the database.
+
+| Input | Candidate value / state | Observation window | Source and limitation |
+|---|---|---|---|
+| BTC spot price | Approximately $82.9k–$83.5k across reports | 11–12 Oct | [Investing.com historical BTC prices](https://www.investing.com/crypto/bitcoin/historical-data?cid=1057388) reports 74,792.6 EUR for 12 Oct; [Barron's market coverage](https://www.barrons.com/livecoverage/stock-market-news-today-101226/card/one-year-since-crash-most-leverage-leaves-bitcoin-AWXLCRuorwMwWeGeKn2W) reports $83,450. Different currencies and observation times mean a canonical USD point still needs a timestamped exchange API observation. |
+| US spot BTC ETF net flow | +$21.1m on 9 Oct; October-to-date about −$386.3m through 9 Oct | 1–9 Oct trading sessions | [Farside Investors primary table](https://farside.co.uk/btc/) reports +102.7, +189.9, −89.8, +118.8, −484.9, −244.1 and +21.1 USD millions on the seven sessions shown. Flow data is daily, not continuous over weekends. |
+| Network hashrate | About 1,029 EH/s for 11 Oct; 7-day mean about 984 EH/s in the cited calculation | Completed UTC days through 11 Oct | [Mempool.space mining API documentation](https://mempool.space/fa/docs/api/rest) exposes network hashrate series. [Satoshi Gazette's dated calculation](https://satoshigazette.org/data/mining?end=2026-10-12&window=30) documents the source, daily window and smoothing method; use the raw API and record the calculation method in the observation. |
+| Fee/subsidy ratio | Candidate about 0.00413 (0.413%) | Recent 144 blocks, page checked 12 Oct | [Mempool.space mining dashboard](https://mempool.space/mining) reports average fees per block 0.0129 BTC; protocol subsidy is 3.125 BTC, so fees/subsidy = 0.0129 / 3.125. This is a short-window level, not by itself a trend or proof of long-term miner sustainability. |
+| DXY | 102.39 | 12 Oct | [Investing.com DXY historical data](https://www.investing.com/indices/usdollar-historical-data) reports 102.39 on 12 Oct. This is a secondary market-data source; the canonical ingestion policy should retain its timestamp and provenance. |
+
+### Implications for the input gate
+
+1. Existing stale database observations are not silently overwritten by this source review.
+2. The canonical metric ID for fee-market economics is `security.fee_subsidy_ratio` (already present in `metric_definitions`), not a new ad-hoc metric name.
+3. The current fee/subsidy ratio is only a point-in-time estimate. Directional evaluation should compare a consistent rolling series (for example, seven complete UTC days) and keep the methodology/version.
+4. The latest ETF-flow date found in Farside's table is 9 Oct. On 12 Oct this is still within the 48-hour gate, but the series has to be inserted with correct UTC dates, freshness, and source provenance before it can pass the database gate.
+5. Spot price requires a canonical USD exchange observation with an explicit timestamp. Do not turn a cross-source price range into one synthetic observation.
+6. Even when refreshed observations pass the quality gate, the directional Bull/Base/Bear scoring rule remains a separate review gate; no scenario state or probability update is authorized by this source review.
