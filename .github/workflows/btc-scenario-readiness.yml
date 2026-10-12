@@ -23,5 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build canonical shared readiness implementation
+        working-directory: vps/shared
+        run: npm install && npm run build
       - name: Test scenario input-quality and directional rules
         run: node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs
