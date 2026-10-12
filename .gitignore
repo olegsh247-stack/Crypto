@@ -5,16 +5,12 @@
 **/dist/
 **/build/
 **/coverage/
-**/.wrangler/
 
 # Local environment and credentials (keep example templates trackable)
 .env
 .env.*
 !.env.example
 !.env.*.example
-**/.dev.vars
-**/.dev.vars.*
-!**/.dev.vars.example
 
 # Logs and local OS files
 *.log
