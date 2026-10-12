@@ -21,14 +21,10 @@ jobs:
         working-directory: workers/crypto-api
         run: npm install --no-audit --no-fund
 
-      - name: Configure database secret
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-        run: |
-          test -n "$NEON_DATABASE_URL"
-          printf '%s' "$NEON_DATABASE_URL" | npx wrangler secret put DATABASE_URL --name crypto-api
+      # Preserve the already-configured runtime DATABASE_URL secret.
+      # Do not rewrite it from CI: Cloudflare rejected secret edits because the
+      # current Worker version was not deployed. Database-provider retirement is
+      # a separate migration; this deploy must not change runtime credentials.
 
       - name: Configure admin secret when available
         env:
@@ -85,8 +81,8 @@ jobs:
       # Scheduled-ingestion tests run only against disposable PostgreSQL in vps-api-build.yml.
       # Never execute ingestion against the production DATABASE_URL from a release workflow.
 
-      - name: Verify deployed Engine contract directly in Neon
-        if: ${{ always() }}
+      - name: Verify deployed Engine contract against the current runtime database
+        if: ${{ success() }}
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
