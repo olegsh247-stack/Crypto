@@ -1,4 +1,4 @@
--- CryptoDataModel v1 — canonical seed for Neon
+-- CryptoDataModel v1 — canonical seed for PostgreSQL
 -- Idempotent: safe to run repeatedly.
 -- Only registry-backed entities are seeded. The BTC initial dataset is intentionally
 -- treated as partial research input; observations are inserted only when their source
