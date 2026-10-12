@@ -5,7 +5,7 @@
 **Актуальность снимка:** 13 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Проверенный SHA `main` на 2026-10-13:** `0ea20923e66efd42b7070e42298ddfb21ad347cf`  
+**Проверенный SHA `main` на 2026-10-13:** `78b9be4bf41c8064c89b1ae16e1db0236d26faff`  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -542,8 +542,8 @@ The live GitHub query returned eight open PRs. Their ahead/behind counts below w
 |---|---|---|
 | 1. Hosting architecture | `REPO AUDIT ACCEPTED; cutover facts deferred` | Self-hosted target stack and scanner verified in CI. Cloudflare/GitHub App/legacy endpoint account-level inspection is deferred and does not block BTC product development; it remains required before disabling legacy resources or switching traffic. No VPS provisioned. |
 | 2. PR audit | `IN PROGRESS` | Eight open PRs were reviewed for scope; useful fixes from #73 and #71 are now ported to main and the relevant Web and Worker checks are green. No PR merged or closed. Finish remaining overlap/base-ancestry review; no need to spend further product time on the external Workers check itself. |
-| 3. Product Contour v1 | `IN PROGRESS` | The relevant checks passed: [Web build #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055), [VPS Build Rehearsal #477](https://github.com/olegsh247-stack/Crypto/actions/runs/38311428159), and [Worker DST regression rehearsal #476](https://github.com/olegsh247-stack/Crypto/actions/runs/38311361017). The progress type/build mismatch and Worker London offset defect are fixed on main. Continue with remaining freshness/type/data lineage checks; live endpoint payload is not verifiable until the legacy endpoint is available through an approved read-only path or VPS is provisioned. |
-| 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Проверить raw artifact, источники, freshness, units, duplicates и manifest. |
+| 3. Product Contour v1 | `IN PROGRESS` | The relevant checks passed: [Web build #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055), [Worker DST regression rehearsal #476](https://github.com/olegsh247-stack/Crypto/actions/runs/38311361017), [VPS Build Rehearsal #481](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800274), and read-only source capture [#9](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800272). The progress type/build mismatch and Worker London offset defect are fixed on main. Continue with remaining freshness/type/data lineage checks; live endpoint payload is not verifiable until the legacy endpoint is available through an approved read-only path or VPS is provisioned. |
+| 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Read-only capture [#9](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800272) succeeded; reviewed in [BTC source capture report](./BTC-SOURCE-CAPTURE-REVIEW-2026-10-13.md). Kraken and mempool responses are candidates only; Farside is HTTP 403, TFTC is stale/unapproved, fee/subsidy ratio and DXY remain blocked. No DB writes. |
 | 5. BTC reproducible scenario | `BLOCKED` | Не начинать до закрытия входных blockers и contract audit. |
 | 6. BTC end-to-end acceptance | `NOT STARTED` | После воспроизводимой оценки. |
 | 7. VPS provisioning/deploy | `BLOCKED` до появления реального VPS | Только локальные/CI rehearsals пока хоста нет. |
