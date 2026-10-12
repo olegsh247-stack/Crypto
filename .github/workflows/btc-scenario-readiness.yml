@@ -7,6 +7,9 @@ on:
       - "scripts/btc-scenario-readiness.test.mjs"
       - "scripts/btc-scenario-direction.mjs"
       - "scripts/btc-scenario-direction.test.mjs"
+      - "vps/shared/src/btc-scenario-readiness.ts"
+      - "data/CryptoDataModel/registry/metric-registry.json"
+      - "data/CryptoDataModel/registry/source-registry.json"
       - ".github/workflows/btc-scenario-readiness.yml"
       - "docs/BTC-SCENARIO-V1.md"
   workflow_dispatch:
