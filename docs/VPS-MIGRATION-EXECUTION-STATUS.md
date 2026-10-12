@@ -39,6 +39,14 @@ This document is an execution tracker, not approval to modify the currently serv
 
 These changes do not switch the public production endpoint or mutate production data.
 
+## Latest verified batch — 2026-10-12
+
+- [VPS Release Gate #38286162070](https://github.com/olegsh247-stack/Crypto/actions/runs/38286162070) passed on `main`, including repository scan, PostgreSQL 16 clean bootstrap, backup/restore with table-count comparison, API/Worker E2E and web build.
+- PR #52 merged: the VPS API exposes active-snapshot evidence and includes evidence-linked sources; factors, scores and scenario states are scoped to the active published snapshot. [Build Rehearsal #38286046472](https://github.com/olegsh247-stack/Crypto/actions/runs/38286046472) passed.
+- PR #54 merged: evidence includes displayable observation values/units and scenario definitions return `snapshot_id`; E2E asserts strict lineage. [Build Rehearsal #38286251489](https://github.com/olegsh247-stack/Crypto/actions/runs/38286251489) passed.
+- PR #55 merged: the BTC input gate rejects a stale newest ETF-flow row rather than silently falling back to older rows. [BTC Scenario Readiness Gate #38286364175](https://github.com/olegsh247-stack/Crypto/actions/runs/38286364175) passed.
+- No production data was changed. BTC still has no snapshot-linked scenario state or monitoring event; monitoring signals remain descriptive baseline entries. The next product step is the factor-to-observation/event readiness contract in `BTC-MONITORING-READINESS-MATRIX.md`, then source-backed observation reconciliation. Do not persist a live scenario state until those gates pass.
+
 ## Required sequence
 
 1. The automated repository-wide source scan passed with zero retired-platform references. Keep this scan required in the VPS build gate.

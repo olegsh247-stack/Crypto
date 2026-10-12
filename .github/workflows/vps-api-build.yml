@@ -275,6 +275,12 @@ jobs:
           assert all(s.get('snapshot_id') == sid for s in scenarios), 'cross-snapshot scenario'
           states=d.get('scenario_states',[])
           assert all(s.get('snapshot_id') == sid for s in states), 'cross-snapshot scenario state'
+          assert states == [], 'clean baseline must not fabricate a scenario-state evaluation'
+          events=d.get('monitoring_events',[])
+          assert events == [], 'clean baseline must not fabricate monitoring events'
+          signals=d.get('monitoring_signals',[])
+          assert len(signals) == 7, f'baseline monitoring signals={len(signals)}'
+          assert all(isinstance(x.get('current_value'),dict) and x['current_value'].get('description') for x in signals), 'baseline signals must remain explicitly descriptive, not fake live measurements'
           print(f'VPS_BTC_RESEARCH_CHAIN_OK snapshot={sid} evidence={len(evidence)} blocks={len(set(e["block_number"] for e in evidence))} factors=6 scores=5 scenarios=3')
           PY
       - name: VPS API persisted history and candle finalization E2E
