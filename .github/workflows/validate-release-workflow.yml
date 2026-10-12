@@ -1,0 +1,34 @@
+name: Validate Release Workflow
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-crypto-api.yml"
+      - ".github/workflows/release-gate.yml"
+      - ".github/workflows/validate-release-workflow.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-crypto-api.yml"
+      - ".github/workflows/release-gate.yml"
+      - ".github/workflows/validate-release-workflow.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: Static validation (no production access)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Lint release workflow definitions
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest .github/workflows/deploy-crypto-api.yml .github/workflows/release-gate.yml .github/workflows/validate-release-workflow.yml
