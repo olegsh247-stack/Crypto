@@ -213,7 +213,7 @@ Where available, expose the linked research block/domain, observation, source, a
 - **Research lifecycle contract:** `shared/research-status-contract.ts`.
 - **Research methodology:** `skills/CryptoResearch/SKILL.md` and `docs/RESEARCH_METHOD.md`.
 
-The Web layer must never write directly to Neon or expose `ADMIN_TOKEN` to browser code. Mutations go through the server-side API/admin proxy and must not claim success until the server confirms it.
+The Web layer must never write directly to PostgreSQL or expose `ADMIN_TOKEN` to browser code. Mutations go through the server-side API/admin proxy and must not claim success until the server confirms it.
 
 ### Asset detail payload expected by the product
 
@@ -236,14 +236,14 @@ The CryptoDataModel v2 documents are design specifications, not authorization to
 - preserve immutable observations and research snapshots;
 - do not silently overwrite historical records;
 - reconcile `scenario_states` with the proposed v2 `research_scenarios` before any migration;
-- do not create a v2 Neon migration until the documented validation set BTC, ETH, SOL and CAKE has passed.
+- do not create a v2 PostgreSQL migration until the documented validation set BTC, ETH, SOL and CAKE has passed.
 
 This Product Contour document does not authorize schema changes or production migrations.
 
 ## 5. Compatibility findings and unresolved items
 
 1. **The product sequence is not the same as the current route tree.** Home/Assets are combined at `/`; Dashboard and Deep Research have separate routes; the remaining analytical blocks are data sections, not yet separate canonical top-level routes. Preserve this arrangement for v1 unless an explicit product decision changes it.
-2. **v2 schema is not yet migrated.** The UI must only depend on fields that the deployed API actually returns; proposed schema fields are not assumed to exist in Neon.
+2. **v2 schema is not yet migrated.** The UI must only depend on fields that the deployed API actually returns; proposed schema fields are not assumed to exist in PostgreSQL.
 3. **Legacy and proposed scenario representations coexist.** The dashboard currently has compatibility logic for `research_scenarios` and `scenario_states`; their semantic mapping needs to remain explicit until reconciliation is documented.
 4. **Evidence/source completeness varies.** Empty arrays or absent links must be represented honestly; do not manufacture provenance.
 5. **Runtime release verification is temporarily blocked by GitHub Actions account billing.** Static repository review can continue, but it is not a substitute for build, database or live-runtime proof.
@@ -272,6 +272,6 @@ The unchecked items are verification gates, not claims of completion.
 2. **Data completeness audit:** check domains, factors, scores, scenarios, monitoring, evidence and sources without changing the schema.
 3. **Behavioral consistency:** ensure lifecycle/freshness, empty states, score scales and scenario compatibility are consistent across Dashboard and Deep Research.
 4. **Navigation and traceability:** ensure a user can move from summary → domain/factor/score/scenario → monitoring/evidence → source/research context.
-5. **Verification:** run available static/build checks and, when safe, database/runtime E2E. Never rerun a migration workflow blindly against the live Neon database.
+5. **Verification:** run available static/build checks and, when safe, database/runtime E2E. Never rerun a migration workflow blindly against the live PostgreSQL database.
 
 Only after these steps should visual redesign or a new data-model migration be considered.
