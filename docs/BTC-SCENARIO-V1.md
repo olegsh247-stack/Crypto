@@ -177,3 +177,22 @@ Each directional signal contributes +1, 0, or −1. The result is Bull at a scor
 The fee/subsidy ratio (`security.fee_subsidy_ratio`) is a required security-economics context input, but is not a directional vote in v1: a higher ratio alone can reflect stronger fee demand or temporary congestion.
 
 These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale inputs block evaluation before this rule is called. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
+
+
+## Dry-run of the directional rule against source-reviewed inputs — 2026-10-12
+
+This is a reproducible calculation from public source pages, not a live database evaluation and not a persisted scenario state.
+
+| Signal | Source-reviewed input | Rule result |
+|---|---:|---|
+| BTC 7-day return, close 4 Oct $86,480.30 to close 11 Oct $83,679.46 | about −3.24% | Neutral (inside ±5%) |
+| US spot BTC ETF flows, five sessions 5–9 Oct | −$678.9m | Bearish vote (≤ −$500m) |
+| Network hashrate, 7-day mean versus prior 7-day mean | about +1% | Neutral (inside ±3%) |
+| DXY, 7 Oct 102.24 to 12 Oct 102.39 | about +0.15% | Neutral (inside ±0.5%) |
+| Fee/subsidy ratio | 0.0129 / 3.125 = about 0.00413 | Context only; no directional vote |
+
+Sources: [StatMuse BTC historical closes](https://www.statmuse.com/money/ask/bitcoin-price-history-october-2026), [Farside Investors ETF-flow table](https://farside.co.uk/btc/), [Satoshi Gazette hashrate series and methodology](https://satoshigazette.org/data/mining?end=2026-10-12&window=30), [Investing.com DXY history](https://www.investing.com/indices/usdollar-historical-data), and [Mempool.space mining dashboard](https://mempool.space/mining).
+
+The resulting directional score is **−1**, so the rule returns **Base** (the ETF-flow signal is negative, while the other three directional signals are within their neutral bands). This is consistent with the rule's 3-of-4 threshold and does not prove the rule has predictive value.
+
+Limitations: source timestamps and aggregation windows are not yet ingested into the database with a canonical shared data contract; the source review is a candidate fixture, not an approved production input set. The fee/subsidy ratio is a recent 144-block value, not a validated 7-day series. Therefore this dry-run does **not** satisfy the input-quality gate and must not be presented as a live-evaluated state.
