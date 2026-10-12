@@ -173,4 +173,10 @@ console.log(JSON.stringify({
   unresolved: manifest.unresolved
 }, null, 2));
 
-if (manifest.sources.some(source => source.status !== "CAPTURED")) process.exitCode = 1;
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w"];
+const requiredCaptureFailed = requiredNames.some(name =>
+  !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
+const etfCaptureSucceeded = manifest.sources.some(source =>
+  ["farside-btc-etf-page", "tftc-btc-etf-json-candidate"].includes(source.name)
+  && source.status === "CAPTURED");
+if (requiredCaptureFailed || !etfCaptureSucceeded) process.exitCode = 1;
