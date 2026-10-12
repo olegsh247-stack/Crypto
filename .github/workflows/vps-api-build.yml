@@ -1,13 +1,20 @@
 name: VPS API Build Rehearsal
 
 on:
+  pull_request:
+    paths:
+      - "vps/**"
+      - "shared/**"
+      - "infrastructure/neon/**"
+      - "scripts/migrate-postgres.sh"
+      - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
     paths:
       - "vps/**"
       - "shared/**"
       - "infrastructure/neon/**"
-      - "scripts/migrate-neon.sh"
+      - "scripts/migrate-postgres.sh"
       - ".github/workflows/vps-api-build.yml"
   workflow_dispatch:
 
@@ -47,9 +54,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
-          chmod +x scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
+          bash scripts/migrate-postgres.sh
+          bash scripts/migrate-postgres.sh
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;")
           duplicates=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from (select version from schema_migrations group by version having count(*) > 1) d;")
           test "$count" -gt 0
