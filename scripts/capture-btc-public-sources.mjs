@@ -4,6 +4,8 @@
  *
  * Writes raw responses and a provenance manifest to tmp/btc-source-review.
  * Does not connect to PostgreSQL, ingest observations, or mutate scenario state.
+ * CAPTURED means only that the HTTP response was saved and its parser ran;
+ * validation_status separately records whether fields are usable as an input.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -11,11 +13,10 @@ import { join } from "node:path";
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
 await mkdir(outDir, { recursive: true });
 
-const retrievedAt = new Date().toISOString();
 const manifest = {
-  schema_version: 1,
+  schema_version: 2,
   asset_id: "btc",
-  retrieved_at: retrievedAt,
+  retrieved_at: new Date().toISOString(),
   mode: "read-only-staging-only",
   production_database_accessed: false,
   production_writes_performed: false,
@@ -27,10 +28,20 @@ const manifest = {
     },
     {
       metric_id: "institutional.etf_net_flow",
-      reason: "The Farside page capture is preserved for review, but the exact publication timestamp and parser reconciliation contract are not inferred from page retrieval time."
+      reason: "Farside returned HTTP 403 in the latest staging run. TFTC is a candidate mirror only; source lineage, licence, revision and date semantics must be reviewed before accepting it."
+    },
+    {
+      metric_id: "security.fee_subsidy_ratio",
+      reason: "Raw fee and reward series are captured separately. Do not calculate the ratio until response semantics, units, and matched time/block windows are validated."
     }
   ]
 };
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
 
 async function capture({ name, metricId, sourceId, url, parse }) {
   const item = {
@@ -39,11 +50,15 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     source_id: sourceId,
     url,
     retrieved_at: new Date().toISOString(),
-    status: "FAILED"
+    status: "FAILED",
+    validation_status: "NOT_RUN"
   };
   try {
     const response = await fetch(url, {
-      headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "application/json,text/html;q=0.9,*/*;q=0.8" },
+      headers: {
+        "user-agent": "Crypto-BTC-Source-Review/1.1",
+        "accept": "application/json,text/html;q=0.9,*/*;q=0.8"
+      },
       signal: AbortSignal.timeout(20000)
     });
     item.http_status = response.status;
@@ -53,19 +68,23 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     item.body_file = `${name}.raw`;
     await writeFile(join(outDir, item.body_file), body, "utf8");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const parsed = parse ? parse(body) : null;
+    const parsed = parse ? parse(body) : {};
     item.status = "CAPTURED";
-    if (parsed) Object.assign(item, parsed);
+    Object.assign(item, parsed);
+    if (item.validation_status === "NOT_RUN") item.validation_status = "RAW_ONLY";
   } catch (error) {
     item.error = error instanceof Error ? error.message : String(error);
+    item.validation_status = "FAILED";
   }
   manifest.sources.push(item);
 }
 
-async function sha256(value) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, "0")).join("");
+function parseJson(body) {
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error("Response is not valid JSON");
+  }
 }
 
 await capture({
@@ -74,23 +93,30 @@ await capture({
   sourceId: "market.kraken",
   url: "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
   parse: body => {
-    const data = JSON.parse(body);
+    const data = parseJson(body);
     if (Array.isArray(data.error) && data.error.length) throw new Error(`Kraken API error: ${data.error.join(", ")}`);
     const result = data.result ?? {};
     const pairKey = Object.keys(result).find(key => key !== "last");
     const trades = result[pairKey];
     if (!pairKey || !Array.isArray(trades) || trades.length === 0) throw new Error("Kraken response has no trade rows");
     const latest = trades.reduce((best, row) => Number(row[2]) > Number(best[2]) ? row : best);
+    const price = Number(latest[0]);
     const epochSeconds = Number(latest[2]);
-    if (!Number.isFinite(epochSeconds) || !Number.isFinite(Number(latest[0]))) throw new Error("Kraken latest trade has invalid price/timestamp");
+    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(epochSeconds) || epochSeconds <= 0) {
+      throw new Error("Kraken latest trade has invalid price/timestamp");
+    }
+    const observedAt = new Date(epochSeconds * 1000);
+    if (Number.isNaN(observedAt.getTime())) throw new Error("Kraken trade timestamp is invalid");
     return {
+      validation_status: "FIELDS_PARSED_UNIT_REVIEW_REQUIRED",
       pair_key: pairKey,
       requested_pair: "XBTUSD",
-      latest_trade_price_usd_per_btc: Number(latest[0]),
+      latest_trade_price_usd_per_btc: price,
+      unit: "USD/BTC",
       latest_trade_epoch_seconds: epochSeconds,
-      latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
+      observed_at: observedAt.toISOString(),
       trade_rows_in_response: trades.length,
-      note: "Latest trade timestamp is source observation time; retrieved_at is capture time."
+      note: "Source trade time is observed_at; retrieved_at is capture time. Check freshness against the metric registry before acceptance."
     };
   }
 });
@@ -101,32 +127,58 @@ await capture({
   sourceId: "network.primary",
   url: "https://mempool.space/api/v1/mining/hashrate/1w",
   parse: body => {
-    const data = JSON.parse(body);
+    const data = parseJson(body);
+    if (!Array.isArray(data) || data.length === 0) throw new Error("Expected a non-empty hashrate series array");
+    const latest = data.reduce((best, row) => Number(row?.timestamp) > Number(best?.timestamp) ? row : best);
+    const epochSeconds = Number(latest?.timestamp);
+    const hashesPerSecond = Number(latest?.avgHashrate);
+    if (!Number.isFinite(epochSeconds) || epochSeconds <= 0 || !Number.isFinite(hashesPerSecond) || hashesPerSecond <= 0) {
+      throw new Error("Hashrate series row lacks a valid timestamp/avgHashrate");
+    }
     return {
-      response_shape: Array.isArray(data) ? "array" : typeof data,
-      row_count: Array.isArray(data) ? data.length : Array.isArray(data.hashrates) ? data.hashrates.length : null,
-      latest_series_timestamp: Array.isArray(data.hashrates) && data.hashrates.length
-        ? new Date(Number(data.hashrates[data.hashrates.length - 1].timestamp) * 1000).toISOString()
-        : null,
-      latest_series_value_eh_s: Array.isArray(data.hashrates) && data.hashrates.length
-        ? Number(data.hashrates[data.hashrates.length - 1].avgHashrate) / 1e18
-        : null,
-      note: "Raw response retained. Confirm bucket/window semantics before treating the latest daily point as an observation; do not label a rolling estimate as instantaneous hashrate."
+      validation_status: "FIELDS_PARSED_AGGREGATION_SEMANTICS_REVIEW_REQUIRED",
+      aggregation_endpoint: "1w",
+      response_shape: "array",
+      row_count: data.length,
+      source_value_hashes_per_second: hashesPerSecond,
+      latest_series_value_eh_s: hashesPerSecond / 1e18,
+      unit: "EH/s",
+      observed_at: new Date(epochSeconds * 1000).toISOString(),
+      note: "Converted hashes/s to EH/s using 1e18. The 1w endpoint is an aggregate series; confirm bucket semantics and freshness before acceptance."
     };
   }
 });
 
 await capture({
-  name: "mempool-block-fees-1w",
+  name: "mempool-block-fees-24h",
   metricId: "security.fee_subsidy_ratio",
   sourceId: "network.primary",
-  url: "https://mempool.space/api/v1/mining/blocks/fees/1w",
+  url: "https://mempool.space/api/v1/mining/blocks/fees/24h",
   parse: body => {
-    const data = JSON.parse(body);
+    const data = parseJson(body);
+    const rows = Array.isArray(data) ? data : null;
     return {
+      validation_status: rows && rows.length ? "RAW_CAPTURED_WINDOW_AND_UNIT_REVIEW_REQUIRED" : "RAW_CAPTURED_SCHEMA_REVIEW_REQUIRED",
       response_shape: Array.isArray(data) ? "array" : typeof data,
-      row_count: Array.isArray(data) ? data.length : null,
-      note: "Raw response retained. Fee/subsidy values are not calculated until fee units, block window, and subsidy denominator are verified."
+      row_count: rows?.length ?? null,
+      note: "Raw fee component only. Do not derive a ratio until fee units and its window are reconciled with the reward component."
+    };
+  }
+});
+
+await capture({
+  name: "mempool-block-rewards-24h",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/blocks/rewards/24h",
+  parse: body => {
+    const data = parseJson(body);
+    const rows = Array.isArray(data) ? data : null;
+    return {
+      validation_status: rows && rows.length ? "RAW_CAPTURED_WINDOW_AND_UNIT_REVIEW_REQUIRED" : "RAW_CAPTURED_SCHEMA_REVIEW_REQUIRED",
+      response_shape: Array.isArray(data) ? "array" : typeof data,
+      row_count: rows?.length ?? null,
+      note: "Raw reward component only. Do not derive a ratio until reward meaning, units and its window are reconciled with the fee component."
     };
   }
 });
@@ -137,8 +189,9 @@ await capture({
   sourceId: "institutional.primary",
   url: "https://farside.co.uk/btc/",
   parse: body => ({
+    validation_status: "RAW_HTML_ONLY_PARSER_AND_PUBLICATION_TIME_REVIEW_REQUIRED",
     html_characters: body.length,
-    note: "Raw page retained for parser review. Retrieval time is not treated as ETF observation/publication time; dash/placeholder rows must not become zero."
+    note: "Raw page retained for parser review. Retrieval time is not publication/observation time; dash and placeholder rows must not become zero."
   })
 });
 
@@ -148,15 +201,15 @@ await capture({
   sourceId: "institutional.tftc",
   url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
   parse: body => {
-    const data = JSON.parse(body);
+    const data = parseJson(body);
     const rows = Array.isArray(data) ? data
       : Array.isArray(data.days) ? data.days
       : Array.isArray(data.data) ? data.data
       : Array.isArray(data.rows) ? data.rows
       : Array.isArray(data.flows) ? data.flows
       : null;
-    const recentDays = rows ? rows.filter(row => String(row.date ?? row.day ?? "") >= "2026-10-05") : null;
     return {
+      validation_status: "CANDIDATE_MIRROR_NOT_CANONICAL",
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
       row_count: rows ? rows.length : null,
@@ -166,8 +219,7 @@ await capture({
       source_lineage: data.sources ?? null,
       first_row_keys: rows && rows.length && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
       latest_day: rows && rows.length ? rows[rows.length - 1] : null,
-      recent_days_from_2026_10_05: recentDays,
-      note: "Candidate mirror only. Inspect source lineage, date semantics, revisions and dash/null handling before using any row as canonical ETF flow."
+      note: "Candidate mirror only. Do not treat as canonical until source lineage, licence, date semantics, revisions and null/dash handling are reviewed."
     };
   }
 });
@@ -175,15 +227,12 @@ await capture({
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
-  sources: manifest.sources.map(({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count }) =>
-    ({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count })),
+  sources: manifest.sources.map(({ name, status, validation_status, http_status, error, observed_at, latest_trade_price_usd_per_btc, latest_series_value_eh_s, row_count, body_sha256 }) =>
+    ({ name, status, validation_status, http_status, error, observed_at, latest_trade_price_usd_per_btc, latest_series_value_eh_s, row_count, body_sha256 })),
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w"];
-const requiredCaptureFailed = requiredNames.some(name =>
-  !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
-const etfCaptureSucceeded = manifest.sources.some(source =>
-  ["farside-btc-etf-page", "tftc-btc-etf-json-candidate"].includes(source.name)
-  && source.status === "CAPTURED");
-if (requiredCaptureFailed || !etfCaptureSucceeded) process.exitCode = 1;
+// This workflow validates that responses can be captured for review, not that BTC
+// inputs are complete or that scenario evaluation is permitted.
+const captureFailed = manifest.sources.some(source => source.status !== "CAPTURED");
+if (captureFailed) process.exitCode = 1;
