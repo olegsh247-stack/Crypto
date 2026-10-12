@@ -18,7 +18,7 @@
 - API работает как Cloudflare Worker: `workers/crypto-api/wrangler.toml`.
 - API использует `@neondatabase/serverless` и `DATABASE_URL`.
 - CI применяет SQL migrations напрямую к Neon через `psql` и secret `NEON_DATABASE_URL`.
-- Основная схема БД находится в `infrastructure/neon/migrations/`.
+- Основная схема БД находится в `infrastructure/postgres/migrations/`.
 - Текущий deployment/migration контур завязан на Cloudflare Workers + Neon PostgreSQL.
 
 **Решение окончательное: переход на VPS — приоритет № 1 и начинается сейчас параллельно с безопасной проверкой целевого runtime.** Product Contour v1 аудит продолжается после/параллельно с инфраструктурными работами без расширения числа активов.
