@@ -3,27 +3,8 @@ name: VPS API Build Rehearsal
 on:
   workflow_call:
   pull_request:
-    paths:
-      - "vps/**"
-      - "shared/**"
-      - "infrastructure/postgres/**"
-      - "scripts/migrate-postgres.sh"
-      - "scripts/backup-postgres.sh"
-      - "scripts/audit-btc-input-provenance.sql"
-      - "scripts/check-vps-only-repository.mjs"
-      - ".gitignore"
-      - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
-    paths:
-      - "vps/**"
-      - "shared/**"
-      - "infrastructure/postgres/**"
-      - "scripts/migrate-postgres.sh"
-      - "scripts/audit-btc-input-provenance.sql"
-      - "scripts/check-vps-only-repository.mjs"
-      - ".gitignore"
-      - ".github/workflows/vps-api-build.yml"
   workflow_dispatch:
 
 permissions:
