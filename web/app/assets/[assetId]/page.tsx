@@ -46,6 +46,7 @@ function scenarioBlockerLabel(reason: string) {
     source_not_registered: "Source is not present in the canonical source registry",
     unit_missing: "Observation has no explicit unit",
     unit_mismatch: "Observation unit does not match the metric contract",
+    metric_unit_contract_mismatch: "Canonical metric registry unit conflicts with the readiness contract",
   };
   return labels[reason] ?? reason.replaceAll("_", " ");
 }
