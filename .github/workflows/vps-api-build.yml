@@ -98,6 +98,13 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
         run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-btc-input-provenance.sql
+      - name: BTC observation idempotency and duplicate reconciliation rehearsal
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: |
+          set -euo pipefail
+          chmod +x scripts/reconcile-btc-exact-duplicates-target.sh scripts/test-btc-observation-idempotency.sh
+          ./scripts/test-btc-observation-idempotency.sh
       - name: PostgreSQL backup and restore rehearsal
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
@@ -282,7 +289,7 @@ jobs:
           blockers=readiness.get('blockers',[])
           assert any(x.get('metric_id') == 'security.fee_subsidy_ratio' and x.get('reason') == 'missing' for x in blockers), 'missing fee/subsidy metric must block readiness'
           assert any(x.get('metric_id') == 'macro.dxy' and x.get('reason') == 'missing' for x in blockers), 'missing DXY metric must block readiness'
-          assert any(x.get('metric_id') == 'institutional.etf_net_flow' and x.get('reason') == 'latest_observation_must_be_current_traceable_and_within_48_hours' for x in blockers), 'stale latest ETF flow must block readiness'
+          assert any(x.get('metric_id') == 'institutional.etf_net_flow' and x.get('reason') == 'latest_observation_must_be_current_traceable_and_within_36_hours' for x in blockers), 'stale latest ETF flow must block readiness'
           assert len(d.get('critical_factors',[])) == 6, 'BTC current snapshot factors'
           assert all(f.get('snapshot_id') == sid for f in d.get('critical_factors',[])), 'cross-snapshot factor'
           assert len(d.get('scores',[])) == 5, 'BTC current snapshot scores'

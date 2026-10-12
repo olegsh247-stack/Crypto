@@ -9,7 +9,26 @@ if [[ "$actual_database" != "crypto_test" ]]; then
 fi
 
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
-base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT observation_id FROM observations WHERE asset_id='btc' AND metric_id='market.spot_price' ORDER BY created_at, observation_id LIMIT 1")"
+# The clean research seed deliberately omits numeric live-input definitions.
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+INSERT INTO metric_definitions (metric_id, namespace, name, description, default_unit, value_type)
+VALUES ('market.spot_price', 'market', 'BTC spot price',
+        'Point-in-time BTC spot market price.', 'USD/BTC', 'numeric')
+ON CONFLICT (metric_id) DO NOTHING;
+SQL
+
+# Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
+base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
+INSERT INTO observations (
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  methodology, status, freshness, revision
+) VALUES (
+  'market.spot_price', 'btc', 80000, 'USD/BTC', now() - interval '1 hour',
+  'market_binance', 'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT',
+  'Disposable idempotency test fixture', 'NORMAL', 'CURRENT', 1
+) RETURNING observation_id;
+SQL
+)"
 test -n "$base_id"
 
 # Create an exact duplicate with a new generated observation ID.
