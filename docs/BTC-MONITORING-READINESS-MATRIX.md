@@ -62,3 +62,26 @@ No price forecast, buy/sell signal, entry/exit recommendation, position sizing, 
 ## API exposure — 2026-10-12
 
 The VPS API now returns a read-only `scenario_readiness` object for BTC, computed from persisted observations for the canonical metric IDs. It reports blockers and selected provenance, but always sets `can_persist_scenario_state: false`; it does not choose Bull/Base/Bear or write state/events. The disposable-database E2E asserts that the current seeded data fails closed because fee/subsidy and DXY observations are missing and the latest ETF-flow row is stale. This API response is the input-quality gate only, not a scenario evaluation.
+
+
+## Live production input audit — 2026-10-12 (read-only)
+
+The production Neon database was queried using SELECT statements only. No rows were inserted, updated or deleted. Results reflect the database at audit time, not a claim that it is the target VPS database.
+
+| Required metric | Rows | Latest observation (UTC) | Freshness | Result |
+|---|---:|---|---|---|
+| `market.spot_price` | 2 | 2026-09-19 06:38 | STALE | Blocked: not current |
+| `institutional.etf_net_flow` | 8 | 2026-09-18 00:00 | STALE | Blocked: not current; zero distinct current, source-linked ETF days in the last 14 days |
+| `security.hashrate` | 2 | 2026-09-19 00:00 | STALE | Blocked: not current |
+| `security.fee_subsidy_ratio` | 0 | — | — | Blocked: metric observation missing |
+| `macro.dxy` | 0 | — | — | Blocked: metric observation missing |
+
+The three existing numeric series have registered source IDs and source URLs, but their latest rows are stale. ETF source: `institutional.primary`; spot source: `market.primary`; hashrate source: `network.primary`. The source URL for the circulating-supply observation is absent; that observation is not one of the five required readiness inputs above, but it remains a provenance defect.
+
+The duplicate-key query returned **nine groups**, covering spot price, block subsidy, circulating supply, max supply, hashrate and four ETF-flow days. Every group had two rows and `distinct_payloads = 1`: the duplicate records have identical values and metadata under the checked logical key. They were preserved; no automatic cleanup was performed.
+
+The published snapshot `BTC-2026-10-07-v1` still has 15 evidence rows covering all 15 blocks, with no missing registered evidence source, observation or source URL. It has zero snapshot-linked scenario-state rows and zero monitoring-event rows; no live scenario evaluation exists yet.
+
+### Decision
+
+BTC scenario readiness is **BLOCKED**, not ready for rule evaluation. Next: obtain current, source-verifiable inputs; define and approve fee/subsidy and DXY metric contracts; then prepare a separate duplicate-reconciliation plan. Do not insert candidate values, change freshness flags, delete duplicate rows or persist a scenario state as part of this audit.
