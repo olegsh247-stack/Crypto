@@ -35,6 +35,18 @@ The freshness gates below are aligned to \`data/CryptoDataModel/registry/metric-
 
 For every metric, the observation's \`unit\` must match both the required canonical unit and \`metric_definitions.default_unit\`. The source ID must be registered. Invalid latest observations block readiness; they must not be bypassed by silently falling back to older rows.
 
+### Registry audit finding — blockers remain
+
+The repository registry has now been inspected directly:
+
+- `security.hashrate` and `security.fee_subsidy_ratio` point first to registered `network.primary` (Mempool.space); the exact endpoint, aggregation window and stored-method mapping still need to be confirmed.
+- `institutional.etf_net_flow` points to registered `institutional.primary` (Farside Investors), but a parser/reconciliation contract is still required.
+- `market.spot_price` currently points to `market.primary`, whose registry URL is null and reliability is `to_validate`. Other exchange sources are listed, but the metric registry does not select a validated USD-denominated pair. This input is therefore **blocked by registry configuration**, not merely by freshness.
+- `macro.dxy` currently points to generic `macro.primary` (Treasury/Federal Reserve/BLS) rather than a specific registered DXY data endpoint and close-time convention. This input is **blocked by source specificity**.
+- The canonical metric registry defines freshness windows of 1 h, 48 h, 48 h, 48 h and 36 h for the five gates respectively. The readiness implementation and SQL audit have been aligned to those windows. For ETF history, the latest observation must pass the 36-hour gate; the five-session sample is validated as a traceable 14-day historical series, not by requiring every historical day to remain a fresh latest observation.
+
+No source registry was silently rewritten to select an exchange or DXY vendor without validating the actual pair/endpoint and observation semantics.
+
 ## 3. Candidate refresh review — 2026-10-12
 
 These are source-review candidates only. They have **not** been inserted into the database.
