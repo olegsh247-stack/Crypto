@@ -4,7 +4,7 @@
 Репозиторий: olegsh247-stack/Crypto
 Статус: FULL REPOSITORY AUDIT — CORE GREEN / VPS PREPARATION
 
-> Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level Cloudflare/Neon состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
+> Важно: этот документ фиксирует то, что удалось доказать по текущему GitHub tree. Account-level legacy runtime/hosted database состояние, live DB, live API и фактический UI runtime не считаются GREEN без прямой проверки. Они помечены YELLOW/MISSING там, где доказательств из репозитория недостаточно.
 
 ## Executive verdict
 
@@ -14,11 +14,11 @@
 
 1. **P1 — Market Pair model:** исправлено в Batch 1: identity теперь `(exchange, symbol)`, `exchange` обязателен.
 2. **P1 — Dynamic Asset Engine:** исправлено в Batch 2: enabled asset требует валидный primary type; новый не классифицированный asset создаётся disabled.
-3. **P1 — Migration reproducibility:** исправлено в Batch 1: добавлен marker-aware deterministic runner `scripts/migrate-neon.sh`.
+3. **P1 — Migration reproducibility:** исправлено в Batch 1: добавлен marker-aware deterministic runner `scripts/migrate-postgres.sh`.
 4. **P1 — Deployment contract:** workflow уже существует и усилен в Batch 2; live deployment/health-check подтверждён GitHub Actions.
-5. **P1 — Infrastructure:** Cloudflare + Neon dependencies подтверждены, но account-level inventory ещё не доказан.
+5. **P1 — Infrastructure:** legacy runtime + hosted database dependencies подтверждены, но account-level inventory ещё не доказан.
 6. **P2 — API error disclosure:** исправлено в Batch 2: raw exception details убраны из public responses.
-7. **P2 — Runtime portability:** API жёстко привязан к Cloudflare Worker + Neon serverless driver.
+7. **P2 — Runtime portability:** API жёстко привязан к legacy runtime Worker + hosted database serverless driver.
 8. **GREEN — UI:** Release Gate #50 содержит post-deploy UI runtime E2E для текущего Web+Worker.
 9. **GREEN — Worker/ingestion:** Release Gate #50 подтверждает scheduled ingestion, idempotency и monitoring refresh.
 
@@ -62,9 +62,9 @@
 | UI-01 | 9 UI | API/shared types | GREEN | P1 | Release Gate #49 Web build + post-deploy UI runtime E2E; shared API contracts and typed getAsset/getPairs/getPairHistory | — | Keep shared contracts authoritative | API |
 | UI-02 | 9 UI | lifecycle/freshness | GREEN | P1 | Release Gate #49 post-deploy UI E2E verifies ETH Monitoring + Freshness; API detail freshness normalized to object contract | — | Keep server lifecycle/freshness authority | API/UI |
 | UI-03 | 9 UI | history/empty/error | GREEN | P2 | Release Gate #49 UI runtime E2E plus explicit loading/error/empty states in pairs/research pages | — | Keep explicit state coverage | UI |
-| CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | apply-neon-v2 workflow | — | Expand | — |
+| CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | VPS PostgreSQL migration workflow | — | Expand | — |
 | CI-02 | 10 CI/CD | API deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run successful; health contract verified | Infra |
-| CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-neon.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
+| CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-postgres.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
 | SEC-03 | 11 Security | secrets | YELLOW | P1 | `docs/SECRET-INVENTORY.md` records all currently known GitHub Actions/runtime secret dependencies; provider-side values are intentionally not stored | Account-level inventory/rotation requires provider access and actual VPS credentials | **Decision:** mandatory pre-cutover secret inventory + rotation; no destructive migration before completion | Infra |
@@ -199,7 +199,7 @@ E2E
 # 3. Infrastructure result
 
 Current:
-**Cloudflare Worker + Neon PostgreSQL**
+**legacy runtime Worker + hosted database PostgreSQL**
 
 Recommended target:
 **VPS + Docker Compose + PostgreSQL 16 + Caddy**
@@ -357,7 +357,7 @@ Execute exactly:
 23. backup/restore.
 24. cutover.
 25. rollback validation.
-26. only then decommission Neon/Cloudflare.
+26. only then decommission hosted database/legacy runtime.
 
 ---
 
@@ -425,7 +425,7 @@ Verified in the same run:
 
 
 
-- Live Worker endpoint: `https://crypto-api.olegsh247.workers.dev`
+- Live Worker endpoint: `former public API endpoint`
 - API smoke: **SUCCESS**
 - DB health: **SUCCESS**
 - Asset Registry: BTC + ETH canonical IDs verified
@@ -433,7 +433,7 @@ Verified in the same run:
 - Canonical market pairs: 9 verified
 - BTC/USDT history: **SUCCESS**
 - ETH/USDT history: **SUCCESS**
-- Neon Engine contract verification after deployment: **SUCCESS**
+- hosted database Engine contract verification after deployment: **SUCCESS**
 - Next.js web build: **SUCCESS**
 - UI mutation paths now use a server-side admin proxy instead of exposing admin credentials to the browser.
 - Market history has exchange-provider fallback handling; Binance public market-data egress from the Worker was returning 403/451, so the runtime now falls back to Kraken public OHLC and then persistent/secondary sources. Kraken documents its public OHLC endpoints as unauthenticated market data. 
