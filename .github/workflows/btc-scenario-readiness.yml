@@ -1,0 +1,25 @@
+name: BTC Scenario Readiness Gate
+
+on:
+  pull_request:
+    paths:
+      - "scripts/btc-scenario-readiness.mjs"
+      - "scripts/btc-scenario-readiness.test.mjs"
+      - ".github/workflows/btc-scenario-readiness.yml"
+      - "docs/BTC-SCENARIO-V1.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test scenario input-quality gate
+        run: node --test scripts/btc-scenario-readiness.test.mjs
