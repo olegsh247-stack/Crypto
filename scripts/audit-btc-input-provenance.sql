@@ -15,7 +15,7 @@ btc_observations AS (
 ),
 latest AS (
   SELECT DISTINCT ON (metric_id)
-    metric_id, observed_at, freshness, source_id, source_url,
+    metric_id, observed_at, freshness, source_id, source_url, unit,
     value_numeric, value_integer, value_text, period_start, period_end, revision
   FROM btc_observations
   ORDER BY metric_id, observed_at DESC, revision DESC, created_at DESC
