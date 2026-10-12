@@ -3,10 +3,10 @@ name: Seed observation idempotency rehearsal
 on:
   pull_request:
     paths:
-      - "infrastructure/neon/seed-v1.sql"
-      - "infrastructure/neon/schema-v1.sql"
-      - "infrastructure/neon/migrations/**"
-      - "scripts/migrate-neon.sh"
+      - "infrastructure/postgres/seed-v1.sql"
+      - "infrastructure/postgres/schema-v1.sql"
+      - "infrastructure/postgres/migrations/**"
+      - "scripts/migrate-postgres.sh"
       - "scripts/test-seed-observation-idempotency.sh"
       - ".github/workflows/seed-observation-idempotency.yml"
   workflow_dispatch:
@@ -46,8 +46,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
         run: |
           set -euo pipefail
-          chmod +x scripts/migrate-neon.sh
-          ./scripts/migrate-neon.sh
+          chmod +x scripts/migrate-postgres.sh
+          ./scripts/migrate-postgres.sh
 
       - name: Verify seed rerun and revision behavior
         env:
