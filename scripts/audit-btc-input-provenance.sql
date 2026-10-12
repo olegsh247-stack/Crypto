@@ -29,9 +29,9 @@ etf_days AS (
   SELECT count(DISTINCT coalesce(period_start::date, observed_at::date)) AS distinct_current_days
   FROM btc_observations
   WHERE metric_id = 'institutional.etf_net_flow'
-    AND freshness = 'CURRENT'
     AND observed_at <= now()
     AND observed_at >= now() - interval '14 days'
+    AND coalesce(value_numeric::text, value_integer::text, value_text) IS NOT NULL
     AND source_url IS NOT NULL
     AND btrim(source_url) <> ''
     AND EXISTS (SELECT 1 FROM sources s WHERE s.source_id = btc_observations.source_id)
