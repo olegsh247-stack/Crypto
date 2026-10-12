@@ -21,22 +21,10 @@ jobs:
         working-directory: workers/crypto-api
         run: npm install --no-audit --no-fund
 
-      # Preserve the already-configured runtime DATABASE_URL secret.
-      # Do not rewrite it from CI: Cloudflare rejected secret edits because the
-      # current Worker version was not deployed. Database-provider retirement is
-      # a separate migration; this deploy must not change runtime credentials.
-
-      - name: Configure admin secret when available
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CRYPTO_ADMIN_TOKEN: ${{ secrets.CRYPTO_ADMIN_TOKEN }}
-        run: |
-          if [ -n "$CRYPTO_ADMIN_TOKEN" ]; then
-            printf '%s' "$CRYPTO_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN --name crypto-api
-          else
-            echo "CRYPTO_ADMIN_TOKEN is not configured; protected admin/mutation endpoints will remain unavailable."
-          fi
+      # Preserve already-configured runtime secrets (DATABASE_URL and ADMIN_TOKEN).
+      # Do not mutate Worker secrets during deployment: Cloudflare can reject secret
+      # edits when the latest Worker version is not deployed. Secret rotation must be
+      # an explicit, separately planned operation.
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
@@ -52,7 +40,10 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          curl -fsS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/crypto-api/subdomain"             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             -H "Content-Type: application/json"             --data '{"enabled":true}' | tee /tmp/worker-subdomain.json
+          curl -fsS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/crypto-api/subdomain" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"enabled":true}' | tee /tmp/worker-subdomain.json
           test "$(jq -r '.success' /tmp/worker-subdomain.json)" = "true"
           subdomain="$(curl -fsS "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq -r '.result.subdomain')"
           test -n "$subdomain" && test "$subdomain" != "null"
@@ -78,8 +69,8 @@ jobs:
           sudo apt-get install -y postgresql-client || test -x /usr/bin/psql
           command -v psql
 
-      # Scheduled-ingestion tests run only against disposable PostgreSQL in vps-api-build.yml.
-      # Never execute ingestion against the production DATABASE_URL from a release workflow.
+      # Ingestion tests belong exclusively in disposable-PostgreSQL CI workflows.
+      # This release workflow must not write candles or monitoring timestamps.
 
       - name: Verify deployed Engine contract against the current runtime database
         if: ${{ success() }}
