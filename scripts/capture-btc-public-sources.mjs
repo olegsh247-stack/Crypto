@@ -104,8 +104,14 @@ await capture({
     const data = JSON.parse(body);
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
-      row_count: Array.isArray(data) ? data.length : null,
-      note: "Raw response retained. Do not assign one observed_at or label a rolling estimate as instantaneous hashrate without inspecting the payload."
+      row_count: Array.isArray(data) ? data.length : Array.isArray(data.hashrates) ? data.hashrates.length : null,
+      latest_series_timestamp: Array.isArray(data.hashrates) && data.hashrates.length
+        ? new Date(Number(data.hashrates[data.hashrates.length - 1].timestamp) * 1000).toISOString()
+        : null,
+      latest_series_value_eh_s: Array.isArray(data.hashrates) && data.hashrates.length
+        ? Number(data.hashrates[data.hashrates.length - 1].avgHashrate) / 1e18
+        : null,
+      note: "Raw response retained. Confirm bucket/window semantics before treating the latest daily point as an observation; do not label a rolling estimate as instantaneous hashrate."
     };
   }
 });
