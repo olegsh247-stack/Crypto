@@ -137,7 +137,7 @@ This section narrows the requested Neon/Cloudflare audit by separating repositor
 
 - [x] Repository target topology, migration runner, CI-only release gate, target environment-variable names and backup/restore rehearsal path identified.
 - [x] No Neon-specific migration directory or Cloudflare deploy configuration found in the inspected current-main tree.
-- [x] `main` branch is confirmed unprotected by GitHub branch metadata.
+- [ ] Verify `main` branch protection in GitHub settings. The rulesets read returned an empty list, but the branch-protection endpoint returned HTTP 403 for the connected integration; this is insufficient evidence to claim the branch is unprotected.
 - [ ] Confirm Cloudflare Git/Worker connection state in provider dashboard; do not treat absence from Git as proof of disconnection.
 - [ ] Confirm installed GitHub Apps and repository permissions from GitHub settings.
 - [ ] Inventory existing repository/environment secrets by **name and usage only**; remove nothing until all references and rollback requirements are checked.
@@ -174,3 +174,23 @@ The scanner in scripts/check-vps-only-repository.mjs previously searched Markdow
 ### Updated disposition
 
 The repository-side target architecture remains self-hosted PostgreSQL + API + Worker + Caddy. The Neon account-level resource is confirmed to exist; its live-runtime relationship remains unknown. Cloudflare dashboard state, GitHub secret names/usage, installed repository Apps, and live public endpoint routing remain external blockers. Hosting audit stays open at Plan 100 step 1. No provider resources, DNS, secrets, production data, or deployment state were changed.
+
+
+### Verification closure pass — 2026-10-12
+
+This pass closes the checks that can be verified from the repository and available GitHub Actions evidence, while explicitly retaining inaccessible account-level checks as blocked.
+
+**Verified in repository/CI**
+- VPS-only scanner fix is present on PR #76 head `c60fc7651292f008ad06c2bb35d313801d7c4cb0`.
+- [VPS API Build Rehearsal run #38302522671](https://github.com/olegsh247-stack/Crypto/actions/runs/38302522671) completed successfully. The job passed the VPS-only scan, shared runtime/API/Worker builds, Compose network-boundary validation, disposable PostgreSQL migration bootstrap, BTC source/provenance checks, idempotency/duplicate rehearsal, backup/restore rehearsal, API/Worker E2E contracts, research snapshot lineage, candle finalization, and admin-boundary checks.
+- This result is evidence for the PR branch only. It does not mean the fix is merged, the main branch is protected, or production has changed.
+- Read-only Neon account inventory confirms a Crypto project, primary production branch and read-write endpoint exist. No SQL was executed; live public API routing to that database is still unknown.
+
+**Not verifiable with the current connected access**
+- Cloudflare Workers & Pages projects, GitHub connection, DNS/routes and bindings: dashboard access is unavailable here.
+- Repository/environment secret names and usage: the GitHub integration does not expose the secrets API. Secret values must not be shared.
+- Installed repository Apps and their repository-specific permissions: the available installation listing does not provide a reliable per-repository integration inventory.
+- Current public API → runtime → database routing: no safe, authoritative read-only mapping is available from the inspected repository files.
+- `main` branch protection: GitHub rulesets read returned no rulesets, but the branch-protection endpoint returned 403 to this integration. Do not infer that `main` is unprotected from this response.
+
+**Disposition:** repository/CI checks are complete for this pass; the hosting audit as a whole remains `BLOCKED` on provider/account/runtime evidence. No production resources, secrets, DNS, migrations, data, merges, or deployments were changed. Do not remove Neon/Cloudflare resources or claim they are retired until the blocked facts are verified and an approved cutover exists.
