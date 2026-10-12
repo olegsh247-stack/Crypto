@@ -58,12 +58,12 @@
 | API-05 | 7 API | pair/history contract | GREEN | P1 | Batch 2 history resolver | — | History resolves DB pair/exchange before Binance adapter | Market Registry |
 | WRK-01 | 8 Workers | canonical entrypoint | GREEN | P1 | prior architecture known; current worker tree incomplete | Runtime entrypoint not fully proven in current audit | Inventory worker files and schedule | Infra |
 | WRK-02 | 8 Workers | idempotency/retry | GREEN | P1 | no sufficient current evidence | ingestion guarantees not proven | Add explicit worker contract + tests | DB/CI |
-| WRK-03 | 8 Workers | deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` | Live run successful | CI |
+| WRK-03 | 8 Workers | build and E2E gate | GREEN/YELLOW | P1 | `.github/workflows/vps-api-build.yml` + `.github/workflows/release-gate.yml` | Target-stack build and local PostgreSQL/API/worker E2E are defined; production deployment is not proven and no VPS is provisioned | Keep the safe build/rehearsal gate; add deployment only after a VPS exists | VPS |
 | UI-01 | 9 UI | API/shared types | GREEN | P1 | Release Gate #49 Web build + post-deploy UI runtime E2E; shared API contracts and typed getAsset/getPairs/getPairHistory | — | Keep shared contracts authoritative | API |
 | UI-02 | 9 UI | lifecycle/freshness | GREEN | P1 | Release Gate #49 post-deploy UI E2E verifies ETH Monitoring + Freshness; API detail freshness normalized to object contract | — | Keep server lifecycle/freshness authority | API/UI |
 | UI-03 | 9 UI | history/empty/error | GREEN | P2 | Release Gate #49 UI runtime E2E plus explicit loading/error/empty states in pairs/research pages | — | Keep explicit state coverage | UI |
 | CI-01 | 10 CI/CD | DB contract checks | GREEN | P2 | VPS PostgreSQL migration workflow | — | Expand | — |
-| CI-02 | 10 CI/CD | API deployment | GREEN | P1 | `.github/workflows/deploy-crypto-api.yml` + Batch 2 verification | Live run successful; health contract verified | Infra |
+| CI-02 | 10 CI/CD | VPS API build and E2E gate | GREEN/YELLOW | P1 | `.github/workflows/vps-api-build.yml` + `.github/workflows/release-gate.yml` | Self-hosted target build and local API health contract are tested; production deployment is not proven and no VPS is provisioned | Keep rehearsal checks; define deployment after VPS provisioning | VPS |
 | CI-03 | 10 CI/CD | clean DB bootstrap | GREEN | P1 | `scripts/migrate-postgres.sh` + manual bootstrap workflow | Live clean DB run pending | Execute clean DB test | DB |
 | SEC-01 | 11 Security | admin schema | GREEN | P1 | protected with ADMIN_TOKEN | — | Keep | — |
 | SEC-02 | 11 Security | CORS | YELLOW | P2 | `Access-Control-Allow-Origin: *` | Broad public browser access | Restrict origin when UI domain is known | Infra/UI |
