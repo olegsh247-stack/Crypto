@@ -1,6 +1,7 @@
 name: VPS API Build Rehearsal
 
 on:
+  workflow_call:
   pull_request:
     paths:
       - "vps/**"
