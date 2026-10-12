@@ -374,6 +374,8 @@ Neon не удалять сразу.
 
 Оставить его как rollback source на согласованный период.
 
+Executable gated checklist: [`NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md`](./NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md). It is preparation only and does not authorize a production migration or cutover.
+
 ---
 
 ## 13. Что обязательно проверить до миграции
