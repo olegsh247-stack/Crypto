@@ -102,16 +102,21 @@ await capture({
   url: "https://mempool.space/api/v1/mining/hashrate/1w",
   parse: body => {
     const data = JSON.parse(body);
+    const rows = Array.isArray(data) ? data
+      : Array.isArray(data.hashrates) ? data.hashrates
+      : Array.isArray(data.data) ? data.data
+      : [];
+    const latest = rows.reduce((best, row) =>
+      !best || Number(row.timestamp) > Number(best.timestamp) ? row : best, null);
+    const epochSeconds = latest ? Number(latest.timestamp) : NaN;
+    const hashrate = latest ? Number(latest.avgHashrate ?? latest.hashrate ?? latest.value) : NaN;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
-      row_count: Array.isArray(data) ? data.length : Array.isArray(data.hashrates) ? data.hashrates.length : null,
-      latest_series_timestamp: Array.isArray(data.hashrates) && data.hashrates.length
-        ? new Date(Number(data.hashrates[data.hashrates.length - 1].timestamp) * 1000).toISOString()
-        : null,
-      latest_series_value_eh_s: Array.isArray(data.hashrates) && data.hashrates.length
-        ? Number(data.hashrates[data.hashrates.length - 1].avgHashrate) / 1e18
-        : null,
-      note: "Raw response retained. Confirm bucket/window semantics before treating the latest daily point as an observation; do not label a rolling estimate as instantaneous hashrate."
+      top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
+      row_count: rows.length,
+      latest_series_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
+      latest_series_value_eh_s: Number.isFinite(hashrate) ? hashrate / 1e18 : null,
+      note: "Raw response retained. Confirm bucket/window semantics and units before treating the latest point as an observation; do not label a rolling estimate as instantaneous hashrate."
     };
   }
 });
@@ -155,7 +160,8 @@ await capture({
       : Array.isArray(data.rows) ? data.rows
       : Array.isArray(data.flows) ? data.flows
       : null;
-    const recentDays = rows ? rows.filter(row => String(row.date ?? row.day ?? "") >= "2026-10-05") : null;
+    const earliestRecentDay = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const recentDays = rows ? rows.filter(row => String(row.date ?? row.day ?? "") >= earliestRecentDay) : null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
