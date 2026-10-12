@@ -98,3 +98,23 @@ Duplicate review remains bounded to available evidence:
 ### Gate result
 
 As of this review, the BTC input contract is **not complete**: current timestamped Kraken/Mempool payloads have not been captured and validated; DXY access is not licensed/confirmed; and the latest reported Farside flow remains outside the 36-hour freshness gate. Therefore there is no complete candidate input set and no scenario evaluation should run yet. No database writes, migrations, scenario-state writes, monitoring changes, production deployment, or merge were performed.
+
+
+## Staging capture run and parser correction — 2026-10-12
+
+Read-only GitHub Actions run: https://github.com/olegsh247-stack/Crypto/actions/runs/38290669941
+Artifact: `btc-public-source-review`, ID `11766330405`, retention 7 days. Raw response files and `manifest.json` were uploaded as a review artifact; they were not committed to the repository and no database was accessed.
+
+Observed run output:
+- Kraken Trades returned HTTP 200. The response parser reported a latest trade price of 82,419.6 USD/BTC with source trade timestamp `2026-10-12T18:24:24.922Z`. This is a time-bounded staging observation, not a current price claim beyond that timestamp. It is not promoted into the candidate manifest or used for scenario evaluation.
+- Mempool `/mining/hashrate/1w` returned HTTP 200 with 7 rows. The previous script incorrectly looked for a nested `hashrates` property even though the response was a top-level array, so it did not expose the latest series timestamp/value. This was a parser defect; the old run is not evidence that hashrate units/freshness were validated.
+- Mempool `/mining/blocks/fees/1w` returned 830 rows. That response is not a matched 24-hour fee/subsidy pair and cannot support the ratio calculation. The capture now requests the 24-hour fee and reward endpoints separately, records their response shapes, and explicitly leaves ratio derivation blocked pending unit/window reconciliation.
+- Farside returned HTTP 403 in the runner, so no new ETF rows were accepted from it.
+- The TFTC JSON candidate endpoint returned HTTP 200 and 705 rows. This is an unapproved mirror, not a canonical source; it remains excluded from accepted inputs until source lineage, licence/terms, date semantics, revisions and missing-value handling are reviewed.
+- DXY remains blocked pending a licensed/approved source.
+
+The capture script was corrected to parse the top-level hashrate array, expose source observation timestamps and explicit unit conversion, capture matched-window fee and reward components separately, and distinguish raw capture from input validation. A successful staging workflow means the HTTP responses were collected; it does **not** mean that the required BTC inputs passed readiness.
+
+## Updated gate
+
+No scenario evaluation is authorized. Spot price has one auditable staging observation at the stated timestamp, but hashrate semantics still require review; fee/subsidy ratio remains uncalculated; ETF flow is not currently accepted; and DXY remains unresolved. No database writes, migrations, scenario-state writes, monitoring changes, production deployment or merge were performed by the staging workflow.
