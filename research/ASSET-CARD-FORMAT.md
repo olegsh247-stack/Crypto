@@ -4,7 +4,7 @@
 
 Every researched asset has its own logical Asset Card. The card is a database-backed entity identified by `asset_id`.
 
-GitHub stores methodology, Structure 1, templates and research source artifacts. Neon stores the working asset card and its current/historical research state. The website reads Neon.
+GitHub stores methodology, Structure 1, templates and research source artifacts. PostgreSQL stores the working asset card and its current/historical research state. The website reads PostgreSQL.
 
 ## Asset Card
 
@@ -30,7 +30,7 @@ Asset
 ## Rules
 
 1. One asset = one canonical Asset Card.
-2. Asset Cards are stored in Neon and addressed by `asset_id`.
+2. Asset Cards are stored in PostgreSQL and addressed by `asset_id`.
 3. Research belongs to the Asset, not to a Pair.
 4. Multiple Pairs may provide market data for one Asset.
 5. The 15 research blocks remain the canonical deep-research structure.
@@ -51,7 +51,7 @@ GitHub methodology + research source artifact
                   ↓
               Asset Card
                   ↓
-                Neon
+                PostgreSQL
                   ↓
         Dynamic Asset Engine
                   ↓
