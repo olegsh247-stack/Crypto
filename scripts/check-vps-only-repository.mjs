@@ -6,35 +6,59 @@ const root = process.cwd();
 const forbidden = [
   ["Cloud", "flare"].join(""),
   ["Ne", "on"].join(""),
+  ["N", "ton"].join(""),
   ["wrang", "ler"].join(""),
   ["workers", ".dev"].join(""),
-  ["@ne", "ondatabase/serverless"].join("")
+  ["@", "neondatabase/serverless"].join("")
 ].map((value) => value.toLowerCase());
-const ignoredDirs = new Set([".git", "node_modules", ".next", ".vercel", "dist", "coverage"]);
-const checkedExtensions = new Set([
-  ".md", ".yml", ".yaml", ".toml", ".ts", ".tsx", ".js", ".mjs",
-  ".json", ".sql", ".sh", ".css", ".txt", ".html", ".env", ".example"
-]);
+const ignoredDirs = new Set([".git", "node_modules", ".next", ".vercel", "coverage"]);
 const violations = [];
 let checked = 0;
+
+function inspect(path, relativePath) {
+  const lowerPath = relativePath.toLowerCase();
+  for (const token of forbidden) {
+    if (lowerPath.includes(token)) {
+      violations.push({ file: relativePath });
+      return;
+    }
+  }
+
+  const bytes = readFileSync(path);
+  // Binary assets are not source text; text files of every extension are scanned.
+  if (bytes.includes(0)) return;
+  const content = bytes.toString("utf8");
+  checked += 1;
+  const lowerContent = content.toLowerCase();
+  for (const token of forbidden) {
+    if (lowerContent.includes(token)) {
+      violations.push({ file: relativePath });
+      return;
+    }
+  }
+}
 
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     if (ignoredDirs.has(name)) continue;
     const path = join(dir, name);
     const info = statSync(path);
+    const relativePath = relative(root, path).replaceAll("\\", "/");
     if (info.isDirectory()) {
+      inspectPath(relativePath);
       walk(path);
-      continue;
+    } else if (info.isFile()) {
+      inspect(path, relativePath);
     }
-    const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : name;
-    if (!checkedExtensions.has(ext) && ![".gitignore", "Dockerfile", "Caddyfile"].includes(name)) continue;
-    const content = readFileSync(path, "utf8");
-    checked += 1;
-    for (const token of forbidden) {
-      if (content.toLowerCase().includes(token)) {
-        violations.push({ file: relative(root, path), token });
-      }
+  }
+}
+
+function inspectPath(relativePath) {
+  const lowerPath = relativePath.toLowerCase();
+  for (const token of forbidden) {
+    if (lowerPath.includes(token)) {
+      violations.push({ file: relativePath });
+      return;
     }
   }
 }
@@ -42,7 +66,7 @@ function walk(dir) {
 walk(root);
 if (violations.length) {
   for (const violation of violations) {
-    console.error("VPS_ONLY_SCAN_FAIL", violation.file, "contains retired platform reference");
+    console.error("VPS_ONLY_SCAN_FAIL", violation.file, "contains a retired platform reference");
   }
   process.exit(1);
 }
