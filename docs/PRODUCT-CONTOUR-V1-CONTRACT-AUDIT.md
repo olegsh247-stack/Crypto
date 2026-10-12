@@ -3,7 +3,7 @@
 **Status:** Static repository audit  
 **Date:** 2026-10-09  
 **Scope:** Read-only comparison of the current Web types/components, API handler and documented Dynamic Asset Engine contracts.  
-**Not performed:** Live API calls, Neon queries, build/runtime tests, database migrations, visual changes.
+**Not performed:** Live API calls, PostgreSQL database queries, build/runtime tests, database migrations, visual changes.
 
 ## Executive summary
 
@@ -16,7 +16,7 @@ No production data or schema was changed during this audit.
 ### P1 — Research progress can disagree between API and Web
 
 **Evidence**
-- `workers/crypto-api/src/research-status.ts` calculates `resolved` as complete + N/A blocks and uses `resolved / 15` for its percentage.
+- `vps/api/src/research-status.ts` calculates `resolved` as complete + N/A blocks and uses `resolved / 15` for its percentage.
 - `shared/research-status-contract.ts` defines `isResolvedBlock` as complete or N/A.
 - `web/lib/research-status.ts` calculates progress with `isCompletedBlock` only, and derives the percentage from completed blocks / 15.
 - The Asset Dashboard and Deep Research use this Web-side calculation rather than the server's `research_progress` payload.
@@ -30,7 +30,7 @@ Use one shared definition of progress. Prefer exposing both `completed` and `res
 ### P1 — Asset-scoped factor and score queries are not limited to the latest published snapshot
 
 **Evidence**
-- In `workers/crypto-api/src/index.ts`, critical factors are selected by `asset_id` and ordered by priority/name, without restricting them to the latest published snapshot.
+- In `vps/api/src/index.ts`, critical factors are selected by `asset_id` and ordered by priority/name, without restricting them to the latest published snapshot.
 - Scores are selected by `asset_id` and ordered by calculation time/type, without restricting them to the latest published snapshot.
 - The v2 model defines factors and scores as snapshot-related analytical records, and the dashboard is intended to present the current research baseline.
 
@@ -111,12 +111,12 @@ Add a read-only data contract check for representative assets (BTC, ETH, SOL, CA
 2. Confirm whether v1 factor/score rows are snapshot-scoped or intended as asset-current records.
 3. Check the actual live payload for BTC, ETH, SOL and CAKE without mutating data.
 4. Reconcile `scenario_states` with `research_scenarios` and record the chosen compatibility rule.
-5. Implement fixes as one coherent patch, then run local/static checks. Do not run the Release Gate while the GitHub Actions billing blocker remains unresolved; the workflow applies migrations to live Neon before its clean-database rehearsal.
+5. Implement fixes as one coherent patch, then run local/static checks. Do not run the Release Gate while the GitHub Actions billing blocker remains unresolved; the workflow applies migrations to live PostgreSQL database before its clean-database rehearsal.
 
 ## Change control
 
 This audit is documentation-only. It does not authorize:
-- Neon schema migrations;
+- PostgreSQL database schema migrations;
 - changes to billing or GitHub Actions settings;
 - changes to visual design;
 - production deployment.
@@ -175,7 +175,7 @@ The static API audit confirmed these contract gaps in the main branch:
 
 The audit-fix branch changes the queries to scope factors, scores and scenario states to the latest published snapshot; includes sources referenced by either observations or evidence; and stops advancing monitoring timestamps during ingestion. Research freshness can still move to `outdated` when a persisted review deadline has actually passed.
 
-A dedicated `worker-build.yml` workflow performs a Wrangler dry-run build for pull requests without deploying. Production release is manual-dispatch only after safety PR #17.
+A dedicated `vps-api-build.yml` workflow performs a deployment CLI dry-run build for pull requests without deploying. Production release is manual-dispatch only after safety PR #17.
 
 ### Release-gate incident record
 
