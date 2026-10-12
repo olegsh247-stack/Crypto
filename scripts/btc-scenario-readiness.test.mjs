@@ -37,6 +37,17 @@ test("fresh and traceable inputs pass readiness but do not create a scenario", (
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
+
+test("historical ETF sessions count toward the five-day series even when they are no longer fresh latest inputs", () => {
+  const inputs = completeInputs().map(x =>
+    x.metric_id === "institutional.etf_net_flow" && x.observed_at < "2026-10-12T00:00:00.000Z"
+      ? { ...x, freshness: "STALE" }
+      : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
+});
+
 test("missing fee-market metric blocks evaluation", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_subsidy_ratio");
   const result = assessBtcScenarioReadiness(inputs, now);
