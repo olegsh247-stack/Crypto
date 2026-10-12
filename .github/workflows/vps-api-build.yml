@@ -98,6 +98,13 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
         run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-btc-input-provenance.sql
+      - name: BTC observation idempotency and duplicate reconciliation rehearsal
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: |
+          set -euo pipefail
+          chmod +x scripts/reconcile-btc-exact-duplicates-target.sh scripts/test-btc-observation-idempotency.sh
+          ./scripts/test-btc-observation-idempotency.sh
       - name: PostgreSQL backup and restore rehearsal
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
