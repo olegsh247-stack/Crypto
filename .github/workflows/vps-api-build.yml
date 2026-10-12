@@ -107,17 +107,11 @@ jobs:
             'institutional.etf_net_flow|USD million/day'; do
             metric="${spec%%|*}"
             unit="${spec#*|}"
-            count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -v metric="$metric" -v unit="$unit" <<'SQL'
-SELECT count(*) FROM metric_definitions WHERE metric_id=:'metric' AND default_unit=:'unit' AND value_type='numeric';
-SQL
-)"
+            count=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT count(*) FROM metric_definitions WHERE metric_id='$metric' AND default_unit='$unit' AND value_type='numeric'")
             test "$count" = "1"
           done
           for source in market_binance network.primary institutional.primary; do
-            count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -v source="$source" <<'SQL'
-SELECT count(*) FROM sources WHERE source_id=:'source';
-SQL
-)"
+            count=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT count(*) FROM sources WHERE source_id='$source'")
             test "$count" = "1"
           done
       - name: BTC input provenance audit (read-only)
