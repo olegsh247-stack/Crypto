@@ -3,6 +3,13 @@ name: Build Crypto Web
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - '.github/workflows/web-build.yml'
   pull_request:
     paths:
       - 'web/**'
