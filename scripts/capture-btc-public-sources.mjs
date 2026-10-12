@@ -150,16 +150,23 @@ await capture({
   parse: body => {
     const data = JSON.parse(body);
     const rows = Array.isArray(data) ? data
+      : Array.isArray(data.days) ? data.days
       : Array.isArray(data.data) ? data.data
       : Array.isArray(data.rows) ? data.rows
       : Array.isArray(data.flows) ? data.flows
       : null;
+    const recentDays = rows ? rows.filter(row => String(row.date ?? row.day ?? "") >= "2026-10-05") : null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
       row_count: rows ? rows.length : null,
+      updated_through: data.updatedThrough ?? null,
+      license: data.license ?? null,
+      attribution: data.attribution ?? null,
+      source_lineage: data.sources ?? null,
       first_row_keys: rows && rows.length && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
-      last_row_sample: rows && rows.length ? rows[rows.length - 1] : null,
+      latest_day: rows && rows.length ? rows[rows.length - 1] : null,
+      recent_days_from_2026_10_05: recentDays,
       note: "Candidate mirror only. Inspect source lineage, date semantics, revisions and dash/null handling before using any row as canonical ETF flow."
     };
   }
