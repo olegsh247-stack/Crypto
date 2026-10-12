@@ -57,6 +57,8 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
             ? "source_not_registered"
             : typeof latest.unit !== "string" || !latest.unit.trim()
               ? "unit_missing"
+              : requirement.unit && latest.expected_unit !== requirement.unit
+              ? "metric_unit_contract_mismatch"
               : requirement.unit && latest.unit !== requirement.unit
                 ? "unit_mismatch"
                 : "stale_or_untraceable",
