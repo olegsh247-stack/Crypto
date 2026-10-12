@@ -45,7 +45,7 @@ jobs:
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
-          docker compose --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
+          docker compose --profile ops --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
           python3 - <<'PY'
           import json
           config=json.load(open('/tmp/crypto-production-compose.json'))
