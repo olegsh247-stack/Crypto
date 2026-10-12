@@ -31,4 +31,4 @@ Keep Git history intact for now. Rewriting history is a separate destructive mai
 
 - The canonical `docs/PLAN-100.md` was restored on 2026-10-13 from the Project Library master copy and updated against current `main`.
 - Because the plan necessarily documents the names of retired platforms and the rule against runtime dependencies on them, the scanner now excludes Markdown *content* from provider-token matching while retaining path checks and scanning non-Markdown source/configuration text. This avoids treating the governance document as an active dependency. Runtime/source/configuration files remain subject to the strict check.
-- This policy correction requires the newly triggered current-main Build Rehearsal to pass before it is considered verified.
+- The correction was verified by [VPS API Build Rehearsal #458](https://github.com/olegsh247-stack/Crypto/actions/runs/38309007906), commit `dca1b3b78552b43246f05be8cf7c9c17b92bd56b` — success, including the repository scan and full target-stack E2E.
