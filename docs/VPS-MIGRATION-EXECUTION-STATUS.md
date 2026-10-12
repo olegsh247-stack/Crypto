@@ -94,3 +94,9 @@ The target host has not yet been purchased, so the public endpoint is still the 
 - Added a fail-closed BTC natural-key/revision migration. It refuses to create uniqueness while duplicate groups remain; it does not delete data.
 - Added a separate explicitly guarded reconciliation script for exact duplicate payloads on a verified restored target copy. It refuses missing confirmation, wrong database name and any conflicting payload group.
 - Disposable PostgreSQL E2E exercises the guard and the unique index. It never connects to the source database. The source audit's nine exact-duplicate groups remain untouched until the target restore and explicit review.
+
+
+## BTC input registry completion — 2026-10-12
+
+- Added a target migration that ensures the five required BTC input metric definitions and canonical units exist, and registers the current public market/network/ETF source records. This adds metadata only; no observations are created or marked fresh.
+- DXY remains intentionally blocked pending a reviewed data feed/provider because the index is a licensed product. No unverified quote endpoint is treated as official data.
