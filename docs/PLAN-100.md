@@ -5,7 +5,7 @@
 **Актуальность снимка:** 13 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Проверенный SHA `main` на 2026-10-13:** `78b9be4bf41c8064c89b1ae16e1db0236d26faff`  
+**Последний проверенный code/CI baseline SHA `main`:** `f12ce13f41fe3fdca857dedf4bcdbfc70f7151cf` (VPS rehearsal #481 passed; subsequent commits through `d276dfe` only update audit documentation).  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
