@@ -37,7 +37,7 @@ services:
       dockerfile: worker/Dockerfile
     environment:
       DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
-      WORKER_INTERVAL_MS: "86400000"
+      WORKER_SCHEDULE_UTC: "00:30"
     depends_on:
       postgres:
         condition: service_healthy
