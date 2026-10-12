@@ -499,7 +499,7 @@
 
 | Этап | Статус на 2026-10-12 | Следующее действие |
 |---|---|---|
-| 1. Hosting architecture | `IN PROGRESS` | Завершить repo-side dependency map и подтвердить внешние Cloudflare/GitHub App/legacy routing facts; внешние проверки могут быть `BLOCKED` при отсутствии доступа. |
+| 1. Hosting architecture | `BLOCKED` по внешним фактам; repo/CI pass завершён | Repo-side dependency map и VPS rehearsal подтверждены. Cloudflare dashboard, secret names/usage, installed Apps, live API-to-DB routing и branch protection требуют доступных account-level доказательств; не объявлять hosting audit закрытым до этого. |
 | 2. PR audit | `NOT STARTED` как полный сводный аудит | После этапа 1 снять актуальные PR/SHA/checks и сравнить каждый PR с `main`. |
 | 3. Product Contour v1 | `IN PROGRESS` / требует повторной проверки current main | После PR audit сверить фактические контракты и провести read-only проверки. |
 | 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Проверить raw artifact, источники, freshness, units, duplicates и manifest. |
@@ -530,3 +530,10 @@
 ## 7. История изменений Плана 100
 
 - **2026-10-12 — v1:** создан главный план на основании состояния `main` SHA `115e13995c4ba005545a78033bf4a638b3584c38`, доступной документации хостинга/Product Contour/BTC и списка открытых PR. Статусы — снимок на дату подготовки, а не вечные факты. Обновлять документ при каждом существенном изменении и не забывать синхронизировать Library-копию, когда меняется master prompt или ключевой порядок этапов.
+
+## Verification closure update — 2026-10-12
+
+- Repository-side hosting checks and the VPS rehearsal on PR #76 are complete for this pass. [Run #38302522671](https://github.com/olegsh247-stack/Crypto/actions/runs/38302522671) succeeded on commit `c60fc7651292f008ad06c2bb35d313801d7c4cb0`; this is branch CI evidence, not a merge or production deployment.
+- Hosting audit remains `BLOCKED`, not `DONE`: Cloudflare dashboard state, GitHub secret names/usage, repository App permissions, live public API-to-database routing, and main branch protection are not authoritatively verified by current integration access. The branch-protection API returned 403; an empty ruleset response is not enough to claim the branch is unprotected.
+- No production changes, resource removals, secret/DNS changes, migrations, database writes, merges, or deployments were made.
+- Next step stays within Plan 100 stage 1: obtain the missing external evidence where dashboard/account access is available. Do not advance to the full PR audit or decommission legacy providers by assuming these facts.
