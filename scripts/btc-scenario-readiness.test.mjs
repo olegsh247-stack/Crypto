@@ -13,7 +13,7 @@ const units = {
 const row = (metric_id, observed_at, value_numeric = 1) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
   source_id: "source.test", source_url: "https://example.com/data",
-  source_registered: true, unit: units[metric_id],
+  source_registered: true, unit: units[metric_id], expected_unit: units[metric_id],
 });
 
 function completeInputs() {
@@ -111,4 +111,13 @@ test("non-canonical unit cannot pass readiness", () => {
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price" && x.reason === "unit_mismatch"));
+});
+
+
+test("metric registry unit drift blocks readiness", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
+    ? { ...x, expected_unit: "USD/BTC" } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "metric_unit_contract_mismatch"));
 });
