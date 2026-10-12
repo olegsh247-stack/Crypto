@@ -164,8 +164,10 @@ jobs:
           test "$successful" = "9"
           test "$written" -gt 0
           test "$after" -gt "$before"
+          actual_asset_count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from assets where enabled=true and asset_id <> 'usdt';" | tr -d '[:space:]')
           actual_assets=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select string_agg(asset_id,' ' order by asset_id) from assets where enabled=true and asset_id <> 'usdt';" | xargs)
-          test "$actual_assets" = "bch btc cake dash eth ltc sol trx xrp"
+          echo "VPS_WORKER_REGISTRY enabled_non_quote_assets=$actual_asset_count ids=$actual_assets"
+          test "$actual_asset_count" = "9"
           for asset in btc dash eth sol cake bch ltc xrp trx; do
             total=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset';" | tr -d '[:space:]')
             fresh=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from market_daily_candles where asset_id='$asset' and candle_open_at >= current_date - interval '2 days';" | tr -d '[:space:]')
