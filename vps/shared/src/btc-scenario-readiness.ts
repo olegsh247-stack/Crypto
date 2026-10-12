@@ -28,7 +28,7 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number, expected
     && typeof row?.source_id === "string" && row.source_id.trim().length > 0
     && row?.source_registered === true
     && typeof row?.unit === "string" && row.unit.trim().length > 0
-    && (!expectedUnit || row.unit === expectedUnit);
+    && (!expectedUnit || (row.unit === expectedUnit && row.expected_unit === expectedUnit));
 }
 
 export function assessBtcScenarioReadiness(observations: unknown, now: Date | string = new Date()) {
