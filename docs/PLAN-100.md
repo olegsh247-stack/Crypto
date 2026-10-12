@@ -512,11 +512,11 @@ This addendum supersedes the older open-PR snapshot above where the live GitHub 
 
 ### Stage 2 — current open PR inventory and disposition
 
-The live GitHub query returned eight open PRs. These are audit dispositions only; no PR was merged or closed.
+The live GitHub query returned eight open PRs. Their ahead/behind counts below were computed against comparison baseline `dca1b3b78552b43246f05be8cf7c9c17b92bd56b` (the verified source tree before the final audit-document-only commits). These are audit dispositions only; no PR was merged or closed.
 
 | PR | Current finding | Disposition |
 |---|---|---|
-| [#78](https://github.com/olegsh247-stack/Crypto/pull/78) — stale deployment gate docs | Its matrix wording correction is already present on current `main` (commits `968a62f` and `e677197`); branch base is stale. | Redundant as currently proposed (1 commit ahead / 8 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
+| [#78](https://github.com/olegsh247-stack/Crypto/pull/78) — stale deployment gate docs | Its matrix wording correction is already present on current `main` (commits `968a62f` and `e677197`); branch base is stale. | Redundant as currently proposed (1 commit ahead / 8 behind comparison baseline `dca1b3b78552b43246f05be8cf7c9c17b92bd56b`); do not merge as-is. Keep open until user reviews closure. |
 | [#77](https://github.com/olegsh247-stack/Crypto/pull/77) — repository hygiene workflow | Its workflow trigger change is superseded by current `main`, which now runs on every PR and every branch push; current main rehearsal passed. | Redundant as currently proposed (1 commit ahead / 8 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
 | [#76](https://github.com/olegsh247-stack/Crypto/pull/76) — scanner false positives | Uses an older, extension-limited scanner policy; current `main` scanner covers all non-binary text and paths and passed. | Superseded (1 commit ahead / 10 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
 | [#73](https://github.com/olegsh247-stack/Crypto/pull/73) — API/Web response types | Focused contract fix; all three recorded checks passed on its head. Branch is based on an older `main`; current audit still identifies the Web/API `research_progress` type mismatch. | Candidate for a fresh current-main comparison/rebase and revalidation (9 commits ahead / 10 behind); no merge yet. |
