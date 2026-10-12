@@ -33,6 +33,16 @@ function normalizeHistory(d) {
     has_interpretation: !!d.interpretation
   };
 }
+function assertHistoryParity(live, target) {
+  const stableKeys = ["status", "pair", "interval", "days", "has_interpretation"];
+  for (const key of stableKeys) assert(live[key] === target[key], "history." + key);
+  const delta = live.row_count - target.row_count;
+  // Temporary, intentional migration difference: target VPS excludes an in-progress daily candle.
+  // Until the legacy Worker is retired, it may return exactly one extra current-day row.
+  assert(delta === 0 || delta === 1, "history finalized-candle row delta=" + delta);
+  assert(live.normalized_relative_count - target.normalized_relative_count === delta, "history normalized row delta");
+  if (delta === 1) console.log("PARITY_KNOWN_FINALIZATION_DELTA live_has_one_unfinalized_daily_row=1");
+}
 const paths = [
   "/api/health",
   "/api/db-health",
@@ -78,7 +88,8 @@ for (const path of paths) {
     left = (l.pairs || l.items || []).map(x => pick(x, ["symbol","base_asset","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
     right = (v.pairs || v.items || []).map(x => pick(x, ["symbol","base_asset","quote_asset","exchange","enabled"])).sort((a,b)=>a.symbol.localeCompare(b.symbol));
   }
-  assert(JSON.stringify(left) === JSON.stringify(right), path);
+  if (path.includes("/history?")) assertHistoryParity(left, right);
+  else assert(JSON.stringify(left) === JSON.stringify(right), path);
   console.log("PARITY_OK", path);
 }
 console.log("VPS_API_PARITY_OK endpoints=7 volatile_fields_normalized=1");
