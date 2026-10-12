@@ -220,3 +220,19 @@ The BTC scenario is complete when the published research scenario, its evidence,
 ## Input-gate correction — 2026-10-12
 
 The ETF-flow readiness gate now checks the newest recorded ETF-flow row before filtering for valid observations. If that newest row is stale, future-dated, malformed, or lacks current freshness/provenance, readiness fails closed; it cannot silently fall back to older rows even when five older days pass the individual row checks. A regression test covers a stale newest row with five older current rows. This is a pure rule/test change: no database reads or writes, no scenario state, and no monitoring event.
+
+
+## VPS API evidence contract verification — 2026-10-12
+
+The target VPS API and disposable-PostgreSQL Build Rehearsal now verify the published BTC research chain without creating a live evaluation:
+
+- `evidence` is returned for the active published snapshot, including block/domain, observation and metric, source URL, observed value/unit, claim, signal, assessment, confidence, thesis impact and status.
+- Evidence-linked sources are included in the top-level source registry.
+- Critical factors, scores and scenario states are restricted to the active published snapshot; scenario definitions expose their `snapshot_id`.
+- E2E verifies the BTC snapshot `BTC-2026-10-07-v1`, 15 evidence records covering all 15 blocks, six factors, five scores, Bull/Base/Bear definitions and probabilities summing to 100%.
+- The clean baseline still contains no `scenario_states` or `monitoring_events`; the seven monitoring signals remain descriptive baseline entries. This is intentional and is now asserted by CI.
+- The ETF input-quality gate rejects a stale/untraceable newest row instead of silently falling back to older daily observations.
+
+These are target API contract checks against disposable PostgreSQL. They do not prove that the currently serving public API is on the VPS, do not repair the historical duplicate/stale production observations, and do not authorize a scenario-state or event write.
+
+The current factor-to-input and event acceptance requirements are documented in [BTC Monitoring Readiness Matrix v1](./BTC-MONITORING-READINESS-MATRIX.md). Remaining BTC blockers are source-verified fresh observations, reviewed metric aggregation windows, and explicit confirmation/invalidation conditions before any live state/event is persisted.
