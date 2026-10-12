@@ -51,4 +51,4 @@ The SDA source has been identified, but no provider credentials or provider-spec
 
 ## 5. Publication / implementation guardrails
 
-No Neon writes, migrations, deployments, PR merges, Product Contour lifecycle changes, scores, scenarios, or monitoring events were performed. SOL and CAKE remain unpublished drafts.
+No PostgreSQL writes, migrations, deployments, PR merges, Product Contour lifecycle changes, scores, scenarios, or monitoring events were performed. SOL and CAKE remain unpublished drafts.
