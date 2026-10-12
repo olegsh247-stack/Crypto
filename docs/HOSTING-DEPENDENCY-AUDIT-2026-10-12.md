@@ -194,3 +194,27 @@ This pass closes the checks that can be verified from the repository and availab
 - `main` branch protection: GitHub rulesets read returned no rulesets, but the branch-protection endpoint returned 403 to this integration. Do not infer that `main` is unprotected from this response.
 
 **Disposition:** repository/CI checks are complete for this pass; the hosting audit as a whole remains `BLOCKED` on provider/account/runtime evidence. No production resources, secrets, DNS, migrations, data, merges, or deployments were changed. Do not remove Neon/Cloudflare resources or claim they are retired until the blocked facts are verified and an approved cutover exists.
+
+
+### Cloudflare dashboard evidence supplied by project owner — 2026-10-12
+
+The project owner inspected the Cloudflare dashboard for Worker `crypto-api` and supplied the following visible state:
+
+- The Worker project exists and its `workers.dev` hostname is `crypto-api.olegsh247.workers.dev`.
+- The dashboard showed 190 requests and approximately 3.2 ms latency in its summary at the time inspected. This is dashboard summary evidence only; it does not establish current availability or prove which database the requests used.
+- The five most recent visible Cloudflare Builds associated with commits on branch `fix/api-web-research-response-contract-2026-10-12` were all red/failed, with reported durations of 5–9 seconds. The listed commits were `e648fa7`, `90b149a`, `40e475f`, `eccf39d`, and `954ca6b`. The owner-provided view does not include the failure logs, so the root cause is not established.
+- Runtime variables/secrets include a Production secret named `DATABASE_URL` (value encrypted). Its existence is evidence of a configured database connection variable, **not** evidence of its target host or proof that the Worker currently serves traffic using it.
+- The Bindings panel reports no connected bindings.
+- The visible Cron triggers panel lists a next run at Tue, 13 Oct 2026 00:30. The schedule itself was not captured, and this display does not prove that a run will succeed.
+- Placement is shown as off.
+- The dashboard has Logs and Traces controls/sections; the owner reported both Worker Logs and Worker Trace as disabled. This is observability configuration, not proof that the Worker itself is disabled.
+- The General/Danger zone section offers Delete Worker. No deletion was performed.
+
+**Interpretation and limits**
+
+1. Cloudflare is not yet proven disconnected or retired: the Worker resource, a `workers.dev` hostname, an encrypted `DATABASE_URL` secret, and a Cron trigger remain visible.
+2. The red Builds indicate that the inspected Cloudflare build pipeline is failing for the listed commits. They do not, by themselves, establish whether an older deployment remains active or whether requests are still being served by that deployment.
+3. The exact effect of the owner's earlier “Disable” action is not established by the two disabled observability controls. Do not infer that the Worker is disabled unless its deployment/serving status explicitly confirms that.
+4. Do not enable the Worker, delete it, change the secret, edit routes/DNS, or switch traffic as part of this audit. First inspect the deployment status and Domains & Routes, then establish whether the public API resolves to this Worker and where its `DATABASE_URL` points, without exposing the secret value.
+
+This evidence narrows the external blocker but does not close it. Cloudflare account state is now **partially evidenced**; active deployment/route state and runtime-to-database mapping remain unknown. No Cloudflare settings were changed by this audit.
