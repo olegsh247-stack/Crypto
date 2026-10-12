@@ -145,3 +145,8 @@ This section narrows the requested Neon/Cloudflare audit by separating repositor
 - [ ] After VPS is actually provisioned, verify host firewall, real environment file permissions, off-host backup, timer execution and restore from a production-like dump.
 
 The hosting architecture audit is therefore **partially complete, not closed**. The repository-side dependency map is documented; provider/account-level connection state, live routing, actual secret usage, and real-host backup behavior remain unverified. Keep the overall plan on step 1 until those external checks can be evidenced, then proceed to the open-PR comparison. No production changes, secret changes, merges, deploys, migrations, or database writes were performed by this pass.
+
+
+### Migration runner: concrete execution implication
+
+At the audited `main` SHA, the migration tree already contains `2026-10-13-btc-input-source-registry.sql` and `2026-10-13-btc-observation-natural-key.sql`, although the audit date is 2026-10-12. This is not a scheduling mechanism: `scripts/migrate-postgres.sh` iterates all `*.sql` files in lexical order and applies each unmarked migration. A clean bootstrap or a later migration run can therefore execute these files immediately. Their presence on `main` must not be interpreted as production application; before any real target DB operation, inspect both files, run the entire ordered migration set on disposable PostgreSQL, and record the exact migration markers on the intended target. No migration was executed against production during this audit.
