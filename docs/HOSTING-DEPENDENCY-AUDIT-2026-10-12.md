@@ -10,7 +10,7 @@ The only target architecture is the user's own VPS:
 
 `DNS → Caddy (HTTPS) → Node.js API → self-hosted PostgreSQL 16`, with a separate Node.js scheduled Worker, private database/API/Worker networking, and verified backups. GitHub Actions is CI/release validation, not a hosted runtime dependency.
 
-Cloudflare and Neon are not part of the desired final architecture. However, repository cleanup and a target-stack rehearsal do **not** prove that the currently serving public endpoint has been cut over. The migration tracker says the former public service has not yet been switched and the VPS is not provisioned. Do not delete the existing database/project or disable the old endpoint until data parity, backup/restore, acceptance, and a controlled cutover are complete.
+The retired edge-runtime platform and hosted database are not part of the desired final architecture. However, repository cleanup and a target-stack rehearsal do **not** prove that the currently serving public endpoint has been cut over. The migration tracker says the former public service has not yet been switched and the VPS is not provisioned. Do not delete the existing database/project or disable the old endpoint until data parity, backup/restore, acceptance, and a controlled cutover are complete.
 
 ## Evidence from current main
 
@@ -42,7 +42,7 @@ Cloudflare and Neon are not part of the desired final architecture. However, rep
 ### Transitional dependency boundary
 
 - The target repository architecture is self-hosted, but the migration tracker explicitly says the existing public service has not yet been switched.
-- Existing production data must be preserved and migrated deliberately. Do not infer that Neon is safe to delete because target migrations pass.
+- Existing production data must be preserved and migrated deliberately. Do not infer that the hosted database is safe to delete because target migrations pass.
 - Do not perform any write against the old production database, seed it, run ingestion, or deploy to the old public runtime as part of this audit.
 - The old endpoint, data copy, secrets and DNS remain cutover concerns until the target host is provisioned and verified.
 
