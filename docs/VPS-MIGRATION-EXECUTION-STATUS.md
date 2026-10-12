@@ -87,3 +87,10 @@ The target host has not yet been purchased, so the public endpoint is still the 
 - The duplicate-row audit found nine logical-key groups / 18 rows; every group has identical payload/provenance fields, with only row ID and created timestamp differing. The circulating-supply row separately lacks a source URL.
 - Results and a proposed **target-copy-only** reconciliation rule are documented in [BTC Source Data Audit](./BTC-SOURCE-DATA-AUDIT-2026-10-12.md). No source rows were modified. Do not run cleanup or add the uniqueness migration before the final dump is restored to the target and the duplicate report is rechecked.
 - The next data task is source-backed observation refresh and revision/idempotency contract work, starting with source/metric definitions and tests; do not fabricate observations or persist a live scenario state.
+
+
+## BTC observation idempotency implementation — 2026-10-12
+
+- Added a fail-closed BTC natural-key/revision migration. It refuses to create uniqueness while duplicate groups remain; it does not delete data.
+- Added a separate explicitly guarded reconciliation script for exact duplicate payloads on a verified restored target copy. It refuses missing confirmation, wrong database name and any conflicting payload group.
+- Disposable PostgreSQL E2E exercises the guard and the unique index. It never connects to the source database. The source audit's nine exact-duplicate groups remain untouched until the target restore and explicit review.
