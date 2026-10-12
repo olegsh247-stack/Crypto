@@ -1,6 +1,7 @@
 import { closePool, createSqlClient } from "@crypto/vps-runtime";
+import { refreshBtcObservationInputs } from "./btc-observations.js";
 
-export interface WorkerEnv { DATABASE_URL: string; }
+export interface WorkerEnv { DATABASE_URL: string; BTC_OBSERVATION_INGESTION_ENABLED?: string; }
 
 const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
 const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
@@ -113,7 +114,15 @@ export async function runScheduledIngestion(env:WorkerEnv){
     if(successfulIngestion.length>0){
       try{await refreshResearchReviewStatus(sql);}catch{}
     }
-    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0)};
+    const btcObservations = env.BTC_OBSERVATION_INGESTION_ENABLED === "true"
+      ? await refreshBtcObservationInputs(env.DATABASE_URL)
+      : {status:"disabled",candidate_count:0,inserted:0,revised:0,unchanged:0,failures:[],unresolved_metrics:["macro.dxy"]};
+    return {
+      assets:assets.length,
+      successful:successfulIngestion.length,
+      written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0),
+      btc_observations:btcObservations,
+    };
   } finally {
     await closePool();
   }
