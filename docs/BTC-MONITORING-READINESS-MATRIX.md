@@ -67,3 +67,8 @@ The VPS API now returns a read-only `scenario_readiness` object for BTC, compute
 ## Provenance/unit validation hardening — 2026-10-12
 
 The readiness gate now requires every selected observation to have an HTTPS source URL, a source ID registered in `sources`, an explicit observation unit matching the readiness contract, and a canonical `metric_definitions.default_unit` that also matches that contract, plus a current freshness marker and an in-window non-future timestamp. Canonical units are `USD/BTC`, `EH/s`, `ratio`, `index`, and `USD million/day` for the five required input families. The API passes source-registry and unit metadata into the shared gate; the web panel explains registry and unit blockers. Unit tests cover an unregistered source, an observation unit mismatch and metric-registry unit drift. This is validation only; it does not fetch, insert, update or delete observations.
+
+
+## Source collection status — 2026-10-12
+
+Source adapters now exist for spot price (Binance), network hashrate and fee/subsidy ratio (Mempool.space), and daily ETF net flows (Farside Investors). They preserve canonical units, source URL, source ID, observation/reporting time, period bounds where known, methodology, freshness and revision. The scheduled persistence path is disabled by default and must remain disabled until read-only candidate output is reviewed. DXY remains a blocker because no reviewed licensed feed is configured. The candidate command and fixture test contract are documented in [BTC Observation Collectors v1](./BTC-OBSERVATION-COLLECTORS-V1.md).

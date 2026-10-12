@@ -4,13 +4,14 @@ const scheduleUtc=process.env.WORKER_SCHEDULE_UTC??"00:30";
 const match=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(scheduleUtc);
 if(!match)throw new Error("WORKER_SCHEDULE_UTC must use HH:mm in UTC, e.g. 00:30");
 const [scheduleHour,scheduleMinute]=scheduleUtc.split(":").map(Number);
-const env={DATABASE_URL:process.env.DATABASE_URL??""};
+const env={DATABASE_URL:process.env.DATABASE_URL??"",BTC_OBSERVATION_INGESTION_ENABLED:process.env.BTC_OBSERVATION_INGESTION_ENABLED??"false"};
 
 async function run(){
   try{
     const result=await runScheduledIngestion(env);
-    console.log(JSON.stringify({status:"ok",service:"crypto-worker-vps",...result}));
-    return true;
+    const partial=(result as any).btc_observations?.status==="partial";
+    console.log(JSON.stringify({status:partial?"partial":"ok",service:"crypto-worker-vps",...result}));
+    return !partial;
   }catch(error){
     console.error(JSON.stringify({status:"error",service:"crypto-worker-vps",error:error instanceof Error?error.message:"worker_failed"}));
     return false;

@@ -100,3 +100,11 @@ The target host has not yet been purchased, so the public endpoint is still the 
 
 - Added a target migration that ensures the five required BTC input metric definitions and canonical units exist, and registers the current public market/network/ETF source records. This adds metadata only; no observations are created or marked fresh.
 - DXY remains intentionally blocked pending a reviewed data feed/provider because the index is a licensed product. No unverified quote endpoint is treated as official data.
+
+
+## BTC source collector implementation — 2026-10-12
+
+- Added fixture-tested read-only collectors for Binance BTC spot price, Mempool.space daily hashrate and 144-block fee/subsidy ratio, and the Farside BTC ETF Total column.
+- The Worker persistence path is explicitly opt-in: `BTC_OBSERVATION_INGESTION_ENABLED` defaults to false in code and Docker Compose. The public candidate command performs GETs only and never connects to PostgreSQL.
+- Observation persistence uses a transaction-scoped advisory lock and the BTC natural-key/revision index; repeated identical payloads are unchanged, and corrections for the same logical key receive the next revision.
+- DXY remains intentionally unresolved until a reviewed licensed feed is selected. No scenario-state or monitoring-event writes are added. The new collector code has not been deployed or enabled in a live environment.
