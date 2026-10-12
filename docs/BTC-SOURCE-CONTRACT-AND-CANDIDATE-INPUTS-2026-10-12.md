@@ -140,3 +140,21 @@ The workflow's green result means the read-only capture and artifact upload comp
 ### Gate after run 7
 
 The source-capture mechanism is now operational and yields timestamped, fingerprinted evidence. The BTC input gate remains **BLOCKED**: hashrate aggregation semantics need confirmation; fee/reward series windows and units are not reconciled; Farside is blocked from the runner and TFTC is not approved as canonical; DXY still lacks a confirmed licensed feed; and the ETF 36-hour freshness requirement is unmet. No scenario evaluation is authorized.
+
+### Matched fee/reward reconciliation — run 7 artifact review
+
+The retained run 7 artifact was downloaded and inspected read-only. This corrects the earlier preliminary note that the differing row counts alone meant a common window was not established. The two endpoints returned 157 fee rows and 158 reward rows, but their records can be reconciled by `avgHeight`:
+
+- 157 shared `avgHeight` keys, from 970974 through 971130.
+- All 157 matched keys have exactly equal source timestamps between fee and reward records.
+- One reward-only record exists at `avgHeight=970973`; it is outside the fee series and is excluded. No records are paired by array position.
+- For every matched row, `avgRewards - avgFees = 312,500,000` raw units. This is consistent with the 3.125 BTC block subsidy and a satoshi-scale payload, although the API endpoint summary does not explicitly specify units; retain that as a unit-contract check rather than silently assuming it.
+- Using the same 157 matched rows, the reproducible read-only candidate is:
+
+  `sum(avgFees) / sum(avgRewards - avgFees) = 0.005535490996178344` (about `0.5535491%`).
+
+- Latest matched source timestamp: `2026-10-12T19:13:30Z`. The raw fee and reward response fingerprints remain `b31de40af7e41a6fc29683e88883aa64e810d4570b035ab789f6fe0f5c9d7934` and `5264e3d033d1dd5c3095a1233e6e029eddf7fff92c2b017237b1df89d239fdb3`, respectively.
+
+Mempool's official REST documentation describes these endpoints as average total fees and average block rewards over the requested trailing period: https://mempool.space/docs/api/rest. The matched-height/timestamp join and constant inferred subsidy provide a coherent derivation candidate. **The ratio is still not promoted to an accepted scenario input** until raw-unit semantics and the exact canonical calculation contract are confirmed. It was not written to the database and has not been used in scenario evaluation.
+
+This finding narrows the blocker: fee/reward data are no longer simply “unmatched”; a matched candidate can be reproduced. Remaining checks concern explicit unit semantics and acceptance into the canonical input contract.
