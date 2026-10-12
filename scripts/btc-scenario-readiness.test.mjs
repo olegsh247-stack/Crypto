@@ -77,7 +77,7 @@ test("stale latest ETF flow blocks instead of falling back to five older current
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_48_hours"));
+    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
 });
 
 test("future-dated observations are rejected", () => {
