@@ -23,6 +23,16 @@
       "evidence": "citeturn0search0turn0search6"
     },
     {
+      "source_id": "market.kraken",
+      "name": "Kraken Spot public market-data API",
+      "type": "market",
+      "url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "public REST API",
+      "notes": "Canonical BTC/USD spot source candidate. Use the public Trades endpoint for actual trade timestamps and price; normalize Kraken's XBT symbol to BTC and retain raw pair/response. No credentials required for public market data."
+    },
+    {
       "source_id": "market.primary",
       "name": "Market data provider",
       "type": "market",
