@@ -89,8 +89,23 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     });
   }
 
-  // Never silently fall back to older rows if the latest source row is invalid.
-  const etfRows = allEtfRows.filter(row => validObservation(row, nowMs, 36, "USD million/day"));
+  // Historical daily ETF rows are allowed to be older than the latest-row
+  // freshness window. They still need valid timestamps, values, canonical
+  // units, registered HTTPS provenance, and must fall within the 14-day series.
+  // The latest row is checked separately above against the 36-hour registry gate.
+  const etfRows = allEtfRows.filter(row => {
+    const observedMs = dateMs(row?.observed_at);
+    const value = row?.value_numeric ?? row?.value_integer;
+    return Number.isFinite(observedMs)
+      && observedMs <= nowMs
+      && nowMs - observedMs <= 14 * 24 * 3600000
+      && value !== null && value !== undefined && Number.isFinite(Number(value))
+      && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
+      && typeof row?.source_id === "string" && row.source_id.trim().length > 0
+      && row?.source_registered === true
+      && row?.unit === "USD million/day"
+      && row?.expected_unit === "USD million/day";
+  });
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.period_start ?? row.observed_at)).toISOString().slice(0, 10);
