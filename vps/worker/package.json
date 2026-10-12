@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "start": "node --enable-source-maps dist/index.js",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/scheduler.test.js"
   },
   "dependencies": {
     "@crypto/vps-runtime": "file:../shared"
