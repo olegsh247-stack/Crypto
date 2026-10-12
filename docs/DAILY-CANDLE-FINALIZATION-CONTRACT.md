@@ -11,7 +11,7 @@ The daily market-candle table may contain the current UTC day's candle before it
 - Stored candle history used by calculations excludes rows whose `candle_close_at` is still in the future.
 - Ingestion may continue to upsert the current daily candle idempotently; this contract does not require deleting or rewriting production rows.
 - This is an API/query contract change only. No schema migration or production data repair is required.
-- The VPS API implementation applies the contract in `vps/api/src/app.ts`. The Cloudflare Worker implementation remains a legacy/current-production path until the VPS cutover is explicitly completed; keep the contract equivalent during the transition.
+- The VPS API implementation applies the contract in `vps/api/src/app.ts`. The former runtime Worker implementation remains a removed source path until the VPS cutover is explicitly completed; keep the contract equivalent during the transition.
 
 ## Verification
 
