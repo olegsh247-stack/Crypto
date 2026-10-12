@@ -1,12 +1,12 @@
 \echo 'BTC_INPUT_PROVENANCE_AUDIT — READ ONLY; no rows are inserted, updated, or deleted.'
-\echo 'Required input freshness/source inventory (ETF count is distinct recent days):'
+\echo 'Required input freshness/source inventory (limits aligned to metric-registry.json; ETF count is distinct recent days):'
 WITH required(metric_id, label, max_age_hours) AS (
   VALUES
-    ('market.spot_price', 'BTC spot price', 24),
-    ('security.hashrate', 'Network hashrate', 168),
-    ('security.fee_subsidy_ratio', 'Fee/subsidy ratio', 168),
-    ('macro.dxy', 'DXY macro proxy', 120),
-    ('institutional.etf_net_flow', 'US spot BTC ETF net flow', 168)
+    ('market.spot_price', 'BTC spot price', 1),
+    ('security.hashrate', 'Network hashrate', 48),
+    ('security.fee_subsidy_ratio', 'Fee/subsidy ratio', 48),
+    ('macro.dxy', 'DXY macro proxy', 48),
+    ('institutional.etf_net_flow', 'US spot BTC ETF net flow', 36)
 ),
 btc_observations AS (
   SELECT o.*
