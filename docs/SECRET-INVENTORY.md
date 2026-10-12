@@ -1,42 +1,28 @@
-# SECRET INVENTORY — Crypto
+# SECRET INVENTORY — Crypto VPS
 
-Дата: 2026-10-07
-Статус: PRE-CUTOVER INVENTORY
+Updated: 2026-10-12
 
-This document records secret names, purpose, owner/source and rotation status only. Secret values must never be committed here.
+This file records secret purposes and lifecycle only. Secret values must never be committed.
 
-## Known GitHub Actions secrets
+## Target host runtime
 
-| Secret | Current use | Target during VPS migration | Status |
+| Variable | Purpose | Storage | Status |
 |---|---|---|---|
-| `NEON_DATABASE_URL` | Neon migrations, seed, scheduled ingestion verification | Temporary migration/rollback only; replace with VPS DB credentials | INVENTORY REQUIRED |
-| `CLOUDFLARE_API_TOKEN` | Worker deploy and workers.dev management | Temporary rollback/deploy only; remove after decommission | INVENTORY REQUIRED |
-| `CLOUDFLARE_ACCOUNT_ID` | Worker deployment/account API | Temporary rollback/deploy only | INVENTORY REQUIRED |
-| `CRYPTO_ADMIN_TOKEN` | Worker `ADMIN_TOKEN` | New VPS API `ADMIN_TOKEN`; rotate before cutover | ROTATION REQUIRED |
+| `DATABASE_URL` | PostgreSQL connection for API and worker | VPS environment file outside Git; restricted file permissions | Create after VPS purchase |
+| `ADMIN_TOKEN` | API administrative authorization | VPS environment and authorized CI secret store only | Generate and rotate before cutover |
+| `POSTGRES_PASSWORD` | PostgreSQL role authentication | VPS environment file outside Git | Generate after VPS purchase |
+| `CORS_ORIGIN` | Allowed frontend origin | VPS environment/configuration | Set after domain selection |
+| `BACKUP_DIR_HOST` | Local backup destination | VPS environment/configuration | Set and test before cutover |
+| `DEPLOY_SSH_KEY` | Automated deployment access | GitHub Actions secret; dedicated deploy account | Create only when VPS is ready |
 
-## Runtime secrets
+## Required controls
 
-Current Worker runtime: `DATABASE_URL`, `ADMIN_TOKEN`.
+- [ ] Use a dedicated application database role and a separate migration/maintenance role.
+- [ ] Restrict SSH to key-based access and least-privilege deploy account.
+- [ ] Never expose PostgreSQL publicly.
+- [ ] Store encrypted backups off-host and prove restore works.
+- [ ] Rotate the admin token before public cutover.
+- [ ] Never paste secret values into Git, issues, audit documents, chat, or logs.
+- [ ] Remove obsolete secret entries from repository settings only after checking all remaining workflows and completing the migration rollback window.
 
-Target VPS runtime: `DATABASE_URL`, `ADMIN_TOKEN`.
-
-Additional runtime secrets may exist only if confirmed by the actual deployment/account inventory.
-
-## Required actions before cutover
-
-- [ ] Confirm every GitHub Actions secret above exists and is still required.
-- [ ] Record where each secret is sourced from.
-- [ ] Rotate `CRYPTO_ADMIN_TOKEN`.
-- [ ] Create a dedicated VPS PostgreSQL application credential.
-- [ ] Create a separate migration/maintenance credential.
-- [ ] Store VPS secrets outside Git.
-- [ ] Confirm no secret value appears in repository history or logs.
-- [ ] Update deployment workflow to use VPS secrets.
-- [ ] Verify rollback credentials remain valid until rollback window ends.
-- [ ] After decommission: remove obsolete Cloudflare/Neon credentials from active workflows.
-
-## Security rule
-
-Never paste secret values into GitHub files, issues, audit documents, chat, logs or screenshots.
-
-The audit records existence and lifecycle, not values.
+No secret values are stored in this document.
