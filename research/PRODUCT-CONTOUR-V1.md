@@ -292,7 +292,7 @@ GitHub methodology + research source artifact
                   ↓
               Asset Card
                   ↓
-                Neon
+                PostgreSQL
                   ↓
         Dynamic Asset Engine
                   ↓
