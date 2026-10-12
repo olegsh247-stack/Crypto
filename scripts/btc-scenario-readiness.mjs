@@ -8,7 +8,7 @@
 const REQUIRED = [
   { metricId: "market.spot_price", maxAgeHours: 24, label: "spot price" },
   { metricId: "security.hashrate", maxAgeHours: 168, label: "network hashrate" },
-  { metricId: "security.fee_market", maxAgeHours: 168, label: "fee-market/security economics" },
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 168, label: "fee-market/security economics" },
   { metricId: "macro.dxy", maxAgeHours: 120, label: "macro liquidity proxy (DXY)" },
 ];
 
