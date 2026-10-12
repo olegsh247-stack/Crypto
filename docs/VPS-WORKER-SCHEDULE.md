@@ -22,4 +22,4 @@ The VPS Build Rehearsal must compile the Worker and run ingestion/idempotency E2
 
 ## Cutover boundary
 
-This change defines the target VPS schedule only. It does not disable the legacy Cloudflare Worker, change Neon, deploy a VPS, or run ingestion against production.
+This change defines the target VPS schedule only. It does not disable the legacy legacy runtime Worker, change source database, deploy a VPS, or run ingestion against production.
