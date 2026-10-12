@@ -1,32 +1,11 @@
-# Neon database
+# PostgreSQL schema and migrations
 
-This directory contains the PostgreSQL schema for CryptoDataModel v1.
+This directory contains the canonical PostgreSQL schema, versioned migrations, and deterministic seed fixtures for the self-hosted Crypto deployment.
 
-## Purpose
+Apply schema and migrations from the repository root with:
 
-Neon stores normalized observations, research snapshots, monitoring state, scenario state, and permanent daily market history.
+`DATABASE_URL=postgresql://... bash scripts/migrate-postgres.sh`
 
-Realtime 1H/4H market data is deliberately temporary and is not stored in PostgreSQL.
+The runner bootstraps the base schema once and applies migrations in lexical order using `schema_migrations` markers. Re-running it is safe. Seed fixtures are intended for controlled initialization or disposable-database tests; do not apply them to production without a reviewed migration plan.
 
-## Tables
-
-- `assets` — curated asset universe.
-- `metric_definitions` — stable machine-readable metric registry.
-- `sources` — source registry.
-- `observations` — canonical normalized measurements and revisions.
-- `research_snapshots` — versioned research conclusions.
-- `monitoring_events` — monitoring triggers and their lifecycle.
-- `scenario_states` — current/recorded scenario states.
-- `market_daily_candles` — permanent 1D market history used to derive 7D views.
-- `schema_migrations` — migration bookkeeping.
-
-## Design rules
-
-1. Primary source -> ingestion -> normalized observation -> validation -> snapshot/history -> API -> UI.
-2. Observations are append-oriented; corrections are represented by revisions rather than silent overwrites.
-3. Research snapshots are versioned and remain immutable after publication.
-4. Website code must not silently rewrite fundamental research conclusions.
-5. Market history uses the actual source timestamp/convention supplied by the exchange.
-6. 1H/4H data is temporary; 1D is permanent; 7D is derived from stored daily candles.
-
-Neon provides standard PostgreSQL connection URIs, including pooled connection URIs for applications with many concurrent connections. 
+The same migration set is used by local CI rehearsals and the target VPS deployment. Never commit credentials or database connection strings.
