@@ -2,7 +2,7 @@
 
 Дата: 2026-10-07
 
-Канонический runtime API: `workers/crypto-api/src/index.ts`.
+Канонический runtime API: `vps/api/src/app.ts`.
 Канонические Web TypeScript contracts: `shared/api-contract.ts`.
 Lifecycle/freshness contracts: `shared/research-status-contract.ts`.
 
