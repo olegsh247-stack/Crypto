@@ -31,7 +31,7 @@ docker compose --env-file vps/.env.production -f vps/docker-compose.production.y
 docker compose --env-file vps/.env.production -f vps/docker-compose.production.yml up -d --build api worker caddy
 ```
 
-The migration command applies the repository's versioned migrations. On a new empty database it also bootstraps the base schema. Do not point this command at Neon or any other production database as a rehearsal. Production migration is a separate approved operation governed by `NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md`.
+The migration command applies the repository's versioned migrations. On a new empty database it also bootstraps the base schema. Do not point this command at source database or any other production database as a rehearsal. Production migration is a separate approved operation governed by `source database-TO-POSTGRES-MIGRATION-RUNBOOK.md`.
 
 ## Verify
 
@@ -62,10 +62,10 @@ The timer runs at 02:00 UTC with a small randomized delay and retains 14 days by
 
 ## Data and backups
 
-This Compose file defines persistence volumes but does not, by itself, provide an off-host backup or a proven restore. Configure encrypted off-host backups and perform a restore test before production cutover. Use the gated migration runbook for the Neon dump, target restore, row-count/integrity comparison, final write freeze, acceptance, and rollback conditions.
+This Compose file defines persistence volumes but does not, by itself, provide an off-host backup or a proven restore. Configure encrypted off-host backups and perform a restore test before production cutover. Use the gated migration runbook for the source database dump, target restore, row-count/integrity comparison, final write freeze, acceptance, and rollback conditions.
 
 ## Important boundaries
 
 - Do not deploy this skeleton to a public VPS until DNS, firewall, secrets, backup/restore, and migration gates are complete.
-- Do not disable Cloudflare or Neon as part of a routine `docker compose up`.
+- Do not disable legacy runtime or source database as part of a routine `docker compose up`.
 - Do not enable production Worker ingestion until the restored target database and API have passed acceptance checks.
