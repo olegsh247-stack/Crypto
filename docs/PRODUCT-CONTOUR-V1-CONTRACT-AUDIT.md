@@ -272,3 +272,66 @@ Evidence: [VPS Build Rehearsal #38286251489](https://github.com/olegsh247-stack/
 - Confirmation/invalidation rules and monitoring event contract; no live scenario-state or event persistence until reviewed gates pass.
 
 The detailed BTC factor-to-input mapping and acceptance gates are in [BTC-MONITORING-READINESS-MATRIX.md](./BTC-MONITORING-READINESS-MATRIX.md). No production data, schema or public routing was changed by this follow-up.
+
+
+## Current-main reconciliation — 2026-10-12
+
+This section supersedes earlier "remaining audit items" where current source and later verification now show the finding has been addressed. It does not erase the historical record above.
+
+### Rechecked against current `main`
+
+| Historical finding | Current source evidence | Current disposition |
+|---|---|---|
+| Progress treats N/A differently in Web and API | `shared/research-status-contract.ts` defines resolved as complete + N/A; `web/lib/research-status.ts` reports completed, resolved, total and percent using resolved; `vps/api/src/research-status.ts` also uses resolved for lifecycle/percentage. | **Original UI calculation defect resolved.** See the separate response-type mismatch below. |
+| Factors/scores can mix snapshots | Current `vps/api/src/app.ts` selects both collections using the latest published snapshot ID for the asset. | **Resolved in target API source.** Keep regression coverage for multi-snapshot isolation. |
+| Scenario state can come from an older snapshot | Current asset-detail query filters `scenario_states` by the latest published snapshot ID. | **Resolved in target API source.** The clean BTC rehearsal intentionally has no evaluated state. |
+| Top-level source registry omits evidence-only sources | Current `sources` query unions source IDs referenced by observations with source IDs referenced by evidence for the active snapshot. | **Resolved in target API source.** Keep evidence/source lineage E2E coverage. |
+| Monitoring timestamps advance merely because ingestion ran | Current target Worker scheduler updates expired research review status but does not update `monitoring_signals.last_updated_at` as an ingestion side effect. | **The inspected target code no longer contains the identified write.** The old deployed Worker was not thereby updated; deployment/cutover remains pending. |
+
+The target API includes the expected major payload sections: metrics/history, published snapshot, blocks/domains, critical factors, scores, scenario definitions/states, monitoring signals/events, sources and evidence. The BTC readiness assessment is included in the detail response. This is source-level confirmation, not a live public-endpoint check.
+
+### Remaining contract gap — research progress response type
+
+The runtime API uses `calculateResearchStatus()` from `vps/api/src/research-status.ts`, whose result shape is:
+
+```ts
+{ status, completed, resolved, total, percentage }
+```
+
+However, `web/lib/api.ts` currently types `AssetDetailResponse.research_progress` as:
+
+```ts
+{ status, completed, total, percent }
+```
+
+The Web pages currently calculate visible progress from normalized research blocks, so this mismatch has not been established as a visible rendering defect. It is still a real API/type-contract inconsistency: the typed client can silently accept the server payload because its generic fetch wrapper casts the response, and a future consumer could read a missing `percent` or miss `resolved`.
+
+**Required fix after review:** align the shared response type with the server contract, or deliberately normalize the server payload to the chosen canonical names; add a contract test that compares the runtime JSON keys and types. Do not change it as part of this documentation-only audit.
+
+### Other response-shape checks still open
+
+- `AssetDetailResponse` does not declare the `scenario_readiness` field returned by the BTC detail endpoint, even though the Asset Dashboard reads it. The page currently uses `any`, which masks this contract omission.
+- `ResearchScenario` omits the `snapshot_id` returned for each scenario definition. E2E currently checks lineage, but the Web type does not expose it to consumers.
+- Freshness fields are split between the raw asset record and nested `research_freshness`; verify list/detail parity and define one canonical contract. Do not infer metric freshness from the research review schedule.
+
+These are type/contract concerns, not authorization to alter production data or the scenario evaluation model.
+
+### BTC Product Contour v1 status after this pass
+
+**Established in current target code / isolated CI:**
+- A published BTC snapshot and 15-block research structure.
+- Six snapshot-linked critical factors, five snapshot-linked scores, three Bull/Base/Bear definitions and 15 evidence records linked to the active snapshot.
+- API payload paths for domains, factors, scores, scenario definitions/states, monitoring, evidence and source provenance.
+- Readiness gate exposes blockers without writing a scenario state or monitoring event.
+- The target API/Worker and clean PostgreSQL rehearsal have successful CI evidence; current-main Release Gate #38290593113 includes VPS API/Worker/PostgreSQL/backup/E2E and Web build checks.
+
+**Still blocked for a complete, reproducible BTC scenario:**
+- The latest read-only data audit records stale core numeric observations, nine duplicate logical-key groups and two rows missing source URLs. Do not rewrite or delete them blindly.
+- Seven monitoring signals are descriptive baseline objects, not live measured conditions.
+- There is no snapshot-linked BTC scenario state and no monitoring event; the published Base is a research definition only.
+- A deterministic, versioned Base/Bull/Bear rule, metric windows/thresholds, source acceptance, freshness policy and dry-run historical/fixture evaluation still need review.
+- A live public-endpoint payload check cannot be claimed from repository source or disposable-database CI. The VPS is not provisioned and cutover is pending.
+
+### Validation boundary
+
+This is a read-only source/documentation reconciliation. No public API call, live PostgreSQL query, migration, production write, UI redesign, merge, or deployment was performed in this pass. Use the successful CI runs as evidence for the isolated target stack only; do not label them live production verification.
