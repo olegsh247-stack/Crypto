@@ -142,6 +142,29 @@ await capture({
   })
 });
 
+await capture({
+  name: "tftc-btc-etf-json-candidate",
+  metricId: "institutional.etf_net_flow",
+  sourceId: "institutional.tftc",
+  url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
+  parse: body => {
+    const data = JSON.parse(body);
+    const rows = Array.isArray(data) ? data
+      : Array.isArray(data.data) ? data.data
+      : Array.isArray(data.rows) ? data.rows
+      : Array.isArray(data.flows) ? data.flows
+      : null;
+    return {
+      response_shape: Array.isArray(data) ? "array" : typeof data,
+      top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
+      row_count: rows ? rows.length : null,
+      first_row_keys: rows && rows.length && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
+      last_row_sample: rows && rows.length ? rows[rows.length - 1] : null,
+      note: "Candidate mirror only. Inspect source lineage, date semantics, revisions and dash/null handling before using any row as canonical ETF flow."
+    };
+  }
+});
+
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
