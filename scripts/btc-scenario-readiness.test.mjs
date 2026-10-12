@@ -12,7 +12,7 @@ function completeInputs() {
   return [
     row("market.spot_price", "2026-10-12T11:00:00.000Z", 80000),
     row("security.hashrate", "2026-10-12T00:00:00.000Z", 1000),
-    row("security.fee_market", "2026-10-11T00:00:00.000Z", 0.2),
+    row("security.fee_subsidy_ratio", "2026-10-11T00:00:00.000Z", 0.2),
     row("macro.dxy", "2026-10-11T00:00:00.000Z", 99),
     ...[
       ["2026-10-12", 10], ["2026-10-11", 20], ["2026-10-10", -5],
@@ -30,10 +30,10 @@ test("fresh and traceable inputs pass readiness but do not create a scenario", (
 });
 
 test("missing fee-market metric blocks evaluation", () => {
-  const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_market");
+  const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_subsidy_ratio");
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_market" && x.reason === "missing"));
+  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio" && x.reason === "missing"));
 });
 
 test("stale observation cannot pass even with a source URL", () => {
