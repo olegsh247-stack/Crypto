@@ -68,18 +68,23 @@ jobs:
           print('VPS_PRODUCTION_COMPOSE_OK public_ports=80,443 postgres_private=1 api_private=1 worker_private=1')
           PY
       - name: Start PostgreSQL rehearsal
+        id: postgres
         run: |
-          docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 55432:5432 postgres:16
+          set -euo pipefail
+          docker run -d --name crypto-vps-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 127.0.0.1::5432 postgres:16
+          port="$(docker port crypto-vps-postgres 5432/tcp | awk -F: '{print $NF}')"
+          test -n "$port"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
           for _ in $(seq 1 30); do
-            pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test >/dev/null 2>&1 && break
+            pg_isready -h 127.0.0.1 -p "$port" -U postgres -d crypto_test >/dev/null 2>&1 && break
             sleep 2
           done
-          pg_isready -h 127.0.0.1 -p 55432 -U postgres -d crypto_test
+          pg_isready -h 127.0.0.1 -p "$port" -U postgres -d crypto_test
       - name: Bootstrap PostgreSQL with repository migrations
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-          export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crypto_test'
+          export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test'
           bash scripts/migrate-postgres.sh
           bash scripts/migrate-postgres.sh
           count=$(psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --tuples-only --no-align --command="select count(*) from schema_migrations;")
@@ -89,7 +94,7 @@ jobs:
           echo "VPS_DB_BOOTSTRAP_OK migrations=$count duplicate_markers=0 rerun=1"
       - name: PostgreSQL backup and restore rehearsal
         env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
           BACKUP_DIR: /tmp/crypto-postgres-backup-e2e
           BACKUP_RETENTION_DAYS: "14"
         run: |
@@ -100,7 +105,7 @@ jobs:
           test -n "$dump"
           sha256sum -c "$dump.sha256"
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --command="CREATE DATABASE crypto_restore_test;"
-          restore_url='postgresql://postgres:postgres@127.0.0.1:55432/crypto_restore_test'
+          restore_url='postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_restore_test'
           pg_restore --exit-on-error --no-owner --no-acl --dbname="$restore_url" "$dump"
           table_counts() {
             local url="$1"
@@ -121,7 +126,7 @@ jobs:
       - name: Start VPS API
         working-directory: vps/api
         env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
           ADMIN_TOKEN: local-development-only
           CORS_ORIGIN: http://localhost:3000
           PORT: 8080
@@ -205,7 +210,7 @@ jobs:
       - name: VPS worker ingestion E2E
         working-directory: vps/worker
         env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
           WORKER_RUN_ONCE: "1"
         run: |
           set -euo pipefail
