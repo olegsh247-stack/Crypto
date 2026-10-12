@@ -9,14 +9,6 @@ if [[ "$actual_database" != "crypto_test" ]]; then
 fi
 
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
-# The clean research seed deliberately omits numeric live-input definitions.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
-INSERT INTO metric_definitions (metric_id, namespace, name, description, default_unit, value_type)
-VALUES ('market.spot_price', 'market', 'BTC spot price',
-        'Point-in-time BTC spot market price.', 'USD/BTC', 'numeric')
-ON CONFLICT (metric_id) DO NOTHING;
-SQL
-
 # Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
 base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
 INSERT INTO observations (
