@@ -7,6 +7,7 @@ on:
       - "shared/**"
       - "infrastructure/neon/**"
       - "scripts/migrate-postgres.sh"
+      - "scripts/vps-api-parity.mjs"
       - ".github/workflows/vps-api-build.yml"
   push:
     branches: [main]
