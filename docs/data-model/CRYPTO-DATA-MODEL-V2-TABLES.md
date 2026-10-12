@@ -1,6 +1,6 @@
 # CryptoDataModel v2 — Tables, Fields, Relations & Constraints
 
-**Status:** Design specification only — no Neon migration yet.
+**Status:** Design specification only — no PostgreSQL migration yet.
 
 This document translates `CRYPTO-DATA-MODEL-V2.md` into a database-oriented specification. Existing v1 tables remain the foundation; v2 adds only the Research Engine layer.
 
@@ -252,7 +252,7 @@ Minimum indexes:
 
 Before production SQL is generated, resolve:
 
-1. Exact v1 table names and column types in the current Neon schema.
+1. Exact v1 table names and column types in the current PostgreSQL schema.
 2. Whether `assets.id`, `metric_definitions.id`, `observations.id`, `sources.id`, `research_snapshots.id`, and `monitoring_events.id` are UUIDs or another type.
 3. Exact existing `scenario_states` semantics; avoid duplicate scenario systems.
 4. Existing API compatibility requirements.
