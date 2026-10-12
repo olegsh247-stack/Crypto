@@ -103,3 +103,37 @@ The published BTC snapshot and scenario definitions were checked against the cur
 **Do not calculate or persist a live Bull/Base/Bear state from these inputs yet.** The current Base remains the published research baseline only. A live evaluation requires refreshed, source-verified values for the existing BTC inputs, a documented deterministic rule, and explicit data-freshness gates. The duplicate observation rows are preserved; the seed script is now idempotent for future reruns, but the existing rows were not deleted or rewritten.
 
 The idempotency regression passed in disposable PostgreSQL on [PR #22](https://github.com/olegsh247-stack/Crypto/pull/22). That proves reruns will not add another copy of the targeted seed observations; it does not repair the existing live duplicates or refresh stale values.
+
+
+## Deterministic evaluation preparation — input-quality gate
+
+The next implementation step is a fail-closed input gate, not a scenario prediction. It deliberately does not write `scenario_states`, change the published 30/50/20 baseline probabilities, or create monitoring events.
+
+### Required input contract
+
+| Input | Requirement before evaluation |
+|---|---|
+| BTC spot price | Numeric, source-linked, marked CURRENT, observed within 24 hours |
+| Network hashrate | Numeric, source-linked, marked CURRENT, observed within 7 days |
+| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within 7 days |
+| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within 5 days |
+| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked and CURRENT; latest within 48 hours |
+
+All observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. A missing required metric is a blocker, not an implicit neutral signal.
+
+The new pure function `scripts/btc-scenario-readiness.mjs` returns either `not_evaluable` with explicit blockers or `ready_for_rule_evaluation` with selected inputs and provenance. It always returns `can_persist_scenario_state: false`: passing the input gate is not the same as having an approved directional scoring rule.
+
+### Current live-data implications
+
+The read-only audit already establishes that the current spot price, hashrate and ETF-flow observations are stale. The audit also did not find a numeric fee-market observation in the BTC input set. Therefore the live dataset must fail this gate today. That is the intended outcome: no stale-value fallback, no guessed refresh, no fabricated Base/Bull/Bear state.
+
+### Automated checks
+
+The unit tests cover fresh traceable inputs, missing fee-market data, stale and future-dated observations, insufficient distinct ETF-flow days, and missing source URLs. The workflow runs on the isolated test fixtures only and has no database credentials or deployment step.
+
+### Next acceptance gate
+
+1. Obtain source-verified fresh observations for the existing inputs and establish the correct fee-market metric definition/source.
+2. Specify and review the directional rule that maps those inputs to Bull/Base/Bear, including how contradictory inputs and invalidation events are handled.
+3. Validate the rule against fixtures and historical cases without writing to production.
+4. Only after those gates pass, plan the controlled persistence of a snapshot-linked scenario state and traceable monitoring events.
