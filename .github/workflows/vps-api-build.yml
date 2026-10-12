@@ -48,6 +48,8 @@ jobs:
       - name: Build VPS worker
         working-directory: vps/worker
         run: npm install && npm run build
+      - name: BTC source collector parser tests
+        run: node --test scripts/btc-observation-collectors.test.mjs
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
