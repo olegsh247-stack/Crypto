@@ -61,6 +61,7 @@ values
   ('protocol.primary','Bitcoin Developer Reference','primary','https://developer.bitcoin.org/reference/','high','Protocol and node-level facts.'),
   ('network.primary','Mempool.space','primary','https://mempool.space/','high','Public Bitcoin network, mempool and Lightning data.'),
   ('market.primary','Market data provider','market',null,'to_validate','Production market-data provider abstraction.'),
+  ('market.kraken','Kraken Spot public market-data API','market','https://api.kraken.com/0/public/Trades?pair=XBTUSD','high','Canonical BTC/USD spot candidate; preserve raw trade payload and Kraken trade epoch timestamp.'),
   ('institutional.primary','Farside Investors — Bitcoin ETF flows','institutional','https://farside.co.uk/btc/','high','US spot Bitcoin ETF flow and holdings data.'),
   ('analytics','Glassnode','analytics','https://glassnode.com/','high','On-chain and market analytics.'),
   ('lightning.primary','Mempool.space Lightning','primary','https://mempool.space/docs/api/rest','high','Lightning network statistics.'),
