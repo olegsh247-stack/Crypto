@@ -150,3 +150,27 @@ The hosting architecture audit is therefore **partially complete, not closed**. 
 ### Migration runner: concrete execution implication
 
 At the audited `main` SHA, the migration tree already contains `2026-10-13-btc-input-source-registry.sql` and `2026-10-13-btc-observation-natural-key.sql`, although the audit date is 2026-10-12. This is not a scheduling mechanism: `scripts/migrate-postgres.sh` iterates all `*.sql` files in lexical order and applies each unmarked migration. A clean bootstrap or a later migration run can therefore execute these files immediately. Their presence on `main` must not be interpreted as production application; before any real target DB operation, inspect both files, run the entire ordered migration set on disposable PostgreSQL, and record the exact migration markers on the intended target. No migration was executed against production during this audit.
+
+
+## Follow-up pass — account evidence and scanner validation (2026-10-12)
+
+### Neon account state (read-only inventory)
+
+A read-only inventory through the connected Neon account confirms that a project named **Crypto** exists, with a primary branch named **production** and a read-write PostgreSQL endpoint. The endpoint reported an idle state at inspection, while its activity metadata was dated today. This is sufficient to establish that the Neon resource still exists; it is **not** sufficient to prove that the current public API is or is not using it.
+
+- No SQL was executed against the database.
+- No database contents, connection strings, resource IDs, hostnames, or account identifiers are recorded in this public repository.
+- Do not delete, suspend, rotate, or otherwise change the project or endpoint until public-runtime routing, required data, backup/restore, target parity, and rollback are verified.
+- Public API-to-database routing remains unverified. This requires a safe, read-only endpoint/configuration check; it must not be guessed from the project name or recent activity.
+
+### Cloudflare account state
+
+The available connected tools do not provide read access to the user's Cloudflare dashboard. Repository inspection still shows no Cloudflare deployment configuration in the inspected main files, but that does not establish whether an account-level Worker/Pages project, Git connection, DNS route, or secret binding remains active. Keep this item open until the dashboard can be inspected. No Cloudflare setting was changed.
+
+### VPS-only scanner false-positive prevention
+
+The scanner in scripts/check-vps-only-repository.mjs previously searched Markdown prose for retired-provider names. That would turn required audit history and the master plan into false positives once those documents are integrated, despite no operational dependency being present. A narrow proposed fix is in [PR #76](https://github.com/olegsh247-stack/Crypto/pull/76): provider-reference scanning remains on operational/source/configuration files, while Markdown is reviewed separately as documentation. The PR's VPS API Build Rehearsal completed successfully on its branch; this is CI evidence for that branch only, not a merge or production change.
+
+### Updated disposition
+
+The repository-side target architecture remains self-hosted PostgreSQL + API + Worker + Caddy. The Neon account-level resource is confirmed to exist; its live-runtime relationship remains unknown. Cloudflare dashboard state, GitHub secret names/usage, installed repository Apps, and live public endpoint routing remain external blockers. Hosting audit stays open at Plan 100 step 1. No provider resources, DNS, secrets, production data, or deployment state were changed.
