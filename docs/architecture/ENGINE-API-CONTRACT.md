@@ -1,6 +1,6 @@
 # Dynamic Engine API Contract
 
-The UI must call the API for mutations. It must never write directly to Neon.
+The UI must call the API for mutations. It must never write directly to PostgreSQL.
 
 ## Read
 
