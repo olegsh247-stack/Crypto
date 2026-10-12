@@ -1,14 +1,14 @@
-# Crypto — Architecture ↔ Neon DB Mapping
+# Crypto — Architecture ↔ PostgreSQL DB Mapping
 
 ## Purpose
 
-This document connects **Structure 1** to the current Neon/PostgreSQL model and defines the contract used by the Dynamic Asset Engine.
+This document connects **Structure 1** to the current PostgreSQL/PostgreSQL model and defines the contract used by the Dynamic Asset Engine.
 
 Structure 1 remains the architectural source of truth. This document describes how its concepts are persisted and read from the database.
 
 ## 1. Core entities
 
-| Structure 1 concept | Neon table / source | Role |
+| Structure 1 concept | PostgreSQL table / source | Role |
 |---|---|---|
 | Asset | `assets` | Canonical research subject |
 | Asset Type | `asset_types` | Determines relevant metrics and Critical Factors |
@@ -214,4 +214,4 @@ This mapping does not invent missing database columns or force Structure 1 conce
 
 ---
 
-**Status:** implementation contract for Structure 1 ↔ Neon ↔ Dynamic Asset Engine.
+**Status:** implementation contract for Structure 1 ↔ PostgreSQL ↔ Dynamic Asset Engine.
