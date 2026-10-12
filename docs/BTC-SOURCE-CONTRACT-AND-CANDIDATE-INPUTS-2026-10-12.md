@@ -158,3 +158,24 @@ The retained run 7 artifact was downloaded and inspected read-only. This correct
 Mempool's official REST documentation describes these endpoints as average total fees and average block rewards over the requested trailing period: https://mempool.space/docs/api/rest. The matched-height/timestamp join and constant inferred subsidy provide a coherent derivation candidate. **The ratio is still not promoted to an accepted scenario input** until raw-unit semantics and the exact canonical calculation contract are confirmed. It was not written to the database and has not been used in scenario evaluation.
 
 This finding narrows the blocker: fee/reward data are no longer simply “unmatched”; a matched candidate can be reproduced. Remaining checks concern explicit unit semantics and acceptance into the canonical input contract.
+
+
+### Candidate manifest synchronization and reproducible fee/reward check
+
+The companion JSON manifest has now been synchronized with the **run 7 staging evidence** rather than leaving all three captured/derived candidates blank:
+
+- Spot price candidate: 82,658.4 USD/BTC at source trade time `2026-10-12T19:43:28.221Z`, fingerprint `160d0516f32aac0872377b919fede0206498eba89cf67cc70ce576742c7bad6c`.
+- Hashrate candidate: 1,028.5948763981921 EH/s at `2026-10-12T00:00:00Z`, fingerprint `b669c2da52aa006f09bcfb2884b7438101041a3dc3b479d4ebfd0c30129ddf62`; the 1-week aggregation semantics remain unresolved.
+- Fee/subsidy ratio candidate: `0.005535490996178344`, derived from the 157 matched heights and two component fingerprints listed in the manifest. It remains explicitly `derived_candidate_not_accepted`.
+
+The manifest does not fabricate retrieval timestamps where the reviewed run summary did not provide them. Raw payloads remain in the short-retention run 7 artifact; the manifest records fingerprints and derivation metadata, not a claim that raw payloads are committed. The decision remains `not_evaluable`, with write and scenario evaluation authorization false.
+
+A deterministic offline checker is now available at `scripts/check-btc-fee-reward-reconciliation.mjs`. Download the two raw JSON responses from the run 7 artifact and run:
+
+```sh
+node scripts/check-btc-fee-reward-reconciliation.mjs path/to/fees.json path/to/rewards.json
+```
+
+The checker joins exclusively by `avgHeight`, rejects duplicate keys, timestamp mismatches and invalid numeric fields, verifies the reward-minus-fee component is constant, and prints the ratio as a **candidate only**. It performs no network calls and no database access. A successful check is not source-unit approval and does not authorize scenario evaluation.
+
+The checker was added after inspecting the retained artifact summary. A fresh end-to-end execution against the original raw artifact still needs to be recorded in CI or from the downloaded raw files; do not report that execution as passed until its output is observed.
