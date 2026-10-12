@@ -13,7 +13,7 @@ Date: 2026-10-13
 
 The repository gate is implemented by `scripts/check-vps-only-repository.mjs` and is run by `.github/workflows/vps-api-build.yml` as the `Verify repository is VPS-only` step.
 
-The workflow triggers on every pull request, pushes to any branch, manual dispatch, and reusable workflow calls. The scanner examines repository paths and non-binary text files, excluding Git internals and generated/dependency directories. It intentionally checks the current working tree, not historical Git objects.
+The workflow triggers on every pull request, pushes to any branch, manual dispatch, and reusable workflow calls. The scanner checks every repository path for retired-provider tokens and scans non-binary text contents outside Markdown governance documents, while excluding Git internals and generated/dependency directories. Markdown is excluded from content matching because the canonical plan and audit documents must be able to name retired providers while specifying their removal; these documents are reviewed as policy/audit artifacts, not runtime configuration. The scanner intentionally checks the current working tree, not historical Git objects.
 
 ## Recorded evidence
 
@@ -25,3 +25,10 @@ The workflow triggers on every pull request, pushes to any branch, manual dispat
 ## Decision
 
 Keep Git history intact for now. Rewriting history is a separate destructive maintenance operation and is not required to keep the current tree clean. If a credential is ever found in historical content, revoke or rotate it independently; do not treat deleting a file from the current tree as secret revocation.
+
+
+## Follow-up correction — Plan 100 restored to the repository
+
+- The canonical `docs/PLAN-100.md` was restored on 2026-10-13 from the Project Library master copy and updated against current `main`.
+- Because the plan necessarily documents the names of retired platforms and the rule against runtime dependencies on them, the scanner now excludes Markdown *content* from provider-token matching while retaining path checks and scanning non-Markdown source/configuration text. This avoids treating the governance document as an active dependency. Runtime/source/configuration files remain subject to the strict check.
+- This policy correction requires the newly triggered current-main Build Rehearsal to pass before it is considered verified.
