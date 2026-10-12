@@ -26,6 +26,27 @@ function confidenceLabel(value: unknown) {
   const n = confidencePercent(value);
   return n == null ? "—" : `${n.toFixed(0)}%`;
 }
+function scenarioMetricLabel(metricId: string) {
+  const labels: Record<string, string> = {
+    "market.spot_price": "BTC spot price",
+    "security.hashrate": "Network hashrate",
+    "security.fee_subsidy_ratio": "Fee / subsidy economics",
+    "macro.dxy": "US Dollar Index (DXY)",
+    "institutional.etf_net_flow": "US spot BTC ETF flows",
+  };
+  return labels[metricId] ?? metricId;
+}
+function scenarioBlockerLabel(reason: string) {
+  const labels: Record<string, string> = {
+    missing: "Required observation is missing",
+    not_marked_current: "Latest observation is not marked current",
+    stale_or_untraceable: "Observation is stale or lacks valid source provenance",
+    latest_observation_must_be_current_traceable_and_within_48_hours: "Latest ETF-flow observation must be current, source-linked and within 48 hours",
+    requires_at_least_5_distinct_recent_daily_observations: "At least five distinct recent ETF-flow days are required",
+  };
+  return labels[reason] ?? reason.replaceAll("_", " ");
+}
+
 function monitoringValueLabel(value: unknown) {
   return value && typeof value === "object" && "description" in value ? "Baseline" : "Current value";
 }
@@ -49,6 +70,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const scenarios = data.research_scenarios ?? data.scenario_states ?? [];
   const sources = data.sources ?? [];
   const evidence = data.evidence ?? [];
+  const scenarioReadiness = data.scenario_readiness ?? null;
   const progress = getResearchProgress(blocks);
   const status = asset.research_status ?? "not_started";
   const freshness = normalizeResearchFreshness(data.research_freshness?.status ?? asset.research_freshness?.status);
@@ -137,7 +159,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   return <main className="shell">
     <MarketTabs />
     <div className="section"><Link href="/">← Assets</Link><div className="row asset-heading"><div><p className="eyebrow">02 · ASSET DASHBOARD</p><h1>{asset.symbol} — {asset.name}</h1><p className="muted">{asset.asset_type_name ?? asset.category ?? "Crypto asset"} · Research tier {asset.research_tier ?? "—"}</p></div><div className="hero-actions"><span className="pill">{getResearchStatusLabel(status)}</span>{freshness && <span className="pill">{getResearchFreshnessLabel(freshness)}</span>}</div></div></div>
-    <nav className="dashboard-nav" aria-label="Asset dashboard sections"><a href="#overview">Overview</a><a href="#domains">Domains</a><a href="#factors">Factors</a><a href="#scores">Scores</a><a href="#scenarios">Scenarios</a><a href="#monitoring">Monitoring</a><a href="#evidence">Evidence</a></nav>
+    <nav className="dashboard-nav" aria-label="Asset dashboard sections"><a href="#overview">Overview</a><a href="#domains">Domains</a><a href="#factors">Factors</a><a href="#scores">Scores</a><a href="#scenarios">Scenarios</a><a href="#scenario-readiness">Readiness</a><a href="#monitoring">Monitoring</a><a href="#evidence">Evidence</a></nav>
 
     <section id="market" className="section card" aria-label="Market chart">
       <div className="row">
@@ -226,6 +248,27 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
 
     <section id="scenarios" className="section"><div className="section-heading"><p className="eyebrow">06 · SCENARIOS</p><h2>Scenario States</h2><p className="muted">Bull / Base / Bear logic, assumptions and invalidation conditions.</p></div><div className="grid">{scenarios.length ? scenarios.map((s: any) => <article className="card" key={s.research_scenario_id ?? s.scenario_state_id ?? s.scenario_type}><div className="row"><h3>{s.scenario_type ?? s.state ?? "Scenario"}</h3><span className="pill">{s.probability ?? s.confidence ?? "—"}</span></div><p>{s.assumptions ?? s.description ?? "No assumptions recorded."}</p>{s.invalidation_conditions && <p className="muted"><strong>Invalidation:</strong> {s.invalidation_conditions}</p>}{s.thesis_impact && <p className="muted">Thesis impact: {s.thesis_impact}</p>}</article>) : <div className="card"><p className="muted">No scenario states recorded yet.</p></div>}</div></section>
 
+    {asset.asset_id === "btc" && <section id="scenario-readiness" className="section card">
+      <div className="section-heading">
+        <p className="eyebrow">SCENARIO INPUT QUALITY</p>
+        <h2>Can the evidence support an evaluation?</h2>
+        <p className="muted">This read-only gate checks source-linked observation freshness. It does not choose Bull/Base/Bear, change baseline probabilities, or create a scenario state.</p>
+      </div>
+      {scenarioReadiness ? <>
+        <div className="row">
+          <strong>{scenarioReadiness.status === "ready_for_rule_evaluation" ? "Input quality checks passed — rule review still required" : "Not evaluable"}</strong>
+          <span className="pill">{scenarioReadiness.status === "ready_for_rule_evaluation" ? "Inputs ready for review" : "Blocked"}</span>
+        </div>
+        {scenarioReadiness.blockers?.length ? <div className="table-list">
+          {scenarioReadiness.blockers.map((blocker: any, index: number) => <div className="row table-row" key={blocker.metric_id + "-" + blocker.reason + "-" + index}>
+            <strong>{scenarioMetricLabel(blocker.metric_id)}</strong>
+            <span className="muted">{scenarioBlockerLabel(blocker.reason)}</span>
+          </div>)}
+        </div> : <p className="muted">No input-quality blockers were returned. A reviewed evaluation rule and explicit approval are still required before any state can be recorded.</p>}
+        <p className="muted">{scenarioReadiness.note ?? "Input readiness only; no scenario evaluation or persistence is implied."}</p>
+      </> : <p className="muted">Readiness data is not available from the configured API. Do not infer that inputs are current or evaluable.</p>}
+      <p className="muted">The published Base scenario remains a research baseline until a separate reviewed evaluation is explicitly recorded.</p>
+    </section>}
     <section id="monitoring" className="section">
       <div className="section-heading"><p className="eyebrow">07 · MONITORING</p><h2>What changed — and what does it mean?</h2><p className="muted">One Monitoring layer with three responsibilities: Dashboard explains the current state, Signals show what is happening now, Events preserve what changed.</p></div>
       <div className="monitoring-dashboard card"><div className="row"><div><p className="eyebrow">MONITORING DASHBOARD</p><h3>Current monitoring state</h3></div><span className="pill">{monitoringOverall}</span></div>
