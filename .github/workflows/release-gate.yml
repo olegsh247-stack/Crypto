@@ -1,16 +1,8 @@
 name: Crypto Release Gate
 
+# Production migration/deploy gate is intentionally manual.
+# Pull requests and ordinary pushes must use disposable-database validation only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "workers/**"
-      - "shared/**"
-      - "web/**"
-      - "infrastructure/neon/**"
-      - "scripts/**"
-      - "wrangler.toml"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:
