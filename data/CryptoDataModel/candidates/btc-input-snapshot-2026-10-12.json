@@ -8,7 +8,7 @@
   "scenario_evaluation_authorized": false,
   "retrieval_timestamp_utc": null,
   "raw_payload_fingerprint": null,
-  "completeness": "incomplete",
+  "completeness": "partial_candidate_evidence",
   "required_inputs": [
     {
       "metric_id": "market.spot_price",
@@ -16,12 +16,12 @@
       "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
       "unit": "USD/BTC",
       "expected_unit": "USD/BTC",
-      "value": null,
-      "observed_at": null,
+      "value": 82658.4,
+      "observed_at": "2026-10-12T19:43:28.221Z",
       "retrieved_at": null,
-      "raw_payload_fingerprint": null,
-      "status": "blocked_payload_not_captured",
-      "notes": "Do not substitute ticker fetch time for a trade timestamp. Preserve raw XBT pair and selected trade row."
+      "raw_payload_fingerprint": "160d0516f32aac0872377b919fede0206498eba89cf67cc70ce576742c7bad6c",
+      "status": "captured_candidate_unit_freshness_review_required",
+      "notes": "Run 7 staging capture candidate only. Source trade timestamp and fingerprint are recorded; retrieval timestamp is not present in the reviewed run summary. Not accepted or persisted."
     },
     {
       "metric_id": "security.hashrate",
@@ -29,12 +29,13 @@
       "source_url": "https://mempool.space/api/v1/mining/hashrate/1m",
       "unit": "EH/s",
       "expected_unit": "EH/s",
-      "value": null,
-      "observed_at": null,
+      "value": 1028.5948763981921,
+      "observed_at": "2026-10-12T00:00:00.000Z",
       "retrieved_at": null,
-      "raw_payload_fingerprint": null,
-      "status": "blocked_payload_not_captured",
-      "notes": "Preserve returned averaging period and unit/scale; no value accepted without raw response."
+      "raw_payload_fingerprint": "b669c2da52aa006f09bcfb2884b7438101041a3dc3b479d4ebfd0c30129ddf62",
+      "status": "captured_candidate_aggregation_semantics_review_required",
+      "notes": "Run 7 staging capture candidate only. Converted from hashes/s to EH/s; the 1-week aggregate/bucket semantics and metric comparability remain unconfirmed. Not accepted or persisted.",
+      "aggregation_period": "1w"
     },
     {
       "metric_id": "security.fee_subsidy_ratio",
@@ -43,15 +44,29 @@
       "companion_source_url": "https://mempool.space/api/v1/mining/blocks/rewards/24h",
       "unit": "ratio",
       "expected_unit": "ratio",
-      "value": null,
-      "observed_at": null,
+      "value": 0.005535490996178344,
+      "observed_at": "2026-10-12T19:13:30Z",
       "retrieved_at": null,
       "raw_payload_fingerprint": null,
-      "status": "blocked_components_not_captured",
-      "formula": "fees / (total_reward - fees)",
-      "formula_version": null,
-      "window": "24h (must be identical for both components)",
-      "notes": "Requires matched source windows and auditable raw fee/reward components."
+      "status": "derived_candidate_not_accepted",
+      "formula": "sum(matched avgFees) / sum(matched avgRewards - avgFees)",
+      "formula_version": "btc-fee-reward-reconciliation-v1",
+      "window": "157 matched avgHeight records; heights 970974–971130; timestamps equal per matched record",
+      "notes": "Reproducible candidate from run 7 artifact review. Component units are inferred from constant difference and known 3.125 BTC subsidy; explicit source unit semantics/canonical calculation contract still require confirmation. Not accepted or persisted.",
+      "component_fingerprints": {
+        "fees": "b31de40af7e41a6fc29683e88883aa64e810d4570b035ab789f6fe0f5c9d7934",
+        "rewards": "5264e3d033d1dd5c3095a1233e6e029eddf7fff92c2b017237b1df89d239fdb3"
+      },
+      "reconciliation": {
+        "fee_rows": 157,
+        "reward_rows": 158,
+        "matched_rows": 157,
+        "reward_only_avgHeight": [
+          970973
+        ],
+        "constant_avgRewards_minus_avgFees_raw_units": 312500000,
+        "all_matched_timestamps_equal": true
+      }
     },
     {
       "metric_id": "macro.dxy",
@@ -180,11 +195,11 @@
   },
   "decision": "not_evaluable",
   "blockers": [
-    "No auditable current Kraken trade payload captured.",
-    "No auditable current Mempool hashrate payload captured.",
-    "Fee and total-reward components for a matched window not captured.",
+    "Spot price is a timestamped staging candidate; retrieval timestamp and canonical acceptance checks remain incomplete.",
+    "Hashrate is a 1-week aggregate candidate; aggregation/bucket semantics and comparability require review.",
+    "Fee/reward ratio is reproducibly derived from 157 matched records but remains unaccepted until explicit unit semantics and canonical calculation contract are confirmed.",
     "DXY ICE access licence and approved endpoint/feed unconfirmed.",
-    "Latest reported ETF flow is outside the 36-hour freshness gate.",
-    "Retrieval timestamps and payload fingerprints are absent from this snapshot."
+    "Latest reported ETF flow is outside the 36-hour freshness gate; Farside returned HTTP 403 in run 7.",
+    "Raw response files remain in the short-retention Actions artifact; candidate manifest records fingerprints and review metadata, not the raw payload bodies."
   ]
 }
