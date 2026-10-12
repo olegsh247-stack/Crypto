@@ -71,3 +71,8 @@ The target host has not yet been purchased, so the public endpoint is still the 
 - The PostgreSQL rehearsal now uses a Docker-assigned ephemeral loopback port, avoiding fixed-port collisions between concurrent workflows. The Build Rehearsal passed after this change: [run 38286818304](https://github.com/olegsh247-stack/Crypto/actions/runs/38286818304).
 - A read-only BTC input provenance audit is available at `scripts/audit-btc-input-provenance.sql`. It reports freshness, source links, duplicate logical keys and snapshot/monitoring coverage without modifying data. Compare its output before and after a future database restore.
 - Production readiness remains blocked on the real host and data: the VPS has not been provisioned, numeric BTC observations need source-verified refresh/reconciliation, and no live scenario-state or monitoring-event row may be fabricated to make the dashboard appear current.
+
+
+## Live BTC data gate — 2026-10-12
+
+A read-only query of the currently serving Neon database confirmed the target readiness API is correctly blocked by production input quality, not only by the disposable test seed: latest spot price, ETF flow and hashrate rows are stale; DXY and fee/subsidy metrics have no rows; there are zero current source-linked ETF days in the last 14 days. Nine duplicate BTC observation-key groups remain, all identical-payload pairs. No production records were modified. See [BTC Monitoring Readiness Matrix](./BTC-MONITORING-READINESS-MATRIX.md).
