@@ -1,6 +1,6 @@
 # CryptoDataModel v2 — Research Engine Layer
 
-**Status:** Design specification — not yet migrated to Neon  
+**Status:** Design specification — not yet migrated to PostgreSQL  
 **Baseline:** CryptoDataModel v1 + Structure 1  
 **Purpose:** Extend the existing data model without breaking v1.
 
@@ -15,7 +15,7 @@
 7. Scores are versioned and explainable; never store an unexplained number.
 8. `N/A` is valid when a metric or research concept is not applicable to an Asset.
 9. Historical observations and research snapshots are not silently overwritten.
-10. This document is a schema design only. No Neon migration should be created until BTC, ETH, SOL and CAKE pass validation.
+10. This document is a schema design only. No PostgreSQL migration should be created until BTC, ETH, SOL and CAKE pass validation.
 
 ## 2. Core relationship
 
@@ -457,7 +457,7 @@ Do not force L1 network metrics. Emphasize protocol usage, trading volume, liqui
 
 ## 9. Migration gate
 
-Before creating Neon SQL/migrations, validate this model against:
+Before creating PostgreSQL SQL/migrations, validate this model against:
 
 - BTC
 - ETH
