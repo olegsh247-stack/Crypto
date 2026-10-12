@@ -499,7 +499,7 @@
 
 | Этап | Статус на 2026-10-12 | Следующее действие |
 |---|---|---|
-| 1. Hosting architecture | `BLOCKED` по внешним фактам; repo/CI pass завершён | Repo-side dependency map и VPS rehearsal подтверждены. Cloudflare dashboard, secret names/usage, installed Apps, live API-to-DB routing и branch protection требуют доступных account-level доказательств; не объявлять hosting audit закрытым до этого. |
+| 1. Hosting architecture | `BLOCKED` по внешним фактам; repo/CI pass завершён, Cloudflare dashboard evidence частично получено | Repo-side dependency map и VPS rehearsal подтверждены. Владелец увидел Cloudflare Worker `crypto-api`, `workers.dev` hostname, encrypted `DATABASE_URL`, Cron trigger и пять последних failed Builds; статус активного deployment, routes и цель DATABASE_URL не установлены. Secret names/usage в GitHub, installed Apps, live API-to-DB routing и branch protection требуют дальнейших проверок; не объявлять hosting audit закрытым. |
 | 2. PR audit | `NOT STARTED` как полный сводный аудит | После этапа 1 снять актуальные PR/SHA/checks и сравнить каждый PR с `main`. |
 | 3. Product Contour v1 | `IN PROGRESS` / требует повторной проверки current main | После PR audit сверить фактические контракты и провести read-only проверки. |
 | 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Проверить raw artifact, источники, freshness, units, duplicates и manifest. |
@@ -537,3 +537,10 @@
 - Hosting audit remains `BLOCKED`, not `DONE`: Cloudflare dashboard state, GitHub secret names/usage, repository App permissions, live public API-to-database routing, and main branch protection are not authoritatively verified by current integration access. The branch-protection API returned 403; an empty ruleset response is not enough to claim the branch is unprotected.
 - No production changes, resource removals, secret/DNS changes, migrations, database writes, merges, or deployments were made.
 - Next step stays within Plan 100 stage 1: obtain the missing external evidence where dashboard/account access is available. Do not advance to the full PR audit or decommission legacy providers by assuming these facts.
+
+
+### Cloudflare dashboard evidence — 2026-10-12
+
+The owner-provided Cloudflare dashboard view has been documented in docs/HOSTING-DEPENDENCY-AUDIT-2026-10-12.md on the hosting-audit branch. Key facts: Worker crypto-api and its workers.dev hostname exist; Production has an encrypted DATABASE_URL secret; the dashboard shows a Cron trigger with a next run on 2026-10-13 00:30; and the five latest visible Cloudflare Builds listed for fix/api-web-research-response-contract-2026-10-12 failed in 5–9 seconds. Logs and Traces being disabled means observability is disabled, not necessarily the Worker itself. Failed Builds do not prove that an older deployment is not serving requests. Active deployment status, Domains & Routes, and the actual database target remain unverified.
+
+No Cloudflare settings, secrets, DNS, deployments, or traffic were changed. Keep Plan 100 stage 1 BLOCKED; next obtain deployment status and Domains & Routes, then verify the public API/runtime/database mapping without revealing secret values. Do not delete or re-enable the Worker as part of this audit.
