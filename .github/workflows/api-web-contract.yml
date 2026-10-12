@@ -1,0 +1,36 @@
+name: API-Web Contract Rehearsal
+
+on:
+  pull_request:
+    paths:
+      - "vps/api/src/research-status.ts"
+      - "vps/api/src/research-status.test.ts"
+      - "vps/api/package.json"
+      - "vps/shared/**"
+      - "web/lib/api.ts"
+      - "web/lib/api-contract.test.ts"
+      - "web/package.json"
+      - "web/tsconfig.json"
+      - ".github/workflows/api-web-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Build shared runtime
+        working-directory: vps/shared
+        run: npm install && npm run build
+      - name: Build API and run response contract test
+        working-directory: vps/api
+        run: npm install && npm run build && npm test
+      - name: Build Web (includes compile-time API contract fixture)
+        working-directory: web
+        run: npm install && npm run build
