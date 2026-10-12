@@ -134,6 +134,12 @@ The P1 progress mismatch identified above has been corrected in the Web layer:
 
 This change does not alter the canonical 15-block structure, database schema, research content, or lifecycle rules.
 
+### Verification update — 2026-10-13
+
+The Web/API `research_progress` declaration mismatch is corrected on current `main` in commit [`ee9614a`](https://github.com/olegsh247-stack/Crypto/commit/ee9614ab0f68ebde80fb9198f9c3b190fe63d5a7). The Web build passed in [Build Crypto Web #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055), and the VPS target-stack rehearsal passed in [#468](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894021). This verifies the current Web build and target-stack CI, not the live public endpoint.
+
+The following areas remain open for the full contour audit: metric-level freshness parity; read-only validation of the live payload when an approved endpoint is available; confirmation that displayed current data are fresh and source-traceable; and final end-to-end BTC UI/API acceptance. Snapshot scoping, scenario lineage and evidence/source joins remain covered by disposable-PostgreSQL E2E, not by live-data acceptance.
+
 ### Remaining audit items
 
 The other findings remain open: snapshot scoping for factors/scores, scenario-state lineage, evidence-linked source completeness, freshness contract consistency, and representative live-payload checks. They require a read-only contract/data audit before any further code changes.
