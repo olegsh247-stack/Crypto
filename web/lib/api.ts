@@ -36,8 +36,16 @@ export type MonitoringSignal = {
 };
 
 export type ResearchScenario = {
-  research_scenario_id: string; scenario_type: "bull" | "base" | "bear"; probability?: number | null; assumptions: string;
+  research_scenario_id: string; snapshot_id: string; scenario_type: "bull" | "base" | "bear"; probability?: number | null; assumptions: string;
   supporting_evidence?: string | null; invalidation_conditions?: string | null; thesis_impact?: "positive" | "neutral" | "negative" | "mixed" | null; confidence?: number | null;
+};
+
+export type BtcScenarioReadiness = {
+  status: "ready_for_rule_evaluation" | "not_evaluable";
+  can_persist_scenario_state: false;
+  blockers: Array<{ metric_id: string; reason: string }>;
+  selected_inputs: Record<string, unknown>;
+  note: string;
 };
 
 export type ResearchScore = {
@@ -49,10 +57,11 @@ export type ResearchSnapshot = { snapshot_id: string; research_version: string; 
 
 export type AssetDetailResponse = {
   api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: ResearchFreshness | null };
-  research_progress: { status: string; completed: number; total: number; percent: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
+  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
+  scenario_readiness?: BtcScenarioReadiness;
   monitoring_signals: MonitoringSignal[]; monitoring_events: Array<Record<string, unknown>>;
   sources: Array<{ source_id: string; name: string; source_type: string; base_url?: string | null; trust_level?: string | null }>;
   evidence: Array<{ evidence_id: string; research_block_id?: string | null; research_domain_id?: string | null; observation_id?: string | null; source_id?: string | null; evidence_type: "fact" | "calculation" | "assessment" | "hypothesis"; claim: string; data_summary?: string | null; signal: "improving" | "stable" | "deteriorating" | "mixed" | "unknown"; assessment?: string | null; confidence?: number | null; thesis_impact: "positive" | "neutral" | "negative" | "mixed"; status: "strong" | "watch" | "weak" | "unknown"; as_of?: string | null; metric_id?: string | null; observation_value?: number | null; observation_text?: string | null; observation_unit?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null }>;
@@ -69,13 +78,3 @@ export async function getAssets(): Promise<Asset[]> { const data = await api<{ a
 export async function getAsset(assetId: string): Promise<AssetDetailResponse> { return api<AssetDetailResponse>("/api/assets/" + encodeURIComponent(assetId)); }
 export async function createAsset(input: { symbol: string; name: string }): Promise<AdminMutationResponse<Asset>> { return api<AdminMutationResponse<Asset>>("/api/admin/assets", { method: "POST", body: JSON.stringify(input) }); }
 export async function disableAsset(assetId: string): Promise<AdminMutationResponse<Asset>> { return api<AdminMutationResponse<Asset>>("/api/admin/assets/" + encodeURIComponent(assetId), { method: "DELETE" }); }
-export async function getPairs(): Promise<PairsResponse> { return api<PairsResponse>("/api/pairs"); }
-export async function createPair(input: { base: string; quote: string; exchange?: string }): Promise<AdminMutationResponse<MarketPair>> { return api<AdminMutationResponse<MarketPair>>("/api/admin/pairs", { method: "POST", body: JSON.stringify({ symbol: input.base + "/" + input.quote, exchange: input.exchange }) }); }
-export async function disablePair(id: string): Promise<AdminMutationResponse<MarketPair>> { return api<AdminMutationResponse<MarketPair>>("/api/admin/pairs/" + encodeURIComponent(id), { method: "DELETE" }); }
-export async function getPairHistory(symbol: string, days = 30, interval = "1d"): Promise<PairHistoryResponse> { return api<PairHistoryResponse>("/api/pairs/" + encodeURIComponent(symbol) + "/history?days=" + days + "&interval=" + encodeURIComponent(interval)); }
-export async function getPairTicker(symbol: string): Promise<PairTickerResponse> { return api<PairTickerResponse>("/api/pairs/" + encodeURIComponent(symbol) + "/ticker"); }
-export async function getCommodities() { return api<any>("/api/commodities"); }
-export async function createCommodity(input: { symbol: string; name: string; unit?: string }) { return api<any>("/api/admin/commodities", { method: "POST", body: JSON.stringify(input) }); }
-export async function disableCommodity(id: string) { return api<any>("/api/admin/commodities/" + encodeURIComponent(id), { method: "DELETE" }); }
-
-export type AssetTab = "assets" | "pair" | "commodities";
