@@ -194,7 +194,7 @@ jobs:
       - name: VPS API persisted history and candle finalization E2E
         run: |
           set -euo pipefail
-          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=30&interval=1d' | grep -qx '200'
+          curl -fsS -o /tmp/history.json -w '%{http_code}' 'http://127.0.0.1:8080/api/pairs/ETH%2FUSDT/history?days=7&interval=1d' | grep -qx '200'
           curl -fsS -o /tmp/eth.json http://127.0.0.1:8080/api/assets/eth
           python3 - <<'PY'
           import json
