@@ -272,3 +272,8 @@ Evidence: [VPS Build Rehearsal #38286251489](https://github.com/olegsh247-stack/
 - Confirmation/invalidation rules and monitoring event contract; no live scenario-state or event persistence until reviewed gates pass.
 
 The detailed BTC factor-to-input mapping and acceptance gates are in [BTC-MONITORING-READINESS-MATRIX.md](./BTC-MONITORING-READINESS-MATRIX.md). No production data, schema or public routing was changed by this follow-up.
+
+
+## Live production observation audit — 2026-10-12
+
+A separate read-only SELECT audit against the current production Neon database confirms that the target VPS API's readiness blockers are not just artifacts of the empty disposable seed: spot price, ETF net flow and hashrate are stale; DXY and fee/subsidy observations are absent; the last 14 days contain zero current, source-linked ETF-flow days. Nine duplicate BTC logical-key groups were found; each consists of two identical-payload rows. No production data was changed. Full inventory and metric-level details are recorded in [BTC Monitoring Readiness Matrix](./BTC-MONITORING-READINESS-MATRIX.md).
