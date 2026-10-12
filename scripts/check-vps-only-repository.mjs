@@ -31,6 +31,10 @@ function walk(dir) {
     if (!checkedExtensions.has(ext) && ![".gitignore", "Dockerfile", "Caddyfile"].includes(name)) continue;
     const content = readFileSync(path, "utf8");
     checked += 1;
+    // Markdown may document the retirement decision and audit history. It is not
+    // executable runtime/deploy configuration, so review docs separately rather
+    // than treating historical provider names as active dependencies.
+    if (ext === ".md") continue;
     for (const token of forbidden) {
       if (content.toLowerCase().includes(token)) {
         violations.push({ file: relative(root, path), token });
