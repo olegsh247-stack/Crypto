@@ -309,3 +309,15 @@ The detailed BTC factor-to-input mapping and acceptance gates are in [BTC-MONITO
 The read-only source-data audit dated 2026-10-12 recorded spot price, hashrate and ETF net flow as stale; fee/subsidy ratio and DXY as missing; and nine duplicate logical-key groups / eighteen rows. These are historical audit results and must be refreshed before any input acceptance. They are not repaired by a green CI run.
 
 The actual public endpoint has not been verified through this audit path, and the target VPS does not yet exist. Stage 3 therefore remains **IN PROGRESS**. Do not proceed to visual redesign, scenario persistence, production ingestion or asset expansion on the strength of CI alone.
+
+## API/Web response type follow-up — 2026-10-13
+
+The remaining source-level Web response type gaps from the previous section have now been addressed on current `main` without merging the stale PR #73 branch wholesale:
+
+- `ResearchScenario.snapshot_id` is declared in the Web contract.
+- Optional BTC `scenario_readiness` is declared with `can_persist_scenario_state: false`.
+- A compile-time Web fixture exercises both fields and the canonical `research_progress` shape.
+- The API response-shape test asserts `status, completed, resolved, total, percentage`.
+- VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
+
+This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
