@@ -141,3 +141,24 @@ The other findings remain open: snapshot scoping for factors/scores, scenario-st
 ### Verification status
 
 The change was committed through GitHub's contents API. A full Web build and runtime check have **not** been run in this environment; verify the GitHub Actions result before treating this fix as build-validated. No migration, deployment, billing change, or visual redesign was performed.
+
+
+## Follow-up implementation — 2026-10-12
+
+### BTC first-scenario pass
+
+Added `docs/BTC-SCENARIO-V1.md` as the first explicit product scenario artifact. It documents the published snapshot `BTC-2026-10-07-v1`, the Bull/Base/Bear probability set (30% / 50% / 20%), Base assumptions, invalidation conditions, supporting research and confidence boundaries.
+
+The current schema/API distinguishes `research_scenarios` (definitions) from `scenario_states` (evaluated state). The previous read-only live audit found no BTC `scenario_states` or `monitoring_events` rows. Therefore this pass does not invent an evaluated state or a monitoring event. It instead makes the dashboard display the published Base definition as a clearly labeled research baseline when no state is linked to the active snapshot, and filters candidate state selection to the active snapshot.
+
+### Additional Web build defect corrected
+
+The Asset Dashboard referenced an undefined `confidence` variable although the score lookup is `confidenceScore`. The display now reads the confidence score object already returned by the API. This is included in the same small Web patch and must be confirmed by CI.
+
+### What this does and does not establish
+
+- Establishes a readable, evidence-linked **published BTC scenario baseline** in the product.
+- Does not establish live scenario evaluation, current probabilities, or automatic Bull/Base/Bear transitions.
+- Does not create `scenario_states` or `monitoring_events` rows and does not modify production data.
+- The qualitative BTC evidence chain must not be presented as fresh quantitative monitoring.
+- Remaining P1/P2 findings—factor/score snapshot scoping, broader source registry completeness, freshness contract consistency and live payload audit—remain open for the full contour audit.
