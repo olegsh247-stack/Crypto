@@ -475,7 +475,7 @@ Executable gated checklist: [`NEON-TO-POSTGRES-MIGRATION-RUNBOOK.md`](./NEON-TO-
 10. Controlled cutover.
 11. Rollback window.
 12. Удалить все runtime-, database-, CI/CD-, config-, dependency- и documentation-ссылки на Cloudflare/Neon после успешного cutover и подтверждения rollback window.
-13. Провести финальный repository-wide scan: названия сервисов допустимы только в историческом incident/migration audit, если это нужно для аудита; в инструкциях актуального запуска, manifests, code, configs, workflows и active docs — ноль зависимостей.
+13. Провести финальный repository-wide scan и удалить все упоминания названий прежних платформ из всего репозитория, включая исторические документы, incident reports и migration runbooks. Итоговый критерий пользователя — в репозитории не должно быть даже словесных упоминаний этих платформ. Финальную зачистку выполнять после переноса и сохранения необходимой операционной информации в нейтральном виде.
 
 ---
 
