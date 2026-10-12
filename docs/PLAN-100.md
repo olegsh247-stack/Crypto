@@ -5,7 +5,7 @@
 **Актуальность снимка:** 13 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Проверенный SHA `main` на 2026-10-13:** `8135b6ca2f2e7fe6e458ef5a45634ce70e2b5fa9`  
+**Проверенный SHA `main` на 2026-10-13:** `dca1b3b78552b43246f05be8cf7c9c17b92bd56b`  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -498,11 +498,11 @@
 
 ## Current-main reconciliation — 2026-10-13
 
-This addendum supersedes the older open-PR snapshot above where the live GitHub state differs. The current `main` SHA is `8135b6ca2f2e7fe6e458ef5a45634ce70e2b5fa9`.
+This addendum supersedes the older open-PR snapshot above where the live GitHub state differs. The initial audit baseline was `8135b6ca2f2e7fe6e458ef5a45634ce70e2b5fa9`; after restoring this plan and correcting the scanner's Markdown policy, the verified current `main` SHA is `dca1b3b78552b43246f05be8cf7c9c17b92bd56b`.
 
 ### Stage 1 — hosting/dependency audit evidence
 
-- The current tracked tree is guarded by `scripts/check-vps-only-repository.mjs`; the latest Build Rehearsal [#455](https://github.com/olegsh247-stack/Crypto/actions/runs/38308076055) passed the scan and all subsequent jobs.
+- The current tracked tree is guarded by `scripts/check-vps-only-repository.mjs`; the Build Rehearsal [#458](https://github.com/olegsh247-stack/Crypto/actions/runs/38309007906) on current `main` passed the scan and all subsequent jobs. The earlier run #455 passed before Plan 100 was restored; run #457 initially failed because the strict scanner treated governance Markdown references as active dependencies, which was corrected and then verified by run #458.
 - The current target build uses VPS API + Worker + PostgreSQL 16 and production Compose network checks; the same run passed clean PostgreSQL bootstrap, rerun-safe migrations, backup/restore rehearsal, API contract E2E, Worker ingestion E2E and BTC snapshot/evidence lineage E2E.
 - The scanner audits current repository paths and non-binary text, not historical Git objects. Git history remains unchanged intentionally.
 - The current repository documentation says the VPS has not been purchased/provisioned and the existing public endpoint has not been switched. Therefore production runtime is **not proven self-hosted** and no traffic cutover is authorized.
@@ -516,14 +516,14 @@ The live GitHub query returned eight open PRs. These are audit dispositions only
 
 | PR | Current finding | Disposition |
 |---|---|---|
-| [#78](https://github.com/olegsh247-stack/Crypto/pull/78) — stale deployment gate docs | Its matrix wording correction is already present on current `main` (commits `968a62f` and `e677197`); branch base is stale. | Redundant as currently proposed; do not merge as-is. Keep open until user reviews closure. |
-| [#77](https://github.com/olegsh247-stack/Crypto/pull/77) — repository hygiene workflow | Its workflow trigger change is superseded by current `main`, which now runs on every PR and every branch push; current main rehearsal passed. | Redundant as currently proposed; do not merge as-is. Keep open until user reviews closure. |
-| [#76](https://github.com/olegsh247-stack/Crypto/pull/76) — scanner false positives | Uses an older, extension-limited scanner policy; current `main` scanner covers all non-binary text and paths and passed. | Superseded; do not merge as-is. Keep open until user reviews closure. |
-| [#73](https://github.com/olegsh247-stack/Crypto/pull/73) — API/Web response types | Focused contract fix; all three recorded checks passed on its head. Branch is based on an older `main`; current audit still identifies the Web/API `research_progress` type mismatch. | Candidate for a fresh current-main comparison/rebase and revalidation; no merge yet. |
-| [#72](https://github.com/olegsh247-stack/Crypto/pull/72) — Product Contour audit reconciliation | Documentation-only reconciliation patch, based on stale `main`; its recorded external Workers build check failed. | Reconcile its claims with current code and current evidence; do not merge as-is. |
-| [#71](https://github.com/olegsh247-stack/Crypto/pull/71) — London day boundary/DST | Focused VPS Worker fix with regression tests; GitHub build/rehearsal checks passed, while a separate Workers build check failed. | Compare against current Worker and rerun current-main tests before any merge decision. |
-| [#69](https://github.com/olegsh247-stack/Crypto/pull/69) — opt-in BTC observation collectors | Collector/parser checks and target rehearsal passed on its recorded head; scheduled persistence is documented as disabled by default. DXY remains a source blocker; branch base is stale. | Candidate only after current-main reconciliation and read-only candidate review; no production ingestion or merge yet. |
-| [#39](https://github.com/olegsh247-stack/Crypto/pull/39) — finalized daily candle contract | Patch targets legacy `workers/crypto-api/src/index.ts`, not the current VPS API path; a Workers build check passed but does not validate target architecture. | Do not merge as-is; port/revalidate only if the behavior is still missing from current VPS API. Keep open until user reviews closure. |
+| [#78](https://github.com/olegsh247-stack/Crypto/pull/78) — stale deployment gate docs | Its matrix wording correction is already present on current `main` (commits `968a62f` and `e677197`); branch base is stale. | Redundant as currently proposed (1 commit ahead / 8 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
+| [#77](https://github.com/olegsh247-stack/Crypto/pull/77) — repository hygiene workflow | Its workflow trigger change is superseded by current `main`, which now runs on every PR and every branch push; current main rehearsal passed. | Redundant as currently proposed (1 commit ahead / 8 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
+| [#76](https://github.com/olegsh247-stack/Crypto/pull/76) — scanner false positives | Uses an older, extension-limited scanner policy; current `main` scanner covers all non-binary text and paths and passed. | Superseded (1 commit ahead / 10 behind current `main`); do not merge as-is. Keep open until user reviews closure. |
+| [#73](https://github.com/olegsh247-stack/Crypto/pull/73) — API/Web response types | Focused contract fix; all three recorded checks passed on its head. Branch is based on an older `main`; current audit still identifies the Web/API `research_progress` type mismatch. | Candidate for a fresh current-main comparison/rebase and revalidation (9 commits ahead / 10 behind); no merge yet. |
+| [#72](https://github.com/olegsh247-stack/Crypto/pull/72) — Product Contour audit reconciliation | Documentation-only reconciliation patch, based on stale `main`; its recorded external Workers build check failed. | Reconcile its claims with current code and current evidence (1 commit ahead / 10 behind; recorded external Workers build check failed); do not merge as-is. |
+| [#71](https://github.com/olegsh247-stack/Crypto/pull/71) — London day boundary/DST | Focused VPS Worker fix with regression tests; GitHub build/rehearsal checks passed, while a separate Workers build check failed. | Compare against current Worker and rerun current-main tests before any merge decision (6 commits ahead / 10 behind; recorded external Workers build check failed). |
+| [#69](https://github.com/olegsh247-stack/Crypto/pull/69) — opt-in BTC observation collectors | Collector/parser checks and target rehearsal passed on its recorded head; scheduled persistence is documented as disabled by default. DXY remains a source blocker; branch base is stale. | Candidate only after current-main reconciliation and read-only candidate review (15 commits ahead / 25 behind); no production ingestion or merge yet. |
+| [#39](https://github.com/olegsh247-stack/Crypto/pull/39) — finalized daily candle contract | Patch targets legacy `workers/crypto-api/src/index.ts`, not the current VPS API path; a Workers build check passed but does not validate target architecture. | Do not merge as-is (2 commits ahead / 187 behind); port/revalidate only if the behavior is still missing from current VPS API. Keep open until user reviews closure. |
 
 ### Stage 3 — Product Contour v1 audit evidence
 
