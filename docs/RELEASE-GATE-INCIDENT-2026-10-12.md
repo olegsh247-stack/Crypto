@@ -4,7 +4,7 @@
 
 Run [38252098393](https://github.com/olegsh247-stack/Crypto/actions/runs/38252098393) completed the database migration/contract job and web build successfully, then failed in the Worker deploy job at **Configure database secret**.
 
-The Cloudflare error was:
+The legacy runtime error was:
 
 > Secret edit failed. You attempted to modify a secret, but the latest version of your Worker isn't currently deployed.
 
@@ -26,14 +26,14 @@ The current Release Gate remains manual-only. A successful build/test run is not
 
 - The migration/contract job and web build succeeded.
 - The secret configuration step failed; Worker deploy and live API E2E were skipped.
-- Despite that failure, the historical workflow ran its **Scheduled ingestion E2E and idempotency** step using the configured production database connection. The step started local `wrangler dev` with `DATABASE_URL` and `FORCE_SCHEDULED_INGESTION=1`, then invoked the local scheduled handler twice. This was not a disposable database test.
+- Despite that failure, the historical workflow ran its **Scheduled ingestion E2E and idempotency** step using the configured production database connection. The step started local `runtime-cli dev` with `DATABASE_URL` and `FORCE_SCHEDULED_INGESTION=1`, then invoked the local scheduled handler twice. This was not a disposable database test.
 - The log reports the enabled non-USDT registry as `bch btc cake dash eth ltc sol trx xrp`.
 - The log reported 14 daily candle rows per asset, three candles within two days, and zero duplicate candle keys.
 - The maximum `last_updated_at` for non-disabled monitoring signals changed from `2026-10-08 12:30:54.538989+00` to `2026-10-12 12:57:52.197804+00`. The step reported `fresh_signals=13` and `research_status_rows=2`.
 
 ### Read-only production database checks completed on 2026-10-12
 
-Queries were executed against the existing Neon `Crypto` project, default `production` branch, database `neondb`. All queries were read-only.
+Queries were executed against the existing source PostgreSQL project `Crypto` project, default `production` branch, database `source PostgreSQL projectdb`. All queries were read-only.
 
 - **36 candle rows were newly created during the incident window** (2026-10-12 12:57:49–12:57:50 UTC): four daily candles per each of the nine enabled non-USDT assets, with candle open dates 2026-10-09 through 2026-10-12. All 36 rows identify `market_binance` and the corresponding Binance USDT symbol.
 - Each of the nine assets currently has 14 rows spanning candle open dates 2026-09-29 through 2026-10-12. There are zero duplicate keys for `(asset_id, candle_open_at, source_id)`.
@@ -48,7 +48,7 @@ Queries were executed against the existing Neon `Crypto` project, default `produ
 
 The selected target cadence is **daily at 00:30 UTC** (`30 0 * * *`). This is the initial operating schedule while we establish a stable, auditable ingestion cycle. Moving to hourly later is expected to be a configuration change, provided idempotency, source limits, and in-progress candle handling are verified first.
 
-The release workflow deploys from the repository root (`workingDirectory: "."`), and the Worker dry-run build also uses the root `wrangler.toml`; the root file is therefore the production deployment source of truth. The nested `workers/crypto-api/wrangler.toml` has now been aligned to the same daily cron so local/nested commands do not silently imply a different schedule. This repository change does **not** deploy the Worker or prove which cron is currently active in production. The failed Gate did not deploy, so production cadence remains unconfirmed until a separately approved deployment and read-only verification.
+The release workflow deploys from the repository root (`workingDirectory: "."`), and the Worker dry-run build also uses the root `runtime-cli.toml`; the root file is therefore the production deployment source of truth. The nested `former-runtime-source/runtime-cli.toml` has now been aligned to the same daily cron so local/nested commands do not silently imply a different schedule. This repository change does **not** deploy the Worker or prove which cron is currently active in production. The failed Gate did not deploy, so production cadence remains unconfirmed until a separately approved deployment and read-only verification.
 
 Do not add ingestion to the release workflow. Release and scheduled ingestion remain separate operations.
 
@@ -72,4 +72,4 @@ Do **not** roll back migrations, delete rows, rewrite candle values, or rerun in
 
 ## Architecture boundary
 
-The current public API is still the existing Cloudflare Worker and depends on its configured runtime database secret. The target architecture remains VPS + self-hosted PostgreSQL. This incident fix does not complete that cutover and does not authorize deleting the existing database project.
+The current public API is still the existing legacy runtime Worker and depends on its configured runtime database secret. The target architecture remains VPS + self-hosted PostgreSQL. This incident fix does not complete that cutover and does not authorize deleting the existing database project.
