@@ -10,7 +10,7 @@ This profile runs the API and Worker against self-hosted PostgreSQL for local re
 
 From the repository root:
 
-`DATABASE_URL=postgresql://crypto:crypto_local_only@127.0.0.1:55432/crypto ./scripts/migrate-postgres.sh`
+`DATABASE_URL=postgresql://crypto:crypto_local_only@127.0.0.1:55432/crypto bash ./scripts/migrate-postgres.sh`
 
 The provider-neutral migration runner applies the repository's current PostgreSQL schema and versioned migrations to the selected DATABASE_URL. Run only against the intended target.
 
