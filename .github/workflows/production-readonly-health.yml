@@ -1,20 +1,20 @@
-name: Crypto Production Read-only Health
+name: Crypto Host Read-only Health
 
-# Read-only smoke check only. This workflow never deploys, migrates, or ingests data.
+# Manual, GET-only check against the URL supplied for the purchased VPS.
+# No deployment, database writes, migrations, or ingestion.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/production-readonly-health.yml"
-      - "scripts/production-readonly-health.mjs"
   workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Base URL of the VPS API, e.g. https://api.example.com"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: crypto-production-readonly-health
+  group: crypto-host-readonly-health
   cancel-in-progress: true
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check live API read-only
+      - name: Check VPS API read-only
         env:
-          CRYPTO_API_URL: https://crypto-api.olegsh247.workers.dev
+          CRYPTO_API_URL: ${{ inputs.api_url }}
         run: node scripts/production-readonly-health.mjs
