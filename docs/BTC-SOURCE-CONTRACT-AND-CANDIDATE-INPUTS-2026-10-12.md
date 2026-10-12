@@ -118,3 +118,25 @@ The capture script was corrected to parse the top-level hashrate array, expose s
 ## Updated gate
 
 No scenario evaluation is authorized. Spot price has one auditable staging observation at the stated timestamp, but hashrate semantics still require review; fee/subsidy ratio remains uncalculated; ETF flow is not currently accepted; and DXY remains unresolved. No database writes, migrations, scenario-state writes, monitoring changes, production deployment or merge were performed by the staging workflow.
+
+
+### Corrected staging capture — run 7
+
+Run: https://github.com/olegsh247-stack/Crypto/actions/runs/38299519815
+Artifact: [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38299519815/artifacts/11769702814), ID `11769702814`, retention 7 days.
+
+The first run after parser changes (run 6) exposed that the hashrate response shape can differ between requests and that Farside is blocked from the GitHub runner. The capture was adjusted so unknown hashrate schemas are recorded as unvalidated evidence, HTTP-blocked responses are preserved as `BLOCKED_HTTP`, and known external-source blocks do not make the capture workflow itself fail. Run 7 completed successfully.
+
+Run 7 reported:
+- Kraken: `82,658.4 USD/BTC`, source trade time `2026-10-12T19:43:28.221Z`, response SHA-256 `160d0516f32aac0872377b919fede0206498eba89cf67cc70ce576742c7bad6c`. The value is a captured observation at that timestamp only; it has not been written to the candidate manifest or database.
+- Mempool hashrate: `1,028.5948763981921 EH/s`, source series timestamp `2026-10-12T00:00:00.000Z`, response SHA-256 `b669c2da52aa006f09bcfb2884b7438101041a3dc3b479d4ebfd0c30129ddf62`. The endpoint is a 1-week aggregation. The numeric conversion was parsed, but aggregation/bucket semantics and metric comparability remain to be confirmed before acceptance.
+- Mempool fee series: 157 rows, response SHA-256 `b31de40af7e41a6fc29683e88883aa64e810d4570b035ab789f6fe0f5c9d7934`.
+- Mempool reward series: 158 rows, response SHA-256 `5264e3d033d1dd5c3095a1233e6e029eddf7fff92c2b017237b1df89d239fdb3`. Different row counts mean a common time/block window is not established. No fee/subsidy ratio was calculated.
+- Farside: HTTP 403; response body and fingerprint preserved, but no ETF value accepted.
+- TFTC: 705 rows captured, response SHA-256 `dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e`. Still an unapproved mirror, excluded from canonical inputs.
+
+The workflow's green result means the read-only capture and artifact upload completed. It is **not** a data-readiness pass. All raw payloads remain in the short-retention Actions artifact, not committed to the repository. No production database, scenario state or monitoring state was touched.
+
+### Gate after run 7
+
+The source-capture mechanism is now operational and yields timestamped, fingerprinted evidence. The BTC input gate remains **BLOCKED**: hashrate aggregation semantics need confirmation; fee/reward series windows and units are not reconciled; Farside is blocked from the runner and TFTC is not approved as canonical; DXY still lacks a confirmed licensed feed; and the ETF 36-hour freshness requirement is unmet. No scenario evaluation is authorized.
