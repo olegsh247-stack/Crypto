@@ -67,11 +67,18 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     item.body_sha256 = await sha256(body);
     item.body_file = `${name}.raw`;
     await writeFile(join(outDir, item.body_file), body, "utf8");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const parsed = parse ? parse(body) : {};
-    item.status = "CAPTURED";
-    Object.assign(item, parsed);
-    if (item.validation_status === "NOT_RUN") item.validation_status = "RAW_ONLY";
+    if (!response.ok) {
+      // Preserve blocked responses as evidence without turning a review capture
+      // into a failing CI check; the manifest still marks the source unusable.
+      item.status = "BLOCKED_HTTP";
+      item.validation_status = "HTTP_BLOCKED";
+      item.error = `HTTP ${response.status}`;
+    } else {
+      const parsed = parse ? parse(body) : {};
+      item.status = "CAPTURED";
+      Object.assign(item, parsed);
+      if (item.validation_status === "NOT_RUN") item.validation_status = "RAW_ONLY";
+    }
   } catch (error) {
     item.error = error instanceof Error ? error.message : String(error);
     item.validation_status = "FAILED";
@@ -128,18 +135,36 @@ await capture({
   url: "https://mempool.space/api/v1/mining/hashrate/1w",
   parse: body => {
     const data = parseJson(body);
-    if (!Array.isArray(data) || data.length === 0) throw new Error("Expected a non-empty hashrate series array");
-    const latest = data.reduce((best, row) => Number(row?.timestamp) > Number(best?.timestamp) ? row : best);
+    const rows = Array.isArray(data) ? data
+      : Array.isArray(data.hashrates) ? data.hashrates
+      : Array.isArray(data.data) ? data.data
+      : null;
+    if (!rows || rows.length === 0) {
+      return {
+        validation_status: "RAW_CAPTURED_SCHEMA_REVIEW_REQUIRED",
+        response_shape: Array.isArray(data) ? "array" : typeof data,
+        top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
+        note: "HTTP response and fingerprint were captured, but no known hashrate-series shape was recognized. Do not accept a value until the response schema is reviewed."
+      };
+    }
+    const latest = rows.reduce((best, row) => Number(row?.timestamp) > Number(best?.timestamp) ? row : best);
     const epochSeconds = Number(latest?.timestamp);
-    const hashesPerSecond = Number(latest?.avgHashrate);
+    const hashesPerSecond = Number(latest?.avgHashrate ?? latest?.hashrate);
     if (!Number.isFinite(epochSeconds) || epochSeconds <= 0 || !Number.isFinite(hashesPerSecond) || hashesPerSecond <= 0) {
-      throw new Error("Hashrate series row lacks a valid timestamp/avgHashrate");
+      return {
+        validation_status: "RAW_CAPTURED_SCHEMA_REVIEW_REQUIRED",
+        response_shape: Array.isArray(data) ? "array" : typeof data,
+        top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
+        row_count: rows.length,
+        latest_row_keys: latest && typeof latest === "object" ? Object.keys(latest) : [],
+        note: "Series rows were found, but timestamp/hashrate fields did not match the expected schema. No value accepted."
+      };
     }
     return {
       validation_status: "FIELDS_PARSED_AGGREGATION_SEMANTICS_REVIEW_REQUIRED",
       aggregation_endpoint: "1w",
-      response_shape: "array",
-      row_count: data.length,
+      response_shape: Array.isArray(data) ? "array" : typeof data,
+      row_count: rows.length,
       source_value_hashes_per_second: hashesPerSecond,
       latest_series_value_eh_s: hashesPerSecond / 1e18,
       unit: "EH/s",
@@ -234,5 +259,5 @@ console.log(JSON.stringify({
 
 // This workflow validates that responses can be captured for review, not that BTC
 // inputs are complete or that scenario evaluation is permitted.
-const captureFailed = manifest.sources.some(source => source.status !== "CAPTURED");
+const captureFailed = manifest.sources.some(source => source.status === "FAILED");
 if (captureFailed) process.exitCode = 1;
