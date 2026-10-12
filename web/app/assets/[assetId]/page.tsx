@@ -60,9 +60,15 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const confidenceScore = scoreByType(scores, ["confidence"]);
   const thesisPercent = scorePercent(thesis);
   const confidenceValue = thesis?.confidence ?? confidenceScore?.value ?? null;
-  const currentScenarioState = (data.scenario_states ?? [])[0] ?? null;
-  const currentScenarioDefinition = currentScenarioState ? scenarios.find((s: any) => s.research_scenario_id === currentScenarioState.scenario_id) : null;
-  const currentScenario = currentScenarioState ? { ...currentScenarioDefinition, ...currentScenarioState } : null;
+  const currentScenarioState = (data.scenario_states ?? []).find((s: any) => !research?.snapshot_id || s.snapshot_id === research.snapshot_id) ?? null;
+  const currentScenarioDefinition = currentScenarioState
+    ? scenarios.find((s: any) => s.research_scenario_id === currentScenarioState.scenario_id)
+    : scenarios.find((s: any) => s.scenario_type === "base") ?? null;
+  const currentScenario = currentScenarioState
+    ? { ...currentScenarioDefinition, ...currentScenarioState, is_published_baseline: false }
+    : currentScenarioDefinition
+      ? { ...currentScenarioDefinition, rationale: currentScenarioDefinition.assumptions, is_published_baseline: true }
+      : null;
   const mainCatalyst = factors.filter((f: any) => f.thesis_impact === "positive").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
@@ -207,10 +213,10 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
       <div className="card"><span className="muted">Health Score</span><div className="metric">{health?.value ?? "—"}</div><span className="muted">{health?.confidence != null ? `Confidence ${health.confidence}` : "Not scored"}</span></div>
       <div className="card"><span className="muted">Thesis Score</span><div className="metric">{thesis?.value ?? "—"}</div><span className="muted">{thesis?.confidence != null ? `Confidence ${thesis.confidence}` : "Not scored"}</span></div>
       <div className="card"><span className="muted">Value Accrual</span><div className="metric">{valueAccrual?.value ?? "—"}</div><span className="muted">{valueAccrual?.confidence != null ? `Confidence ${valueAccrual.confidence}` : "Not scored"}</span></div>
-      <div className="card"><span className="muted">Confidence</span><div className="metric">{confidence?.confidence ?? "—"}</div><span className="muted">{confidence?.score_type ?? "No score confidence recorded"}</span></div>
+      <div className="card"><span className="muted">Confidence</span><div className="metric">{confidenceScore?.value ?? "—"}</div><span className="muted">{confidenceScore?.score_type ?? "No score confidence recorded"}</span></div>
     </section>
 
-    <section className="grid section"><div className="card"><span className="muted">Current Scenario</span><h2>{currentScenario?.scenario_type ?? currentScenario?.state ?? "—"}</h2><p className="muted">{currentScenario?.rationale ?? currentScenario?.thesis_impact ?? "Current scenario state not recorded."}</p></div><div className="card"><span className="muted">Main Catalyst</span><h3>{mainCatalyst?.name ?? "—"}</h3><p>{mainCatalyst?.current_state ?? mainCatalyst?.description ?? "No positive thesis driver is currently recorded."}</p></div><div className="card"><span className="muted">Main Risk</span><h3>{mainRisk?.name ?? "—"}</h3><p>{mainRisk?.current_state ?? mainRisk?.description ?? "No negative thesis driver is currently recorded."}</p></div></section>
+    <section className="grid section"><div className="card"><span className="muted">Current Scenario</span><h2>{currentScenario?.scenario_type ?? currentScenario?.state ?? "—"}</h2><p className="muted">{currentScenario?.rationale ?? currentScenario?.assumptions ?? currentScenario?.thesis_impact ?? "Current scenario state not recorded."}</p>{currentScenario?.is_published_baseline && <p className="muted">Published research baseline; no snapshot-linked scenario evaluation is recorded yet.</p>}</div><div className="card"><span className="muted">Main Catalyst</span><h3>{mainCatalyst?.name ?? "—"}</h3><p>{mainCatalyst?.current_state ?? mainCatalyst?.description ?? "No positive thesis driver is currently recorded."}</p></div><div className="card"><span className="muted">Main Risk</span><h3>{mainRisk?.name ?? "—"}</h3><p>{mainRisk?.current_state ?? mainRisk?.description ?? "No negative thesis driver is currently recorded."}</p></div></section>
 
     <section id="domains" className="section"><div className="section-heading"><p className="eyebrow">03 · DOMAINS</p><h2>Research Domains</h2><p className="muted">Six dashboard-level views aggregate the canonical 15 research blocks; they do not replace them.</p></div><div className="grid">{domains.length ? domains.map((d: any) => { const mappedBlocks = blocks.filter((b: any) => Array.isArray(b.domains) && b.domains.some((bd: any) => bd.code === d.code)); return <article className="card" key={d.research_domain_id}><div className="row"><h3>{d.name}</h3><span className="pill">{d.code}</span></div><p className="muted">{d.description ?? "Domain state is available from the Asset Card."}</p><div className="row"><span className="muted">Mapped research blocks</span><strong>{mappedBlocks.length}</strong></div>{mappedBlocks.length ? <div className="table-list">{mappedBlocks.map((b: any) => <div className="row table-row" key={b.research_block_id}><span>{String(b.number).padStart(2,"0")} · {b.title}</span><span className="pill">{getResearchBlockStatusLabel(b.status)}</span></div>)}</div> : <p className="muted">No Structure 1 blocks are mapped to this domain yet.</p>}</article>; }) : <div className="card"><p className="muted">No research domains recorded yet.</p></div>}</div></section>
 
