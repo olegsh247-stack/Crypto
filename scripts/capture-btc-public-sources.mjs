@@ -172,7 +172,7 @@ await capture({
       source_lineage: data.sources ?? null,
       first_row_keys: rows && rows.length && rows[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
       latest_day: rows && rows.length ? rows[rows.length - 1] : null,
-      recent_days_from_2026_10_05: recentDays,
+      recent_days_in_last_14_days: recentDays,
       note: "Candidate mirror only. Inspect source lineage, date semantics, revisions and dash/null handling before using any row as canonical ETF flow."
     };
   }
