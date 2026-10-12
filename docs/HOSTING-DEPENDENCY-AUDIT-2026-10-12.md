@@ -106,3 +106,42 @@ The pattern contains doubled backslashes in the regular-expression literal, so i
 The inspected VPS Build Rehearsal exercises ingestion and idempotency but does not assert the London boundary across GMT/BST transitions; no dedicated scheduler test file was found at the checked conventional paths. The current successful gate therefore does not establish this conversion is correct.
 
 **Follow-up completed in PR #71:** six regression tests cover winter, summer, both DST transition dates, and the days immediately after. The focused Worker patch and test step are on a branch based on current `main`; VPS Build Rehearsal and workflow static validation passed. The PR remains unmerged and no production deployment occurred. Do not merge the stale scheduler PR as a substitute for the focused fix.
+
+
+## Dependency inventory completion pass — current `main` at `115e13995c4ba005545a78033bf4a638b3584c38`
+
+This section narrows the requested Neon/Cloudflare audit by separating repository evidence from account-level state that cannot be inferred from source code.
+
+### Neon and Cloudflare disposition
+
+| Surface | Current-main evidence | Finding / required confirmation |
+|---|---|---|
+| Runtime application | Target runtime files are under `vps/api` and `vps/worker`; production Compose uses Node.js services and PostgreSQL 16. No Neon SDK/runtime config or Cloudflare Wrangler config appeared in the inspected main tree. | Repository target runtime is provider-neutral/self-hosted. This does **not** prove the live public endpoint has moved off the legacy Worker or that the old service has been disconnected. |
+| Database | Target migrations live under `infrastructure/postgres/migrations/`; `scripts/migrate-postgres.sh` uses `DATABASE_URL` and applies every unmarked SQL file in lexical order. | The target migration path no longer depends on a Neon-specific runner. The legacy hosted database must remain preserved until backup/restore, parity, cutover and rollback gates pass. |
+| CI/CD | `.github/workflows/release-gate.yml` calls VPS build/rehearsal and Web build. The inspected workflow uses disposable PostgreSQL and has no production deploy step or Neon/Cloudflare credentials. `production-readonly-health.yml` is a manually triggered GET-only check against a supplied URL. | Repository CI is self-hosted-target validation, not deployment. No production workflow should be enabled without a separate reviewed deployment path. |
+| Environment variables | Production Compose consumes `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, `WORKER_SCHEDULE_UTC`, `BACKUP_DIR_HOST`, and `BACKUP_RETENTION_DAYS`. API/Worker get `DATABASE_URL` assembled internally from the Postgres password. CI creates an ephemeral `DATABASE_URL` for disposable PostgreSQL. | These are target-host variables. The secret inventory lists `DEPLOY_SSH_KEY` as future/planned, not as proof of an active deploy workflow. Do not print or copy secret values during the audit. |
+| GitHub App / repository integration | Source files cannot establish which GitHub Apps are installed, their permissions, or whether a third-party service has a repository integration. | **Unverified externally.** Inspect repository Settings → GitHub Apps / installed apps and account-level integrations before declaring GitHub App access removed. Do not revoke an app based only on absence of source references. |
+| Cloudflare Git integration / live Worker | No Cloudflare deploy workflow or Wrangler configuration was found in the inspected main tree; PR #70 and this audit are documentation-only. | **External state remains unverified.** Confirm in the Cloudflare dashboard whether a Worker/Pages project is connected to this repository, whether builds are disabled, and whether the legacy public endpoint still routes to it. Repository absence alone is not disconnection. |
+| Backups | `scripts/backup-postgres.sh` creates a custom-format dump, archive list and SHA-256; Compose mounts `BACKUP_DIR_HOST`; systemd template schedules daily at 02:00 UTC. | CI rehearses backup/restore on disposable PostgreSQL. No evidence yet proves a real host, off-host encrypted copy, timer execution or restore of the production dataset. |
+| Migration safety | The migration runner applies every file in `infrastructure/postgres/migrations/*.sql` in lexical order when unmarked. | A date in a filename does not defer a migration. Review the complete pending migration set against a disposable clean database before any target DB operation; never use the production Release Gate as a test. |
+| Branch protection | GitHub's current branch metadata reports `main` as unprotected and required status checks disabled. | A real governance gap: merge protection is not enforced at the branch level. This audit records the finding but does not change repository settings or guess the desired ruleset. |
+
+### Runtime and CI variable boundary
+
+- **Local/disposable CI:** temporary `DATABASE_URL`, test-only admin token and local CORS origin are created inside the workflow; they are not production credentials.
+- **Future VPS runtime:** values in `vps/.env.production.example` are placeholders. A real `.env.production` must remain outside Git with restrictive permissions.
+- **Future deployment:** `DEPLOY_SSH_KEY` is described in the secret inventory as a future secret. No deployment workflow or SSH deployment action was observed in the inspected release-gate workflow.
+- **Legacy services:** any old Neon/Cloudflare secrets may exist in GitHub or provider settings even though they are not referenced by current-main source. Their existence and last-use status cannot be inferred safely from repository code.
+
+### Hosting audit exit criteria — still open
+
+- [x] Repository target topology, migration runner, CI-only release gate, target environment-variable names and backup/restore rehearsal path identified.
+- [x] No Neon-specific migration directory or Cloudflare deploy configuration found in the inspected current-main tree.
+- [x] `main` branch is confirmed unprotected by GitHub branch metadata.
+- [ ] Confirm Cloudflare Git/Worker connection state in provider dashboard; do not treat absence from Git as proof of disconnection.
+- [ ] Confirm installed GitHub Apps and repository permissions from GitHub settings.
+- [ ] Inventory existing repository/environment secrets by **name and usage only**; remove nothing until all references and rollback requirements are checked.
+- [ ] Confirm whether the legacy public API still routes to the old runtime and database; no endpoint switch or deletion is authorized here.
+- [ ] After VPS is actually provisioned, verify host firewall, real environment file permissions, off-host backup, timer execution and restore from a production-like dump.
+
+The hosting architecture audit is therefore **partially complete, not closed**. The repository-side dependency map is documented; provider/account-level connection state, live routing, actual secret usage, and real-host backup behavior remain unverified. Keep the overall plan on step 1 until those external checks can be evidenced, then proceed to the open-PR comparison. No production changes, secret changes, merges, deploys, migrations, or database writes were performed by this pass.
