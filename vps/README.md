@@ -18,7 +18,7 @@ The provider-neutral migration runner applies the repository's current PostgreSQ
 
 `docker compose up --build api worker`
 
-The API is HTTP-only. Scheduled ingestion runs in the separate `worker` process and shares the same PostgreSQL target. The worker executes once on startup and then at `WORKER_INTERVAL_MS` (24h by default).
+The API is HTTP-only in this local rehearsal profile. Host ports bind to `127.0.0.1` only; PostgreSQL is not exposed to the public network. Scheduled ingestion runs in the separate `worker` process and shares the same PostgreSQL target. The worker does not ingest immediately on startup; it runs at `WORKER_SCHEDULE_UTC` (default `00:30` UTC) and schedules the next run after the previous run finishes.
 
 Then verify GET /api/health, GET /api/db-health, GET /api/assets and GET /api/pairs. Worker logs should report `service":"crypto-worker-vps"` with ingestion counts.
 
