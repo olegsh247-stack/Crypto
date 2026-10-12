@@ -53,6 +53,16 @@
       "notes": "US spot Bitcoin ETF flow and holdings data; requires parser/reconciliation."
     },
     {
+      "source_id": "institutional.tftc",
+      "name": "TFTC Bitcoin ETF Flows — public JSON candidate",
+      "type": "institutional",
+      "url": "https://www.tftc.io/bitcoin-etf-flows",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "public JSON endpoint",
+      "notes": "Candidate public mirror of US spot BTC ETF daily flows. Landing page advertises a JSON data endpoint and CC BY 4.0 reuse; verify schema, exact source lineage, dates and revisions before canonical ingestion. Not yet in metric source_priority."
+    },
+    {
       "source_id": "analytics",
       "name": "Glassnode",
       "type": "analytics",
