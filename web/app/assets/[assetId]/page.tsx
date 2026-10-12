@@ -41,7 +41,7 @@ function scenarioBlockerLabel(reason: string) {
     missing: "Required observation is missing",
     not_marked_current: "Latest observation is not marked current",
     stale_or_untraceable: "Observation is stale or lacks valid source provenance",
-    latest_observation_must_be_current_traceable_and_within_48_hours: "Latest ETF-flow observation must be current, source-linked and within 48 hours",
+    latest_observation_must_be_current_traceable_and_within_48_hours: "Latest ETF-flow observation must be current, source-linked and within 36 hours",
     requires_at_least_5_distinct_recent_daily_observations: "At least five distinct recent ETF-flow days are required",
     source_not_registered: "Source is not present in the canonical source registry",
     unit_missing: "Observation has no explicit unit",
