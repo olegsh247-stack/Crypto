@@ -76,3 +76,8 @@ The target host has not yet been purchased, so the public endpoint is still the 
 ## Live BTC data gate — 2026-10-12
 
 A read-only query of the currently serving Neon database confirmed the target readiness API is correctly blocked by production input quality, not only by the disposable test seed: latest spot price, ETF flow and hashrate rows are stale; DXY and fee/subsidy metrics have no rows; there are zero current source-linked ETF days in the last 14 days. Nine duplicate BTC observation-key groups remain, all identical-payload pairs. No production records were modified. See [BTC Monitoring Readiness Matrix](./BTC-MONITORING-READINESS-MATRIX.md).
+
+
+## Cloudflare integration finding — 2026-10-12
+
+The Cloudflare Workers GitHub App is still attached to this repository outside the tracked workflow files. A documentation-only PR head received a failed `Workers Builds: crypto-api` check whose details URL points at the former Worker's `production/builds` page. The target VPS Release Gate remains green, but this external integration is still a repository-side Cloudflare dependency and could attempt a legacy build/deploy on merge. Do not treat its failed check as a VPS failure, and do not merge changes while assuming the integration is harmless. At controlled cutover, inspect and remove/disable this GitHub App integration once the old endpoint is no longer needed; verify that VPS CI continues to pass without it. No Cloudflare deployment was intentionally requested by this audit.
