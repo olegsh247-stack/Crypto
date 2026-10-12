@@ -1,0 +1,31 @@
+name: BTC Public Source Staging (Read Only)
+
+on:
+  push:
+    paths:
+      - "scripts/capture-btc-public-sources.mjs"
+      - ".github/workflows/btc-public-source-staging.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture public source responses for review only
+        run: node scripts/capture-btc-public-sources.mjs
+      - name: Upload raw responses and provenance manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-public-source-review
+          path: tmp/btc-source-review/
+          if-no-files-found: error
+          retention-days: 7
