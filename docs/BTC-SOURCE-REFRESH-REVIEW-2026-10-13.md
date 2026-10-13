@@ -252,3 +252,13 @@ Run [BTC Public Source Staging #27](https://github.com/olegsh247-stack/Crypto/ac
 | DXY | No canonical source captured | Blocked |
 
 The new 165-block window passed the same integrity checks as the prior run and independently reproduced a valid candidate calculation. This improves confidence in the **staging computation**, but does not resolve the canonical metric definition, production source registration, duplicate dry-run, ETF freshness, DXY source, or the required historical price/hashrate signals. No production data or scenario state was changed.
+
+## ETF alternative API contract review — CryptoETF.today
+
+The authenticated CryptoETF.today API is now implemented as a read-only candidate adapter, without changing canonical source priority. See [BTC ETF flow candidate review](./BTC-ETF-FLOW-CANDIDATE-REVIEW-2026-10-13.md).
+
+Provider documentation confirms daily net flows in USD millions, UTC dates, up to 30 days of free-tier history, and T+1 publication; the newest day may be revised later that day. Its documented response schema contains a global `updatedAt` but no per-row publication timestamp. Therefore a current global `updatedAt` cannot prove that the newest flow row meets the metric registry's 36-hour freshness gate.
+
+The staging workflow now tests and optionally captures this endpoint through GitHub Actions secret `CRYPTOETF_API_KEY`. No credential is committed. If the secret is absent, no request is made and the artifact explicitly records `BLOCKED_NO_CREDENTIAL`. The parser does not zero-fill missing trading dates, and duplicate dates/invalid values fail closed.
+
+**Decision:** useful alternate candidate, not canonical or accepted. Authentication and row-level freshness/revision evidence remain unresolved. Do not replace `institutional.primary` or mark missing values as zero. ETF remains a scenario blocker.
