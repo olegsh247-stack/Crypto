@@ -68,3 +68,18 @@ Staging [run #38370320501](https://github.com/olegsh247-stack/Crypto/actions/run
 No ETF values were accepted. The REST path remains available if a key is configured, but no key was supplied. The scenario remains `not_evaluable`.
 
 A follow-up content-negotiation probe using only `application/json` and then only `text/event-stream` received HTTP 406 from the public MCP endpoint. The adapter has been returned to the provider bridge's documented `Accept: application/json, text/event-stream` negotiation. Current operational decision is unchanged: the public MCP path is not yielding a usable JSON-RPC tool response in CI; do not treat the provider as available for accepted input. An authenticated REST capture remains optional if a key becomes available.
+
+## Live public MCP capture — 2026-10-13 08:42 UTC
+
+The public MCP endpoint returned a usable BTC flow history after the adapter was aligned with its actual response schema (the MCP payload includes `symbol`, `windowDays`, `days`, and `updatedAt`, but omits the REST-only `asset` field). Read-only staging [run #38371104698](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698) passed both parser suites and uploaded artifact [11798629801](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698/artifacts/11798629801).
+
+Captured candidate:
+- Latest flow date: **2026-10-12**
+- Latest BTC ETF net flow: **−$65.4 million**
+- Distinct flow dates in the last seven calendar days: **6**
+- Provider-level `updatedAt`: `2026-10-13T08:42:43.162Z`
+- Retrieval time: `2026-10-13T08:42:43Z`
+- Conservative age from the UTC midnight of the latest flow date: **32.711 hours** (within the registry's 36-hour threshold)
+- Raw returned-payload SHA-256: `4cec024a39ab5355336da610d84fe6ac2bac4700ec04e6b4236179245ea260fb`
+
+**Decision remains BLOCKED for canonical scenario use.** The flow-date age passes the numeric threshold, but the source does not provide a per-row publication timestamp, and the registry does not explicitly define whether the 36-hour freshness age is measured from UTC flow-date midnight or provider publication time. The value is a useful live candidate, not an accepted observation. Next contract decision: either explicitly approve the conservative flow-date-midnight convention (which errs toward marking rows stale early) or require provider publication metadata. Do not silently use global `updatedAt` as row publication time.
