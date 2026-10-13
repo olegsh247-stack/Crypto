@@ -276,3 +276,7 @@ Read-only staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/a
 | Fee/subsidy | Existing 165-block integrity evidence unchanged | Candidate only; daily metric versus rolling 144-block window and authoritative field/unit contract unresolved |
 
 The DXY candidate improves source feasibility, not acceptance. No source-priority or metric-registry edits were made. The full BTC scenario remains `not_evaluable`; no production observations, scenario states, monitoring events, or probability changes were written.
+
+## Fee/subsidy contract decision prepared
+
+Added `docs/BTC-FEE-SUBSIDY-CONTRACT-DECISION-2026-10-13.md` to resolve the existing mismatch between the metric registry's `frequency: 1d` and the source note describing a rolling block window. It compares a completed UTC-day ratio with a rolling 144-block ratio and recommends the UTC-day definition for v1 because it matches the canonical metric frequency. This is a documented recommendation only; no registry or calculation was changed, and the current 144-block candidate remains blocked pending explicit contract approval.
