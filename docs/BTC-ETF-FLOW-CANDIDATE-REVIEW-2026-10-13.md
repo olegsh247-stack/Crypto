@@ -8,7 +8,7 @@
 Candidate provider: CryptoETF.today REST API.
 
 - Endpoint: `GET https://api.cryptoetf.today/api/v1/flows/btc`
-- Authentication: API key in `Authorization: Bearer …` (also documents `X-API-Key`).
+- REST authentication: API key in `Authorization: Bearer …` (also documents `X-API-Key`). A public read-only MCP endpoint is available without a key at `https://mcp.cryptoetf.today/api/mcp`, with `get_asset_flows` tool.
 - Metric: daily net BTC spot-ETF flows in USD millions; positive means inflow, negative means outflow.
 - History: free tier documents 30 days; rows are ordered oldest to newest; dates are UTC.
 - Publication convention: provider describes flows as T+1 (previous trading day's flows published next morning UTC); latest row may be revised later that day.
@@ -23,7 +23,7 @@ References:
 
 - `scripts/capture-btc-etf-flow-candidate.mjs` captures the endpoint response read-only, records HTTP status, retrieval time, raw body SHA-256 and parsed rows, and writes only a local CI artifact.
 - `scripts/capture-btc-etf-flow-candidate.test.mjs` tests schema/units, negative and zero flows, duplicate dates, invalid rows, no zero-filling, credential absence and raw-payload hashing.
-- `.github/workflows/btc-public-source-staging.yml` runs the tests and invokes capture with the optional GitHub Actions secret `CRYPTOETF_API_KEY`. If the secret is absent, the script makes no network request and records `BLOCKED_NO_CREDENTIAL`; no credential is stored in source control.
+- `.github/workflows/btc-public-source-staging.yml` runs the tests and captures via the public no-key MCP endpoint by default. The optional GitHub Actions secret `CRYPTOETF_API_KEY` switches capture to REST; no credential is stored in source control.
 - The parser intentionally does not infer a publication time from `updatedAt`, and it never fills absent trading dates with zero.
 
 ## Acceptance status
@@ -47,7 +47,7 @@ Next:
 
 ## Staging execution — 2026-10-13 08:31 UTC
 
-Read-only workflow [run #38369827976](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976) passed both BTC series and ETF parser test suites, completed the public-source candidate captures, and uploaded artifact [11797928912](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976/artifacts/11797928912). The ETF capture explicitly returned `BLOCKED_NO_CREDENTIAL`; the Actions environment does not currently have `CRYPTOETF_API_KEY`. No authenticated ETF request was made. This is expected fail-closed behavior, not a passing ETF source acceptance.
+Read-only workflow [run #38369827976](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976) passed both BTC series and ETF parser test suites, completed the public-source candidate captures, and uploaded artifact [11797928912](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976/artifacts/11797928912). At that commit the ETF capture was still REST-only and returned `BLOCKED_NO_CREDENTIAL`; subsequent work added the public no-key MCP fallback. The new MCP path is covered by mocked transport tests and is awaiting a fresh live staging run.
 
 The same run refreshed candidate-only Kraken OHLC and Mempool history:
 - Kraken HTTP 200 at `2026-10-13T08:31:32.276Z`; latest completed close on 2026-10-12 was 81,737.1 USD/BTC; seven-day return −4.6814%; raw SHA-256 `b034d2510eec7a39354a388dfcc16b32aa6669f922e438bfd1062490a2a1e347`.
