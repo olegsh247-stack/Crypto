@@ -192,9 +192,9 @@
     "production_writes_performed": false
   },
   "individual_block_window_review": {
-    "status": "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY",
-    "target_block_count": 150,
-    "request_strategy": "10 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each, stepping backward by 15 heights",
+    "status": "IMPLEMENTED_NOT_YET_EXECUTED_165_BLOCK_VALIDATION",
+    "target_block_count": 165,
+    "request_strategy": "11 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each; latest 144 blocks are the proposed metric window and 21 earlier blocks provide timestamp-consensus context.",
     "normalized_output": "individual-block-window.json",
     "raw_page_sha256s_recorded": true,
     "checks": [
@@ -208,12 +208,13 @@
     ],
     "required_staging_gate": true,
     "production_approved": false,
-    "commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
-    "execution_status": "PASS_CANDIDATE_ONLY",
+    "commit": "9e0e60dbc4717396262a0a8075da4407408e1087",
+    "execution_status": "PENDING_RUN_AFTER_WINDOW_CONTRACT_REFINEMENT",
     "unresolved": [
+      "verify the 165-block staging run and candidate 144-block ratio",
       "confirm endpoint field/unit contract against authoritative API documentation",
-      "reconcile ratio window/frequency with metric registry and SQL migration",
-      "reconcile source ID/runtime mapping",
+      "approve or revise the proposed 144-block metric window and daily cadence",
+      "reconcile source ID/runtime mapping by data domain",
       "perform separately scoped read-only duplicate dry-run"
     ],
     "unique_block_count": 150,
@@ -233,7 +234,9 @@
     "window_fee_to_subsidy_ratio": 0.006297876928,
     "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
     "artifact_id": 11792344913,
-    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0"
+    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0",
+    "candidate_metric_window_blocks": 144,
+    "candidate_metric_status": "PROPOSED_NOT_APPROVED"
   },
   "staging_gate_manifest_update": {
     "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
@@ -249,5 +252,19 @@
     "successful_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
     "artifact_id": 11792344913,
     "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0"
+  },
+  "proposed_fee_subsidy_metric_contract": {
+    "status": "PROPOSAL_ONLY_NOT_CANONICAL",
+    "metric_id": "security.fee_subsidy_ratio",
+    "cadence": "one candidate point per day",
+    "window": "latest 144 individual blocks",
+    "formula": "sum(totalFees) / sum(reward - totalFees)",
+    "candidate_fields": "extras.totalFees and extras.reward",
+    "proposed_source_id": "network.primary",
+    "observed_at": "timestamp of the final block in the 144-block metric window",
+    "period_start": "timestamp of the first block in the 144-block metric window",
+    "period_end": "timestamp of the final block in the 144-block metric window",
+    "method_version": "mempool-fee-subsidy-144-block-v1",
+    "note": "Do not alter canonical registry or ingest until endpoint units, source mapping and metric window/cadence are explicitly accepted."
   }
 }
