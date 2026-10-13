@@ -47,3 +47,26 @@ The public Mempool REST contract confirms that both `/mining/blocks/fees/1w` and
 **DXY decision:** ICE is the authoritative administrator, but the public product documentation lists licensed delivery channels rather than a confirmed free API. Keep DXY blocked until a usable, permitted feed and its timestamp convention are explicitly established. Do not substitute a broad trade-weighted USD series and label it DXY.
 
 **Current acceptance status:** Kraken and hashrate pass only their capture-time freshness checks; they remain candidates pending source/runtime mapping and duplicate dry-run. Fee/subsidy, ETF flow, and DXY remain blocked. This review authorizes no production writes.
+
+
+## Individual-block sample review — 2026-10-13
+
+The read-only staging artifact `btc-public-source-review` (run [#38353245643](https://github.com/olegsh247-stack/Crypto/actions/runs/38353245643), artifact SHA-256 `f165c64d71ec42890789d6d47040f4f0a5a76b8714b0aff85e0e1e421ddd1461`) contains the raw response from `GET /api/v1/blocks/{tip-height}`. The captured sample has 15 consecutive blocks, heights **971185–971199**, with a raw response SHA-256 of `e986a0bf21b7e23acc4a27be973ea3ceb88126c8434e32fccc22ecd432ad573b`.
+
+### Field and arithmetic check
+
+- Individual-block fields are present as `extras.totalFees` and `extras.reward`.
+- In all 15 rows, `extras.reward - extras.totalFees = 312,500,000` raw units, matching the current 3.125 BTC subsidy when the raw unit is interpreted as satoshis.
+- The reproducible candidate formula is **fee-to-subsidy ratio = totalFees / (reward − totalFees)**. This avoids mixing the total coinbase reward (subsidy plus fees) into the subsidy denominator.
+- Across this bounded sample, the diagnostic ratios range from **0.0010287968** to **0.0074590496** (about 0.103%–0.746%). These are per-block sample diagnostics, not accepted production factor values.
+
+### Decision
+
+**Sample arithmetic check: PASS (15/15); production acceptance: NOT APPROVED.** The raw fields and arithmetic are internally consistent, and the staging script now emits the normalized per-block fields, derived subsidy, ratio, sample validation status and provenance hash. This does not by itself replace confirmation of the endpoint's field/unit contract, testing across a larger historical range and edge cases, matching the repository's metric/source registry, or a read-only duplicate dry-run. No production data or scenario state was changed.
+
+### Next gate
+
+1. Run the updated staging workflow and verify the new summary reports 15 valid rows and zero subsidy mismatches.
+2. Inspect repository metric/source contracts for `security.fee_subsidy_ratio`, `security.hashrate`, and `market.spot_price`; resolve source IDs, units, and stored-method mapping.
+3. Keep ETF flow and DXY blocked until auditable, fresh sources and timestamp conventions are accepted.
+4. Only after the input contract is accepted, run the separately scoped read-only duplicate comparison; then execute one deterministic, offline/read-only BTC scenario.
