@@ -208,8 +208,8 @@
     ],
     "required_staging_gate": true,
     "production_approved": false,
-    "commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
-    "execution_status": "FAILED_VALIDATION_GATE_TIMESTAMP_RULE_CORRECTED",
+    "commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
+    "execution_status": "PENDING_RERUN_AFTER_SYNTAX_FIX",
     "unresolved": [
       "rerun staging against the corrected timestamp-consensus validation and inspect artifact",
       "confirm endpoint field/unit contract",
@@ -225,7 +225,9 @@
     "failure_reason": "The first 150-block run exposed an invalid assumption that Bitcoin block timestamps must be monotonic by height; Bitcoin consensus permits non-monotonic timestamps.",
     "correction_commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
     "correction": "Validate median-time-past against the preceding 11 blocks and the two-hour future-time bound instead of strict monotonicity.",
-    "next_step": "Verify a fresh staging run on the correction commit.",
-    "production_approved": false
+    "next_step": "Verify the staging run triggered by the syntax-fix commit.",
+    "production_approved": false,
+    "syntax_fix_commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
+    "syntax_failure": "Run #22 failed before capture due to literal escaped-newline syntax in the newly added timestamp-consensus fields; corrected in the commit above."
   }
 }
