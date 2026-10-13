@@ -1,6 +1,6 @@
 # BTC Kraken Runtime Mapping Gate — 2026-10-13
 
-**Status: CANDIDATE CONTRACT IMPLEMENTED — CI verification pending; production ingestion remains blocked.**
+**Status: PASS — candidate contract and rollback-only PostgreSQL rehearsal verified in CI; production ingestion remains blocked.**
 **Scope:** repository code and isolated/rollback-only tests. No production database access or writes; no scenario or monitoring changes.
 
 ## What was verified
@@ -14,7 +14,7 @@
 - `toKrakenObservationCandidateRow` now maps only a current, source-provenanced capture to the canonical observation fields. It fails closed on stale data, invalid identity/unit/URL/status, missing raw response/hash or invalid/future timestamps. It is a mapper only; it does not perform a write.
 - Unit tests cover current/stale trades, future timestamps, API errors, malformed/empty rows, pair key validation, HTTP failures, invalid JSON, raw response/hash provenance, candidate field mapping, and rejection of stale or incomplete provenance.
 - Added `scripts/test-btc-kraken-observation-contract.sql` and a shell guard. The disposable rehearsal validates registered BTC/metric/source, the natural-key index, one insert followed by an idempotent duplicate attempt, and metric/source foreign-key rejection. The SQL fixture runs in a transaction and always rolls back; the shell script refuses non-loopback hosts and databases not ending in `_test`.
-- Added the rollback-only rehearsal to `.github/workflows/vps-api-build.yml`. Latest CI status must be checked before accepting these changes.
+- Added the rollback-only rehearsal to `.github/workflows/vps-api-build.yml`. VPS API Build Rehearsal #616 passed on commit `dfee4a1bd107c7edfdbe1cb3353864bb1aacaafe`, including worker build/unit tests, clean PostgreSQL migrations, this candidate observation rehearsal, worker ingestion E2E and BTC research evidence/snapshot lineage E2E. Seed observation idempotency rehearsal #25 also passed on the same commit. Evidence: https://github.com/olegsh247-stack/Crypto/actions/runs/38359583130 and https://github.com/olegsh247-stack/Crypto/actions/runs/38359583135.
 
 ## Contract decision
 
