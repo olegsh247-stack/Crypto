@@ -346,6 +346,7 @@ console.log(JSON.stringify({
     acceptance_status, updated_through, row_count
   })),
   fee_subsidy_review: manifest.fee_subsidy_review,
+  individual_block_review: manifest.individual_block_review,
   unresolved: manifest.unresolved
 }, null, 2));
 
