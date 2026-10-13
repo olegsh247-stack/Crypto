@@ -7,6 +7,7 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { expectedSubsidySats, validateBlockPage, tipAnchorMatches } from "./btc-block-window-validation.mjs";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
 await mkdir(outDir, { recursive: true });
@@ -273,9 +274,7 @@ async function captureIndividualBlockWindow() {
       if (!contentType || !contentType.toLowerCase().includes("json")) throw new Error(`Unexpected content type for page ${startHeight}`);
       const rows = JSON.parse(body);
       if (!Array.isArray(rows) || rows.length !== pageSize) throw new Error(`Expected ${pageSize} rows for page ${startHeight}`);
-      const returnedHeights = rows.map(row => Number(row?.height));
-      const expectedPageHeights = Array.from({ length: pageSize }, (_, i) => startHeight - i);
-      if (new Set(returnedHeights).size !== pageSize || expectedPageHeights.some(height => !returnedHeights.includes(height))) throw new Error(`Unexpected or duplicate heights in page starting at ${startHeight}`);
+      const returnedHeights = validateBlockPage(rows, startHeight, pageSize);
       pageEvidence.at(-1).row_count = rows.length;
       pageEvidence.at(-1).returned_heights = returnedHeights;
       for (const row of rows) {
@@ -311,11 +310,6 @@ async function captureIndividualBlockWindow() {
     const missingHeights = [];
     for (let h = expectedMin; h <= expectedMax; h++) if (!byHeight.has(h)) missingHeights.push(h);
     const invalidRows = blocks.filter(row => !row.fields_valid);
-    const expectedSubsidySats = height => {
-      const halvings = Math.floor(height / 210000);
-      if (halvings >= 64) return 0;
-      return Math.floor(5000000000 / (2 ** halvings));
-    };
     const subsidyMismatches = blocks.filter(row => row.derived_subsidy_raw !== expectedSubsidySats(row.height));
     const duplicateHashes = blocks.length - new Set(blocks.map(row => row.id)).size;
     // Bitcoin block timestamps are not required to increase strictly with height.
@@ -359,7 +353,10 @@ async function captureIndividualBlockWindow() {
     anchorRecheck.current_tip_hash = hashBody.trim().toLowerCase();
     anchorRecheck.initial_tip_height = latestTipHeight;
     anchorRecheck.initial_tip_hash = latestTipHash;
-    anchorRecheck.status = heightResponse.ok && hashResponse.ok && anchorRecheck.current_tip_height === latestTipHeight && anchorRecheck.current_tip_hash === latestTipHash ? "PASS" : "FAIL_ANCHOR_CHANGED_OR_UNAVAILABLE";
+    anchorRecheck.status = heightResponse.ok && hashResponse.ok && tipAnchorMatches(
+      { height: latestTipHeight, hash: latestTipHash },
+      { height: anchorRecheck.current_tip_height, hash: anchorRecheck.current_tip_hash }
+    ) ? "PASS" : "FAIL_ANCHOR_CHANGED_OR_UNAVAILABLE";
     const passed = blocks.length === targetCount && missingHeights.length === 0 && invalidRows.length === 0
       && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsConsensusValid
       && anchorRecheck.status === "PASS" && validationWindowRatio !== null && candidateMetricRatio !== null;
