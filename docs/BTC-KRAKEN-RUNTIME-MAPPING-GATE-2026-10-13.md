@@ -37,7 +37,7 @@ Keep these source IDs distinct:
 
 ## Still blocked
 
-1. Run the explicit live-capture rehearsal after its `workflow_dispatch` definition is available from the default branch; the current branch's worker build, unit tests and rollback-only synthetic contract rehearsal pass in VPS API Build Rehearsal #626.
+1. The explicit live-capture rehearsal is complete and passed in [BTC Kraken Live Candidate Rehearsal #2](https://github.com/olegsh247-stack/Crypto/actions/runs/38360852900); standard checks for the later docs/test commits also passed.
 2. Review how the raw response is retained for durable audit; the candidate object returns the raw body and hash, but the observation table stores the hash and provenance in `methodology`, not the entire raw body.
 3. Keep this candidate path out of scheduled production ingestion. A separate explicit decision is required before any production observation writes.
 4. Do not calculate or persist live BTC scenario/monitoring state until all required inputs pass freshness/provenance gates and the deterministic scoring rule is reviewed.
@@ -66,7 +66,14 @@ This remains rehearsal-only: no production DB credentials are used, no productio
 - Candidate: BTC/USD 83,590.3 USD/BTC; source timestamp 2026-10-13 07:09:13.118 UTC; retrieved 2026-10-13 07:09:25.872 UTC; age 12 seconds; freshness CURRENT; HTTP 200.
 - Returned pair key: `XXBTZUSD`; source: `https://api.kraken.com/0/public/Trades?pair=XBTUSD`.
 - Raw payload SHA-256: `02f5b8a02d5668d1855de3ce5c413d779954706a276f15c210af42dde0459284`.
-- The temporary PostgreSQL database was loopback-only (`127.0.0.1`, `crypto_test)); repository migrations passed. The rehearsal inserted once, confirmed a duplicate insert did nothing, verified the candidate fields, rolled back, and then independently confirmed `persisted_rows=0`. The disposable database was removed.
+- The temporary PostgreSQL database was loopback-only (`127.0.0.1`, `crypto_test`); repository migrations passed. The rehearsal inserted once, confirmed a duplicate insert did nothing, verified the candidate fields, rolled back, and then independently confirmed `persisted_rows=0`. The disposable database was removed.
 - No production database credentials were used; no production observation, scenario, monitoring state, or published probability was changed.
 - Workflow #1 failed only at the confirmation guard before building or contacting Kraken. The guard was corrected, and workflow #2 passed all steps.
 - The workflow keeps a narrow `push` trigger limited to changes to its own workflow file on this feature branch, so this one-off rehearsal can be repeated by explicitly updating that file; it is not scheduled and ordinary documentation/code pushes do not trigger the live network capture.
+
+
+## Scenario readiness handoff — 2026-10-13
+
+The standard CI checks on commit `72becab84d2def726df838204083822221410d2e` all passed: VPS API Build Rehearsal #635, Seed observation idempotency #35 and Validate VPS Release Workflow #58. The scenario-readiness regression added in the subsequent commit verifies that the Kraken candidate alone cannot pass the input gate; other required metrics remain blockers.
+
+The candidate capture is evidence that the adapter and rollback rehearsal work, not an accepted current scenario input for all time. It is not written to production and cannot be used to bypass the required freshness window. The next product step is to obtain source-verified current inputs for the remaining metrics and daily ETF flow series, then produce a read-only, reproducible confirmation/invalidation assessment for the published BTC Base thesis. No directional-rule prototype or probability changes are approved by this handoff.
