@@ -1,6 +1,11 @@
 name: BTC Kraken Live Candidate Rehearsal
 
 on:
+  push:
+    branches:
+      - btc-capture-freshness-gates-2026-10-13
+    paths:
+      - .github/workflows/btc-kraken-live-candidate-rehearsal.yml
   workflow_dispatch:
     inputs:
       confirmation:
@@ -13,7 +18,7 @@ permissions:
 
 jobs:
   live-candidate-rehearsal:
-    if: ${{ inputs.confirmation == 'RUN_ROLLBACK_ONLY' }}
+    if: ${{ github.event_name == 'push' || inputs.confirmation == 'RUN_ROLLBACK_ONLY' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
