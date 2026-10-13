@@ -27,7 +27,7 @@ function assertDisposableDatabase(databaseUrl: string): URL {
 
 function sqlLiteral(value: string | number): string {
   const text = String(value);
-  if (text.includes("\\0")) throw new Error("SQL value contains a NUL byte");
+  if (text.includes("\0")) throw new Error("SQL value contains a NUL byte");
   return "'" + text.replace(/'/g, "''") + "'";
 }
 
