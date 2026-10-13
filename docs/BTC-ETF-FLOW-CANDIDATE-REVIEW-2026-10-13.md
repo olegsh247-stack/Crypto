@@ -54,3 +54,9 @@ The same run refreshed candidate-only Kraken OHLC and Mempool history:
 - Mempool HTTP 200 at the same retrieval time; latest daily point 2026-10-12 was 1,028.5949 EH/s; seven-day candidate change +8.6770%; raw SHA-256 `dc38aea6b983053359689f4b655eb586bfe9aa2bf7561e0ad7e4c078921d3539`.
 
 Artifact archive includes the raw source payloads. These values remain candidate-only pending source mapping and bucket semantics.
+
+## Public MCP live probe — 2026-10-13 08:35 UTC
+
+The first live attempt against the provider's documented no-key MCP endpoint `https://mcp.cryptoetf.today/api/mcp` returned HTTP 200 with `text/event-stream` but an empty response body during `initialize`. The capture therefore records `BLOCKED_MCP`; no ETF rows were accepted. The adapter's mocked transport tests pass, but the live public MCP protocol path is not yet verified. Optional authenticated REST remains available if a key is later configured.
+
+This external-source failure no longer fails the whole staging workflow: it is retained as a blocked artifact so the independent Kraken/hashrate capture and deterministic tests can still complete. No metric registry or source-priority changes were made.
