@@ -334,3 +334,8 @@ The staging adapter validates and preserves a candidate five-observed-session ch
 Staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518) captured the Yahoo Finance `DX-Y.NYB` daily series (HTTP 200). Latest completed New York session was 2026-10-12, close 102.58; close five observed sessions earlier 102.17; candidate five-session change +0.4013%. Raw response SHA-256: `79eb39867cbc33ea1b5dffbfd8c3d7a9a37d9ee1d3f5c12a9fa2a052d1272170`; artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469).
 
 The result remains `CANDIDATE_ONLY`: third-party source authorization and the exact ICE daily close/publication timestamp are unresolved. No canonical source priority or metric registry was changed. ETF row-publication freshness and fee/subsidy semantics also remain blocked. The BTC scenario remains `not_evaluable`.
+
+
+### Fee/subsidy metric contract — decision note prepared
+
+The current registry defines `security.fee_subsidy_ratio` as daily, while the source description mentions a rolling block window. Added `docs/BTC-FEE-SUBSIDY-CONTRACT-DECISION-2026-10-13.md` comparing the two definitions. It recommends a completed UTC-day ratio for v1 to match the registry's explicit daily frequency, but this remains a recommendation only. No registry change or new ratio calculation was activated; the staging 144-block ratio remains candidate-only.
