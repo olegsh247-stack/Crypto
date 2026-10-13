@@ -160,3 +160,15 @@ Staging run [#25](https://github.com/olegsh247-stack/Crypto/actions/runs/3835739
 
 Review found the validation-window aggregate fields still carried a `150_blocks` suffix after the window was expanded to 165. The values were computed from the 165-block window, but the labels were misleading. Commit `2e69b81e1d9248529468f8d17342b10e9e07371a` corrects those field names; a fresh staging run is required before treating the latest artifact as final evidence.
 
+### Final 165-block staging verification — labels corrected
+
+The rerun [BTC Public Source Staging #26](https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316) completed successfully on commit `2e69b81e1d9248529468f8d17342b10e9e07371a`. Artifact: [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316/artifacts/11793430771), SHA-256 `d92a6925ee0d99aae485535094e8ef5c40092d7cf324e3c7f695998fd1c6925e`.
+
+- Validation window: **165/165** unique blocks, heights **971038–971202**.
+- Missing heights, invalid field rows, subsidy mismatches, duplicate hashes: **0** each.
+- Median-time-past violations and future timestamps beyond the two-hour bound: **0** each.
+- Validation-window diagnostic (165 blocks): `307743303 / 51562500000 = 0.0059683549672727276`.
+- Proposed metric window (latest 144 blocks, heights **971059–971202**): fees `286686334`, derived subsidy `45000000000`, ratio **0.0063708074222222225** (about **0.6371%**).
+
+The artifact labels now explicitly distinguish the 165-block validation aggregate from the proposed 144-block metric. Staging status is **PASS — CANDIDATE ONLY**. The 144-block window remains a proposal until the metric contract is accepted; no canonical registry change or production write was made.
+
