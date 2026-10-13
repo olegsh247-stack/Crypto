@@ -236,3 +236,19 @@ The official [Mempool REST documentation](https://mempool.space/docs/api/rest) c
 **Registry reconciliation:** `security.fee_subsidy_ratio` is currently registered with frequency `1d`, unit `ratio`, 48-hour freshness and source priority `network.primary`. The 144-block rolling window is roughly one day only in intent; it is not a fixed UTC calendar day. Do not change the registry or silently relabel the observation. Decide explicitly whether the metric contract should be a rolling 144-block ratio timestamped at the last included block or a UTC-day ratio computed from blocks in that calendar day. Until that decision is reviewed and tests encode it, the candidate remains blocked.
 
 **Next steps:** (1) resolve and test the fee/subsidy window/timestamp contract against the existing daily metric definition; (2) accept traceable 7-day price and hashrate series for directional changes; (3) acquire an authorized current ETF series with explicit publication/revision semantics; (4) establish an approved DXY source or formally remove/replace that input only through a reviewed methodology change. Then run the fixed-manifest readiness gate. Do not persist observations or scenario state as part of these steps.
+
+
+## Fresh public-source staging capture — 2026-10-13 07:15 UTC
+
+Run [BTC Public Source Staging #27](https://github.com/olegsh247-stack/Crypto/actions/runs/38361508900) completed **SUCCESS** on commit `8a2dc0c0659b0c9e1d2c7a6b29edc1158903a035`. Artifact [ID 11794817924](https://github.com/olegsh247-stack/Crypto/actions/runs/38361508900/artifacts/11794817924), SHA-256 `9e13cbfbc107fe18d4a0fe2c917eec265d52cb66568252be6386b7a6726e593f`, retained until 2026-10-20. The pass means **capture completeness only**; the workflow itself records `PASS_CANDIDATE_ONLY`.
+
+| Input | Latest capture | Acceptance |
+|---|---|---|
+| Kraken BTC spot | 83,653.8 USD/BTC; exchange time `2026-10-13T07:15:24.229Z`; retrieved `07:15:27.009Z`; age 3 seconds; raw SHA-256 `24c8bbfc50ceef6b780a51514dad44a19cd361cc0d35e49ff6a814dcdcc44137` | Candidate only; not an accepted 7-day price series or production observation |
+| Mempool hashrate | 999.342298838022 EH/s; daily bucket `2026-10-13T00:00:00Z`; age 26,127 seconds; raw SHA-256 `c047a553341567169c0c89954fd4faa9d84e092da8c6d0dfba310737bf6f310e` | Freshness gate passes; smoothing/bucket contract and historical change series still unaccepted |
+| Individual-block fee/subsidy candidate | 165/165 unique heights **971042–971206**; zero missing heights, invalid rows, subsidy mismatches, duplicate hashes, median-time-past violations, or future-time violations. Proposed latest 144-block window: heights **971063–971206**, fees `283922130`, derived subsidy `45000000000`, ratio **0.006309380666666667** | Stronger staging evidence; still `CANDIDATE_ONLY` pending authoritative field/unit contract and registry frequency/method reconciliation |
+| Averaged fee/reward series | 835 fee rows, 834 reward rows; 832 matching heights; 6 timestamp mismatches; aggregate ratio intentionally not calculated | Blocked; do not use |
+| ETF flow | Farside HTTP 403; TFTC mirror says `updated_through=2026-10-09` | Blocked / stale. Capture failure is not zero flow |
+| DXY | No canonical source captured | Blocked |
+
+The new 165-block window passed the same integrity checks as the prior run and independently reproduced a valid candidate calculation. This improves confidence in the **staging computation**, but does not resolve the canonical metric definition, production source registration, duplicate dry-run, ETF freshness, DXY source, or the required historical price/hashrate signals. No production data or scenario state was changed.
