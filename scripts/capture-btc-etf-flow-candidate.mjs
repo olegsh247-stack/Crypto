@@ -145,7 +145,7 @@ async function captureViaPublicMcp({ fetchImpl, now, retrievedAt }) {
     headers: {
       "content-type": "application/json",
       accept: "application/json",
-      ...(sessionId ? { "mcp-session-id": sessionId } : {})
+      ...(sessionId ? { "mcp-session-id": sessionId, "MCP-Protocol-Version": "2025-03-26" } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
     signal: AbortSignal.timeout(20_000)
