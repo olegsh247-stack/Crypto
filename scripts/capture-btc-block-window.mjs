@@ -12,6 +12,7 @@ await mkdir(outDir, { recursive: true });
 const targetCount = 165;
 const pageSize = 15;
 const candidateWindowSize = 144;
+const anchorCaptures = [];
 const manifest = {
   schema_version: 1,
   asset_id: "btc",
@@ -51,7 +52,10 @@ function parseHash(capture) {
 }
 try {
   const initialHeightCapture = await readText("https://mempool.space/api/blocks/tip/height");
+  anchorCaptures.push(initialHeightCapture);
+  manifest.anchor_captures = anchorCaptures;
   const initialHashCapture = await readText("https://mempool.space/api/blocks/tip/hash");
+  anchorCaptures.push(initialHashCapture);
   const initialAnchor = { height: parseHeight(initialHeightCapture), hash: parseHash(initialHashCapture) };
   manifest.initial_anchor = { height: initialAnchor.height, hash: initialAnchor.hash,
     height_capture: initialHeightCapture, hash_capture: initialHashCapture };
@@ -111,7 +115,9 @@ try {
   if (futureRows.length || mtpViolations.length) throw new Error("Timestamp consensus checks failed");
 
   const finalHeightCapture = await readText("https://mempool.space/api/blocks/tip/height");
+  anchorCaptures.push(finalHeightCapture);
   const finalHashCapture = await readText("https://mempool.space/api/blocks/tip/hash");
+  anchorCaptures.push(finalHashCapture);
   const finalAnchor = { height: parseHeight(finalHeightCapture), hash: parseHash(finalHashCapture) };
   manifest.final_anchor = { height: finalAnchor.height, hash: finalAnchor.hash,
     height_capture: finalHeightCapture, hash_capture: finalHashCapture };
