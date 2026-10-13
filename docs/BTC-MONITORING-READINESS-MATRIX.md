@@ -2,7 +2,7 @@
 
 Status: research baseline only; **not ready for live evaluation or event persistence**  
 Snapshot: `BTC-2026-10-07-v1`  
-Last read-only input audit: 2026-10-12
+Last read-only input audit: 2026-10-12; live candidate capture verified 2026-10-13
 
 ## Purpose and boundary
 
@@ -24,7 +24,7 @@ The currently published scenario probabilities remain authored research judgment
 | Critical factor | Evidence / candidate input contract | Confirmation condition | Invalidation / escalation condition | Readiness |
 |---|---|---|---|---|
 | Monetary Demand | Canonical USD spot price plus distinct daily US spot BTC ETF flows; retain source, observed time, UTC window, revision and freshness | Sustained monetary demand consistent with the published thesis | Sustained loss of monetary demand | Blocked: current observation freshness/provenance audit must be repaired; quantitative duration/threshold is not approved |
-| Institutional Allocation | At least 5 distinct recent ETF-flow trading days, each current and source-linked; latest row current and within the freshness window | Persistent institutional allocation and broader regulated access | Persistent institutional outflows or material contraction in regulated access | Blocked: source-linked current series not yet established in the target database |
+| Institutional Allocation | At least 5 distinct recent ETF-flow trading days, each source-linked; latest row CURRENT and within the registry's 36-hour freshness window | Persistent institutional allocation and broader regulated access | Persistent institutional outflows or material contraction in regulated access | Blocked: source-linked current series not yet established in the target database |
 | Network Security | Hashrate/difficulty series with a fixed calculation window, plus miner revenue and fee data; distinguish level from trend | Robust network security and stable decentralization | Credible deterioration in long-term network-security economics | Blocked: the candidate hashrate series needs canonical raw-source ingestion and documented aggregation |
 | Fee-Market Strength | Fee revenue / subsidy ratio as a consistent rolling series; preserve raw fee observations and calculation methodology | Fee market increasingly supports security as subsidy issuance declines | Prolonged fee weakness combined with deteriorating miner economics | Blocked: the available 144-block ratio is only a point-in-time context value, not a validated rolling trend |
 | Decentralization | Mining-pool share, node/client distribution, and custody/infrastructure concentration from named sources | No material concentration deterioration | Material rise in mining, custody or infrastructure concentration | Blocked: canonical metric IDs, source selection, window and escalation threshold are not yet defined |
@@ -67,3 +67,14 @@ The VPS API now returns a read-only `scenario_readiness` object for BTC, compute
 ## Provenance/unit validation hardening — 2026-10-12
 
 The readiness gate now requires every selected observation to have an HTTPS source URL, a source ID registered in `sources`, an explicit observation unit matching the readiness contract, and a canonical `metric_definitions.default_unit` that also matches that contract, plus a current freshness marker and an in-window non-future timestamp. Canonical units are `USD/BTC`, `EH/s`, `ratio`, `index`, and `USD million/day` for the five required input families. The API passes source-registry and unit metadata into the shared gate; the web panel explains registry and unit blockers. Unit tests cover an unregistered source, an observation unit mismatch and metric-registry unit drift. This is validation only; it does not fetch, insert, update or delete observations.
+
+
+## Update — Kraken candidate capture, 2026-10-13
+
+The Kraken spot candidate path has passed an end-to-end disposable-database rehearsal: a real API response was captured, candidate provenance/freshness validated, one insert and duplicate no-op asserted, stored fields checked, transaction rolled back, and an independent query confirmed zero persisted rows. CI also passed for the latest candidate branch commit.
+
+This advances only the **spot-source capture contract**. It does not clear the monitoring matrix: the hashrate, rolling fee/subsidy series, DXY and recent ETF-flow series still require independent current, source-registered inputs with canonical units and timestamps. The scenario readiness test now explicitly proves that a Kraken spot candidate by itself returns `not_evaluable` and never authorizes persistence.
+
+Registry-aligned freshness windows for the readiness gate are: spot 1h; hashrate 48h; fee/subsidy ratio 48h; DXY 48h; latest ETF flow 36h. ETF daily rows count once per UTC day, and the latest row cannot fall back to an older current row if it is stale or untraceable.
+
+No scenario-state or monitoring-event row is created. Published Base/Bull/Bear definitions and 30/50/20 baseline probabilities remain unchanged.
