@@ -51,11 +51,11 @@
       "retrieved_at": "2026-10-13T05:43:37.358Z",
       "row_count": 835,
       "raw_payload_sha256": "97a18a42b555fb96f645f2a53674acc8331a68f8474fbd28cc9637f29df29c7b",
-      "decision": "BLOCKED_SERIES_CONSISTENCY_REVIEW",
+      "decision": "BLOCKED_AGGREGATE_SEMANTICS",
       "unresolved": [
         "confirm avgFees units and average bucket semantics",
         "verify matching avgRewards semantics",
-        "review ratio denominator as avgRewards - avgFees before accepting"
+        "Do not calculate ratio from averaged fee/reward series; validate individual-block fields, units and timestamps first."
       ],
       "observed_at": "2026-10-13T05:29:20.000Z",
       "latest_avg_height": 971198,
@@ -108,10 +108,11 @@
       "raw_payload_sha256": "777c561ca223fada12e39eb73ad7b7c8c94f246354a5bbfefab8c2f4956695d8",
       "latest_avg_height": 971198,
       "latest_avg_rewards_raw": 313429443,
-      "decision": "BLOCKED_SERIES_CONSISTENCY_REVIEW",
+      "decision": "BLOCKED_AGGREGATE_SEMANTICS",
       "unresolved": [
         "confirm avgRewards unit and bucket semantics",
-        "pair by exact avgHeight only; no interpolation"
+        "pair by exact avgHeight only; no interpolation",
+        "Do not calculate ratio from averaged fee/reward series; validate individual-block fields, units and timestamps first."
       ]
     }
   ],
@@ -122,7 +123,7 @@
   "disposition": "not_evaluable",
   "next_gate": "Resolve definitions and source identity; then separately authorize read-only production registry/duplicate audit and candidate-vs-existing dry-run diff.",
   "fee_subsidy_review": {
-    "status": "BLOCKED_SERIES_CONSISTENCY_REVIEW",
+    "status": "BLOCKED_AGGREGATE_SEMANTICS",
     "fee_rows": 835,
     "reward_rows": 835,
     "matched_avg_height_rows": 835,
@@ -145,9 +146,9 @@
       "observed_at": "2026-10-13T05:29:20.000Z",
       "avg_fees_raw": 929443,
       "avg_rewards_raw": 313429443,
-      "derived_subsidy_raw": 312500000,
-      "candidate_fee_subsidy_ratio": 0.0029742176
+      "derived_subsidy_raw": 312500000
     },
-    "rule": "Exact avgHeight matches alone are insufficient: 6 matched timestamps differ and derived subsidy values vary. Do not accept the ratio series until bucket semantics are reconciled by timestamp and height."
+    "rule": "Do not derive a fee/subsidy ratio from averaged series. Equal avgHeight values do not prove equal block sets or time windows, especially when timestamps differ. Use a bounded sample of individual block records to validate source fields and units before defining a reproducible calculation.",
+    "aggregate_ratio_calculated": false
   }
 }
