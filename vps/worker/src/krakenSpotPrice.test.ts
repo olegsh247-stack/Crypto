@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseKrakenBtcUsdTrades } from "./krakenSpotPrice.js";
+import {
+  fetchKrakenBtcUsdSpotCandidate,
+  KRAKEN_BTC_USD_TRADES_URL,
+  parseKrakenBtcUsdTrades
+} from "./krakenSpotPrice.js";
 
 const now = "2026-10-13T06:00:00.000Z";
 const payload = {
@@ -49,4 +53,27 @@ test("rejects empty or malformed trades", () => {
 
 test("rejects an unexpected returned pair key", () => {
   assert.throws(() => parseKrakenBtcUsdTrades({ error: [], result: { XETHZUSD: [["83000", "1", "1791871198"]], last: "x" } }, now), /unexpected returned pair key/);
+});
+
+test("network capture retains the raw response, source URL, HTTP status and hash", async () => {
+  const observedAt = (Date.now() / 1000 - 10).toFixed(3);
+  const rawBody = JSON.stringify({ error: [], result: { XXBTZUSD: [["83500.5", "0.01", observedAt]], last: "cursor" } });
+  const fakeFetch: typeof fetch = async (input, init) => {
+    assert.equal(String(input), KRAKEN_BTC_USD_TRADES_URL);
+    assert.equal(init?.headers && new Headers(init.headers).get("accept"), "application/json");
+    return new Response(rawBody, { status: 200, headers: { "content-type": "application/json" } });
+  };
+  const capture = await fetchKrakenBtcUsdSpotCandidate(fakeFetch);
+  assert.equal(capture.source_url, KRAKEN_BTC_USD_TRADES_URL);
+  assert.equal(capture.http_status, 200);
+  assert.equal(capture.raw_response_body, rawBody);
+  assert.match(capture.raw_payload_sha256, /^[a-f0-9]{64}$/);
+  assert.equal(capture.acceptance_status, "CANDIDATE_ONLY");
+});
+
+test("network capture rejects HTTP failures and malformed JSON", async () => {
+  const httpFailure: typeof fetch = async () => new Response("temporarily unavailable", { status: 503 });
+  await assert.rejects(fetchKrakenBtcUsdSpotCandidate(httpFailure), /HTTP 503/);
+  const invalidJson: typeof fetch = async () => new Response("{bad json", { status: 200 });
+  await assert.rejects(fetchKrakenBtcUsdSpotCandidate(invalidJson), /not valid JSON/);
 });
