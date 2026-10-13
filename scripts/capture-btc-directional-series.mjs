@@ -122,7 +122,7 @@ export function parseHashrateSeries(body, now = new Date()) {
     source_url: HASHRATE_URL,
     value_unit: "EH/s",
     raw_value_unit: "H/s (conversion divisor 1e18; verify against current provider payload/schema)",
-    bucket_timestamp_convention: "NOT YET AUTHORITATIVELY CONFIRMED; raw timestamps preserved and acceptance remains blocked",
+    bucket_timestamp_convention: "Provider documents historical daily average hashrates; UTC-midnight timestamp is retained as the provider date label, not interpreted as an instantaneous measurement or assumed interval boundary. Current UTC date is excluded.",
     completed_daily_point_count: ordered.length,
     first_point_day_utc: utcDay(ordered[0].timestampMs),
     latest_point_day_utc: utcDay(latest.timestampMs),
