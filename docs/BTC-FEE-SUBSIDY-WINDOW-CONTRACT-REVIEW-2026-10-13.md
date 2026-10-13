@@ -105,3 +105,10 @@ These are implementation-review findings, not production failures: the script is
 4. Make the subsidy check height-aware, with deterministic fixtures for the current era and halving boundaries.
 5. Correct the 150-versus-165 wording and add regression tests for all gates above.
 6. Keep the resulting ratio candidate-only; do not enable ingestion or scenario evaluation as part of these changes.
+
+
+## Source implementation cross-check
+
+The current public Mempool repository's `backend/src/api/blocks.ts` constructs `extras.reward` by summing the coinbase transaction output values and assigns `extras.totalFees` from its block-statistics `totalfee` field. See the upstream implementation: https://github.com/mempool/mempool/blob/master/backend/src/api/blocks.ts
+
+This supports the **field relationship** used by the candidate calculation: coinbase reward includes the block subsidy plus transaction fees, so the proposed subtraction is `coinbase outputs total - total block fees`. It does not, by itself, complete the units contract: the underlying amount representation and API serialization still need a pinned source/version or a deterministic fixture cross-checked against known block data. Therefore the candidate's current-era subsidy match remains a diagnostic, not final unit authorization. Do not remove the units gate based only on matching one observed value.
