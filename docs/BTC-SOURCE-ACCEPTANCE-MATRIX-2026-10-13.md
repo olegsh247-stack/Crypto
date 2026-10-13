@@ -99,3 +99,17 @@ The preliminary staging manifest is [`BTC-CANDIDATE-STAGING-DRY-RUN-2026-10-13.j
 - [BTC Monitoring Readiness Matrix](BTC-MONITORING-READINESS-MATRIX.md)
 - [Canonical metric registry](../data/CryptoDataModel/registry/metric-registry.json)
 - [Canonical source registry](../data/CryptoDataModel/registry/source-registry.json)
+
+
+## CI and readiness-gate verification — 2026-10-13
+
+After the selective PR reconciliation, the docs-only head completed both PR-triggered checks successfully:
+
+- [VPS API Build Rehearsal #857](https://github.com/olegsh247-stack/Crypto/actions/runs/38447537476) — **success**. Worker/API builds and response-contract tests passed; disposable PostgreSQL bootstrap/migrations, canonical BTC input registry, read-only provenance audit, idempotency/duplicate rehearsal, backup/restore, API contracts, worker ingestion, evidence/snapshot lineage, history/candle finalization and admin boundary E2E all passed.
+- [BTC Block Window Validation #36](https://github.com/olegsh247-stack/Crypto/actions/runs/38447537716) — **success**. Syntax and deterministic validation tests passed. Live capture steps were skipped for this PR-triggered run, so this is not a new live-source capture.
+
+The readiness implementation on main was also inspected. It requires current, traceable observations with exact units and registered sources for spot, hashrate, fee/subsidy and DXY; ETF requires a latest observation within 36 hours plus at least five distinct daily observations within the 14-day history window. It returns not_evaluable on blockers and explicitly sets can_persist_scenario_state: false; it does not calculate a probability or write state. This matches the intended fail-closed boundary.
+
+**What CI does not prove:** the PostgreSQL instance is disposable and created by the workflow. It does not establish current contents of the external target/legacy database, its live sources table, or production endpoint freshness. The last target database audit remains 2026-10-12 18:20 UTC; no fresh target read was available in this run.
+
+**Decision unchanged:** zero BTC candidates accepted for ingestion; scenario remains not_evaluable; no production or target DB access/writes. Next action remains source/metric acceptance and, when an approved read-only target path exists, a fresh target source-registry/adapter audit followed by a no-write staging diff.
