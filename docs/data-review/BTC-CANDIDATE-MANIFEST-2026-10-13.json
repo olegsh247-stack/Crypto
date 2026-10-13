@@ -192,7 +192,7 @@
     "production_writes_performed": false
   },
   "individual_block_window_review": {
-    "status": "IMPLEMENTED_LABEL_CORRECTION_PENDING_RERUN",
+    "status": "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY",
     "target_block_count": 165,
     "request_strategy": "11 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each; latest 144 blocks are the proposed metric window and 21 earlier blocks provide timestamp-consensus context.",
     "normalized_output": "individual-block-window.json",
@@ -209,18 +209,17 @@
     "required_staging_gate": true,
     "production_approved": false,
     "commit": "2e69b81e1d9248529468f8d17342b10e9e07371a",
-    "execution_status": "RUN_25_PASS_CANDIDATE_BUT_VALIDATION_WINDOW_LABELS_NEED_CORRECTION",
+    "execution_status": "PASS_CANDIDATE_ONLY",
     "unresolved": [
-      "verify fresh staging artifact after correcting validation-window output labels",
       "confirm endpoint field/unit contract against authoritative API documentation",
       "approve or revise the proposed 144-block metric window and daily cadence",
       "reconcile source ID/runtime mapping by data domain",
       "perform separately scoped read-only duplicate dry-run"
     ],
-    "unique_block_count": 150,
+    "unique_block_count": 165,
     "first_height": 971038,
     "last_height": 971202,
-    "expected_min_height": 971053,
+    "expected_min_height": 971038,
     "expected_max_height": 971202,
     "missing_height_count": 0,
     "invalid_field_rows": 0,
@@ -232,16 +231,19 @@
     "total_fees_raw": 295212981,
     "total_subsidy_raw": 46875000000,
     "window_fee_to_subsidy_ratio": 0.006297876928,
-    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357391827",
-    "artifact_id": 11793366272,
-    "artifact_sha256": "833f9db6314e76770117b2882306824949df533f239c3fd7c0ea6532b3f98102",
+    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316",
+    "artifact_id": 11793430771,
+    "artifact_sha256": "d92a6925ee0d99aae485535094e8ef5c40092d7cf324e3c7f695998fd1c6925e",
     "candidate_metric_window_blocks": 144,
-    "candidate_metric_status": "PROPOSED_NOT_APPROVED",
+    "candidate_metric_status": "PROPOSED_144_BLOCK_WINDOW_NOT_YET_APPROVED",
     "candidate_metric_first_height": 971059,
     "candidate_metric_last_height": 971202,
     "candidate_metric_total_fees_raw": 286686334,
     "candidate_metric_total_subsidy_raw": 45000000000,
-    "candidate_metric_fee_to_subsidy_ratio": 0.0063708074222222225
+    "candidate_metric_fee_to_subsidy_ratio": 0.0063708074222222225,
+    "validation_window_total_fees_raw_165_blocks": 307743303,
+    "validation_window_total_subsidy_raw_165_blocks": 51562500000,
+    "validation_window_fee_to_subsidy_ratio_165_blocks": 0.0059683549672727276
   },
   "staging_gate_manifest_update": {
     "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
@@ -254,9 +256,9 @@
     "production_approved": false,
     "syntax_fix_commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
     "syntax_failure": "Run #22 failed before capture due to literal escaped-newline syntax in the newly added timestamp-consensus fields; corrected in the commit above.",
-    "successful_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
-    "artifact_id": 11792344913,
-    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0"
+    "successful_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316",
+    "artifact_id": 11793430771,
+    "artifact_sha256": "d92a6925ee0d99aae485535094e8ef5c40092d7cf324e3c7f695998fd1c6925e"
   },
   "proposed_fee_subsidy_metric_contract": {
     "status": "PROPOSAL_ONLY_NOT_CANONICAL",
@@ -271,6 +273,6 @@
     "period_end": "timestamp of the final block in the 144-block metric window",
     "method_version": "mempool-fee-subsidy-144-block-v1",
     "note": "Do not alter canonical registry or ingest until endpoint units, source mapping and metric window/cadence are explicitly accepted.",
-    "execution_status": "candidate calculation executed; label-correction rerun pending"
+    "execution_status": "candidate 144-block calculation reproduced in successful run #26; proposal remains unapproved"
   }
 }
