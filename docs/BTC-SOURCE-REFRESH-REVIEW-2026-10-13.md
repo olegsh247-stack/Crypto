@@ -82,3 +82,20 @@ A read-only repository comparison found a source-ID mismatch that must be resolv
 - `security.fee_subsidy_ratio` is declared as a daily ratio in the JSON metric registry; its exact calculation window and aggregation method are not defined there. The later SQL migration describes a documented rolling block window, so those contracts need to be reconciled explicitly.
 
 **Decision:** do not silently alias source IDs or write new observations. First reconcile JSON registry, SQL registry, and runtime adapter to one canonical source identifier; specify whether the ratio is per-block or a rolling average and define its exact window. The individual-block sample proves the candidate arithmetic for 15 blocks only; it does not authorize production ingestion. This registry check used repository files only; no production database was queried or changed.
+
+
+## Wider individual-block validation gate — implementation update
+
+The staging capture script now includes a second, wider read-only check over the latest **150 individual blocks**. It requests ten consecutive 15-block pages, retains each raw page and SHA-256, normalizes records by exact block height, rejects conflicting hashes for the same height, and reports:
+
+- missing heights and duplicate block hashes;
+- invalid/missing hash, timestamp, fee, or reward fields;
+- timestamps that are not monotonic by block height;
+- deviations from the current 312,500,000-satoshi subsidy;
+- a diagnostic window ratio calculated as `sum(totalFees) / sum(reward - totalFees)` over the same validated blocks.
+
+The normalized rows are written to the staging artifact as `individual-block-window.json`. The wider check is a **required staging gate**: a failed or incomplete validation makes the capture workflow fail. Its ratio remains candidate-only and is not written to the database or scenario.
+
+**Execution status at this commit:** implementation committed as `982fc772b708f98485e6c68a84a928dfbd5cad06`; the wider capture has **not yet been executed**, so no 150-block result is claimed. The earlier 15-block check remains the only executed individual-block sample (15/15 arithmetic checks passed). The next verification must run the staging workflow against this commit and review the raw page hashes, full height coverage, field checks and ratio before proceeding. If any block is missing or the subsidy check fails, do not use the aggregate candidate.
+
+This still does not resolve the repository contract mismatch: the exact rolling window/frequency and source-ID/runtime mapping must be reconciled before production acceptance. ETF flow and DXY remain blocked. No production database access or writes are authorized.
