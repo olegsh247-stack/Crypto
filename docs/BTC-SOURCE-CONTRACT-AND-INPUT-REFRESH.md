@@ -29,7 +29,7 @@ The freshness gates below are aligned to \`data/CryptoDataModel/registry/metric-
 |---|---|---:|---|
 | \`market.spot_price\` | \`USD/BTC\` | 1 h | One named exchange/pair and actual timestamp; never average unrelated exchange quotes into a synthetic point |
 | \`security.hashrate\` | \`EH/s\` | 48 h | Store source's raw daily estimate and documented aggregation; distinguish daily estimate from rolling mean |
-| \`security.fee_subsidy_ratio\` | \`ratio\` | 48 h | Value must state numerator, denominator, block/window range and calculation version; one 144-block point is context, not a validated rolling trend |
+| \`security.fee_subsidy_ratio\` | \`ratio\` | 48 h | Use one completed UTC day (registry frequency \`1d\`): sum per-block fees / sum expected subsidy over the same included blocks; preserve day boundaries, height range and calculation version. A rolling 144-block value is diagnostic only. |
 | \`macro.dxy\` | \`index\` | 48 h | One selected provider and defined daily close/time convention; reconcile materially conflicting vendor values before acceptance |
 | \`institutional.etf_net_flow\` | \`USD million/day\` | 36 h | At least five distinct recent trading dates; latest source row must be valid/current; dashes or a placeholder total are not zero |
 
@@ -39,7 +39,7 @@ For every metric, the observation's \`unit\` must match both the required canoni
 
 The repository registry has now been inspected directly:
 
-- `security.hashrate` and `security.fee_subsidy_ratio` point first to registered `network.primary` (Mempool.space); the exact endpoint, aggregation window and stored-method mapping still need to be confirmed.
+- `security.hashrate` and `security.fee_subsidy_ratio` point first to registered `network.primary` (Mempool.space). For fee/subsidy, the block endpoint and satoshi units for `extras.totalFees` and `extras.reward` are now supported by the pinned upstream implementation at [mempool/mempool commit 7e790680](https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/blocks.ts) and the frontend's satoshi display/conversion. The persisted observation window is recommended to be a completed UTC day because the metric registry declares `frequency: 1d`; production acceptance is still pending.
 - `institutional.etf_net_flow` still points to `institutional.primary` (Farside Investors) in the metric registry. `institutional.tftc` is registered in repository JSON and SQL seed as an unvalidated fallback candidate, but is deliberately not added to `source_priority` pending lineage, discrepancy and observation-time review. Neither source candidate has been verified in the live production `sources` table.
 - `market.spot_price` points to `market.kraken` in the metric registry and the source registry. A repository audit found that `infrastructure/postgres/seed-v1.sql` had not seeded this source, so a clean database could reject Kraken observations as unregistered. The seed now includes `market.kraken` with the public Trades endpoint for `XBTUSD`; this is a repository-only correction and does not alter any deployed database. The actual production `sources` table and adapter still require independent verification. Preserve the raw trade payload and convert Kraken's returned trade epoch timestamp to UTC.
 - `macro.dxy` currently points to generic `macro.primary` (Treasury/Federal Reserve/BLS) rather than a specific registered DXY data endpoint and close-time convention. This input is **blocked by source specificity**.
@@ -68,7 +68,7 @@ These are source-review candidates only. They have **not** been inserted into th
 - **DXY:** provider/time disagreement must be resolved by selecting one canonical source and observation convention.
 - **Units:** expected units are \`USD/BTC\`, \`EH/s\`, \`ratio\`, \`index\`, and \`USD million/day\`. Unit validation must check both the observation and metric registry.
 - **Repeated observations:** do not delete duplicate history. First export every row in each logical-key group; classify exact duplicates, revisions, conflicting values, and missing provenance. Define a deterministic winner/retention rule, preserve audit lineage, and only then propose a separate reviewed remediation.
-- **Readiness:** because current price/source selection, the current hashrate series, a valid rolling fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
+- **Readiness:** because current price/source selection, the current hashrate series, a production-accepted completed-UTC-day fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
 
 ## 4A. Read-only database audit — 2026-10-12 18:20 UTC
 
@@ -125,10 +125,25 @@ Keep the published research probabilities unchanged: Bull 30%, Base 50%, Bear 20
 - [ ] Current BTC quote fetched from the selected registered exchange feed.
 - [ ] Five distinct completed ETF-flow sessions staged; placeholder rows excluded; latest-row freshness checked at run time.
 - [ ] Hashrate raw series refreshed through latest complete UTC day and method recorded.
-- [ ] Fee/subsidy rolling series computed from documented raw observations.
+- [ ] Fee/subsidy completed-UTC-day series computed from documented raw block observations and accepted in the canonical metric/source/monitoring contracts.
 - [ ] DXY provider and daily observation convention selected; discrepancies resolved.
 - [ ] Staging rows pass source, unit, timestamp, freshness and numeric validation.
 - [ ] Duplicate-group payloads classified; dry-run remediation reviewed; no blind historical deletion.
 - [ ] Readiness passes on the reviewed candidate set.
 - [ ] Reproducible scenario evaluation is run read-only only after separate rule review.
 - [ ] No scenario state/event persistence and no probability changes.
+
+
+## 4C. Completed UTC-day block capture — 2026-10-13
+
+A read-only Mempool.space capture fetched 330 contiguous blocks (heights 970932–971261) across 22 pages. All pages returned HTTP 200; their raw-body SHA-256 values matched the manifest. The tip height/hash anchor remained unchanged. No missing heights, duplicate heights/hashes, future-timestamp violations or Median Time Past violations were found.
+
+The capture artifact is [btc-block-window-review-38421354649](https://github.com/olegsh247-stack/Crypto/actions/runs/38421354649/artifacts/11825714284), SHA-256 `dde8265c9ff0ac1791751d5907f95509c50b6dc64011ca8d05bcc4083beabdcc`. The permanent review is [BTC UTC-Day Candidate Review](BTC-UTC-DAY-CANDIDATE-REVIEW-2026-10-13.md).
+
+- Completed UTC day: 2026-10-12, 00:00 UTC inclusive to 2026-10-13 00:00 UTC exclusive.
+- Included blocks: 152, heights 971006–971157.
+- Fees: 286,069,738 sats; expected subsidy over the same blocks: 47,500,000,000 sats.
+- Candidate ratio: 0.0060225208 (about 0.602252%).
+- Rolling 144-block diagnostic: 0.0057881996 (about 0.578820%).
+
+The repository metric registry's `frequency: 1d` makes the completed UTC-day definition the recommended persisted observation contract. The 144-block value remains diagnostic-only. Both candidates remain unaccepted; no database or product state was changed.
