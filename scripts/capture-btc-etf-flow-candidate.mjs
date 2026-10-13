@@ -118,7 +118,7 @@ async function callMcp(fetchImpl, method, params, id, sessionId) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      accept: "text/event-stream",
+      accept: "application/json, text/event-stream",
       ...(sessionId ? { "mcp-session-id": sessionId, "MCP-Protocol-Version": "2025-03-26" } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
@@ -144,7 +144,7 @@ async function captureViaPublicMcp({ fetchImpl, now, retrievedAt }) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      accept: "text/event-stream",
+      accept: "application/json, text/event-stream",
       ...(sessionId ? { "mcp-session-id": sessionId, "MCP-Protocol-Version": "2025-03-26" } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
@@ -220,7 +220,7 @@ export async function capture({ apiKey = process.env.CRYPTOETF_API_KEY, fetchImp
     }
   }
   const response = await fetchImpl(URL, {
-    headers: { accept: "text/event-stream", authorization: `Bearer ${apiKey}` },
+    headers: { accept: "application/json, text/event-stream", authorization: `Bearer ${apiKey}` },
     signal: AbortSignal.timeout(20_000)
   });
   const body = await response.text();
