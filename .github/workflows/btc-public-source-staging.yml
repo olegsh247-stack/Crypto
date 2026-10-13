@@ -7,6 +7,8 @@ on:
       - "scripts/capture-btc-public-sources.mjs"
       - "scripts/capture-btc-directional-series.mjs"
       - "scripts/capture-btc-directional-series.test.mjs"
+      - "scripts/capture-btc-etf-flow-candidate.mjs"
+      - "scripts/capture-btc-etf-flow-candidate.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -24,10 +26,16 @@ jobs:
           node-version: 22
       - name: Test BTC directional-series parser and return contracts
         run: node --test scripts/capture-btc-directional-series.test.mjs
+      - name: Test BTC ETF flow candidate contract
+        run: node --test scripts/capture-btc-etf-flow-candidate.test.mjs
       - name: Capture current public-source candidates for review only
         run: node scripts/capture-btc-public-sources.mjs
       - name: Capture historical BTC price and hashrate candidate series
         run: node scripts/capture-btc-directional-series.mjs
+      - name: Capture ETF flow candidate (uses secret only if configured)
+        env:
+          CRYPTOETF_API_KEY: ${{ secrets.CRYPTOETF_API_KEY }}
+        run: node scripts/capture-btc-etf-flow-candidate.mjs
       - name: Upload raw responses and provenance manifests
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,5 +44,6 @@ jobs:
           path: |
             tmp/btc-source-review/
             tmp/btc-directional-series-review/
+            tmp/btc-etf-flow-review/
           if-no-files-found: error
           retention-days: 7
