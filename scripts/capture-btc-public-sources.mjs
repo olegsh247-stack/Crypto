@@ -289,12 +289,25 @@ async function captureIndividualBlockWindow() {
     const invalidRows = blocks.filter(row => !row.fields_valid);
     const subsidyMismatches = blocks.filter(row => row.derived_subsidy_raw !== 312500000);
     const duplicateHashes = blocks.length - new Set(blocks.map(row => row.id)).size;
-    const timestampsMonotonic = blocks.every((row, i) => i === 0 || row.timestamp >= blocks[i - 1].timestamp);
+    // Bitcoin block timestamps are not required to increase strictly with height.
+    // Validate the consensus median-time-past rule for rows with 11 predecessors,
+    // plus the consensus two-hour future-time bound, instead of monotonic ordering.
+    const nowEpochSeconds = Math.floor(Date.now() / 1000);
+    const futureTimestampRows = blocks.filter(row => row.timestamp > nowEpochSeconds + 2 * 3600);
+    const medianTimePastViolations = [];
+    for (let i = 11; i < blocks.length; i++) {
+      const previousTimes = blocks.slice(i - 11, i).map(row => row.timestamp).sort((a, b) => a - b);
+      const medianPreviousTimestamp = previousTimes[5];
+      if (blocks[i].timestamp <= medianPreviousTimestamp) {
+        medianTimePastViolations.push({ height: blocks[i].height, timestamp: blocks[i].timestamp, median_previous_11_timestamp: medianPreviousTimestamp });
+      }
+    }
+    const timestampsConsensusValid = futureTimestampRows.length === 0 && medianTimePastViolations.length === 0;
     const totalFeesRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.total_fees_raw, 0) : null;
     const totalSubsidyRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.derived_subsidy_raw, 0) : null;
     const ratio = totalFeesRaw !== null && totalSubsidyRaw > 0 ? totalFeesRaw / totalSubsidyRaw : null;
     const passed = blocks.length === targetCount && missingHeights.length === 0 && invalidRows.length === 0
-      && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsMonotonic && ratio !== null;
+      && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsConsensusValid && ratio !== null;
     const review = {
       status: passed ? "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY" : "WIDE_WINDOW_VALIDATION_FAILED",
       target_block_count: targetCount, unique_block_count: blocks.length,
@@ -303,7 +316,7 @@ async function captureIndividualBlockWindow() {
       missing_height_count: missingHeights.length, missing_heights: missingHeights,
       invalid_field_rows: invalidRows.length, subsidy_mismatch_rows: subsidyMismatches.length,
       expected_current_subsidy_raw: 312500000, duplicate_hash_count: duplicateHashes,
-      timestamps_monotonic: timestampsMonotonic,
+      timestamp_consensus_valid: timestampsConsensusValid,\n      median_time_past_violation_count: medianTimePastViolations.length,\n      median_time_past_violations: medianTimePastViolations,\n      future_timestamp_count: futureTimestampRows.length,
       total_fees_raw: totalFeesRaw, total_subsidy_raw: totalSubsidyRaw,
       window_fee_to_subsidy_ratio: ratio,
       per_block_ratio_min: blocks.length ? Math.min(...blocks.map(row => row.fee_to_subsidy_ratio ?? Infinity)) : null,
