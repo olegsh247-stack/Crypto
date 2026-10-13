@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Read-only candidate capture for CryptoETF.today BTC daily net flows.
- * No database access. Requires CRYPTOETF_API_KEY; never prints the credential.
+ * No database access. Uses the public no-key MCP endpoint by default; REST key is optional.
  */
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -21,7 +21,7 @@ function validDateOnly(value) {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = now.toISOString(), rawSha256 = null } = {}) {
+export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = now.toISOString(), rawSha256 = null, sourceUrl = URL } = {}) {
   const payload = typeof body === "string" ? JSON.parse(body) : body;
   if (payload?.symbol !== "BTC" || payload?.asset !== "bitcoin" || !Array.isArray(payload?.days)) {
     throw new Error("cryptoetf_btc_schema_mismatch");
@@ -99,15 +99,123 @@ export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = n
   };
 }
 
+const MCP_URL = "https://mcp.cryptoetf.today/api/mcp";
+
+async function readJsonRpcResponse(response) {
+  const type = response.headers.get("content-type") ?? "";
+  const body = await response.text();
+  if (!response.ok) throw new Error(`mcp_http_${response.status}`);
+  if (!body.trim()) return null;
+  const payloadText = type.includes("text/event-stream")
+    ? body.split("\\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).filter(Boolean).at(-1)
+    : body.trim();
+  if (!payloadText) return null;
+  return JSON.parse(payloadText);
+}
+
+async function callMcp(fetchImpl, method, params, id, sessionId) {
+  const response = await fetchImpl(MCP_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      ...(sessionId ? { "mcp-session-id": sessionId } : {})
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+    signal: AbortSignal.timeout(20_000)
+  });
+  const nextSessionId = response.headers.get("mcp-session-id") ?? sessionId;
+  const payload = await readJsonRpcResponse(response);
+  if (payload?.error) throw new Error(`mcp_${payload.error.code ?? "error"}:${payload.error.message ?? "unknown"}`);
+  return { payload, sessionId: nextSessionId };
+}
+
+async function captureViaPublicMcp({ fetchImpl, now, retrievedAt }) {
+  let sessionId = null;
+  const initialized = await callMcp(fetchImpl, "initialize", {
+    protocolVersion: "2025-03-26",
+    capabilities: {},
+    clientInfo: { name: "crypto-btc-etf-review", version: "1.0.0" }
+  }, 1, sessionId);
+  sessionId = initialized.sessionId;
+  const notification = await fetchImpl(MCP_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      ...(sessionId ? { "mcp-session-id": sessionId } : {})
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    signal: AbortSignal.timeout(20_000)
+  });
+  if (!notification.ok) throw new Error(`mcp_initialized_http_${notification.status}`);
+
+  const listed = await callMcp(fetchImpl, "tools/list", {}, 2, sessionId);
+  sessionId = listed.sessionId;
+  const tools = listed.payload?.result?.tools;
+  if (!Array.isArray(tools)) throw new Error("mcp_tools_list_missing");
+  const tool = tools.find(item => item.name === "get_asset_flows");
+  if (!tool) throw new Error("mcp_get_asset_flows_missing");
+  const schema = tool.inputSchema ?? {};
+  const properties = schema.properties ?? {};
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  const candidateKey = [...required, ...Object.keys(properties)].find(key => /^(asset|symbol|ticker)$/i.test(key)) ?? "asset";
+  const called = await callMcp(fetchImpl, "tools/call", {
+    name: "get_asset_flows",
+    arguments: { [candidateKey]: "btc" }
+  }, 3, sessionId);
+  const result = called.payload?.result;
+  if (result?.isError) throw new Error("mcp_get_asset_flows_returned_error");
+  let data = result?.structuredContent;
+  if (!data && Array.isArray(result?.content)) {
+    const textContent = result.content.find(item => item.type === "text" && typeof item.text === "string")?.text;
+    if (textContent) {
+      try { data = JSON.parse(textContent); }
+      catch { throw new Error("mcp_flow_result_not_json"); }
+    }
+  }
+  if (!data || typeof data !== "object") throw new Error("mcp_flow_result_missing");
+  const body = JSON.stringify(data);
+  const evidence = {
+    source_url: MCP_URL,
+    transport: "MCP Streamable HTTP, tools/call get_asset_flows",
+    http_status: 200,
+    retrieved_at: retrievedAt,
+    raw_body_sha256: sha256(body),
+    raw_body: body
+  };
+  try {
+    return {
+      schema_version: 1,
+      asset_id: "btc",
+      capture_status: "PASS_CANDIDATE_ONLY",
+      evidence,
+      parsed: parseCryptoEtfBtcFlows(data, { now, retrievedAt, rawSha256: evidence.raw_body_sha256, sourceUrl: MCP_URL }),
+      production_database_accessed: false,
+      production_writes_performed: false
+    };
+  } catch (error) {
+    return {
+      schema_version: 1, asset_id: "btc", capture_status: "BLOCKED_SCHEMA",
+      error: error instanceof Error ? error.message : String(error), evidence,
+      production_database_accessed: false, production_writes_performed: false
+    };
+  }
+}
+
 export async function capture({ apiKey = process.env.CRYPTOETF_API_KEY, fetchImpl = fetch, now = new Date() } = {}) {
   const retrievedAt = now.toISOString();
   if (!apiKey) {
-    return {
-      schema_version: 1, asset_id: "btc", source_url: URL, retrieved_at: retrievedAt,
-      capture_status: "BLOCKED_NO_CREDENTIAL",
-      reason: "CRYPTOETF_API_KEY is not configured; no request was made.",
-      production_database_accessed: false, production_writes_performed: false
-    };
+    try {
+      return await captureViaPublicMcp({ fetchImpl, now, retrievedAt });
+    } catch (error) {
+      return {
+        schema_version: 1, asset_id: "btc", source_url: MCP_URL, retrieved_at: retrievedAt,
+        capture_status: "BLOCKED_MCP",
+        error: error instanceof Error ? error.message : String(error),
+        production_database_accessed: false, production_writes_performed: false
+      };
+    }
   }
   const response = await fetchImpl(URL, {
     headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
