@@ -36,6 +36,7 @@ export function parseYahooDxyChart(body, { now = new Date(), retrievedAt = now.t
   if (chart?.error) throw new Error(`yahoo_chart_error:${chart.error.code ?? "unknown"}`);
   const result = chart?.result?.[0];
   if (!result || result.meta?.symbol !== SYMBOL) throw new Error("yahoo_dxy_symbol_mismatch");
+  if (result.meta?.exchangeTimezoneName !== "America/New_York") throw new Error("yahoo_dxy_exchange_timezone_unverified");
   const timestamps = result.timestamp;
   const closes = result.indicators?.quote?.[0]?.close;
   if (!Array.isArray(timestamps) || !Array.isArray(closes) || timestamps.length !== closes.length) {
