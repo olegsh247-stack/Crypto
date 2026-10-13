@@ -180,3 +180,12 @@ The current BTC source-capture branch also passed [VPS API Build Rehearsal #581]
 All 26 job steps completed successfully, including the VPS-only repository check, shared runtime/worker/API builds, API response contract tests, Compose network-boundary validation, clean PostgreSQL bootstrap from repository migrations, canonical BTC input-registry verification, read-only BTC provenance audit, duplicate/idempotency reconciliation rehearsal, PostgreSQL backup/restore, API contract E2E, mutation-contract E2E, worker-ingestion E2E, offline invariants, BTC research-evidence/snapshot-lineage E2E, persisted history/candle finalization E2E, and admin-boundary E2E.
 
 This is isolated CI/rehearsal evidence, not a production deployment or production database audit. It does not resolve the provisional raw-unit contract or approve the 144-block candidate for ingestion. No production observations, scenario states, monitoring events, or published probabilities were changed.
+
+
+## Kraken source-registry alignment — 2026-10-13
+
+A repository-only cross-check confirmed that the JSON metric registry points `market.spot_price` to `market.kraken`, while the existing SQL source entry `market_kraken` belongs to the separate daily OHLC fallback. These IDs must not be silently aliased because they represent different source paths and observation semantics.
+
+A new idempotent migration, `infrastructure/postgres/migrations/2026-10-13-btc-kraken-trade-source.sql`, now registers `market.kraken` explicitly for the public Kraken Trades endpoint. It documents the XBTUSD request, raw-pair/provenance retention, and XBT-to-BTC normalization boundary. It does not insert observations or rename/remove `market_kraken`.
+
+**Scope and status:** repository metadata alignment prepared; migration has not been applied to production, and no production database was accessed. The runtime adapter/logical-key comparison remains a separate acceptance gate. This change does not approve the captured price for ingestion.
