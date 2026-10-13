@@ -29,3 +29,11 @@ A fresh database dry-run diff was not produced: that requires a separately autho
 3. Resolve ETF canonical-source access/lineage without turning unavailable or missing values into zero.
 4. Run a separately approved read-only production registry/duplicate audit, then create a candidate-vs-existing logical-key dry-run diff.
 5. Only after all required inputs pass acceptance, run the BTC scenario deterministically in offline/read-only mode. No scenario or monitoring writes are authorized by this review.
+
+## Endpoint contract references
+
+- [Mempool REST API — GET Block Fees](https://mempool.space/docs/api/rest#get-block-fees) documents the endpoint as average total fees for blocks over a trailing time period.
+- [Mempool REST API — GET Block Rewards](https://mempool.space/docs/api/rest#get-block-rewards) documents the matching average block-reward series.
+- [TFTC ETF flow tracker and methodology](https://www.tftc.io/bitcoin-etf-flows) states that the latest session can be revised, older days are corrected automatically, and the published history combines SoSoValue daily aggregates with issuer/Farside history. That is useful lineage evidence, but it does not cure the current 36-hour freshness failure (latest row 9 Oct) or make TFTC canonical automatically.
+
+The fee/reward capture is internally consistent: all 835 `avgHeight` keys matched; for the latest pair, `avgRewards - avgFees = 312,500,000` raw units, which equals the current 3.125 BTC block subsidy expressed in satoshis. This is a strong consistency check, **not final approval**: the exact raw-unit convention and the endpoint's averaging/bucket semantics still need to be recorded in the metric contract and tested against a source-defined sample before promoting the ratio.
