@@ -1,7 +1,7 @@
 # BTC Kraken Runtime Mapping Gate — 2026-10-13
 
-**Status: PARTIAL — read-only candidate capture implemented; observation ingestion remains blocked.**
-**Scope:** repository code and isolated tests only. No production database access or writes; no scenario or monitoring changes.
+**Status: CANDIDATE CONTRACT IMPLEMENTED — CI verification pending; production ingestion remains blocked.**
+**Scope:** repository code and isolated/rollback-only tests. No production database access or writes; no scenario or monitoring changes.
 
 ## What was verified
 
@@ -10,22 +10,36 @@
 - Migration `2026-10-13-btc-kraken-trade-source.sql` registers `market.kraken` as source metadata only. It intentionally inserts no observation.
 - `vps/worker/src/scheduler.ts` fetches daily OHLC candles (Binance, then Kraken OHLC, then CoinGecko) and writes `market_daily_candles`. Its Kraken function calls `/0/public/OHLC`, labels candles `market_kraken`, and does not call `/0/public/Trades`.
 - `runScheduledIngestion` does not currently create rows in `observations`. Registry metadata therefore does not establish an operational spot-price observation path.
-- Added `vps/worker/src/krakenSpotPrice.ts`: a pure parser plus an independently injectable read-only network capture function. It validates HTTP status, JSON/API errors, returned BTC/USD pair key, all trade rows, positive numeric price and actual epoch timestamp; rejects future timestamps; calculates freshness from the trade time; and returns the raw response body, source URL, HTTP status and SHA-256 for review. It never writes to PostgreSQL.
-- Added `vps/worker/src/krakenSpotPrice.test.ts` for current/stale trades, future timestamps, API errors, malformed/empty rows, pair key validation, canonical output fields, raw response/hash provenance, HTTP failures and invalid JSON. Worker test command includes all compiled `*.test.js` files.
+- `vps/worker/src/krakenSpotPrice.ts` provides a pure parser and injectable read-only network capture function. It validates HTTP status, JSON/API errors, returned BTC/USD pair key, all trade rows, positive numeric price and actual epoch timestamp; rejects future timestamps; calculates freshness from the trade time; and returns the raw response body, source URL, HTTP status, retrieval/observation timestamps and SHA-256 for review. It never writes to PostgreSQL.
+- `toKrakenObservationCandidateRow` now maps only a current, source-provenanced capture to the canonical observation fields. It fails closed on stale data, invalid identity/unit/URL/status, missing raw response/hash or invalid/future timestamps. It is a mapper only; it does not perform a write.
+- Unit tests cover current/stale trades, future timestamps, API errors, malformed/empty rows, pair key validation, HTTP failures, invalid JSON, raw response/hash provenance, candidate field mapping, and rejection of stale or incomplete provenance.
+- Added `scripts/test-btc-kraken-observation-contract.sql` and a shell guard. The disposable rehearsal validates registered BTC/metric/source, the natural-key index, one insert followed by an idempotent duplicate attempt, and metric/source foreign-key rejection. The SQL fixture runs in a transaction and always rolls back; the shell script refuses non-loopback hosts and databases not ending in `_test`.
+- Added the rollback-only rehearsal to `.github/workflows/vps-api-build.yml`. Latest CI status must be checked before accepting these changes.
 
-## Decision
+## Contract decision
 
-Do not promote the captured Kraken trade to a canonical observation and do not mark BTC spot-price readiness as passed. The new function is a read-only candidate capture path, not an observation writer and not connected to scheduled ingestion. CI must pass before the implementation is treated as verified.
+Canonical observation mapping:
+- `metric_id=market.spot_price`
+- `asset_id=btc`
+- `value_numeric` = positive Kraken trade price
+- `unit=USD/BTC`
+- `observed_at` = exchange trade timestamp, not retrieval time
+- `source_id=market.kraken`
+- `source_url` = HTTPS Kraken Trades endpoint
+- `methodology` records adapter version, retrieval time, raw payload SHA-256 and returned pair key
+- `status=NORMAL`, `freshness=CURRENT`, `revision=1`
+
+The natural logical key is the BTC partial unique index over metric, source, observation time, period bounds and revision. Repeated observations at the same trade timestamp cannot create another revision-1 row. A policy for meaningful corrections/revisions has not been approved; this implementation does not invent one.
 
 Keep these source IDs distinct:
 - `market.kraken`: candidate point-in-time trade source for `market.spot_price`.
 - `market_kraken`: daily OHLC fallback used for `market_daily_candles`.
 
-## Remaining implementation gate
+## Still blocked
 
-1. Run and confirm worker build/unit tests and disposable PostgreSQL migration/idempotency rehearsals for the latest commit.
-2. Design an explicit, opt-in candidate observation rehearsal with the canonical `observations` contract and stable logical key/revision policy; do not wire it to scheduled production ingestion.
-3. Add disposable-PostgreSQL tests for duplicate reruns, source/metric foreign keys and no-write-on-failure. Any candidate write must require an explicit rehearsal invocation and remain isolated from production.
-4. Review source URL, raw-payload hash, retrieval time, observation time, units and logical key before any separate authorization for production ingestion.
+1. Confirm the latest worker build/tests and rollback-only PostgreSQL contract rehearsal pass on the current commit.
+2. Review how the raw response is retained for durable audit; the candidate object returns the raw body and hash, but the observation table stores the hash and provenance in `methodology`, not the entire raw body.
+3. Keep this candidate path out of scheduled production ingestion. A separate explicit decision is required before any production observation writes.
+4. Do not calculate or persist live BTC scenario/monitoring state until all required inputs pass freshness/provenance gates and the deterministic scoring rule is reviewed.
 
-Production ingestion and scenario/monitoring writes remain out of scope until separately reviewed and authorized. Do not broaden the asset universe or change published scenario probabilities.
+No production database was accessed or modified. No scenario/monitoring state was written, no published probabilities were changed, and no other assets were added.
