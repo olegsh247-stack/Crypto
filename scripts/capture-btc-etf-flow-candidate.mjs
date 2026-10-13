@@ -24,7 +24,7 @@ function validDateOnly(value) {
 export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = now.toISOString(), rawSha256 = null, sourceUrl = URL } = {}) {
   const payload = typeof body === "string" ? JSON.parse(body) : body;
   if (payload?.symbol !== "BTC" || payload?.asset !== "bitcoin" || !Array.isArray(payload?.days)) {
-    throw new Error("cryptoetf_btc_schema_mismatch");
+    throw new Error(`cryptoetf_btc_schema_mismatch:keys=${Object.keys(payload ?? {}).join(",")};symbol=${String(payload?.symbol)};asset=${String(payload?.asset)};days_is_array=${Array.isArray(payload?.days)}`);
   }
   if (!Number.isFinite(Date.parse(payload.updatedAt))) throw new Error("cryptoetf_updated_at_invalid");
   if (!Number.isInteger(payload.windowDays) || payload.windowDays < 1) throw new Error("cryptoetf_window_days_invalid");
