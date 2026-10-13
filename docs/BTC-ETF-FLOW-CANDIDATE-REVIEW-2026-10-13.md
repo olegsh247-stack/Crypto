@@ -44,3 +44,13 @@ Next:
 2. Review exact returned dates, units, publication semantics, payload hash and revisions.
 3. Keep the metric blocked unless at least five distinct recent trading-day rows and the 36-hour freshness contract can be demonstrated.
 4. Resolve whether this source is accepted as canonical or only a fallback; do not silently replace `institutional.primary`.
+
+## Staging execution — 2026-10-13 08:31 UTC
+
+Read-only workflow [run #38369827976](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976) passed both BTC series and ETF parser test suites, completed the public-source candidate captures, and uploaded artifact [11797928912](https://github.com/olegsh247-stack/Crypto/actions/runs/38369827976/artifacts/11797928912). The ETF capture explicitly returned `BLOCKED_NO_CREDENTIAL`; the Actions environment does not currently have `CRYPTOETF_API_KEY`. No authenticated ETF request was made. This is expected fail-closed behavior, not a passing ETF source acceptance.
+
+The same run refreshed candidate-only Kraken OHLC and Mempool history:
+- Kraken HTTP 200 at `2026-10-13T08:31:32.276Z`; latest completed close on 2026-10-12 was 81,737.1 USD/BTC; seven-day return −4.6814%; raw SHA-256 `b034d2510eec7a39354a388dfcc16b32aa6669f922e438bfd1062490a2a1e347`.
+- Mempool HTTP 200 at the same retrieval time; latest daily point 2026-10-12 was 1,028.5949 EH/s; seven-day candidate change +8.6770%; raw SHA-256 `dc38aea6b983053359689f4b655eb586bfe9aa2bf7561e0ad7e4c078921d3539`.
+
+Artifact archive includes the raw source payloads. These values remain candidate-only pending source mapping and bucket semantics.
