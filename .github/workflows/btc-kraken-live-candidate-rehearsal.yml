@@ -1,0 +1,73 @@
+name: BTC Kraken Live Candidate Rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_ROLLBACK_ONLY to capture live Kraken data and test a transaction that always rolls back
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-candidate-rehearsal:
+    if: ${{ inputs.confirmation == 'RUN_ROLLBACK_ONLY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Require explicit confirmation
+        run: |
+          test "${{ inputs.confirmation }}" = "RUN_ROLLBACK_ONLY"
+          echo "Explicit rollback-only confirmation received."
+      - name: Build VPS shared runtime
+        working-directory: vps/shared
+        run: npm install && npm run build
+      - name: Install and build VPS worker
+        working-directory: vps/worker
+        run: npm install && npm run build
+      - name: Start disposable loopback PostgreSQL
+        id: postgres
+        run: |
+          set -euo pipefail
+          docker run -d --name crypto-btc-kraken-test -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=crypto_test -p 127.0.0.1::5432 postgres:16
+          port="$(docker port crypto-btc-kraken-test 5432/tcp | awk -F: '{print $NF}')"
+          test -n "$port"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
+          for _ in $(seq 1 30); do
+            pg_isready -h 127.0.0.1 -p "$port" -U postgres -d crypto_test >/dev/null 2>&1 && break
+            sleep 2
+          done
+          pg_isready -h 127.0.0.1 -p "$port" -U postgres -d crypto_test
+      - name: Install PostgreSQL client and apply repository migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          bash scripts/migrate-postgres.sh
+          bash scripts/migrate-postgres.sh
+      - name: Fetch real Kraken trade candidate and verify rollback-only DB contract
+        working-directory: vps/worker
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: node dist/krakenSpotPriceLiveRehearsal.js
+      - name: Verify no BTC Kraken observation persisted
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: |
+          set -euo pipefail
+          count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT count(*) FROM observations WHERE asset_id='btc' AND source_id='market.kraken'")"
+          test "$count" = "0"
+          echo "BTC_KRAKEN_ROLLBACK_VERIFIED persisted_rows=$count"
+      - name: Cleanup disposable PostgreSQL
+        if: always()
+        run: docker rm -f crypto-btc-kraken-test >/dev/null 2>&1 || true
