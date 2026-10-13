@@ -39,15 +39,25 @@ export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = n
     if (new Date(`${row.date}T00:00:00.000Z`).getTime() > now.getTime()) {
       throw new Error(`cryptoetf_future_flow_date:${row.date}`);
     }
-    return { date_utc: row.date, net_flow_usd_million: row.netFlowUsdM };
+    return {
+      date_utc: row.date,
+      net_flow_usd_million: row.netFlowUsdM,
+      published_at_utc: typeof row.publishedAt === "string" && Number.isFinite(Date.parse(row.publishedAt))
+        ? new Date(row.publishedAt).toISOString()
+        : null
+    };
   }).sort((a, b) => a.date_utc.localeCompare(b.date_utc));
 
   if (!days.length) throw new Error("cryptoetf_flow_history_empty");
   if (payload.windowDays > 30) throw new Error("cryptoetf_window_exceeds_documented_free_history");
   const latest = days.at(-1);
   const latestDateMs = new Date(`${latest.date_utc}T00:00:00.000Z`).getTime();
+  const latestPublishedAtMs = latest.published_at_utc ? Date.parse(latest.published_at_utc) : null;
+  const latestFreshnessTimestampMs = latestPublishedAtMs ?? latestDateMs;
   const latestDataDateAgeMs = now.getTime() - latestDateMs;
+  const latestFreshnessAgeMs = now.getTime() - latestFreshnessTimestampMs;
   const latestDataDateAgeHours = latestDataDateAgeMs / 3_600_000;
+  const latestFreshnessAgeHours = latestFreshnessAgeMs / 3_600_000;
   const recentDistinctTradingDays = days.filter(row => {
     const age = now.getTime() - new Date(`${row.date_utc}T00:00:00.000Z`).getTime();
     return age >= 0 && age <= 7 * 24 * 60 * 60 * 1000;
@@ -55,8 +65,8 @@ export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = n
 
   // updatedAt is an API-level timestamp, not necessarily the publication timestamp for
   // the latest flow row. Do not use it to pass the metric's 36-hour freshness gate.
-  const publicationTimestampAvailable = days.some(row => typeof row.publishedAt === "string" && Number.isFinite(Date.parse(row.publishedAt)));
-  const freshness = latestDataDateAgeMs <= MAX_AGE_MS && publicationTimestampAvailable;
+  const publicationTimestampAvailable = latest.published_at_utc !== null;
+  const freshness = latestFreshnessAgeMs >= 0 && latestFreshnessAgeMs <= MAX_AGE_MS && publicationTimestampAvailable;
   return {
     source_id_candidate: "institutional.cryptoetf_today",
     source_url: URL,
@@ -71,12 +81,15 @@ export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = n
     latest_flow_date_utc: latest.date_utc,
     latest_flow_usd_million: latest.net_flow_usd_million,
     latest_data_date_age_hours: Number(latestDataDateAgeHours.toFixed(3)),
+    latest_freshness_timestamp_utc: latest.published_at_utc,
+    latest_freshness_age_hours: Number(latestFreshnessAgeHours.toFixed(3)),
     distinct_flow_days_in_last_7_calendar_days: recentDistinctTradingDays,
     publication_timestamp_available_per_latest_row: publicationTimestampAvailable,
     metric_freshness_window_hours: 36,
     freshness_gate: freshness ? "PASS_CANDIDATE_ONLY" : "BLOCKED",
     freshness_blockers: [
-      ...(latestDataDateAgeMs > MAX_AGE_MS ? ["latest flow date is outside the conservative 36-hour window"] : []),
+      ...(latestFreshnessAgeMs < 0 ? ["latest row publication timestamp is in the future"] : []),
+      ...(latestFreshnessAgeMs > MAX_AGE_MS ? ["latest flow publication timestamp (or conservative date fallback) is outside the 36-hour window"] : []),
       ...(!publicationTimestampAvailable ? ["response lacks a per-row publication timestamp; provider updatedAt cannot prove row publication freshness"] : [])
     ],
     days,
