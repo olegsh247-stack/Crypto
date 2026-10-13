@@ -283,3 +283,10 @@ A new regression test passes a real-shaped, source-registered Kraken candidate i
 The gate's age limits now documented here follow the canonical metric registry: spot price 1 hour, hashrate 48 hours, fee/subsidy ratio 48 hours, DXY 48 hours and latest ETF flow 36 hours. These are data-quality limits, not directional scoring thresholds.
 
 **Current decision: no live scenario evaluation is accepted yet.** Next, source-verified inputs must be acquired for the remaining required metrics and at least five distinct ETF-flow days, with canonical units, source registration, observation timestamps, freshness and calculation windows. Fee/subsidy must be sourced as a documented rolling series before any factor confirmation/invalidation assessment. No scenario state or monitoring event is persisted by this change.
+
+
+### Evidence refresh — staging run #27
+
+The latest read-only capture is documented in `docs/BTC-SOURCE-REFRESH-REVIEW-2026-10-13.md` and artifact [BTC Public Source Staging #27](https://github.com/olegsh247-stack/Crypto/actions/runs/38361508900). It refreshed the Kraken candidate to 83,653.8 USD/BTC (exchange timestamp 07:15:24.229 UTC, retrieved 07:15:27.009 UTC) and the daily hashrate series to 999.342298838022 EH/s at 00:00 UTC. The 165-block validation passed; a proposed 144-block rolling ratio was 0.006309380666666667. All are still candidate-only.
+
+The fee/subsidy metric registry says `frequency: 1d`; the proposed 144-block rolling window is not identical to a UTC calendar day. That definition must be decided and tested before using the ratio. Current capture manifest reports no production DB access or writes. ETF and DXY blockers remain open, so no current full-rule evaluation was run.
