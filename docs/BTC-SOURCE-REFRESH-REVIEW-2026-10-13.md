@@ -51,7 +51,7 @@ The public Mempool REST contract confirms that both `/mining/blocks/fees/1w` and
 
 ## Individual-block sample review — 2026-10-13
 
-The read-only staging artifact `btc-public-source-review` (run [#38353245643](https://github.com/olegsh247-stack/Crypto/actions/runs/38353245643), artifact SHA-256 `f165c64d71ec42890789d6d47040f4f0a5a76b8714b0aff85e0e1e421ddd1461`) contains the raw response from `GET /api/v1/blocks/{tip-height}`. The captured sample has 15 consecutive blocks, heights **971185–971199**, with a raw response SHA-256 of `e986a0bf21b7e23acc4a27be973ea3ceb88126c8434e32fccc22ecd432ad573b`.
+The latest read-only staging artifact `btc-public-source-review` (run [#17](https://github.com/olegsh247-stack/Crypto/actions/runs/38353759368), artifact SHA-256 `b9f5d31c26eeed7acbe6aca8dfd0178e04cc42c7a637a96c52c246755f511a37`) contains the raw response from `GET /api/v1/blocks/{tip-height}`. The captured sample has 15 consecutive blocks, heights **971185–971199**, with a raw response SHA-256 of `c6936234d6b3af353a9283b7dbee6c75769a1834dfe362c3a6569eb87d325b38`.
 
 ### Field and arithmetic check
 
@@ -70,3 +70,15 @@ The read-only staging artifact `btc-public-source-review` (run [#38353245643](ht
 2. Inspect repository metric/source contracts for `security.fee_subsidy_ratio`, `security.hashrate`, and `market.spot_price`; resolve source IDs, units, and stored-method mapping.
 3. Keep ETF flow and DXY blocked until auditable, fresh sources and timestamp conventions are accepted.
 4. Only after the input contract is accepted, run the separately scoped read-only duplicate comparison; then execute one deterministic, offline/read-only BTC scenario.
+
+
+## Registry contract cross-check — 2026-10-13
+
+A read-only repository comparison found a source-ID mismatch that must be resolved before accepting the Kraken candidate:
+
+- `data/CryptoDataModel/registry/source-registry.json` uses **`market.kraken`**.
+- `infrastructure/postgres/migrations/2026-10-11-market-data-sources.sql` registers **`market_kraken`**.
+- `data/CryptoDataModel/registry/metric-registry.json` assigns `market.spot_price` to `market.kraken`, but the current registry does not spell out the exact normalization method for trade price to the product's point-in-time spot-price observation.
+- `security.fee_subsidy_ratio` is declared as a daily ratio in the JSON metric registry; its exact calculation window and aggregation method are not defined there. The later SQL migration describes a documented rolling block window, so those contracts need to be reconciled explicitly.
+
+**Decision:** do not silently alias source IDs or write new observations. First reconcile JSON registry, SQL registry, and runtime adapter to one canonical source identifier; specify whether the ratio is per-block or a rolling average and define its exact window. The individual-block sample proves the candidate arithmetic for 15 blocks only; it does not authorize production ingestion. This registry check used repository files only; no production database was queried or changed.
