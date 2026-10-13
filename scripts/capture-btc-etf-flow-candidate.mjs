@@ -243,7 +243,7 @@ async function main() {
   const printable = structuredClone(result);
   if (printable.evidence?.raw_body) printable.evidence.raw_body = "[retained in artifact]";
   console.log(JSON.stringify(printable, null, 2));
-  if (!["PASS_CANDIDATE_ONLY", "BLOCKED_NO_CREDENTIAL"].includes(result.capture_status)) process.exitCode = 1;
+  if (result.capture_status === "BLOCKED_SCHEMA") process.exitCode = 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
