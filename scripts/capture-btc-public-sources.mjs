@@ -62,6 +62,9 @@ async function capture({ name, metricId, sourceId, url, parse }) {
   manifest.sources.push(item);
 }
 
+let feeRows = null;
+let rewardRows = null;
+
 async function sha256(value) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -136,14 +139,68 @@ await capture({
   url: "https://mempool.space/api/v1/mining/blocks/fees/1w",
   parse: body => {
     const data = JSON.parse(body);
+    feeRows = Array.isArray(data) ? data : null;
+    const latest = feeRows?.at(-1) ?? null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
-      row_count: Array.isArray(data) ? data.length : null,
-      acceptance_status: "BLOCKED_DEFINITION",
-      note: "Raw response retained. Fee/subsidy values are not calculated until fee units, block window, and subsidy denominator are verified. Row count is not assumed to equal block count."
+      row_count: feeRows?.length ?? null,
+      latest_avg_height: latest?.avgHeight ?? null,
+      latest_timestamp: Number.isFinite(Number(latest?.timestamp)) ? new Date(Number(latest.timestamp) * 1000).toISOString() : null,
+      latest_avg_fees_raw: latest?.avgFees ?? null,
+      latest_usd_mark: latest?.USD ?? null,
+      acceptance_status: "CANDIDATE_PENDING_MATCHED_REWARD_SERIES",
+      note: "Mempool documents this endpoint as average total block fees over the selected trailing period. Keep raw values and pair by avgHeight with the matching rewards endpoint before any ratio calculation; never infer a block count from row_count."
     };
   }
 });
+
+await capture({
+  name: "mempool-block-rewards-1w",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/blocks/rewards/1w",
+  parse: body => {
+    const data = JSON.parse(body);
+    rewardRows = Array.isArray(data) ? data : null;
+    const latest = rewardRows?.at(-1) ?? null;
+    return {
+      response_shape: Array.isArray(data) ? "array" : typeof data,
+      row_count: rewardRows?.length ?? null,
+      latest_avg_height: latest?.avgHeight ?? null,
+      latest_timestamp: Number.isFinite(Number(latest?.timestamp)) ? new Date(Number(latest.timestamp) * 1000).toISOString() : null,
+      latest_avg_rewards_raw: latest?.avgRewards ?? null,
+      acceptance_status: "CANDIDATE_ONLY",
+      note: "Capture the matching average block-reward series. Ratio derivation remains blocked unless fee and reward records share the same avgHeight/window and field semantics are confirmed."
+    };
+  }
+});
+
+const rewardsByHeight = new Map((rewardRows ?? []).map(row => [String(row.avgHeight), row]));
+const matchedFeeRewardRows = (feeRows ?? []).flatMap(fee => {
+  const reward = rewardsByHeight.get(String(fee.avgHeight));
+  const fees = Number(fee.avgFees);
+  const totalReward = Number(reward?.avgRewards);
+  if (!reward || !Number.isFinite(fees) || !Number.isFinite(totalReward) || totalReward <= fees || fees < 0) return [];
+  const subsidyEstimate = totalReward - fees;
+  return [{
+    avg_height: fee.avgHeight,
+    fee_timestamp: Number.isFinite(Number(fee.timestamp)) ? new Date(Number(fee.timestamp) * 1000).toISOString() : null,
+    reward_timestamp: Number.isFinite(Number(reward.timestamp)) ? new Date(Number(reward.timestamp) * 1000).toISOString() : null,
+    avg_fees_raw: fees,
+    avg_rewards_raw: totalReward,
+    derived_subsidy_raw: subsidyEstimate,
+    candidate_fee_subsidy_ratio: fees / subsidyEstimate
+  }];
+});
+const latestMatched = matchedFeeRewardRows.at(-1) ?? null;
+manifest.fee_subsidy_review = {
+  status: "CANDIDATE_ONLY_NOT_ACCEPTED",
+  fee_rows: feeRows?.length ?? null,
+  reward_rows: rewardRows?.length ?? null,
+  matched_avg_height_rows: matchedFeeRewardRows.length,
+  latest_matched_candidate: latestMatched,
+  rule: "Pair fee/reward rows by exact avgHeight. The denominator is candidate avgRewards - avgFees and is not accepted until source field semantics, bucket construction, and units are confirmed. No unmatched rows are interpolated."
+};
 
 await capture({
   name: "farside-btc-etf-page",
@@ -194,19 +251,24 @@ console.log(JSON.stringify({
     name, status, http_status, error, retrieved_at, body_sha256,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
     latest_series_timestamp, latest_series_value_eh_s,
+    latest_avg_height, latest_timestamp, latest_avg_fees_raw,
+    latest_avg_rewards_raw, latest_usd_mark,
     freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
     acceptance_status, updated_through, row_count
   }) => ({
     name, status, http_status, error, retrieved_at, body_sha256,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
     latest_series_timestamp, latest_series_value_eh_s,
+    latest_avg_height, latest_timestamp, latest_avg_fees_raw,
+    latest_avg_rewards_raw, latest_usd_mark,
     freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
     acceptance_status, updated_through, row_count
   })),
+  fee_subsidy_review: manifest.fee_subsidy_review,
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w"];
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w"];
 const requiredCaptureFailed = requiredNames.some(name =>
   !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
 const etfCaptureSucceeded = manifest.sources.some(source =>
