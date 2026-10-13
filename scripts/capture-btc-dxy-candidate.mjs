@@ -16,12 +16,16 @@ export function sha256(value) {
 }
 
 function dateInNewYork(timestampSeconds) {
+  return newYorkDate(new Date(timestampSeconds * 1000));
+}
+
+function newYorkDate(date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
-  }).formatToParts(new Date(timestampSeconds * 1000));
+  }).formatToParts(date);
   const get = type => parts.find(part => part.type === type)?.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
@@ -38,9 +42,7 @@ export function parseYahooDxyChart(body, { now = new Date(), retrievedAt = now.t
     throw new Error("yahoo_dxy_series_shape_invalid");
   }
 
-  const todayNewYork = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit"
-  }).format(now);
+  const todayNewYork = newYorkDate(now);
   const rows = [];
   const seen = new Set();
   for (let i = 0; i < timestamps.length; i++) {
