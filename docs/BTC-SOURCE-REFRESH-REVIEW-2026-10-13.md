@@ -131,3 +131,26 @@ The corrected capture completed successfully in [BTC Public Source Staging #23](
 
 **Decision:** the wider staging validation is **PASS — CANDIDATE ONLY**. It confirms the capture and internal checks over this 150-block window, not the final production metric contract. Raw-unit interpretation remains provisional; the JSON/SQL/runtime source-ID mismatch and fee/subsidy frequency/window contract still need reconciliation. No production ingestion, database duplicate dry-run, or scenario write has occurred.
 
+## BTC metric/source contract reconciliation — proposal, not canonical acceptance
+
+### Source IDs are use-specific today
+
+- `market.kraken` is the source ID in the JSON metric/source registries and in `infrastructure/postgres/seed-v1.sql` for the point-in-time BTC/USD Trades observation candidate.
+- `market_kraken` is inserted by `2026-10-11-market-data-sources.sql` and used by the daily-candle worker for its Kraken OHLC fallback. That is a separate candle-ingestion path, not the same observation contract.
+- Do not silently alias or rename either identifier. The spot-price observation path must be explicitly mapped to `market.kraken`; the daily candle adapter can continue to use `market_kraken` until a separate reviewed consolidation is chosen. This is a source-domain distinction to document, not evidence that the BTC candidate has already been registered in a live database.
+
+### Proposed fee/subsidy metric contract
+
+The JSON registry currently specifies `frequency: 1d` and a 48-hour freshness window, but does not define the formula or block window. The SQL metric description says “documented rolling block window” without specifying its size. The staged evidence supports the following proposal for review:
+
+- **Cadence:** one candidate point per day; freshness remains 48 hours.
+- **Window:** latest **144 individual blocks** (roughly one day in block count, not a fixed 24-hour clock window).
+- **Formula:** `sum(extras.totalFees) / sum(extras.reward - extras.totalFees)` across exactly the same 144 blocks.
+- **Timestamp contract:** `period_start` is the first metric-window block timestamp, `period_end` and `observed_at` are the final metric-window block timestamp; include first/last block heights and method version `mempool-fee-subsidy-144-block-v1` in provenance.
+- **Validation:** capture 165 blocks total — 144 metric-window blocks plus 21 earlier context blocks — so the 11-block median-time-past rule can be checked for every block in the metric window. The extra context is not included in the ratio.
+- **Unit:** the raw fields are internally consistent with satoshis in the successful sample, but the unit remains provisional until the source contract is confirmed.
+
+This is a **proposal only**. The canonical metric registry has not been changed and the candidate ratio is not approved for production ingestion. The new 165-block staging run must pass before the proposed 144-block ratio is added to the review artifact.
+
+Authoritative endpoint references: [Mempool REST API — GET Blocks (v1)](https://mempool.space/docs/api/rest#get-blocks-v1) describes individual block records with mining details in `extras`; [Bitcoin Developer Reference — block chain](https://developer.bitcoin.org/reference/block_chain.html) documents the previous-11-block median timestamp and two-hour future-time constraints.
+
