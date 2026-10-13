@@ -1,0 +1,31 @@
+name: BTC Block Window Validation
+on:
+  pull_request:
+    paths:
+      - "scripts/capture-btc-block-window.mjs"
+      - "scripts/btc-block-window-validation.mjs"
+      - "scripts/btc-block-window-validation.test.mjs"
+      - ".github/workflows/btc-block-window-validation.yml"
+  push:
+    branches:
+      - "btc-block-window-hardening-2026-10-13"
+    paths:
+      - "scripts/capture-btc-block-window.mjs"
+      - "scripts/btc-block-window-validation.mjs"
+      - "scripts/btc-block-window-validation.test.mjs"
+      - ".github/workflows/btc-block-window-validation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax-check read-only capture
+        run: node --check scripts/capture-btc-block-window.mjs
+      - name: Run deterministic tests
+        run: node --test scripts/btc-block-window-validation.test.mjs
