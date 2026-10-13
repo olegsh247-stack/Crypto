@@ -262,3 +262,17 @@ Provider documentation confirms daily net flows in USD millions, UTC dates, up t
 The staging workflow now tests and optionally captures this endpoint through GitHub Actions secret `CRYPTOETF_API_KEY`. No credential is committed. If the secret is absent, no request is made and the artifact explicitly records `BLOCKED_NO_CREDENTIAL`. The parser does not zero-fill missing trading dates, and duplicate dates/invalid values fail closed.
 
 **Decision:** useful alternate candidate, not canonical or accepted. Authentication and row-level freshness/revision evidence remain unresolved. Do not replace `institutional.primary` or mark missing values as zero. ETF remains a scenario blocker.
+
+## Candidate capture refresh — DXY added, 2026-10-13 11:11 UTC
+
+Read-only staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518) passed the directional-series, ETF-flow and DXY parser test suites and uploaded artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469). The staging workflow completed source captures but deliberately reports candidate-only/block statuses rather than scenario readiness.
+
+| Input | Latest candidate evidence | Current decision |
+|---|---|---|
+| BTC daily close | Kraken completed close on 2026-10-12: 81,737.1 USD/BTC; seven-day return −4.6814%; raw SHA-256 `4f38e355bb145a386c383915659c186842df1815e9d2848d2ce0d19c2d138c5f` | Candidate only; canonical source mapping `market_kraken` vs `market.kraken` unresolved |
+| BTC hashrate | Mempool daily-average candidate through 2026-10-12; raw SHA-256 `1fd7446253f1e097fd9ccef69d4eb7578f4aa3ee1ed7a1629a8fb0a5e0509c6e` | Candidate only; daily-average interpretation is explicit, but source/observation mapping still needs review |
+| ETF net flow | Public MCP returned latest flow date 2026-10-12 at −$65.4M; raw SHA-256 `dbd201945f8df38c1b09d3f845f0a85c19cdba4143e6f0b07186459eaf60a08f` | Candidate only; provider lacks per-row publication time, and freshness timestamp convention is unresolved |
+| DXY | Yahoo Finance `DX-Y.NYB`: latest completed New York session 2026-10-12 close 102.58; close five observed sessions earlier 102.17; candidate change +0.4013%; raw SHA-256 `79eb39867cbc33ea1b5dffbfd8c3d7a9a37d9ee1d3f5c12a9fa2a052d1272170` | Candidate only; third-party feed authorization and exact ICE close/publication time unresolved |
+| Fee/subsidy | Existing 165-block integrity evidence unchanged | Candidate only; daily metric versus rolling 144-block window and authoritative field/unit contract unresolved |
+
+The DXY candidate improves source feasibility, not acceptance. No source-priority or metric-registry edits were made. The full BTC scenario remains `not_evaluable`; no production observations, scenario states, monitoring events, or probability changes were written.
