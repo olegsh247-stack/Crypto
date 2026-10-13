@@ -5,11 +5,11 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { expectedSubsidySats, validateBlockPage, tipAnchorMatches } from "./btc-block-window-validation.mjs";
+import { expectedSubsidySats, validateBlockPage, tipAnchorMatches, deriveUtcDayCandidate } from "./btc-block-window-validation.mjs";
 
 const outDir = join(process.cwd(), "tmp", "btc-block-window-review");
 await mkdir(outDir, { recursive: true });
-const targetCount = 165;
+const targetCount = 330;
 const pageSize = 15;
 const candidateWindowSize = 144;
 const anchorCaptures = [];
@@ -129,6 +129,10 @@ try {
   const totalSubsidy = candidate.reduce((sum, row) => sum + row.subsidy_sats_candidate, 0);
   if (candidate.length !== candidateWindowSize || totalSubsidy <= 0) throw new Error("Candidate 144-block window is invalid");
   const ratio = totalFees / totalSubsidy;
+  const captureStartedEpoch = Math.floor(Date.parse(manifest.started_at) / 1000);
+  const currentUtcMidnight = Math.floor(captureStartedEpoch / 86400) * 86400;
+  const completedDayStart = currentUtcMidnight - 86400;
+  const utcDayCandidate = deriveUtcDayCandidate(blocks, completedDayStart);
   manifest.validation = { status: "PASS_CANDIDATE_ONLY", block_count: blocks.length,
     first_height: heights[0], last_height: heights[heights.length - 1],
     missing_height_count: 0, duplicate_height_count: 0, duplicate_hash_count: 0,
@@ -138,9 +142,19 @@ try {
     total_fees_sats_candidate: totalFees, total_subsidy_sats_candidate: totalSubsidy,
     value_candidate: ratio, status: "CANDIDATE_ONLY_NOT_ACCEPTED", production_approved: false,
     note: "The calculation window remains unapproved until metric, source, and monitoring registries explicitly agree." };
+  manifest.daily_candidate_metric = {
+    metric_id: "security.fee_subsidy_ratio",
+    window: "completed UTC calendar day",
+    ...utcDayCandidate,
+    note: "Daily frequency matches the repository metric registry; this is still a candidate and is not accepted for production."
+  };
   manifest.status = "PASS_CANDIDATE_ONLY";
   manifest.completed_at = new Date().toISOString();
-  await writeFile(join(outDir, "blocks-normalized.json"), JSON.stringify({ blocks, candidate_window: candidate }, null, 2) + "\n", "utf8");
+  await writeFile(join(outDir, "blocks-normalized.json"), JSON.stringify({
+    blocks,
+    candidate_window: candidate,
+    utc_day_candidate: utcDayCandidate
+  }, null, 2) + "\n", "utf8");
 } catch (error) {
   manifest.error = error instanceof Error ? error.message : String(error);
   manifest.status = "FAILED_CANDIDATE_BLOCKED";
@@ -149,5 +163,5 @@ try {
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({ manifest: "tmp/btc-block-window-review/manifest.json",
   status: manifest.status, validation: manifest.validation || null,
-  candidate_metric: manifest.candidate_metric, error: manifest.error || null }, null, 2));
+  candidate_metric: manifest.candidate_metric, daily_candidate_metric: manifest.daily_candidate_metric || null, error: manifest.error || null }, null, 2));
 if (manifest.status !== "PASS_CANDIDATE_ONLY") process.exitCode = 1;
