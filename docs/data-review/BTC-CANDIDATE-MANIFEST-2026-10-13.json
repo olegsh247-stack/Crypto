@@ -121,7 +121,7 @@
     "reason": "A current production read-only observation/source-registry audit has not been authorized/performed in this capture workflow; no duplicate comparison is claimed."
   },
   "disposition": "not_evaluable",
-  "next_gate": "Resolve definitions and source identity; then separately authorize read-only production registry/duplicate audit and candidate-vs-existing dry-run diff.",
+  "next_gate": "Verify the updated staging workflow's individual_block_review result, then reconcile source/metric registry and run a separately scoped read-only duplicate audit; keep ETF and DXY blocked until accepted sources exist.",
   "fee_subsidy_review": {
     "status": "BLOCKED_AGGREGATE_SEMANTICS",
     "fee_rows": 835,
@@ -150,5 +150,31 @@
     },
     "rule": "Do not derive a fee/subsidy ratio from averaged series. Equal avgHeight values do not prove equal block sets or time windows, especially when timestamps differ. Use a bounded sample of individual block records to validate source fields and units before defining a reproducible calculation.",
     "aggregate_ratio_calculated": false
+  },
+  "individual_block_review": {
+    "status": "SAMPLE_VALIDATION_PASS_CANDIDATE_ONLY",
+    "source_id": "network.primary",
+    "source_url": "https://mempool.space/api/v1/blocks/{tip-height}",
+    "captured_in_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38353245643",
+    "raw_payload_sha256": "e986a0bf21b7e23acc4a27be973ea3ceb88126c8434e32fccc22ecd432ad573b",
+    "sample_count": 15,
+    "first_height": 971185,
+    "last_height": 971199,
+    "valid_field_rows": 15,
+    "subsidy_mismatch_rows": 0,
+    "expected_current_subsidy_raw": 312500000,
+    "fee_field": "extras.totalFees",
+    "reward_field": "extras.reward",
+    "calculation": "fee_to_subsidy_ratio = totalFees / (reward - totalFees)",
+    "unit_assessment": "Values are internally consistent with satoshis because reward minus totalFees equals the current 312,500,000-satoshi subsidy in all 15 sampled rows; confirm the documented API contract and test a wider historical range before production use.",
+    "observed_ratio_min": 0.0010287968,
+    "observed_ratio_max": 0.0074590496,
+    "production_approved": false,
+    "unresolved": [
+      "confirm endpoint field and unit contract against authoritative API documentation",
+      "test wider historical range and edge cases",
+      "verify repository metric/source registry and runtime mapping",
+      "perform separately scoped read-only duplicate dry-run"
+    ]
   }
 }
