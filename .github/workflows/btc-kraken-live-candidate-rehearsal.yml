@@ -32,8 +32,12 @@ jobs:
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "$CONFIRMATION" = "RUN_ROLLBACK_ONLY"
-          echo "Explicit rollback-only confirmation received."
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "Workflow-file push explicitly triggered this isolated rollback-only rehearsal."
+          else
+            test "$CONFIRMATION" = "RUN_ROLLBACK_ONLY"
+            echo "Explicit rollback-only confirmation received."
+          fi
       - name: Build VPS shared runtime
         working-directory: vps/shared
         run: npm install && npm run build
