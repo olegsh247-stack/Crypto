@@ -48,3 +48,39 @@ Checks observed:
 - [Crypto VPS Release Gate #203](https://github.com/olegsh247-stack/Crypto/actions/runs/38312864376): still in progress at the time of writing; not yet called green.
 
 These are CI checks against the repository/disposable stack. No live production endpoint, database, or deployment was changed.
+
+
+## Targeted code-level reconciliation — PR #80 and PR #69 (2026-10-13)
+
+This follow-up inspects the branch-only implementation files, not just ahead/behind counts. No branch was merged and no ingestion or database operation was run.
+
+### PR #80 — Kraken point-in-time BTC spot candidate
+
+**Finding: useful isolated parser/tests; runtime writer and migration remain deferred.**
+
+- Branch-only files include `vps/worker/src/krakenSpotPrice.ts`, `vps/worker/src/krakenSpotPrice.test.ts`, and `vps/worker/src/krakenSpotPriceLiveRehearsal.ts`, plus migration `infrastructure/postgres/migrations/2026-10-13-btc-kraken-trade-source.sql`.
+- The parser has useful deterministic coverage for returned pair key normalization, newest-trade selection, stale/future timestamps and Kraken API errors. The candidate contract keeps `market.spot_price`, `btc`, `market.kraken`, `USD/BTC`, source URL and raw response hash explicit.
+- The live rehearsal is guarded to PostgreSQL loopback hosts and database names ending in `_test`; it performs insert/idempotency/field assertions inside a transaction that ends in `ROLLBACK`. This is a disposable test rehearsal, not production persistence.
+- **Do not port the migration or wire the Worker yet.** The latest public capture remains candidate-only and the last target-database audit is dated 2026-10-12 18:20 UTC, not current. The actual target runtime source registration/adapter mapping has not been re-audited read-only. The main-branch read-only capture already exercises Kraken candidate provenance without requiring a new runtime writer.
+- Next gate for this work: first confirm the current canonical source/metric contract and target runtime mapping, then port parser/tests separately from any scheduled collector or migration, run the complete disposable rehearsal, and re-run the source registry audit.
+
+### PR #69 — broad BTC observation collectors
+
+**Finding: do not port persistence or enable collectors; keep branch source-contract-blocked.**
+
+- Branch-only collector `vps/worker/src/btc-observations.ts` combines Binance BTCUSDT spot, Mempool hashrate, a 144-block reward/fee window, and Farside ETF table parsing. These are not equivalent to the current reviewed candidate contracts.
+- The 144-block fee/subsidy ratio is a rolling diagnostic; the metric registry's persisted cadence is one observation per completed UTC day. Porting this collector as-is would reintroduce a window/cadence mismatch.
+- The branch uses a Farside HTML parser, but current review has unresolved publication-time freshness and placeholder/no-data semantics. An ETF session date alone does not prove the 36-hour observation-time freshness contract.
+- The branch documents scheduled persistence as opt-in, but opt-in is not acceptance: source provenance, units, aggregation windows, duplicate/revision semantics and target schema still require current review. DXY remains unresolved and must not be silently filled by this collector.
+- Safe disposition: retain the branch as reference for test ideas only; no collector, scheduler hook, persistence code or migration is ported now. Revisit only after each input passes the canonical source/metric acceptance matrix.
+
+### Reconciliation decision
+
+| Work item | Decision | Reason / next gate |
+|---|---|---|
+| Kraken parser + fixture tests (#80) | **Candidate for a later narrow port** | Useful deterministic coverage, but first verify current target runtime/source registry and ensure the adapter contract matches the accepted metric definition. |
+| Kraken migration + live rehearsal (#80) | **Defer** | Do not add schema/runtime writer until read-only target audit is current; rehearsal is safe only on guarded disposable `*_test` PostgreSQL and rolls back. |
+| Broad collector/scheduler/persistence (#69) | **Do not port** | Includes rolling 144-block ratio and ETF freshness assumptions that do not match accepted contracts; DXY remains blocked. |
+| Existing read-only capture + block-window validator | **Keep as current path** | Preserves evidence and allows reproducible review without production writes. |
+
+No production/target database was accessed or changed in this follow-up. No source was accepted, no scenario or monitoring state was written, and no PR was merged or closed.
