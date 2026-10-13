@@ -290,3 +290,12 @@ The gate's age limits now documented here follow the canonical metric registry: 
 The latest read-only capture is documented in `docs/BTC-SOURCE-REFRESH-REVIEW-2026-10-13.md` and artifact [BTC Public Source Staging #27](https://github.com/olegsh247-stack/Crypto/actions/runs/38361508900). It refreshed the Kraken candidate to 83,653.8 USD/BTC (exchange timestamp 07:15:24.229 UTC, retrieved 07:15:27.009 UTC) and the daily hashrate series to 999.342298838022 EH/s at 00:00 UTC. The 165-block validation passed; a proposed 144-block rolling ratio was 0.006309380666666667. All are still candidate-only.
 
 The fee/subsidy metric registry says `frequency: 1d`; the proposed 144-block rolling window is not identical to a UTC calendar day. That definition must be decided and tested before using the ratio. Current capture manifest reports no production DB access or writes. ETF and DXY blockers remain open, so no current full-rule evaluation was run.
+
+### Evidence refresh — directional series candidate capture #28
+
+Read-only staging run [#38362350907](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907) passed all six directional-series parser tests and captured the historical Kraken OHLC and Mempool hashrate series. Artifact [11795391910](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907/artifacts/11795391910), archive SHA-256 `7ad8a07ef0b818c0c2f3ac24bf05f2a515adafb1552d486dea6ce911d1de8c49`.
+
+- Kraken completed daily close through 2026-10-12: 81,737.1 USD/BTC; close seven days earlier: 85,751.5 USD/BTC; candidate return: −4.6814%. Raw payload SHA-256: `97628c0fb352d68b5625c7d58d8fa3a4cb70c633bd9df63936797130f67d666a`.
+- Mempool daily hashrate candidate through 2026-10-12: 1,028.5949 EH/s; seven days earlier: 946.4696 EH/s; candidate change: +8.6770%. Raw payload SHA-256: `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1`.
+
+These calculations are reproducible candidate values, **not accepted rule inputs**. Kraken OHLC uses `market_kraken`, while canonical `market.spot_price` priority is `market.kraken`; do not alias the IDs without an explicit source contract decision. Mempool bucket/smoothing semantics also remain unconfirmed. ETF and DXY remain blocked. The scenario stays `not_evaluable`; no rule evaluation, production write, scenario/monitoring persistence, or probability change was performed.
