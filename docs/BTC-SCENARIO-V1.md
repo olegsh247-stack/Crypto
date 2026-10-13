@@ -307,3 +307,9 @@ Added a read-only candidate adapter and deterministic tests for CryptoETF.today 
 Implementation: `scripts/capture-btc-etf-flow-candidate.mjs`, tests: `scripts/capture-btc-etf-flow-candidate.test.mjs`, review: `docs/BTC-ETF-FLOW-CANDIDATE-REVIEW-2026-10-13.md`. The staging workflow uses optional secret `CRYPTOETF_API_KEY`; absent credentials result in `BLOCKED_NO_CREDENTIAL` and no request. The current API row schema does not provide per-row publication timestamps, so freshness remains blocked unless that evidence is added or a conservative method is explicitly approved.
 
 No canonical source priority or metric registry was changed. ETF flow remains an unresolved input; scenario remains `not_evaluable`.
+
+### Live ETF flow candidate captured through public MCP — 2026-10-13
+
+The public MCP candidate capture now works against the provider's actual response shape. Staging [run #38371104698](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698) captured a 30-day BTC flow series; latest row is 2026-10-12 at **−$65.4M**, with six distinct flow dates in the last seven calendar days. Raw payload SHA-256: `4cec024a39ab5355336da610d84fe6ac2bac4700ec04e6b4236179245ea260fb`; artifact [11798629801](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698/artifacts/11798629801).
+
+The latest flow-date midnight is 32.711 hours before retrieval, inside the 36-hour numerical window, but the response lacks per-row publication timestamps. The global `updatedAt` is not treated as row publication time. This source remains candidate-only until the metric's freshness timestamp convention is explicitly resolved; canonical `institutional.primary` remains unchanged. The scenario remains `not_evaluable` because source acceptance and other required inputs (DXY, hashrate method, fee/subsidy contract) are still unresolved.
