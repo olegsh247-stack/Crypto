@@ -320,3 +320,10 @@ The latest flow-date midnight is 32.711 hours before retrieval, inside the 36-ho
 The candidate capture now explicitly treats Mempool's historical hashrate points as provider-labelled **daily averages**, preserves the UTC-midnight date labels without interpreting them as instantaneous samples, and excludes the current UTC date. The parser tests enforce that method label. This aligns the candidate calculation with the provider's historical daily-average series description ([Mempool REST API](https://mempool.space/docs/api/rest); [endpoint documentation example](https://mempool.emzy.de/docs/api)).
 
 The historical candidate change remains +8.6770% through 2026-10-12, but is not yet accepted as a live rule input. The source/method mapping must still be reviewed against the canonical `security.hashrate` metric contract. The Kraken OHLC source ID remains distinct from canonical `market.kraken`; ETF publication freshness remains unresolved; DXY and fee/subsidy remain blocked. Scenario status stays `not_evaluable`.
+
+
+### DXY source feasibility — 2026-10-13
+
+Added a read-only Yahoo Finance candidate capture for ticker `DX-Y.NYB`, which Yahoo identifies as the ICE US Dollar Index. This is only a feasibility candidate: the reviewed ICE product page describes commercial delivery channels but does not establish an unauthenticated public feed, and the Yahoo chart response does not prove the exact ICE daily-close/publication timestamp needed for the 48-hour freshness contract. No canonical source priority or metric registry was changed. See `docs/BTC-DXY-CANDIDATE-REVIEW-2026-10-13.md`.
+
+The staging adapter validates and preserves a candidate five-observed-session change, but marks it `CANDIDATE_ONLY` and `BLOCKED_SOURCE_CONTRACT_REVIEW`. It cannot be used by the scenario readiness gate as accepted DXY input. The scenario remains `not_evaluable`.
