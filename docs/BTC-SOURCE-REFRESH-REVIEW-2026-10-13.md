@@ -120,3 +120,14 @@ Commit `9261e934b0e5a914c54b938598c67ee03dfb495f` corrects the check: each block
 
 The immediate rerun [BTC Public Source Staging #22](https://github.com/olegsh247-stack/Crypto/actions/runs/38357193802) failed before source capture because the timestamp-consensus field insertion contained literal escaped newlines, producing a JavaScript syntax error. This was corrected in commit `f794b046f50743d6f7535b6bde7485f08e3a00da`. The next staging run must confirm both syntax and the corrected consensus-time gate; no 150-block pass is claimed yet.
 
+## Wider individual-block staging result — PASS candidate only
+
+The corrected capture completed successfully in [BTC Public Source Staging #23](https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407), commit `f794b046f50743d6f7535b6bde7485f08e3a00da`. The uploaded artifact is [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407/artifacts/11792344913), SHA-256 `9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0`.
+
+- 150 unique blocks validated, heights **971053–971202**.
+- Missing heights: **0**; invalid field rows: **0**; subsidy mismatches: **0**; duplicate hashes: **0**.
+- Timestamp consensus checks: median-time-past violations **0**; future timestamps beyond the two-hour bound **0**.
+- Candidate aggregate: total fees `295212981` raw units; derived subsidy total `46875000000` raw units; `sum(totalFees) / sum(reward - totalFees) = 0.006297876928` (about **0.630%**).
+
+**Decision:** the wider staging validation is **PASS — CANDIDATE ONLY**. It confirms the capture and internal checks over this 150-block window, not the final production metric contract. Raw-unit interpretation remains provisional; the JSON/SQL/runtime source-ID mismatch and fee/subsidy frequency/window contract still need reconciliation. No production ingestion, database duplicate dry-run, or scenario write has occurred.
+
