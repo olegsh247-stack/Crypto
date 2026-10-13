@@ -3,7 +3,8 @@ import test from "node:test";
 import {
   fetchKrakenBtcUsdSpotCandidate,
   KRAKEN_BTC_USD_TRADES_URL,
-  parseKrakenBtcUsdTrades
+  parseKrakenBtcUsdTrades,
+  toKrakenObservationCandidateRow
 } from "./krakenSpotPrice.js";
 
 const now = "2026-10-13T06:00:00.000Z";
@@ -76,4 +77,35 @@ test("network capture rejects HTTP failures and malformed JSON", async () => {
   await assert.rejects(fetchKrakenBtcUsdSpotCandidate(httpFailure), /HTTP 503/);
   const invalidJson: typeof fetch = async () => new Response("{bad json", { status: 200 });
   await assert.rejects(fetchKrakenBtcUsdSpotCandidate(invalidJson), /not valid JSON/);
+});
+
+test("maps a provenanced current capture to the canonical observation contract without writing", async () => {
+  const observedAt = (Date.now() / 1000 - 10).toFixed(3);
+  const rawBody = JSON.stringify({ error: [], result: { XXBTZUSD: [["83500.5", "0.01", observedAt]], last: "cursor" } });
+  const fakeFetch: typeof fetch = async () => new Response(rawBody, { status: 200 });
+  const capture = await fetchKrakenBtcUsdSpotCandidate(fakeFetch);
+  const row = toKrakenObservationCandidateRow(capture);
+  assert.equal(row.metric_id, "market.spot_price");
+  assert.equal(row.asset_id, "btc");
+  assert.equal(row.value_numeric, 83500.5);
+  assert.equal(row.unit, "USD/BTC");
+  assert.equal(row.source_id, "market.kraken");
+  assert.equal(row.source_url, KRAKEN_BTC_USD_TRADES_URL);
+  assert.equal(row.freshness, "CURRENT");
+  assert.equal(row.revision, 1);
+  assert.match(row.methodology, /raw_payload_sha256=[a-f0-9]{64}/);
+});
+
+test("candidate observation mapper fails closed for stale data or missing provenance", async () => {
+  const observedAt = (Date.now() / 1000 - 4000).toFixed(3);
+  const rawBody = JSON.stringify({ error: [], result: { XXBTZUSD: [["83500.5", "0.01", observedAt]], last: "cursor" } });
+  const fakeFetch: typeof fetch = async () => new Response(rawBody, { status: 200 });
+  const stale = await fetchKrakenBtcUsdSpotCandidate(fakeFetch);
+  assert.equal(stale.freshness, "STALE");
+  assert.throws(() => toKrakenObservationCandidateRow(stale), /not current/);
+  const currentObservedAt = (Date.now() / 1000 - 10).toFixed(3);
+  const currentBody = JSON.stringify({ error: [], result: { XXBTZUSD: [["83500.5", "0.01", currentObservedAt]], last: "cursor" } });
+  const current = await fetchKrakenBtcUsdSpotCandidate(async () => new Response(currentBody, { status: 200 }));
+  assert.throws(() => toKrakenObservationCandidateRow({ ...current, raw_payload_sha256: "missing" }), /SHA-256/);
+  assert.throws(() => toKrakenObservationCandidateRow({ ...current, http_status: 206 }), /source URL or HTTP status/);
 });
