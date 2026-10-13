@@ -116,3 +116,7 @@ Commit `9261e934b0e5a914c54b938598c67ee03dfb495f` corrects the check: each block
 
 **Status:** correction pushed; a fresh staging run and artifact review are still required. No production ingestion or scenario use is approved.
 
+### Follow-up execution note
+
+The immediate rerun [BTC Public Source Staging #22](https://github.com/olegsh247-stack/Crypto/actions/runs/38357193802) failed before source capture because the timestamp-consensus field insertion contained literal escaped newlines, producing a JavaScript syntax error. This was corrected in commit `f794b046f50743d6f7535b6bde7485f08e3a00da`. The next staging run must confirm both syntax and the corrected consensus-time gate; no 150-block pass is claimed yet.
+
