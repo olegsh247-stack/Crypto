@@ -24,11 +24,13 @@ The repository currently distinguishes `market.kraken` (point-in-time Trades can
 ## Hashrate: proposed candidate contract
 
 - Endpoint: Mempool.space historical hashrate series, `https://mempool.space/api/v1/mining/hashrate/6m` (official REST reference documents `/api/v1/mining/hashrate/:timePeriod` as the network-wide hashrate/difficulty series).
-- Select completed daily buckets only. The current/incomplete UTC bucket must not be treated as a completed daily observation.
+- The provider REST reference documents this endpoint as network-wide hashrate/difficulty and provider API reference copies describe the historical series as **daily average hashrates** ([Mempool REST reference](https://mempool.space/docs/api/rest); [endpoint documentation example](https://mempool.emzy.de/docs/api)).
+- Treat each returned timestamp as a provider date label for the daily-average point, not as an instantaneous hashrate sample. The captured labels are UTC midnight; preserve that raw convention without inventing an intraday observation time.
+- Exclude the current UTC date conservatively; only use date-labelled points from completed prior UTC dates.
 - Preserve the original response, payload SHA-256, retrieval time, each bucket timestamp, raw value and unit conversion from H/s to EH/s.
-- Require eight consecutive completed daily points, no duplicates or missing UTC dates, positive finite values, and timestamps that are not in the future. Verify the provider's bucket timestamp convention against returned samples before interpreting a timestamp as bucket start or end.
-- Formula: `(latest_completed_daily_hashrate / daily_hashrate_7_days_earlier) - 1`.
-- A weekly-smoothed estimate must not be relabeled as an instantaneous measurement. Record the endpoint's averaging/smoothing semantics as part of the method.
+- Require eight consecutive completed daily points, no duplicates or missing UTC dates, positive finite values, and timestamps that are not in the future.
+- Formula: `(latest_completed_daily_average / daily_average_7_days_earlier) - 1`.
+- The result is a change in the provider's **daily-average hashrate series**, not an instantaneous or weekly-smoothed value.
 
 ## Fresh candidate capture — 2026-10-13
 
@@ -37,9 +39,9 @@ Read-only staging workflow [run #38362350907](https://github.com/olegsh247-stack
 | Series | Captured result | Raw payload SHA-256 | Acceptance |
 |---|---|---|---|
 | Kraken daily OHLC | HTTP 200; completed daily candles through 2026-10-12; latest close **81,737.1 USD/BTC**; close seven days earlier **85,751.5 USD/BTC**; calculated 7-day return **−4.6814%** | `97628c0fb352d68b5625c7d58d8fa3a4cb70c633bd9df63936797130f67d666a` | Candidate only. Kraken returns at most 720 OHLC rows; source ID `market_kraken` still needs reconciliation with canonical `market.spot_price` priority `market.kraken`. |
-| Mempool hashrate history | HTTP 200; daily points through 2026-10-12; latest candidate **1,028.5949 EH/s**; seven days earlier **946.4696 EH/s**; calculated 7-day change **+8.6770%** | `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1` | Candidate only. Bucket timestamp/smoothing convention is not yet authoritatively confirmed. |
+| Mempool hashrate history | HTTP 200; daily points through 2026-10-12; latest candidate **1,028.5949 EH/s**; seven days earlier **946.4696 EH/s**; calculated 7-day change **+8.6770%** | `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1` | Candidate only. The endpoint is documented as a daily-average series and UTC-midnight labels are preserved as date labels; source/method acceptance and the metric-to-observation mapping still require review. |
 
-The calculations are reproducible from the preserved candidate rows; they are not yet approved directional inputs. The Kraken daily series must not be silently treated as the registered Trades source, and the hashrate change must not be interpreted until the source's daily bucket convention is verified. The separate public-source capture still records ETF HTTP 403 and DXY as unresolved.
+The calculations are reproducible from the preserved candidate rows; they are not yet approved directional inputs. The Kraken daily series must not be silently treated as the registered Trades source. The hashrate calculation is specifically a change between provider-labelled daily-average values; the current UTC date is excluded. The source/method remains candidate-only pending metric-to-observation mapping review. The separate public-source capture records the ETF candidate and DXY as unresolved.
 
 ## Acceptance rules
 
@@ -56,7 +58,7 @@ A successful HTTP response alone is not acceptance. Passing this gate does not a
 ## Current blockers and next action
 
 - Resolve the Kraken OHLC versus Trades source identity without aliasing `market_kraken` and `market.kraken`.
-- Verify Mempool's hashrate timestamp and smoothing semantics; keep the series candidate-only until then.
+- Keep Mempool hashrate semantics explicit: provider-labelled daily-average series, UTC date labels, current date excluded. Review the mapping to `security.hashrate` before promotion.
 - Acquire an authorized current ETF series and an approved DXY source.
 - Reconcile the fee/subsidy rolling-144-block method with the existing daily metric contract and authoritative field/unit semantics.
 - Only when every required input passes, run the fixed-manifest readiness gate and one deterministic BTC rule offline/read-only. Keep the scenario `not_evaluable` until then.
