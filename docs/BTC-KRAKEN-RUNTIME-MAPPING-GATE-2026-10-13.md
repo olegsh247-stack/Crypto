@@ -37,7 +37,7 @@ Keep these source IDs distinct:
 
 ## Still blocked
 
-1. Confirm the latest worker build/tests and rollback-only PostgreSQL contract rehearsal pass on the current commit.
+1. Run the explicit live-capture rehearsal after its `workflow_dispatch` definition is available from the default branch; the current branch's worker build, unit tests and rollback-only synthetic contract rehearsal pass in VPS API Build Rehearsal #626.
 2. Review how the raw response is retained for durable audit; the candidate object returns the raw body and hash, but the observation table stores the hash and provenance in `methodology`, not the entire raw body.
 3. Keep this candidate path out of scheduled production ingestion. A separate explicit decision is required before any production observation writes.
 4. Do not calculate or persist live BTC scenario/monitoring state until all required inputs pass freshness/provenance gates and the deterministic scoring rule is reviewed.
