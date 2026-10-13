@@ -118,7 +118,7 @@ async function callMcp(fetchImpl, method, params, id, sessionId) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      accept: "application/json, text/event-stream",
+      accept: "application/json",
       ...(sessionId ? { "mcp-session-id": sessionId } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
