@@ -611,3 +611,28 @@ The current main-branch BTC readiness gate was inspected and remains fail-closed
 **Boundary:** CI uses disposable PostgreSQL. It is not a fresh read of the external target database. The last documented target audit remains 2026-10-12 18:20 UTC; no current target source registration/adapter audit was performed and no production/target data was read or written. All five BTC inputs remain unaccepted (four held, DXY blocked), and the scenario remains not_evaluable.
 
 **Next practical step:** keep the product work focused on BTC and prepare the source acceptance/review bundle so that the remaining decisions are explicit: (1) target-runtime source registry/adapter check when a permitted read-only route exists, (2) ETF session-date/observation-time convention with no inferred timestamp or placeholder zero, (3) completed-UTC-day fee/subsidy contract acceptance, and (4) a specific permitted DXY feed or keep DXY blocked. Then rerun the no-write staging diff. Do not enable ingestion, write scenario/monitoring state, merge/close PRs, or expand to other assets.
+
+## 2026-10-14 — target DB audit path and fee/subsidy contract reconciliation
+
+### Target database: access-path finding
+
+A repository-only inspection was performed against `main` and the BTC hardening branch:
+
+- `.github/workflows/production-readonly-health.yml` is a manually dispatched GET-only API health check. It accepts an API base URL and runs `scripts/production-readonly-health.mjs`; it does not query the target PostgreSQL source registry or observations.
+- `scripts/audit-btc-input-provenance.sql` is an available read-only SQL audit for BTC input freshness, source registration, and duplicate logical keys.
+- No repository workflow was found that safely connects this SQL audit to the current target database, and the current session has no verified target DB connection/runtime credential. No secret values were read or exposed.
+
+**Decision:** do not treat disposable CI PostgreSQL or an API health response as a fresh target database audit. The next valid proof must run the existing SQL audit through an explicitly configured, least-privilege read-only connection to the actual target database, with output limited to audit results. If that connection is not available, source registration/adapter acceptance remains blocked. No database access or writes were performed by this repository inspection.
+
+### Fee/subsidy contract: resolve conflicting open proposals
+
+The canonical metric registry uses `frequency: 1d`. The validated 2026-10-12 completed UTC-day calculation covers the half-open interval `[2026-10-12T00:00:00Z, 2026-10-13T00:00:00Z)`; the rolling 144-block ratio remains diagnostic-only. This is the current recommendation for the persisted metric because it aligns with the declared daily cadence and explicit calendar-day boundaries. It is not yet activated in canonical registries or runtime ingestion.
+
+Open PR #81 proposes a rolling 144-consecutive-block observation and therefore conflicts with the completed-UTC-day recommendation in PR #82. Do not merge both contracts as-is. Keep both PRs open pending one explicit metric-contract decision; the current evidence favors completed UTC-day sampling for `frequency: 1d`, with rolling 144 blocks retained only as a diagnostic.
+
+### ETF and DXY remain blocked
+
+- ETF session date is not a publication timestamp. Do not infer `observed_at` from retrieval time, and do not convert an unreported placeholder to zero. A reviewed trading-session-lag contract or a source-declared publication timestamp is required before applying the 36-hour gate.
+- DXY remains blocked until an exact, stable, permitted source and observation-time convention are approved. A broad trade-weighted USD index is not interchangeable with DXY.
+
+**Current gate:** BTC remains `not_evaluable`; no candidate is approved for ingestion; no observation, scenario state, monitoring event, score, probability, or published snapshot was changed.
