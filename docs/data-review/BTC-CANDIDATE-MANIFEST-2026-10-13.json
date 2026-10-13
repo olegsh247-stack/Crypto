@@ -192,7 +192,7 @@
     "production_writes_performed": false
   },
   "individual_block_window_review": {
-    "status": "IMPLEMENTED_NOT_YET_EXECUTED",
+    "status": "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY",
     "target_block_count": 150,
     "request_strategy": "10 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each, stepping backward by 15 heights",
     "normalized_output": "individual-block-window.json",
@@ -209,25 +209,45 @@
     "required_staging_gate": true,
     "production_approved": false,
     "commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
-    "execution_status": "PENDING_RERUN_AFTER_SYNTAX_FIX",
+    "execution_status": "PASS_CANDIDATE_ONLY",
     "unresolved": [
-      "rerun staging against the corrected timestamp-consensus validation and inspect artifact",
-      "confirm endpoint field/unit contract",
+      "confirm endpoint field/unit contract against authoritative API documentation",
       "reconcile ratio window/frequency with metric registry and SQL migration",
       "reconcile source ID/runtime mapping",
       "perform separately scoped read-only duplicate dry-run"
-    ]
+    ],
+    "unique_block_count": 150,
+    "first_height": 971053,
+    "last_height": 971202,
+    "expected_min_height": 971053,
+    "expected_max_height": 971202,
+    "missing_height_count": 0,
+    "invalid_field_rows": 0,
+    "subsidy_mismatch_rows": 0,
+    "duplicate_hash_count": 0,
+    "timestamp_consensus_valid": true,
+    "median_time_past_violation_count": 0,
+    "future_timestamp_count": 0,
+    "total_fees_raw": 295212981,
+    "total_subsidy_raw": 46875000000,
+    "window_fee_to_subsidy_ratio": 0.006297876928,
+    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
+    "artifact_id": 11792344913,
+    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0"
   },
   "staging_gate_manifest_update": {
     "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
     "change": "Record final staging gate outcome in manifest.json before artifact upload",
-    "execution_status": "RUN_20_FAILED_AS_EXPECTED_AFTER_REVIEW",
+    "execution_status": "PASS_CANDIDATE_ONLY",
     "failure_reason": "The first 150-block run exposed an invalid assumption that Bitcoin block timestamps must be monotonic by height; Bitcoin consensus permits non-monotonic timestamps.",
     "correction_commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
     "correction": "Validate median-time-past against the preceding 11 blocks and the two-hour future-time bound instead of strict monotonicity.",
-    "next_step": "Verify the staging run triggered by the syntax-fix commit.",
+    "next_step": "Reconcile the repository metric/source contract and timestamp/units; then prepare a separately scoped read-only duplicate dry-run. No production ingestion is approved.",
     "production_approved": false,
     "syntax_fix_commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
-    "syntax_failure": "Run #22 failed before capture due to literal escaped-newline syntax in the newly added timestamp-consensus fields; corrected in the commit above."
+    "syntax_failure": "Run #22 failed before capture due to literal escaped-newline syntax in the newly added timestamp-consensus fields; corrected in the commit above.",
+    "successful_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
+    "artifact_id": 11792344913,
+    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0"
   }
 }
