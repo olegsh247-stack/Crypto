@@ -44,6 +44,13 @@ The daily candidate was independently recomputed from the normalized block evide
 
 The daily candidate is approximately 4.05% higher than the rolling 144-block diagnostic. This difference is expected to be possible because the two windows contain different blocks and are not interchangeable observations. It is not evidence of a trend by itself.
 
+
+## Source-field semantics cross-check
+
+The Mempool.space implementation was reviewed at a pinned upstream commit: [`backend/src/api/blocks.ts` at `7e790680`](https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/blocks.ts). The code assigns `extras.reward` from the sum of coinbase transaction outputs and `extras.totalFees` from the block statistics `totalfee` field. The corresponding frontend displays both fields using its satoshi amount component and converts reward from satoshis to BTC when deriving fees. This supports interpreting both raw values as satoshis for this API implementation version.
+
+This cross-check is version-pinned source evidence, not a guarantee that the public API can never change. The capture's invariant `reward - totalFees = expected subsidy at block height` passed for all 330 blocks and is retained as an independent consistency check.
+
 ## 4. Contract decision recommendation
 
 **Recommended contract:** one observation per completed UTC calendar day, using each included block's source timestamp in UTC; calculate `sum(block fees in sats) / sum(expected block subsidy in sats)` over the exact same included block set. Persist the logical observation identity by the UTC date, not by fetch time. Keep the rolling 144-block result diagnostic-only.
