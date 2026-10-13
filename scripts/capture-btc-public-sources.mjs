@@ -305,9 +305,23 @@ async function captureIndividualBlockWindow() {
     const timestampsConsensusValid = futureTimestampRows.length === 0 && medianTimePastViolations.length === 0;
     const totalFeesRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.total_fees_raw, 0) : null;
     const totalSubsidyRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.derived_subsidy_raw, 0) : null;
-    const ratio = totalFeesRaw !== null && totalSubsidyRaw > 0 ? totalFeesRaw / totalSubsidyRaw : null;
+    const validationWindowRatio = totalFeesRaw !== null && totalSubsidyRaw > 0 ? totalFeesRaw / totalSubsidyRaw : null;
+    // Candidate metric proposal: one daily point over the latest 144 validated blocks.
+    // Keep this separate from the 150-block validation-window diagnostic until the
+    // metric registry formally accepts the window and method.
+    const candidateMetricWindowSize = 144;
+    const candidateMetricBlocks = blocks.slice(-candidateMetricWindowSize);
+    const candidateMetricWindowValid = candidateMetricBlocks.length === candidateMetricWindowSize
+      && candidateMetricBlocks.every(row => row.fields_valid);
+    const candidateMetricFeesRaw = candidateMetricWindowValid
+      ? candidateMetricBlocks.reduce((sum, row) => sum + row.total_fees_raw, 0) : null;
+    const candidateMetricSubsidyRaw = candidateMetricWindowValid
+      ? candidateMetricBlocks.reduce((sum, row) => sum + row.derived_subsidy_raw, 0) : null;
+    const candidateMetricRatio = candidateMetricFeesRaw !== null && candidateMetricSubsidyRaw > 0
+      ? candidateMetricFeesRaw / candidateMetricSubsidyRaw : null;
     const passed = blocks.length === targetCount && missingHeights.length === 0 && invalidRows.length === 0
-      && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsConsensusValid && ratio !== null;
+      && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsConsensusValid
+      && validationWindowRatio !== null && candidateMetricRatio !== null;
     const review = {
       status: passed ? "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY" : "WIDE_WINDOW_VALIDATION_FAILED",
       target_block_count: targetCount, unique_block_count: blocks.length,
@@ -320,11 +334,20 @@ async function captureIndividualBlockWindow() {
       median_time_past_violation_count: medianTimePastViolations.length,
       median_time_past_violations: medianTimePastViolations,
       future_timestamp_count: futureTimestampRows.length,
-      total_fees_raw: totalFeesRaw, total_subsidy_raw: totalSubsidyRaw,
-      window_fee_to_subsidy_ratio: ratio,
+      validation_window_total_fees_raw_150_blocks: totalFeesRaw,
+      validation_window_total_subsidy_raw_150_blocks: totalSubsidyRaw,
+      validation_window_fee_to_subsidy_ratio_150_blocks: validationWindowRatio,
+      candidate_metric_window_blocks: candidateMetricWindowSize,
+      candidate_metric_first_height: candidateMetricBlocks[0]?.height ?? null,
+      candidate_metric_last_height: candidateMetricBlocks.at(-1)?.height ?? null,
+      candidate_metric_total_fees_raw: candidateMetricFeesRaw,
+      candidate_metric_total_subsidy_raw: candidateMetricSubsidyRaw,
+      candidate_metric_fee_to_subsidy_ratio: candidateMetricRatio,
+      candidate_metric_status: "PROPOSED_144_BLOCK_WINDOW_NOT_YET_APPROVED",
       per_block_ratio_min: blocks.length ? Math.min(...blocks.map(row => row.fee_to_subsidy_ratio ?? Infinity)) : null,
       per_block_ratio_max: blocks.length ? Math.max(...blocks.map(row => row.fee_to_subsidy_ratio ?? -Infinity)) : null,
-      calculation: "sum(totalFees) / sum(reward - totalFees), using the same validated individual blocks",
+      calculation: "sum(totalFees) / sum(reward - totalFees), over the same validated individual blocks",
+      proposed_metric_contract: "One daily candidate point over the latest 144 validated blocks; this is a proposal only and must be reconciled with metric-registry frequency/methodology before acceptance.",
       unit_assessment: "Raw values are treated as satoshis provisionally; exact field/unit contract and repository metric definition still require approval.",
       pages: pageEvidence,
       production_approved: false,
