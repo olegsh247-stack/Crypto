@@ -172,3 +172,11 @@ The rerun [BTC Public Source Staging #26](https://github.com/olegsh247-stack/Cry
 
 The artifact labels now explicitly distinguish the 165-block validation aggregate from the proposed 144-block metric. Staging status is **PASS — CANDIDATE ONLY**. The 144-block window remains a proposal until the metric contract is accepted; no canonical registry change or production write was made.
 
+
+## VPS-only build and isolated database rehearsal — PASS
+
+The current BTC source-capture branch also passed [VPS API Build Rehearsal #581](https://github.com/olegsh247-stack/Crypto/actions/runs/38357502720) on commit `ca5946f95b3cc96dd93ed1dc5c2865a07696fcea`.
+
+All 26 job steps completed successfully, including the VPS-only repository check, shared runtime/worker/API builds, API response contract tests, Compose network-boundary validation, clean PostgreSQL bootstrap from repository migrations, canonical BTC input-registry verification, read-only BTC provenance audit, duplicate/idempotency reconciliation rehearsal, PostgreSQL backup/restore, API contract E2E, mutation-contract E2E, worker-ingestion E2E, offline invariants, BTC research-evidence/snapshot-lineage E2E, persisted history/candle finalization E2E, and admin-boundary E2E.
+
+This is isolated CI/rehearsal evidence, not a production deployment or production database audit. It does not resolve the provisional raw-unit contract or approve the 144-block candidate for ingestion. No production observations, scenario states, monitoring events, or published probabilities were changed.
