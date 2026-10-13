@@ -86,8 +86,12 @@
       "age_hours_at_retrieval": 15.437,
       "freshness_window": "48h",
       "raw_body_sha256": "379aa3569f6b1841f1445463936abd22ac7efcbaa2900929896d74823bf8c764",
-      "dry_run_classification": "HOLD_BUCKET_SEMANTICS",
-      "reason": "Within the nominal age limit, but the daily bucket timestamp convention and estimator/smoothing semantics have not been accepted."
+      "dry_run_classification": "HOLD_TARGET_DATABASE_READ_ONLY_REAUDIT",
+      "reason": "The UTC-day bucket and estimator semantics are verified against pinned upstream code. The last available target-database audit is from 2026-10-12, so recheck the current registered source and adapter before accepting this candidate.",
+      "window_start_utc": "2026-10-12T00:00:00Z",
+      "window_end_utc_exclusive": "2026-10-13T00:00:00Z",
+      "aggregation_method": "Network hashrate estimate from blocks counted in the preceding 24-hour UTC window; timestamp labels the end-exclusive UTC midnight.",
+      "method_source_url": "https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/mining/mining.ts"
     },
     {
       "metric_id": "security.fee_subsidy_ratio",
@@ -152,7 +156,7 @@
   "next_gate": [
     "Perform a fresh read-only audit of the target database's sources and observations; the baseline above is from 2026-10-12 and is not a current live diff.",
     "Resolve market.kraken registration/adapter parity.",
-    "Document the hashrate daily bucket convention.",
+    "Recheck the current target database's registered network.primary source and adapter; the hashrate UTC-day bucket convention is now verified against pinned upstream code.",
     "Accept the UTC-day fee/subsidy contract across metric/source/monitoring docs before promoting the candidate.",
     "Define ETF session-date observation-time semantics and apply the 36-hour freshness rule without treating dashes as zero.",
     "Select a canonical DXY source.",
