@@ -6,7 +6,7 @@ const now = new Date("2026-10-13T12:00:00.000Z");
 const epoch = value => Math.floor(new Date(value).getTime() / 1000);
 const krakenRows = [];
 const hashrateRows = [];
-for (let day = 5; day <= 13; day++) {
+for (let day = 4; day <= 13; day++) {
   const stamp = epoch(`2026-10-${String(day).padStart(2, "0")}T00:00:00.000Z`);
   const close = 80000 + day * 100;
   krakenRows.push([stamp, close - 100, close + 100, close - 200, close, close - 10, 12.5, 1000]);
@@ -15,10 +15,10 @@ for (let day = 5; day <= 13; day++) {
 const krakenBody = JSON.stringify({ error: [], result: { XXBTZUSD: krakenRows, last: 1 } });
 const hashrateBody = JSON.stringify({ hashrates: hashrateRows });
 
-test("Kraken parser uses eight completed daily closes and excludes current candle", () => {
+test("Kraken parser uses completed daily closes and excludes current candle", () => {
   const result = parseKrakenOhlc(krakenBody, now);
-  assert.equal(result.completed_candle_count, 8);
-  assert.equal(result.first_completed_day, "2026-10-05");
+  assert.equal(result.completed_candle_count, 9);
+  assert.equal(result.first_completed_day, "2026-10-04");
   assert.equal(result.latest_completed_day, "2026-10-12");
   assert.equal(result.close_seven_days_prior_usd_per_btc, 80500);
   assert.equal(result.latest_completed_close_usd_per_btc, 81200);
@@ -36,14 +36,14 @@ test("Kraken parser rejects inconsistent OHLC values and API errors", () => {
 
 test("Kraken parser fails closed on missing daily dates", () => {
   const missing = JSON.parse(krakenBody);
-  missing.result.XXBTZUSD.splice(3, 1);
+  missing.result.XXBTZUSD.splice(4, 1);
   assert.throws(() => parseKrakenOhlc(missing, now), /daily gap/);
 });
 
 test("Hashrate parser calculates seven-day change and preserves candidate-only semantics", () => {
   const result = parseHashrateSeries(hashrateBody, now);
-  assert.equal(result.completed_daily_point_count, 8);
-  assert.equal(result.first_point_day_utc, "2026-10-05");
+  assert.equal(result.completed_daily_point_count, 9);
+  assert.equal(result.first_point_day_utc, "2026-10-04");
   assert.equal(result.latest_point_day_utc, "2026-10-12");
   assert.equal(result.value_seven_days_prior_eh_s, 995);
   assert.equal(result.latest_value_eh_s, 1002);
@@ -54,7 +54,7 @@ test("Hashrate parser calculates seven-day change and preserves candidate-only s
 
 test("Hashrate parser rejects gaps, duplicates and invalid values", () => {
   const gap = JSON.parse(hashrateBody);
-  gap.hashrates.splice(2, 1);
+  gap.hashrates.splice(4, 1);
   assert.throws(() => parseHashrateSeries(gap, now), /daily gap/);
   const duplicate = JSON.parse(hashrateBody);
   duplicate.hashrates[2].timestamp = duplicate.hashrates[1].timestamp;
