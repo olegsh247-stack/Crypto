@@ -327,3 +327,10 @@ The historical candidate change remains +8.6770% through 2026-10-12, but is not 
 Added a read-only Yahoo Finance candidate capture for ticker `DX-Y.NYB`, which Yahoo identifies as the ICE US Dollar Index. This is only a feasibility candidate: the reviewed ICE product page describes commercial delivery channels but does not establish an unauthenticated public feed, and the Yahoo chart response does not prove the exact ICE daily-close/publication timestamp needed for the 48-hour freshness contract. No canonical source priority or metric registry was changed. See `docs/BTC-DXY-CANDIDATE-REVIEW-2026-10-13.md`.
 
 The staging adapter validates and preserves a candidate five-observed-session change, but marks it `CANDIDATE_ONLY` and `BLOCKED_SOURCE_CONTRACT_REVIEW`. It cannot be used by the scenario readiness gate as accepted DXY input. The scenario remains `not_evaluable`.
+
+
+### DXY candidate capture — 2026-10-13
+
+Staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518) captured the Yahoo Finance `DX-Y.NYB` daily series (HTTP 200). Latest completed New York session was 2026-10-12, close 102.58; close five observed sessions earlier 102.17; candidate five-session change +0.4013%. Raw response SHA-256: `79eb39867cbc33ea1b5dffbfd8c3d7a9a37d9ee1d3f5c12a9fa2a052d1272170`; artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469).
+
+The result remains `CANDIDATE_ONLY`: third-party source authorization and the exact ICE daily close/publication timestamp are unresolved. No canonical source priority or metric registry was changed. ETF row-publication freshness and fee/subsidy semantics also remain blocked. The BTC scenario remains `not_evaluable`.
