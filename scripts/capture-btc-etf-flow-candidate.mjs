@@ -153,7 +153,7 @@ async function captureViaPublicMcp({ fetchImpl, now, retrievedAt }) {
   const listed = await callMcp(fetchImpl, "tools/list", {}, 2, sessionId);
   sessionId = listed.sessionId;
   const tools = listed.payload?.result?.tools;
-  if (!Array.isArray(tools)) throw new Error("mcp_tools_list_missing");
+  if (!Array.isArray(tools)) throw new Error(`mcp_tools_list_missing:${JSON.stringify(listed.payload).slice(0,1200)}`);
   const tool = tools.find(item => item.name === "get_asset_flows");
   if (!tool) throw new Error("mcp_get_asset_flows_missing");
   const schema = tool.inputSchema ?? {};
