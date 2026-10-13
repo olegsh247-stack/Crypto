@@ -154,3 +154,9 @@ This is a **proposal only**. The canonical metric registry has not been changed 
 
 Authoritative endpoint references: [Mempool REST API — GET Blocks (v1)](https://mempool.space/docs/api/rest#get-blocks-v1) describes individual block records with mining details in `extras`; [Bitcoin Developer Reference — block chain](https://developer.bitcoin.org/reference/block_chain.html) documents the previous-11-block median timestamp and two-hour future-time constraints.
 
+### 165-block / 144-block proposal run and output-label correction
+
+Staging run [#25](https://github.com/olegsh247-stack/Crypto/actions/runs/38357391827) passed the 165-block integrity gate: 165 unique blocks, no missing heights, no invalid fields, no subsidy mismatches or duplicate hashes, and zero timestamp-consensus violations. The candidate 144-block window was heights 971059–971202 with ratio `0.0063708074222222225` (about 0.637%). Artifact [ID 11793366272](https://github.com/olegsh247-stack/Crypto/actions/runs/38357391827/artifacts/11793366272), SHA-256 `833f9db6314e76770117b2882306824949df533f239c3fd7c0ea6532b3f98102`.
+
+Review found the validation-window aggregate fields still carried a `150_blocks` suffix after the window was expanded to 165. The values were computed from the 165-block window, but the labels were misleading. Commit `2e69b81e1d9248529468f8d17342b10e9e07371a` corrects those field names; a fresh staging run is required before treating the latest artifact as final evidence.
+
