@@ -105,3 +105,14 @@ This still does not resolve the repository contract mismatch: the exact rolling 
 Commit `d33d100cf19b02aa84ee15020ace26b59baade70` updates the capture script so the final staging gate is recorded inside `manifest.json` **before** the artifact upload step. The recorded gate combines required source captures, at least one successful ETF page capture, and the 150-block validation result; the script exit code is derived from that same recorded status. This avoids relying only on console output when reviewing an artifact.
 
 **Execution evidence is not yet confirmed here.** The code change is pushed to the PR branch, but the new staging run and its uploaded artifact still need to be retrieved and inspected before the 150-block gate can be called passed. This observability change does not approve any production ingestion or scenario input.
+
+## First 150-block staging execution — failure found and corrected
+
+The first execution of the wider gate was [BTC Public Source Staging #20](https://github.com/olegsh247-stack/Crypto/actions/runs/38356997453). It captured all ten 15-block pages and produced an artifact, but the required gate correctly failed because the implementation required timestamps to be monotonic by block height. That assumption is invalid for Bitcoin: consensus timestamps may move backwards relative to the immediately preceding block.
+
+The artifact reported 150 unique blocks, no missing heights, no invalid field rows, no subsidy mismatches and no duplicate hashes; the failure was the timestamp check. The candidate aggregate ratio in that failed artifact is diagnostic only and is not accepted.
+
+Commit `9261e934b0e5a914c54b938598c67ee03dfb495f` corrects the check: each block with 11 predecessors is checked against the median timestamp of those preceding 11 blocks, and all block timestamps are checked against Bitcoin's two-hour future-time bound. This is more faithful to Bitcoin consensus than strict monotonicity.
+
+**Status:** correction pushed; a fresh staging run and artifact review are still required. No production ingestion or scenario use is approved.
+
