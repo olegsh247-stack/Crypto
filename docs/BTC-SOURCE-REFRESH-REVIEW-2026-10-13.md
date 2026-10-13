@@ -99,3 +99,9 @@ The normalized rows are written to the staging artifact as `individual-block-win
 **Execution status at this commit:** implementation committed as `982fc772b708f98485e6c68a84a928dfbd5cad06`; the wider capture has **not yet been executed**, so no 150-block result is claimed. The earlier 15-block check remains the only executed individual-block sample (15/15 arithmetic checks passed). The next verification must run the staging workflow against this commit and review the raw page hashes, full height coverage, field checks and ratio before proceeding. If any block is missing or the subsidy check fails, do not use the aggregate candidate.
 
 This still does not resolve the repository contract mismatch: the exact rolling window/frequency and source-ID/runtime mapping must be reconciled before production acceptance. ETF flow and DXY remain blocked. No production database access or writes are authorized.
+
+## Staging gate artifact observability update
+
+Commit `d33d100cf19b02aa84ee15020ace26b59baade70` updates the capture script so the final staging gate is recorded inside `manifest.json` **before** the artifact upload step. The recorded gate combines required source captures, at least one successful ETF page capture, and the 150-block validation result; the script exit code is derived from that same recorded status. This avoids relying only on console output when reviewing an artifact.
+
+**Execution evidence is not yet confirmed here.** The code change is pushed to the PR branch, but the new staging run and its uploaded artifact still need to be retrieved and inspected before the 150-block gate can be called passed. This observability change does not approve any production ingestion or scenario input.
