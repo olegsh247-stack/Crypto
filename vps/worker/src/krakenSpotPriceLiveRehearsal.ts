@@ -74,63 +74,25 @@ async function main(): Promise<void> {
   const sql = `
 BEGIN;
 DO $rehearsal$
-DECLARE
-  first_count integer;
-  duplicate_count integer;
-  row_count integer;
-  found_value numeric;
-  found_unit text;
-  found_url text;
-  found_methodology text;
-  found_status text;
-  found_freshness text;
-  found_revision integer;
+DECLARE first_count integer; duplicate_count integer; row_count integer;
+  found_value numeric; found_unit text; found_url text; found_methodology text;
+  found_status text; found_freshness text; found_revision integer;
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM assets WHERE asset_id = ${asset}) THEN
-    RAISE EXCEPTION 'BTC live rehearsal blocked: BTC asset missing';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM metric_definitions WHERE metric_id = ${metric} AND default_unit = ${unit} AND value_type = 'numeric') THEN
-    RAISE EXCEPTION 'BTC live rehearsal blocked: canonical metric/unit missing';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM sources WHERE source_id = ${source} AND base_url = 'https://api.kraken.com/0/public/Trades') THEN
-    RAISE EXCEPTION 'BTC live rehearsal blocked: Kraken source missing';
-  END IF;
-  IF to_regclass('public.observations_btc_natural_key_revision_uq') IS NULL THEN
-    RAISE EXCEPTION 'BTC live rehearsal blocked: BTC natural-key index missing';
-  END IF;
+  IF NOT EXISTS (SELECT 1 FROM assets WHERE asset_id = ${asset}) THEN RAISE EXCEPTION 'BTC asset missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM metric_definitions WHERE metric_id = ${metric} AND default_unit = ${unit} AND value_type = 'numeric') THEN RAISE EXCEPTION 'BTC metric/unit missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM sources WHERE source_id = ${source} AND base_url = 'https://api.kraken.com/0/public/Trades') THEN RAISE EXCEPTION 'Kraken source missing'; END IF;
+  IF to_regclass('public.observations_btc_natural_key_revision_uq') IS NULL THEN RAISE EXCEPTION 'BTC natural-key index missing'; END IF;
+  ${insert}; GET DIAGNOSTICS first_count = ROW_COUNT;
+  IF first_count <> 1 THEN RAISE EXCEPTION 'expected first insert, got %', first_count; END IF;
+  ${insert}; GET DIAGNOSTICS duplicate_count = ROW_COUNT;
+  IF duplicate_count <> 0 THEN RAISE EXCEPTION 'expected duplicate no-op, got %', duplicate_count; END IF;
+  SELECT count(*) INTO row_count FROM observations WHERE metric_id=${metric} AND asset_id=${asset} AND source_id=${source} AND observed_at=${candidateAt}::timestamptz AND revision=${revision}::integer;
+  IF row_count <> 1 THEN RAISE EXCEPTION 'expected one logical row, found %', row_count; END IF;
+  SELECT value_numeric, unit, source_url, methodology, status, freshness, revision INTO found_value, found_unit, found_url, found_methodology, found_status, found_freshness, found_revision FROM observations WHERE metric_id=${metric} AND asset_id=${asset} AND source_id=${source} AND observed_at=${candidateAt}::timestamptz AND revision=${revision}::integer;
+  IF found_value <> ${value}::numeric OR found_unit <> ${unit} OR found_url <> ${sourceUrl} OR found_methodology <> ${methodology} OR found_status <> ${status} OR found_freshness <> ${freshness} OR found_revision <> ${revision}::integer THEN RAISE EXCEPTION 'stored observation differs from captured candidate'; END IF;
+  RAISE NOTICE 'BTC_KRAKEN_LIVE_CANDIDATE_REHEARSAL_OK first_insert=1 duplicate_insert=0 row_count=1 fields_match=1';
 END
 $rehearsal$;
-${insert};
-GET DIAGNOSTICS first_count = ROW_COUNT;
-${insert};
-GET DIAGNOSTICS duplicate_count = ROW_COUNT;
-DO $verify$
-DECLARE
-  row_count integer;
-  found_value numeric;
-  found_unit text;
-  found_url text;
-  found_methodology text;
-  found_status text;
-  found_freshness text;
-  found_revision integer;
-BEGIN
-  SELECT count(*) INTO row_count FROM observations
-  WHERE metric_id = ${metric} AND asset_id = ${asset} AND source_id = ${source}
-    AND observed_at = ${candidateAt}::timestamptz AND revision = ${revision}::integer;
-  IF row_count <> 1 THEN RAISE EXCEPTION 'BTC live rehearsal expected one logical row, found %', row_count; END IF;
-  SELECT value_numeric, unit, source_url, methodology, status, freshness, revision
-    INTO found_value, found_unit, found_url, found_methodology, found_status, found_freshness, found_revision
-  FROM observations
-  WHERE metric_id = ${metric} AND asset_id = ${asset} AND source_id = ${source}
-    AND observed_at = ${candidateAt}::timestamptz AND revision = ${revision}::integer;
-  IF found_value <> ${value}::numeric OR found_unit <> ${unit} OR found_url <> ${sourceUrl}
-    OR found_methodology <> ${methodology} OR found_status <> ${status}
-    OR found_freshness <> ${freshness} OR found_revision <> ${revision}::integer THEN
-    RAISE EXCEPTION 'BTC live rehearsal stored row differs from captured candidate';
-  END IF;
-END
-$verify$;
 ROLLBACK;
 SELECT 'BTC_KRAKEN_LIVE_CANDIDATE_REHEARSAL_OK' AS result;
 `;
