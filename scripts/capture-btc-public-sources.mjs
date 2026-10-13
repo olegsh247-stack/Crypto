@@ -65,6 +65,7 @@ async function capture({ name, metricId, sourceId, url, parse }) {
 let feeRows = null;
 let rewardRows = null;
 let latestTipHeight = null;
+let latestTipHash = null;
 
 async function sha256(value) {
   const bytes = new TextEncoder().encode(value);
@@ -151,6 +152,19 @@ await capture({
   }
 });
 
+await capture({
+  name: "mempool-tip-hash",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/blocks/tip/hash",
+  parse: body => {
+    const hash = body.trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(hash)) throw new Error("Mempool tip hash is invalid");
+    latestTipHash = hash;
+    return { tip_hash: hash, acceptance_status: "REFERENCE_ONLY" };
+  }
+});
+
 if (latestTipHeight !== null) {
   await capture({
     name: "mempool-individual-block-sample",
@@ -233,7 +247,7 @@ async function captureIndividualBlockWindow() {
     acceptance_status: "CANDIDATE_ONLY"
   };
   try {
-    if (latestTipHeight === null) throw new Error("Tip height unavailable; no fallback height is substituted.");
+    if (latestTipHeight === null || latestTipHash === null) throw new Error("Tip height/hash unavailable; no fallback anchor is substituted.");
     const targetCount = 165;
     const pageSize = 15;
     const pagesNeeded = Math.ceil(targetCount / pageSize);
@@ -246,17 +260,24 @@ async function captureIndividualBlockWindow() {
         headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "application/json" },
         signal: AbortSignal.timeout(20000)
       });
+      const pageRetrievedAt = new Date().toISOString();
+      const contentType = response.headers.get("content-type");
       const body = await response.text();
       const digest = await sha256(body);
       const file = `mempool-block-window-page-${String(page + 1).padStart(2, "0")}.raw`;
       await writeFile(join(outDir, file), body, "utf8");
+      pageEvidence.push({ page: page + 1, requested_url: url, requested_start_height: startHeight,
+        http_status: response.status, content_type: contentType, row_count: null, returned_heights: [],
+        retrieved_at: pageRetrievedAt, raw_file: file, raw_payload_sha256: digest });
       if (!response.ok) throw new Error(`HTTP ${response.status} for block page starting at ${startHeight}`);
+      if (!contentType || !contentType.toLowerCase().includes("json")) throw new Error(`Unexpected content type for page ${startHeight}`);
       const rows = JSON.parse(body);
-      if (!Array.isArray(rows) || rows.length === 0) throw new Error(`No block rows for page starting at ${startHeight}`);
-      pageEvidence.push({
-        page: page + 1, requested_start_height: startHeight, row_count: rows.length,
-        retrieved_at: new Date().toISOString(), raw_file: file, raw_payload_sha256: digest
-      });
+      if (!Array.isArray(rows) || rows.length !== pageSize) throw new Error(`Expected ${pageSize} rows for page ${startHeight}`);
+      const returnedHeights = rows.map(row => Number(row?.height));
+      const expectedPageHeights = Array.from({ length: pageSize }, (_, i) => startHeight - i);
+      if (new Set(returnedHeights).size !== pageSize || expectedPageHeights.some(height => !returnedHeights.includes(height))) throw new Error(`Unexpected or duplicate heights in page starting at ${startHeight}`);
+      pageEvidence.at(-1).row_count = rows.length;
+      pageEvidence.at(-1).returned_heights = returnedHeights;
       for (const row of rows) {
         const height = Number(row?.height);
         const extras = row && typeof row.extras === "object" && row.extras !== null ? row.extras : null;
@@ -264,7 +285,7 @@ async function captureIndividualBlockWindow() {
         const reward = Number(extras?.reward);
         const timestamp = Number(row?.timestamp);
         const id = row?.id ?? row?.hash ?? null;
-        if (!Number.isSafeInteger(height) || height <= 0) continue;
+        if (!Number.isSafeInteger(height) || height <= 0) throw new Error("Block row has invalid height");
         const normalized = {
           height, id, timestamp,
           observed_at: Number.isFinite(timestamp) ? new Date(timestamp * 1000).toISOString() : null,
@@ -276,7 +297,10 @@ async function captureIndividualBlockWindow() {
             && Number.isFinite(fees) && fees >= 0 && Number.isFinite(reward) && reward > fees
         };
         const existing = byHeight.get(height);
-        if (existing && existing.id !== normalized.id) throw new Error(`Conflicting block hashes for height ${height}`);
+        if (existing) {
+          if (existing.id !== normalized.id) throw new Error(`Conflicting block hashes for height ${height}`);
+          throw new Error(`Duplicate block height ${height} across pages`);
+        }
         byHeight.set(height, normalized);
       }
     }
@@ -287,7 +311,12 @@ async function captureIndividualBlockWindow() {
     const missingHeights = [];
     for (let h = expectedMin; h <= expectedMax; h++) if (!byHeight.has(h)) missingHeights.push(h);
     const invalidRows = blocks.filter(row => !row.fields_valid);
-    const subsidyMismatches = blocks.filter(row => row.derived_subsidy_raw !== 312500000);
+    const expectedSubsidySats = height => {
+      const halvings = Math.floor(height / 210000);
+      if (halvings >= 64) return 0;
+      return Math.floor(5000000000 / (2 ** halvings));
+    };
+    const subsidyMismatches = blocks.filter(row => row.derived_subsidy_raw !== expectedSubsidySats(row.height));
     const duplicateHashes = blocks.length - new Set(blocks.map(row => row.id)).size;
     // Bitcoin block timestamps are not required to increase strictly with height.
     // Validate the consensus median-time-past rule for rows with 11 predecessors,
@@ -319,9 +348,21 @@ async function captureIndividualBlockWindow() {
       ? candidateMetricBlocks.reduce((sum, row) => sum + row.derived_subsidy_raw, 0) : null;
     const candidateMetricRatio = candidateMetricFeesRaw !== null && candidateMetricSubsidyRaw > 0
       ? candidateMetricFeesRaw / candidateMetricSubsidyRaw : null;
+    const anchorRecheck = { checked_at: new Date().toISOString(), status: "NOT_CHECKED" };
+    const heightResponse = await fetch("https://mempool.space/api/blocks/tip/height", { headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "text/plain" }, signal: AbortSignal.timeout(20000) });
+    const heightBody = await heightResponse.text();
+    const hashResponse = await fetch("https://mempool.space/api/blocks/tip/hash", { headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "text/plain" }, signal: AbortSignal.timeout(20000) });
+    const hashBody = await hashResponse.text();
+    anchorRecheck.current_tip_height_http_status = heightResponse.status;
+    anchorRecheck.current_tip_hash_http_status = hashResponse.status;
+    anchorRecheck.current_tip_height = Number(heightBody.trim());
+    anchorRecheck.current_tip_hash = hashBody.trim().toLowerCase();
+    anchorRecheck.initial_tip_height = latestTipHeight;
+    anchorRecheck.initial_tip_hash = latestTipHash;
+    anchorRecheck.status = heightResponse.ok && hashResponse.ok && anchorRecheck.current_tip_height === latestTipHeight && anchorRecheck.current_tip_hash === latestTipHash ? "PASS" : "FAIL_ANCHOR_CHANGED_OR_UNAVAILABLE";
     const passed = blocks.length === targetCount && missingHeights.length === 0 && invalidRows.length === 0
       && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsConsensusValid
-      && validationWindowRatio !== null && candidateMetricRatio !== null;
+      && anchorRecheck.status === "PASS" && validationWindowRatio !== null && candidateMetricRatio !== null;
     const review = {
       status: passed ? "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY" : "WIDE_WINDOW_VALIDATION_FAILED",
       target_block_count: targetCount, unique_block_count: blocks.length,
@@ -329,8 +370,10 @@ async function captureIndividualBlockWindow() {
       expected_min_height: expectedMin, expected_max_height: expectedMax,
       missing_height_count: missingHeights.length, missing_heights: missingHeights,
       invalid_field_rows: invalidRows.length, subsidy_mismatch_rows: subsidyMismatches.length,
-      expected_current_subsidy_raw: 312500000, duplicate_hash_count: duplicateHashes,
+      subsidy_validation_method: "Expected subsidy is derived from block height using the 210,000-block halving schedule.",
+      duplicate_hash_count: duplicateHashes,
       timestamp_consensus_valid: timestampsConsensusValid,
+      anchor_recheck: anchorRecheck,
       median_time_past_violation_count: medianTimePastViolations.length,
       median_time_past_violations: medianTimePastViolations,
       future_timestamp_count: futureTimestampRows.length,
@@ -367,7 +410,7 @@ async function captureIndividualBlockWindow() {
       review,
       normalized_file: "individual-block-window.json",
       normalized_file_sha256: await sha256(JSON.stringify({ review, blocks }, null, 2) + "\n"),
-      note: "Last 150 individual blocks are checked by exact height and block hash. Candidate metric only; no ingestion or scenario writes."
+      note: "A 165-block read-only validation sample is checked by exact height and block hash; the proposed 144-block metric slice remains candidate-only. No ingestion or scenario writes."
     });
   } catch (error) {
     item.error = error instanceof Error ? error.message : String(error);
