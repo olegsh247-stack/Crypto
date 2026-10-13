@@ -43,3 +43,18 @@ Keep these source IDs distinct:
 4. Do not calculate or persist live BTC scenario/monitoring state until all required inputs pass freshness/provenance gates and the deterministic scoring rule is reviewed.
 
 No production database was accessed or modified. No scenario/monitoring state was written, no published probabilities were changed, and no other assets were added.
+
+## Explicit live-capture rehearsal (added 2026-10-13)
+
+Added `vps/worker/src/krakenSpotPriceLiveRehearsal.ts` and `.github/workflows/btc-kraken-live-candidate-rehearsal.yml` as a separately invoked path. It is intentionally not part of scheduled worker ingestion or ordinary CI:
+
+- The workflow requires the exact manual confirmation `RUN_ROLLBACK_ONLY`.
+- It creates its own disposable `crypto_test` PostgreSQL instance bound to loopback and applies repository migrations.
+- The runner validates the database URL before making the external Kraken request. The script refuses any non-loopback PostgreSQL host or database name not ending in `_test`.
+- It captures the current public Kraken XBT/USD Trades response, validates freshness and provenance, then tries the canonical observation insert twice in one transaction.
+- Assertions verify the first insert, duplicate no-op, one logical row, and exact persisted candidate fields. The transaction ends with `ROLLBACK`; the workflow then verifies no Kraken BTC observations remain before deleting the disposable database.
+- Logs include the candidate price, exchange observation time, retrieval time, freshness, source URL, pair key and raw response SHA-256, but not the full raw payload.
+
+The live rehearsal has **not yet been executed**. The manual workflow is on the open PR branch and requires the workflow file to be available from the repository's default branch before GitHub can dispatch it. No live Kraken price or live database-write test is claimed until a successful workflow run exists.
+
+This remains rehearsal-only: no production DB credentials are used, no production observations are written, scheduled ingestion remains unchanged, and BTC scenario/monitoring state and published probabilities remain untouched.
