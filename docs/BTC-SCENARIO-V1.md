@@ -236,3 +236,33 @@ The target VPS API and disposable-PostgreSQL Build Rehearsal now verify the publ
 These are target API contract checks against disposable PostgreSQL. They do not prove that the currently serving public API is on the VPS, do not repair the historical duplicate/stale production observations, and do not authorize a scenario-state or event write.
 
 The current factor-to-input and event acceptance requirements are documented in [BTC Monitoring Readiness Matrix v1](./BTC-MONITORING-READINESS-MATRIX.md). Remaining BTC blockers are source-verified fresh observations, reviewed metric aggregation windows, and explicit confirmation/invalidation conditions before any live state/event is persisted.
+
+
+## Reproducible evaluation gate — 2026-10-13
+
+The deterministic rule implementation is present in `scripts/btc-scenario-direction.mjs` (`BTC-Scenario-Rule-v1`) and is covered by `scripts/btc-scenario-direction.test.mjs`. The read-only readiness gate is implemented in `vps/shared/src/btc-scenario-readiness.ts` and covered by `scripts/btc-scenario-readiness.test.mjs`. These tests prove rule behavior and fail-closed input checks using fixtures; they are not evidence that today's real input set is complete.
+
+### Current result: NOT EVALUABLE
+
+The latest documented source review, `docs/BTC-SOURCE-REFRESH-REVIEW-2026-10-13.md`, explicitly keeps all captured candidates out of production ingestion. The Kraken spot candidate has now also passed a real, rollback-only PostgreSQL rehearsal, but that validates capture and storage contract only. It does not promote the candidate to an accepted scenario input.
+
+| Required input | Current decision | Why it cannot enter the rule yet |
+|---|---|---|
+| Spot-price return, 7 days | Candidate source path validated; historical window still needs accepted, traceable points and logical-key/source contract review | One fresh point is not a 7-day return series |
+| ETF net flow, 5 sessions | Blocked | Farside returned HTTP 403; TFTC mirror is stale and its mixed lineage/revision semantics are unresolved |
+| Hashrate change, 7 days | Candidate only | Daily series bucket/smoothing semantics and stored metric mapping remain to be accepted |
+| DXY change, 5 days | Blocked | No canonical endpoint and daily-close timestamp convention accepted |
+| Fee/subsidy ratio | Blocked / context only | Averaged fees/rewards endpoints were rejected as proof of individual-block values; 165-block staging validation passed, but the proposed 144-block metric window remains candidate-only until its metric contract is accepted |
+
+The readiness gate therefore must return `not_evaluable` for the current accepted-input set. Do not pass hand-entered values, old test fixtures, or candidate-only captures as though they were accepted live observations. In particular, do not use the previously documented illustrative October 12 fixture as today's evaluation.
+
+### Next actions, in order
+
+1. Finalize the fee/subsidy metric contract from the validated individual-block staging artifact: exact block window, numerator/denominator units, timestamp convention, and freshness/aggregation meaning. Keep it candidate-only until reviewed.
+2. Resolve a canonical ETF flow source with current rows, publication timestamps, lineage, and revision semantics; missing/403 values are not zero.
+3. Select and document a canonical DXY endpoint and daily-close convention.
+4. Accept the price and hashrate historical series contracts and compare candidate logical keys against the repository's canonical schema/source registry using a read-only rehearsal.
+5. Assemble an explicit immutable input manifest with source URLs, observed/retrieved timestamps, units, revisions, and payload hashes. Run readiness first; run `BTC-Scenario-Rule-v1` only if readiness returns `ready_for_rule_evaluation`.
+6. Save the evaluation output as a review artifact only. Do not write `scenario_states`, `monitoring_events`, alter published probabilities, or connect scheduled production ingestion as part of this step.
+
+**Decision:** the BTC scenario definition and deterministic rule are ready for a controlled evaluation, but the current real-world input set is not. The honest result is `not_evaluable`; Base remains the published research baseline, not a fresh evaluated state.
