@@ -299,3 +299,11 @@ Read-only staging run [#38362350907](https://github.com/olegsh247-stack/Crypto/a
 - Mempool daily hashrate candidate through 2026-10-12: 1,028.5949 EH/s; seven days earlier: 946.4696 EH/s; candidate change: +8.6770%. Raw payload SHA-256: `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1`.
 
 These calculations are reproducible candidate values, **not accepted rule inputs**. Kraken OHLC uses `market_kraken`, while canonical `market.spot_price` priority is `market.kraken`; do not alias the IDs without an explicit source contract decision. Mempool bucket/smoothing semantics also remain unconfirmed. ETF and DXY remain blocked. The scenario stays `not_evaluable`; no rule evaluation, production write, scenario/monitoring persistence, or probability change was performed.
+
+### ETF flow source gate — CryptoETF.today candidate adapter
+
+Added a read-only candidate adapter and deterministic tests for CryptoETF.today `/api/v1/flows/btc`. The provider documents daily net flows in USD millions, UTC flow dates, 30 days of free-tier history, and T+1 publication with possible same-day revision. The response's `updatedAt` is a response-level timestamp and is not accepted as the latest row's publication timestamp. The provider's public page reports data for 2026-10-09 published on 2026-10-10 05:47 UTC; at the 2026-10-13 review, that display is stale relative to the registry's 36-hour gate.
+
+Implementation: `scripts/capture-btc-etf-flow-candidate.mjs`, tests: `scripts/capture-btc-etf-flow-candidate.test.mjs`, review: `docs/BTC-ETF-FLOW-CANDIDATE-REVIEW-2026-10-13.md`. The staging workflow uses optional secret `CRYPTOETF_API_KEY`; absent credentials result in `BLOCKED_NO_CREDENTIAL` and no request. The current API row schema does not provide per-row publication timestamps, so freshness remains blocked unless that evidence is added or a conservative method is explicitly approved.
+
+No canonical source priority or metric registry was changed. ETF flow remains an unresolved input; scenario remains `not_evaluable`.
