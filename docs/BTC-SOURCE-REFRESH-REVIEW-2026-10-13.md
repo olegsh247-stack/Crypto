@@ -189,3 +189,33 @@ A repository-only cross-check confirmed that the JSON metric registry points `ma
 A new idempotent migration, `infrastructure/postgres/migrations/2026-10-13-btc-kraken-trade-source.sql`, now registers `market.kraken` explicitly for the public Kraken Trades endpoint. It documents the XBTUSD request, raw-pair/provenance retention, and XBT-to-BTC normalization boundary. It does not insert observations or rename/remove `market_kraken`.
 
 **Scope and status:** repository metadata alignment prepared; migration has not been applied to production, and no production database was accessed. The runtime adapter/logical-key comparison remains a separate acceptance gate. This change does not approve the captured price for ingestion.
+
+
+## Fresh CI verification and alternate ETF-source screening — 2026-10-13
+
+### Latest branch verification
+
+The documentation update for the BTC scenario gate passed the following checks:
+
+- [BTC Scenario Readiness Gate #16](https://github.com/olegsh247-stack/Crypto/actions/runs/38361313073) — **SUCCESS**.
+- [Validate VPS Release Workflow #61](https://github.com/olegsh247-stack/Crypto/actions/runs/38361313061) — **SUCCESS**.
+- [Seed observation idempotency rehearsal #38](https://github.com/olegsh247-stack/Crypto/actions/runs/38361313064) — **SUCCESS**.
+- [VPS API Build Rehearsal #642](https://github.com/olegsh247-stack/Crypto/actions/runs/38361313165) — **SUCCESS**, including clean disposable PostgreSQL migrations and the API/worker/evidence/history E2E checks.
+
+These are repository and isolated-CI checks, not production database access or live scenario acceptance.
+
+### Additional ETF provider screening
+
+Two additional public-facing provider documentations were reviewed as potential leads, not as accepted inputs:
+
+- [CryptoETF.today API documentation](https://docs.cryptoetf.today/) describes daily per-asset flows in USD millions, a free API key, a 30-day history limit, and a publication/update timestamp. Its public dashboard reports a more recent flow date than the trimmed sample shown in the API overview. This discrepancy means the exact authenticated API response, data-through date, publication time, missing-fund treatment, and revision policy must be checked together before accepting the source. No API key is present in this repository or CI, so no authenticated request was made.
+- [Newhedge ETF flows API documentation](https://docs.newhedge.io/api/spot-bitcoin-etf-flows-btc) documents daily data and a seven-day revision window, but requires an API token. It also describes a BTC-denominated metric converted at a reference price, which is not automatically interchangeable with the project's canonical `USD million/day` metric. The USD endpoint is separately documented at [Newhedge USD flow API](https://prod-docs.newhedge.io/api/spot-bitcoin-etf-flows). No token is available in this workflow, so no authenticated request was made.
+
+**Decision:** neither provider is promoted to canonical source. They are leads for source acceptance review only. Do not add a placeholder credential, scrape a dashboard as though it were an API contract, or infer missing fund disclosures as zero. The existing TFTC mirror remains unapproved and stale in the captured evidence; Farside's HTTP 403 remains a failed capture, not zero flow.
+
+### Next acceptance gate
+
+1. Acquire a permitted current ETF series from an explicitly selected provider, with source ID, data-through date, publication/retrieval times, units, per-fund coverage, revision policy and raw-payload hash.
+2. Keep DXY blocked until an actual licensed/usable source and daily-close timestamp convention are available; ICE remains the index administrator, but the reviewed product documentation does not establish an unauthenticated public feed.
+3. Reconcile the source/metric IDs and historical series needed for the 7-day price and hashrate-change signals before computing directional inputs.
+4. Only then run the read-only readiness gate and deterministic BTC rule with a fixed input manifest. No production writes, scenario-state/monitoring persistence, or probability changes.
