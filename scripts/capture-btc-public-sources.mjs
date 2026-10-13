@@ -464,13 +464,14 @@ console.log(JSON.stringify({
   })),
   fee_subsidy_review: manifest.fee_subsidy_review,
   individual_block_review: manifest.individual_block_review,
+  individual_block_window_review: manifest.individual_block_window_review,
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w", "mempool-tip-height", "mempool-individual-block-sample"];
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w", "mempool-tip-height", "mempool-individual-block-sample", "mempool-individual-block-window"];
 const requiredCaptureFailed = requiredNames.some(name =>
   !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
 const etfCaptureSucceeded = manifest.sources.some(source =>
   ["farside-btc-etf-page", "tftc-btc-etf-json-candidate"].includes(source.name)
   && source.status === "CAPTURED");
-if (requiredCaptureFailed || !etfCaptureSucceeded) process.exitCode = 1;
+if (requiredCaptureFailed || !etfCaptureSucceeded || manifest.individual_block_window_review?.status !== "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY") process.exitCode = 1;
