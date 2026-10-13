@@ -24,8 +24,10 @@ jobs:
         with:
           node-version: 22
       - name: Require explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "${{ inputs.confirmation }}" = "RUN_ROLLBACK_ONLY"
+          test "$CONFIRMATION" = "RUN_ROLLBACK_ONLY"
           echo "Explicit rollback-only confirmation received."
       - name: Build VPS shared runtime
         working-directory: vps/shared
