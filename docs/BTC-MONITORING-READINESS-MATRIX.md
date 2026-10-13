@@ -67,3 +67,12 @@ The VPS API now returns a read-only `scenario_readiness` object for BTC, compute
 ## Provenance/unit validation hardening — 2026-10-12
 
 The readiness gate now requires every selected observation to have an HTTPS source URL, a source ID registered in `sources`, an explicit observation unit matching the readiness contract, and a canonical `metric_definitions.default_unit` that also matches that contract, plus a current freshness marker and an in-window non-future timestamp. Canonical units are `USD/BTC`, `EH/s`, `ratio`, `index`, and `USD million/day` for the five required input families. The API passes source-registry and unit metadata into the shared gate; the web panel explains registry and unit blockers. Unit tests cover an unregistered source, an observation unit mismatch and metric-registry unit drift. This is validation only; it does not fetch, insert, update or delete observations.
+
+
+## Fee-market input contract review — 2026-10-13
+
+The canonical metric registry specifies `security.fee_subsidy_ratio` with `frequency: 1d`. The read-only candidate capture therefore recommends a completed UTC calendar day as the persisted observation window; a rolling 144-block value is retained only as a diagnostic until the registry is deliberately revised.
+
+The candidate for 2026-10-12 used 152 blocks (heights 971006–971157), with 286,069,738 sats in fees divided by 47,500,000,000 sats in expected subsidy, yielding `0.0060225208`. The same capture's rolling 144-block diagnostic was `0.0057881996`. These values are evidence candidates only, not accepted observations or a monitoring signal. See [BTC UTC-Day Candidate Review](BTC-UTC-DAY-CANDIDATE-REVIEW-2026-10-13.md) and [BTC source contract](BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md).
+
+No monitoring signal/event, scenario state, score, probability or database row was created or changed. Fee-Market Strength remains blocked until the canonical contract and input acceptance gates pass.
