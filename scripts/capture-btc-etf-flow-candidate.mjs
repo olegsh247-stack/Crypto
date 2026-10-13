@@ -125,7 +125,9 @@ async function callMcp(fetchImpl, method, params, id, sessionId) {
     signal: AbortSignal.timeout(20_000)
   });
   const nextSessionId = response.headers.get("mcp-session-id") ?? sessionId;
+  const contentType = response.headers.get("content-type") ?? "";
   const payload = await readJsonRpcResponse(response);
+  if (!payload) throw new Error(`mcp_empty_response:${method}:http_${response.status}:${contentType}`);
   if (payload?.error) throw new Error(`mcp_${payload.error.code ?? "error"}:${payload.error.message ?? "unknown"}`);
   return { payload, sessionId: nextSessionId };
 }
