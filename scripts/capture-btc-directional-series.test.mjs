@@ -48,7 +48,9 @@ test("Hashrate parser calculates seven-day change and preserves candidate-only s
   assert.equal(result.value_seven_days_prior_eh_s, 995);
   assert.equal(result.latest_value_eh_s, 1002);
   assert.equal(result.seven_day_change, 1002 / 995 - 1);
-  assert.match(result.bucket_timestamp_convention, /NOT YET AUTHORITATIVELY CONFIRMED/);
+  assert.match(result.bucket_timestamp_convention, /daily average hashrates/);
+  assert.match(result.bucket_timestamp_convention, /not interpreted as an instantaneous measurement/);
+  assert.match(result.bucket_timestamp_convention, /Current UTC date is excluded/);
   assert.equal(result.acceptance_status, "CANDIDATE_ONLY");
 });
 
