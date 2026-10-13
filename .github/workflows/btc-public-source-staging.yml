@@ -32,7 +32,7 @@ jobs:
         run: node scripts/capture-btc-public-sources.mjs
       - name: Capture historical BTC price and hashrate candidate series
         run: node scripts/capture-btc-directional-series.mjs
-      - name: Capture ETF flow candidate (uses secret only if configured)
+      - name: Capture ETF flow candidate (public MCP; REST key optional)
         env:
           CRYPTOETF_API_KEY: ${{ secrets.CRYPTOETF_API_KEY }}
         run: node scripts/capture-btc-etf-flow-candidate.mjs
