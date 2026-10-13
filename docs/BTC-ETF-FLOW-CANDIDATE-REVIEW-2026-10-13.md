@@ -60,3 +60,9 @@ Artifact archive includes the raw source payloads. These values remain candidate
 The first live attempt against the provider's documented no-key MCP endpoint `https://mcp.cryptoetf.today/api/mcp` returned HTTP 200 with `text/event-stream` but an empty response body during `initialize`. The capture therefore records `BLOCKED_MCP`; no ETF rows were accepted. The adapter's mocked transport tests pass, but the live public MCP protocol path is not yet verified. Optional authenticated REST remains available if a key is later configured.
 
 This external-source failure no longer fails the whole staging workflow: it is retained as a blocked artifact so the independent Kraken/hashrate capture and deterministic tests can still complete. No metric registry or source-priority changes were made.
+
+## Retest after fail-closed handling — 2026-10-13 08:35 UTC
+
+Staging [run #38370320501](https://github.com/olegsh247-stack/Crypto/actions/runs/38370320501) completed successfully, with all **12 source-capture parser tests passing** (6 directional-series tests + 6 ETF candidate tests) and artifact [11798698186](https://github.com/olegsh247-stack/Crypto/actions/runs/38370320501/artifacts/11798698186). The ETF result remains explicitly `BLOCKED_MCP` because the live public endpoint returned HTTP 200 `text/event-stream` with an empty body at initialization. The workflow now records this as a blocked external candidate instead of failing the independent BTC staging job.
+
+No ETF values were accepted. The REST path remains available if a key is configured, but no key was supplied. The scenario remains `not_evaluable`.
