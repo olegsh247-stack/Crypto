@@ -48,6 +48,7 @@ test("ETF parser never fills absent trading dates with zero", () => {
 
 test("capture without a key uses the public read-only MCP endpoint", async () => {
   const calls = [];
+  const mcpBody = JSON.stringify({ ...JSON.parse(body), asset: undefined });
   const fetchImpl = async (url, options) => {
     calls.push({ url, options });
     const request = JSON.parse(options.body);
@@ -60,7 +61,7 @@ test("capture without a key uses the public read-only MCP endpoint", async () =>
     }
     assert.equal(request.method, "tools/call");
     assert.deepEqual(request.params.arguments, { asset: "btc" });
-    return new Response(JSON.stringify({ jsonrpc: "2.0", id: 3, result: { content: [{ type: "text", text: body }] } }), { status: 200, headers: { "content-type": "application/json", "mcp-session-id": "test-session" } });
+    return new Response(JSON.stringify({ jsonrpc: "2.0", id: 3, result: { content: [{ type: "text", text: mcpBody }] } }), { status: 200, headers: { "content-type": "application/json", "mcp-session-id": "test-session" } });
   };
   const result = await capture({ apiKey: "", fetchImpl, now });
   assert.equal(calls.length, 4);
@@ -68,7 +69,7 @@ test("capture without a key uses the public read-only MCP endpoint", async () =>
   assert.equal(calls.every(call => !call.options.headers.authorization), true);
   assert.equal(result.capture_status, "PASS_CANDIDATE_ONLY");
   assert.equal(result.evidence.transport, "MCP Streamable HTTP, tools/call get_asset_flows");
-  assert.equal(result.parsed.freshness_gate, "BLOCKED");
+  assert.equal(result.parsed.freshness_gate, "BLOCKED");\n  assert.equal(result.parsed.source_url, "https://mcp.cryptoetf.today/api/mcp");
   assert.equal(result.production_database_accessed, false);
   assert.equal(result.production_writes_performed, false);
 });
