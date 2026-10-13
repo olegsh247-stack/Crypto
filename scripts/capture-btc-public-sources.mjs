@@ -442,9 +442,25 @@ await capture({
   }
 });
 
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w", "mempool-tip-height", "mempool-individual-block-sample", "mempool-individual-block-window"];
+const requiredCaptureFailed = requiredNames.some(name =>
+  !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
+const etfCaptureSucceeded = manifest.sources.some(source =>
+  ["farside-btc-etf-page", "tftc-btc-etf-json-candidate"].includes(source.name)
+  && source.status === "CAPTURED");
+const wideWindowPassed = manifest.individual_block_window_review?.status === "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY";
+manifest.staging_gate = {
+  status: !requiredCaptureFailed && etfCaptureSucceeded && wideWindowPassed ? "PASS_CANDIDATE_ONLY" : "FAIL",
+  required_capture_failed: requiredCaptureFailed,
+  etf_capture_succeeded: etfCaptureSucceeded,
+  wide_window_validation_passed: wideWindowPassed,
+  required_capture_names: requiredNames,
+  note: "A passing staging gate validates capture completeness only; it does not approve production ingestion or scenario use."
+};
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
+  staging_gate: manifest.staging_gate,
   sources: manifest.sources.map(({
     name, status, http_status, error, retrieved_at, body_sha256,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
@@ -468,10 +484,4 @@ console.log(JSON.stringify({
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w", "mempool-tip-height", "mempool-individual-block-sample", "mempool-individual-block-window"];
-const requiredCaptureFailed = requiredNames.some(name =>
-  !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
-const etfCaptureSucceeded = manifest.sources.some(source =>
-  ["farside-btc-etf-page", "tftc-btc-etf-json-candidate"].includes(source.name)
-  && source.status === "CAPTURED");
-if (requiredCaptureFailed || !etfCaptureSucceeded || manifest.individual_block_window_review?.status !== "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY") process.exitCode = 1;
+if (manifest.staging_gate.status !== "PASS_CANDIDATE_ONLY") process.exitCode = 1;
