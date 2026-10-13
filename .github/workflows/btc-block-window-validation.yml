@@ -15,6 +15,12 @@ on:
       - "scripts/btc-block-window-validation.test.mjs"
       - ".github/workflows/btc-block-window-validation.yml"
   workflow_dispatch:
+    inputs:
+      run_live_capture:
+        description: "Run a read-only capture from public Mempool.space endpoints and retain evidence as an artifact"
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -29,3 +35,14 @@ jobs:
         run: node --check scripts/capture-btc-block-window.mjs
       - name: Run deterministic tests
         run: node --test scripts/btc-block-window-validation.test.mjs
+      - name: Run read-only live BTC block-window capture
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live_capture }}
+        run: node scripts/capture-btc-block-window.mjs
+      - name: Upload live capture evidence
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_live_capture }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-block-window-review-${{ github.run_id }}
+          path: tmp/btc-block-window-review/
+          if-no-files-found: warn
+          retention-days: 14
