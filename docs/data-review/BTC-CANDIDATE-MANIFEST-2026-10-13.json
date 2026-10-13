@@ -121,7 +121,7 @@
     "reason": "A current production read-only observation/source-registry audit has not been authorized/performed in this capture workflow; no duplicate comparison is claimed."
   },
   "disposition": "not_evaluable",
-  "next_gate": "Resolve source-ID/runtime mapping and formal metric formula/window; run a broader individual-block historical validation; then perform a separately scoped read-only duplicate audit. Keep ETF and DXY blocked.",
+  "next_gate": "Execute the newly required 150-individual-block staging validation, review its artifact and contract gates, then reconcile source/metric IDs and ratio window before any read-only duplicate audit. ETF and DXY remain blocked.",
   "fee_subsidy_review": {
     "status": "BLOCKED_AGGREGATE_SEMANTICS",
     "fee_rows": 834,
@@ -190,5 +190,32 @@
     "source_id_mismatch": "JSON source registry uses market.kraken; SQL migration infrastructure/postgres/migrations/2026-10-11-market-data-sources.sql registers market_kraken. Do not assume these identifiers are interchangeable; reconcile the runtime adapter and DB source ID before ingestion.",
     "production_database_accessed": false,
     "production_writes_performed": false
+  },
+  "individual_block_window_review": {
+    "status": "IMPLEMENTED_NOT_YET_EXECUTED",
+    "target_block_count": 150,
+    "request_strategy": "10 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each, stepping backward by 15 heights",
+    "normalized_output": "individual-block-window.json",
+    "raw_page_sha256s_recorded": true,
+    "checks": [
+      "exact height coverage",
+      "conflicting hashes at same height",
+      "unique block hashes",
+      "required hash/timestamp/fee/reward fields",
+      "monotonic timestamps",
+      "current subsidy consistency",
+      "sum(totalFees)/sum(reward-totalFees) over the same validated blocks"
+    ],
+    "required_staging_gate": true,
+    "production_approved": false,
+    "commit": "982fc772b708f98485e6c68a84a928dfbd5cad06",
+    "execution_status": "NOT_RUN",
+    "unresolved": [
+      "run the staging capture against the updated script",
+      "confirm endpoint field/unit contract",
+      "reconcile ratio window/frequency with metric registry and SQL migration",
+      "reconcile source ID/runtime mapping",
+      "perform separately scoped read-only duplicate dry-run"
+    ]
   }
 }
