@@ -192,7 +192,7 @@
     "production_writes_performed": false
   },
   "individual_block_window_review": {
-    "status": "IMPLEMENTED_NOT_YET_EXECUTED_165_BLOCK_VALIDATION",
+    "status": "IMPLEMENTED_LABEL_CORRECTION_PENDING_RERUN",
     "target_block_count": 165,
     "request_strategy": "11 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each; latest 144 blocks are the proposed metric window and 21 earlier blocks provide timestamp-consensus context.",
     "normalized_output": "individual-block-window.json",
@@ -208,17 +208,17 @@
     ],
     "required_staging_gate": true,
     "production_approved": false,
-    "commit": "9e0e60dbc4717396262a0a8075da4407408e1087",
-    "execution_status": "PENDING_RUN_AFTER_WINDOW_CONTRACT_REFINEMENT",
+    "commit": "2e69b81e1d9248529468f8d17342b10e9e07371a",
+    "execution_status": "RUN_25_PASS_CANDIDATE_BUT_VALIDATION_WINDOW_LABELS_NEED_CORRECTION",
     "unresolved": [
-      "verify the 165-block staging run and candidate 144-block ratio",
+      "verify fresh staging artifact after correcting validation-window output labels",
       "confirm endpoint field/unit contract against authoritative API documentation",
       "approve or revise the proposed 144-block metric window and daily cadence",
       "reconcile source ID/runtime mapping by data domain",
       "perform separately scoped read-only duplicate dry-run"
     ],
     "unique_block_count": 150,
-    "first_height": 971053,
+    "first_height": 971038,
     "last_height": 971202,
     "expected_min_height": 971053,
     "expected_max_height": 971202,
@@ -232,11 +232,16 @@
     "total_fees_raw": 295212981,
     "total_subsidy_raw": 46875000000,
     "window_fee_to_subsidy_ratio": 0.006297876928,
-    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357233407",
-    "artifact_id": 11792344913,
-    "artifact_sha256": "9b3019625b2f150e7c80cbe533dafbf0dec431e73d09954a4ea242edfbe649f0",
+    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357391827",
+    "artifact_id": 11793366272,
+    "artifact_sha256": "833f9db6314e76770117b2882306824949df533f239c3fd7c0ea6532b3f98102",
     "candidate_metric_window_blocks": 144,
-    "candidate_metric_status": "PROPOSED_NOT_APPROVED"
+    "candidate_metric_status": "PROPOSED_NOT_APPROVED",
+    "candidate_metric_first_height": 971059,
+    "candidate_metric_last_height": 971202,
+    "candidate_metric_total_fees_raw": 286686334,
+    "candidate_metric_total_subsidy_raw": 45000000000,
+    "candidate_metric_fee_to_subsidy_ratio": 0.0063708074222222225
   },
   "staging_gate_manifest_update": {
     "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
@@ -265,6 +270,7 @@
     "period_start": "timestamp of the first block in the 144-block metric window",
     "period_end": "timestamp of the final block in the 144-block metric window",
     "method_version": "mempool-fee-subsidy-144-block-v1",
-    "note": "Do not alter canonical registry or ingest until endpoint units, source mapping and metric window/cadence are explicitly accepted."
+    "note": "Do not alter canonical registry or ingest until endpoint units, source mapping and metric window/cadence are explicitly accepted.",
+    "execution_status": "candidate calculation executed; label-correction rerun pending"
   }
 }
