@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "asset_id": "btc",
-  "capture_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38352444862",
-  "captured_at_utc": "2026-10-13T05:38:44Z",
+  "capture_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38352757095",
+  "captured_at_utc": "2026-10-13T05:42:22Z",
   "mode": "read-only-staging-only",
   "production_database_accessed": false,
   "production_writes_performed": false,
@@ -13,13 +13,13 @@
       "source_id": "market.kraken",
       "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
       "unit": "USD/BTC",
-      "value": 83534.5,
-      "observed_at": "2026-10-13T05:38:42.141Z",
-      "retrieved_at": "2026-10-13T05:38:44.255Z",
-      "age_seconds_at_capture": 2,
+      "value": 83550.2,
+      "observed_at": "2026-10-13T05:42:15.531Z",
+      "retrieved_at": "2026-10-13T05:42:20.954Z",
+      "age_seconds_at_capture": 5,
       "max_age_seconds": 3600,
       "freshness_at_capture": "PASS",
-      "raw_payload_sha256": "766c3123b40e2a5d52b2b73a2a4fd31a84ee1bef524bdcb89dfe68062ce04157",
+      "raw_payload_sha256": "6d77e123978d4f3bc7164f8f40530052653cfd9c115516e1d7ad8c69fdd6c801",
       "decision": "CANDIDATE_ONLY",
       "unresolved": [
         "verify live source registry and runtime adapter",
@@ -48,15 +48,19 @@
       "metric_id": "security.fee_subsidy_ratio",
       "source_id": "network.primary",
       "source_url": "https://mempool.space/api/v1/mining/blocks/fees/1w",
-      "retrieved_at": "2026-10-13T05:38:44.917Z",
+      "retrieved_at": "2026-10-13T05:42:21.621Z",
       "row_count": 835,
-      "raw_payload_sha256": "97a18a42b555fb96f645f2a53674acc8331a68f8474fbd28cc9637f29df29c7b",
-      "decision": "BLOCKED_DEFINITION",
+      "raw_payload_sha256": "23a9dc460a12ba7b73e21280bb9de6060de8ec982e731432fbfc254d0f709472",
+      "decision": "CANDIDATE_CALCULATION_NOT_ACCEPTED",
       "unresolved": [
-        "fee units and aggregation semantics",
-        "matched block heights/window and subsidy denominator",
-        "calculation version"
-      ]
+        "confirm avgFees units and average bucket semantics",
+        "verify matching avgRewards semantics",
+        "review ratio denominator as avgRewards - avgFees before accepting"
+      ],
+      "observed_at": "2026-10-13T05:29:20.000Z",
+      "latest_avg_height": 971198,
+      "latest_avg_fees_raw": 929443,
+      "latest_usd_mark": 83347
     },
     {
       "metric_id": "institutional.etf_net_flow",
@@ -92,6 +96,23 @@
         "select exact source and endpoint",
         "define observation time, daily close and timezone convention"
       ]
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/blocks/rewards/1w",
+      "unit": "ratio",
+      "observed_at": "2026-10-13T05:29:20.000Z",
+      "retrieved_at": "2026-10-13T05:42:21.710Z",
+      "row_count": 835,
+      "raw_payload_sha256": "c53d7d278ea7aaeea1b05a4753321601cf6acdaf18d83e0c1cf6334a65c7d306",
+      "latest_avg_height": 971198,
+      "latest_avg_rewards_raw": 313429443,
+      "decision": "MATCHED_REWARD_CANDIDATE_ONLY",
+      "unresolved": [
+        "confirm avgRewards unit and bucket semantics",
+        "pair by exact avgHeight only; no interpolation"
+      ]
     }
   ],
   "database_dry_run": {
@@ -99,5 +120,20 @@
     "reason": "A current production read-only observation/source-registry audit has not been authorized/performed in this capture workflow; no duplicate comparison is claimed."
   },
   "disposition": "not_evaluable",
-  "next_gate": "Resolve definitions and source identity; then separately authorize read-only production registry/duplicate audit and candidate-vs-existing dry-run diff."
+  "next_gate": "Resolve definitions and source identity; then separately authorize read-only production registry/duplicate audit and candidate-vs-existing dry-run diff.",
+  "fee_subsidy_review": {
+    "status": "CANDIDATE_ONLY_NOT_ACCEPTED",
+    "fee_rows": 835,
+    "reward_rows": 835,
+    "matched_avg_height_rows": 835,
+    "latest_matched_candidate": {
+      "avg_height": 971198,
+      "observed_at": "2026-10-13T05:29:20.000Z",
+      "avg_fees_raw": 929443,
+      "avg_rewards_raw": 313429443,
+      "derived_subsidy_raw": 312500000,
+      "candidate_fee_subsidy_ratio": 0.0029742176
+    },
+    "rule": "Pair by exact avgHeight; avgRewards - avgFees is only a candidate subsidy denominator pending confirmation of units and endpoint semantics. No unmatched rows are interpolated."
+  }
 }
