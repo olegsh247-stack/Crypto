@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "asset_id": "btc",
+  "capture_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38352444862",
+  "captured_at_utc": "2026-10-13T05:38:44Z",
+  "mode": "read-only-staging-only",
+  "production_database_accessed": false,
+  "production_writes_performed": false,
+  "production_ingestion_approved": false,
+  "candidates": [
+    {
+      "metric_id": "market.spot_price",
+      "source_id": "market.kraken",
+      "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+      "unit": "USD/BTC",
+      "value": 83534.5,
+      "observed_at": "2026-10-13T05:38:42.141Z",
+      "retrieved_at": "2026-10-13T05:38:44.255Z",
+      "age_seconds_at_capture": 2,
+      "max_age_seconds": 3600,
+      "freshness_at_capture": "PASS",
+      "raw_payload_sha256": "766c3123b40e2a5d52b2b73a2a4fd31a84ee1bef524bdcb89dfe68062ce04157",
+      "decision": "CANDIDATE_ONLY",
+      "unresolved": [
+        "verify live source registry and runtime adapter",
+        "compare logical observation key against current database rows"
+      ]
+    },
+    {
+      "metric_id": "security.hashrate",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/hashrate/1w",
+      "unit": "EH/s",
+      "value": 999.342298838022,
+      "observed_at": "2026-10-13T00:00:00.000Z",
+      "retrieved_at": "2026-10-13T05:38:44.394Z",
+      "age_seconds_at_capture": 20324,
+      "max_age_seconds": 172800,
+      "freshness_at_capture": "PASS",
+      "raw_payload_sha256": "fe47b1bb6dd96cb5507cde7f945fcb3493f7e0a3ca9ee2a856024ce89e8c6bde",
+      "decision": "CANDIDATE_ONLY",
+      "unresolved": [
+        "confirm bucket timestamp and smoothing semantics",
+        "verify live source registry and stored-method mapping"
+      ]
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/blocks/fees/1w",
+      "retrieved_at": "2026-10-13T05:38:44.917Z",
+      "row_count": 835,
+      "raw_payload_sha256": "97a18a42b555fb96f645f2a53674acc8331a68f8474fbd28cc9637f29df29c7b",
+      "decision": "BLOCKED_DEFINITION",
+      "unresolved": [
+        "fee units and aggregation semantics",
+        "matched block heights/window and subsidy denominator",
+        "calculation version"
+      ]
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.primary",
+      "source_url": "https://farside.co.uk/btc/",
+      "retrieved_at": "2026-10-13T05:38:45.026Z",
+      "http_status": 403,
+      "raw_payload_sha256": "2e8f98d028b1e992517e4d35d55f0eec9eb91ce1354c06df71fb892bb0d22f63",
+      "decision": "BLOCKED_SOURCE_UNAVAILABLE",
+      "unresolved": [
+        "obtain auditable current source rows and observation/publication semantics"
+      ]
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.tftc",
+      "source_url": "https://www.tftc.io/bitcoin-etf-flows/data.json",
+      "retrieved_at": "2026-10-13T05:38:45.066Z",
+      "updated_through": "2026-10-09",
+      "row_count": 705,
+      "raw_payload_sha256": "dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e",
+      "decision": "UNAPPROVED_FALLBACK_STALE",
+      "unresolved": [
+        "36-hour freshness gate",
+        "mixed lineage and revision semantics",
+        "formal canonical source-priority review"
+      ]
+    },
+    {
+      "metric_id": "macro.dxy",
+      "decision": "BLOCKED_NO_CANONICAL_SOURCE",
+      "unresolved": [
+        "select exact source and endpoint",
+        "define observation time, daily close and timezone convention"
+      ]
+    }
+  ],
+  "database_dry_run": {
+    "status": "NOT_RUN",
+    "reason": "A current production read-only observation/source-registry audit has not been authorized/performed in this capture workflow; no duplicate comparison is claimed."
+  },
+  "disposition": "not_evaluable",
+  "next_gate": "Resolve definitions and source identity; then separately authorize read-only production registry/duplicate audit and candidate-vs-existing dry-run diff."
+}
