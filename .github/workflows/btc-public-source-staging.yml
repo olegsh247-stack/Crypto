@@ -1,3 +1,4 @@
+# Explicit public-source capture only: stores artifacts for review, never writes a database.
 name: BTC Public Source Staging (Read Only)
 
 on:
