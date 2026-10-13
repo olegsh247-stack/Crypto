@@ -68,3 +68,16 @@ test("capture hashes raw response and never returns credentials", async () => {
   assert.equal(result.evidence.raw_body_sha256, sha256(body));
   assert.equal(JSON.stringify(result).includes("test-only-secret"), false);
 });
+test("ETF freshness uses an explicit row publication timestamp when present", () => {
+  const withPublication = JSON.parse(body);
+  withPublication.days[withPublication.days.length - 1] = {
+    date: "2026-10-12",
+    netFlowUsdM: 14.2,
+    publishedAt: "2026-10-13T05:00:00.000Z"
+  };
+  const parsed = parseCryptoEtfBtcFlows(withPublication, { now });
+  assert.equal(parsed.publication_timestamp_available_per_latest_row, true);
+  assert.equal(parsed.latest_freshness_timestamp_utc, "2026-10-13T05:00:00.000Z");
+  assert.equal(parsed.latest_freshness_age_hours, 7);
+  assert.equal(parsed.freshness_gate, "PASS_CANDIDATE_ONLY");
+});
