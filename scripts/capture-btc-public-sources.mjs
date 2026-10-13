@@ -221,6 +221,123 @@ if (latestTipHeight !== null) {
   });
 }
 
+
+async function captureIndividualBlockWindow() {
+  const item = {
+    name: "mempool-individual-block-window",
+    metric_id: "security.fee_subsidy_ratio",
+    source_id: "network.primary",
+    url: "https://mempool.space/api/v1/blocks/{start-height}",
+    retrieved_at: new Date().toISOString(),
+    status: "FAILED",
+    acceptance_status: "CANDIDATE_ONLY"
+  };
+  try {
+    if (latestTipHeight === null) throw new Error("Tip height unavailable; no fallback height is substituted.");
+    const targetCount = 150;
+    const pageSize = 15;
+    const pagesNeeded = Math.ceil(targetCount / pageSize);
+    const byHeight = new Map();
+    const pageEvidence = [];
+    for (let page = 0; page < pagesNeeded; page++) {
+      const startHeight = latestTipHeight - page * pageSize;
+      const url = `https://mempool.space/api/v1/blocks/${startHeight}`;
+      const response = await fetch(url, {
+        headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "application/json" },
+        signal: AbortSignal.timeout(20000)
+      });
+      const body = await response.text();
+      const digest = await sha256(body);
+      const file = `mempool-block-window-page-${String(page + 1).padStart(2, "0")}.raw`;
+      await writeFile(join(outDir, file), body, "utf8");
+      if (!response.ok) throw new Error(`HTTP ${response.status} for block page starting at ${startHeight}`);
+      const rows = JSON.parse(body);
+      if (!Array.isArray(rows) || rows.length === 0) throw new Error(`No block rows for page starting at ${startHeight}`);
+      pageEvidence.push({
+        page: page + 1, requested_start_height: startHeight, row_count: rows.length,
+        retrieved_at: new Date().toISOString(), raw_file: file, raw_payload_sha256: digest
+      });
+      for (const row of rows) {
+        const height = Number(row?.height);
+        const extras = row && typeof row.extras === "object" && row.extras !== null ? row.extras : null;
+        const fees = Number(extras?.totalFees);
+        const reward = Number(extras?.reward);
+        const timestamp = Number(row?.timestamp);
+        const id = row?.id ?? row?.hash ?? null;
+        if (!Number.isSafeInteger(height) || height <= 0) continue;
+        const normalized = {
+          height, id, timestamp,
+          observed_at: Number.isFinite(timestamp) ? new Date(timestamp * 1000).toISOString() : null,
+          total_fees_raw: Number.isFinite(fees) && fees >= 0 ? fees : null,
+          total_reward_raw: Number.isFinite(reward) && reward >= 0 ? reward : null,
+          derived_subsidy_raw: Number.isFinite(fees) && Number.isFinite(reward) && reward >= fees ? reward - fees : null,
+          fee_to_subsidy_ratio: Number.isFinite(fees) && Number.isFinite(reward) && reward > fees ? fees / (reward - fees) : null,
+          fields_valid: typeof id === "string" && id.length >= 16 && Number.isSafeInteger(timestamp) && timestamp > 0
+            && Number.isFinite(fees) && fees >= 0 && Number.isFinite(reward) && reward > fees
+        };
+        const existing = byHeight.get(height);
+        if (existing && existing.id !== normalized.id) throw new Error(`Conflicting block hashes for height ${height}`);
+        byHeight.set(height, normalized);
+      }
+    }
+    const heights = [...byHeight.keys()].sort((a, b) => a - b);
+    const blocks = heights.map(height => byHeight.get(height));
+    const expectedMin = latestTipHeight - targetCount + 1;
+    const expectedMax = latestTipHeight;
+    const missingHeights = [];
+    for (let h = expectedMin; h <= expectedMax; h++) if (!byHeight.has(h)) missingHeights.push(h);
+    const invalidRows = blocks.filter(row => !row.fields_valid);
+    const subsidyMismatches = blocks.filter(row => row.derived_subsidy_raw !== 312500000);
+    const duplicateHashes = blocks.length - new Set(blocks.map(row => row.id)).size;
+    const timestampsMonotonic = blocks.every((row, i) => i === 0 || row.timestamp >= blocks[i - 1].timestamp);
+    const totalFeesRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.total_fees_raw, 0) : null;
+    const totalSubsidyRaw = blocks.every(row => row.fields_valid) ? blocks.reduce((sum, row) => sum + row.derived_subsidy_raw, 0) : null;
+    const ratio = totalFeesRaw !== null && totalSubsidyRaw > 0 ? totalFeesRaw / totalSubsidyRaw : null;
+    const passed = blocks.length === targetCount && missingHeights.length === 0 && invalidRows.length === 0
+      && subsidyMismatches.length === 0 && duplicateHashes === 0 && timestampsMonotonic && ratio !== null;
+    const review = {
+      status: passed ? "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY" : "WIDE_WINDOW_VALIDATION_FAILED",
+      target_block_count: targetCount, unique_block_count: blocks.length,
+      first_height: heights[0] ?? null, last_height: heights.at(-1) ?? null,
+      expected_min_height: expectedMin, expected_max_height: expectedMax,
+      missing_height_count: missingHeights.length, missing_heights: missingHeights,
+      invalid_field_rows: invalidRows.length, subsidy_mismatch_rows: subsidyMismatches.length,
+      expected_current_subsidy_raw: 312500000, duplicate_hash_count: duplicateHashes,
+      timestamps_monotonic: timestampsMonotonic,
+      total_fees_raw: totalFeesRaw, total_subsidy_raw: totalSubsidyRaw,
+      window_fee_to_subsidy_ratio: ratio,
+      per_block_ratio_min: blocks.length ? Math.min(...blocks.map(row => row.fee_to_subsidy_ratio ?? Infinity)) : null,
+      per_block_ratio_max: blocks.length ? Math.max(...blocks.map(row => row.fee_to_subsidy_ratio ?? -Infinity)) : null,
+      calculation: "sum(totalFees) / sum(reward - totalFees), using the same validated individual blocks",
+      unit_assessment: "Raw values are treated as satoshis provisionally; exact field/unit contract and repository metric definition still require approval.",
+      pages: pageEvidence,
+      production_approved: false,
+      unresolved: [
+        "confirm endpoint field and unit contract against authoritative API documentation",
+        "reconcile ratio window with the repository metric frequency and methodology",
+        "verify source ID/runtime mapping and perform a separately scoped read-only duplicate dry-run"
+      ]
+    };
+    await writeFile(join(outDir, "individual-block-window.json"), JSON.stringify({ review, blocks }, null, 2) + "\n", "utf8");
+    manifest.individual_block_window_review = review;
+    item.status = "CAPTURED";
+    Object.assign(item, {
+      retrieved_at: new Date().toISOString(),
+      page_count: pageEvidence.length,
+      raw_pages: pageEvidence,
+      review,
+      normalized_file: "individual-block-window.json",
+      normalized_file_sha256: await sha256(JSON.stringify({ review, blocks }, null, 2) + "\n"),
+      note: "Last 150 individual blocks are checked by exact height and block hash. Candidate metric only; no ingestion or scenario writes."
+    });
+  } catch (error) {
+    item.error = error instanceof Error ? error.message : String(error);
+    manifest.individual_block_window_review = { status: "CAPTURE_FAILED", error: item.error, production_approved: false };
+  }
+  manifest.sources.push(item);
+}
+await captureIndividualBlockWindow();
+
 await capture({
   name: "mempool-block-fees-1w",
   metricId: "security.fee_subsidy_ratio",
