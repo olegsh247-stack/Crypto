@@ -208,11 +208,11 @@
     ],
     "required_staging_gate": true,
     "production_approved": false,
-    "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
-    "execution_status": "NOT_CONFIRMED",
+    "commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
+    "execution_status": "FAILED_VALIDATION_GATE_TIMESTAMP_RULE_CORRECTED",
     "unresolved": [
-      "verify the staging workflow run for the updated capture commit and inspect its uploaded artifact",
-      "confirm endpoint field and unit contract",
+      "rerun staging against the corrected timestamp-consensus validation and inspect artifact",
+      "confirm endpoint field/unit contract",
       "reconcile ratio window/frequency with metric registry and SQL migration",
       "reconcile source ID/runtime mapping",
       "perform separately scoped read-only duplicate dry-run"
@@ -220,8 +220,12 @@
   },
   "staging_gate_manifest_update": {
     "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
-    "change": "Capture the final required-capture, ETF-capture and 150-block validation outcome in manifest.json before artifact upload; the process exit code uses the same recorded gate status.",
-    "execution_status": "NOT_CONFIRMED",
+    "change": "Record final staging gate outcome in manifest.json before artifact upload",
+    "execution_status": "RUN_20_FAILED_AS_EXPECTED_AFTER_REVIEW",
+    "failure_reason": "The first 150-block run exposed an invalid assumption that Bitcoin block timestamps must be monotonic by height; Bitcoin consensus permits non-monotonic timestamps.",
+    "correction_commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
+    "correction": "Validate median-time-past against the preceding 11 blocks and the two-hour future-time bound instead of strict monotonicity.",
+    "next_step": "Verify a fresh staging run on the correction commit.",
     "production_approved": false
   }
 }
