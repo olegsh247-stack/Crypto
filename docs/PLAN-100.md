@@ -600,3 +600,14 @@ The file-level review is recorded in [OPEN-PR-RECONCILIATION-2026-10-13.md](./OP
 - **Current execution path:** keep the read-only source capture, raw provenance artifacts, block-window validator and staging dry-run. No source acceptance, production/target DB access, observation writes, scenario writes, monitoring events, merges or PR closures occurred in this review.
 
 Next action: close the source/metric acceptance gates against the existing evidence, then run the no-write BTC staging diff. Do not expand to other assets or enable scheduled candidate persistence.
+
+
+## Follow-up after successful BTC/stack CI — 2026-10-13
+
+The targeted PR reconciliation is now documented, and its resulting head passed both checks: [VPS API Build Rehearsal #857](https://github.com/olegsh247-stack/Crypto/actions/runs/38447537476) and [BTC Block Window Validation #36](https://github.com/olegsh247-stack/Crypto/actions/runs/38447537716). The full rehearsal passed all steps, including disposable PostgreSQL migrations/bootstrap, source registry/provenance, idempotency and duplicate guards, backup/restore, API/Worker E2E, evidence/snapshot lineage, history/candle finalization and admin boundaries. Block-window validation passed syntax and deterministic tests; live capture was skipped in that PR-triggered run.
+
+The current main-branch BTC readiness gate was inspected and remains fail-closed: it requires source registration, HTTPS provenance, exact units, current observation timestamps, a 36-hour latest ETF gate and five distinct ETF dates within 14 days. It returns not_evaluable on missing/invalid inputs and never authorizes scenario-state persistence. No implementation change is needed to preserve that safety boundary.
+
+**Boundary:** CI uses disposable PostgreSQL. It is not a fresh read of the external target database. The last documented target audit remains 2026-10-12 18:20 UTC; no current target source registration/adapter audit was performed and no production/target data was read or written. All five BTC inputs remain unaccepted (four held, DXY blocked), and the scenario remains not_evaluable.
+
+**Next practical step:** keep the product work focused on BTC and prepare the source acceptance/review bundle so that the remaining decisions are explicit: (1) target-runtime source registry/adapter check when a permitted read-only route exists, (2) ETF session-date/observation-time convention with no inferred timestamp or placeholder zero, (3) completed-UTC-day fee/subsidy contract acceptance, and (4) a specific permitted DXY feed or keep DXY blocked. Then rerun the no-write staging diff. Do not enable ingestion, write scenario/monitoring state, merge/close PRs, or expand to other assets.
