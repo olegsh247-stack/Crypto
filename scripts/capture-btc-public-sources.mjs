@@ -64,6 +64,7 @@ async function capture({ name, metricId, sourceId, url, parse }) {
 
 let feeRows = null;
 let rewardRows = null;
+let latestTipHeight = null;
 
 async function sha256(value) {
   const bytes = new TextEncoder().encode(value);
@@ -132,6 +133,66 @@ await capture({
   }
 });
 
+
+await capture({
+  name: "mempool-tip-height",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/blocks/tip/height",
+  parse: body => {
+    const height = Number(body.trim());
+    if (!Number.isSafeInteger(height) || height <= 0) throw new Error("Mempool tip height is not a positive integer");
+    latestTipHeight = height;
+    return {
+      tip_height: height,
+      acceptance_status: "REFERENCE_ONLY",
+      note: "Used only to choose a recent bounded block sample. Tip height is not a fee/subsidy observation."
+    };
+  }
+});
+
+if (latestTipHeight !== null) {
+  await capture({
+    name: "mempool-individual-block-sample",
+    metricId: "security.fee_subsidy_ratio",
+    sourceId: "network.primary",
+    url: `https://mempool.space/api/v1/blocks/${latestTipHeight}`,
+    parse: body => {
+      const data = JSON.parse(body);
+      const rows = Array.isArray(data) ? data : [];
+      const sample = rows.map(row => {
+        const extras = row && typeof row.extras === "object" && row.extras !== null ? row.extras : null;
+        return {
+          height: row.height ?? null,
+          id: row.id ?? row.hash ?? null,
+          timestamp: row.timestamp ?? null,
+          top_level_keys: row && typeof row === "object" ? Object.keys(row).sort() : [],
+          extras_keys: extras ? Object.keys(extras).sort() : [],
+          extras_sample: extras
+        };
+      });
+      return {
+        response_shape: Array.isArray(data) ? "array" : typeof data,
+        row_count: rows.length,
+        requested_tip_height: latestTipHeight,
+        sample,
+        acceptance_status: "SCHEMA_DISCOVERY_ONLY",
+        note: "Raw individual-block response is retained. Do not infer fee/subsidy field names, units, or a calculation until the captured payload and official contract are reviewed."
+      };
+    }
+  });
+} else {
+  manifest.sources.push({
+    name: "mempool-individual-block-sample",
+    metric_id: "security.fee_subsidy_ratio",
+    source_id: "network.primary",
+    url: "https://mempool.space/api/v1/blocks/{tip-height}",
+    retrieved_at: new Date().toISOString(),
+    status: "SKIPPED",
+    error: "Tip-height capture failed; no fallback height is substituted."
+  });
+}
+
 await capture({
   name: "mempool-block-fees-1w",
   metricId: "security.fee_subsidy_ratio",
@@ -148,8 +209,8 @@ await capture({
       latest_timestamp: Number.isFinite(Number(latest?.timestamp)) ? new Date(Number(latest.timestamp) * 1000).toISOString() : null,
       latest_avg_fees_raw: latest?.avgFees ?? null,
       latest_usd_mark: latest?.USD ?? null,
-      acceptance_status: "CANDIDATE_PENDING_MATCHED_REWARD_SERIES",
-      note: "Mempool documents this endpoint as average total block fees over the selected trailing period. Keep raw values and pair by avgHeight with the matching rewards endpoint before any ratio calculation; never infer a block count from row_count."
+      acceptance_status: "BLOCKED_AGGREGATE_SEMANTICS",
+      note: "This is an averaged series, not a guaranteed per-block record stream. Preserve it for diagnostics only; do not calculate a fee/subsidy ratio from it."
     };
   }
 });
@@ -169,59 +230,29 @@ await capture({
       latest_avg_height: latest?.avgHeight ?? null,
       latest_timestamp: Number.isFinite(Number(latest?.timestamp)) ? new Date(Number(latest.timestamp) * 1000).toISOString() : null,
       latest_avg_rewards_raw: latest?.avgRewards ?? null,
-      acceptance_status: "CANDIDATE_ONLY",
-      note: "Capture the matching average block-reward series. Ratio derivation remains blocked unless fee and reward records share the same avgHeight/window and field semantics are confirmed."
+      acceptance_status: "BLOCKED_AGGREGATE_SEMANTICS",
+      note: "This is an averaged series, not a guaranteed per-block record stream. Preserve it for diagnostics only; do not calculate a fee/subsidy ratio from it."
     };
   }
 });
 
 const rewardsByHeight = new Map((rewardRows ?? []).map(row => [String(row.avgHeight), row]));
-const matchedFeeRewardRows = (feeRows ?? []).flatMap(fee => {
-  const reward = rewardsByHeight.get(String(fee.avgHeight));
-  const fees = Number(fee.avgFees);
-  const totalReward = Number(reward?.avgRewards);
-  if (!reward || !Number.isFinite(fees) || !Number.isFinite(totalReward) || totalReward <= fees || fees < 0) return [];
-  const subsidyEstimate = totalReward - fees;
-  return [{
-    avg_height: fee.avgHeight,
-    fee_timestamp: Number.isFinite(Number(fee.timestamp)) ? new Date(Number(fee.timestamp) * 1000).toISOString() : null,
-    reward_timestamp: Number.isFinite(Number(reward.timestamp)) ? new Date(Number(reward.timestamp) * 1000).toISOString() : null,
-    avg_fees_raw: fees,
-    avg_rewards_raw: totalReward,
-    derived_subsidy_raw: subsidyEstimate,
-    candidate_fee_subsidy_ratio: fees / subsidyEstimate
-  }];
-});
-const latestMatched = matchedFeeRewardRows.at(-1) ?? null;
-const rewardByHeight = new Map((rewardRows ?? []).map(row => [String(row.avgHeight), row]));
 const matchedRawRows = (feeRows ?? []).flatMap(fee => {
-  const reward = rewardByHeight.get(String(fee.avgHeight));
-  if (!reward) return [];
-  return [{ fee, reward }];
+  const reward = rewardsByHeight.get(String(fee.avgHeight));
+  return reward ? [{ fee, reward }] : [];
 });
 const timestampMismatchRows = matchedRawRows.filter(({ fee, reward }) =>
   Number(fee.timestamp) !== Number(reward.timestamp)).length;
-const derivedSubsidies = [...new Set(matchedFeeRewardRows.map(row => row.derived_subsidy_raw))].sort((a, b) => a - b);
-const expectedSubsidyRaw = 312500000; // 3.125 BTC in satoshis for the current halving era.
-const subsidyConsistency = matchedFeeRewardRows.length > 0
-  && timestampMismatchRows === 0
-  && derivedSubsidies.length === 1
-  && derivedSubsidies[0] === expectedSubsidyRaw
-  ? "PASS_INTERNAL_CONSISTENCY_ONLY"
-  : "REVIEW_REQUIRED";
 manifest.fee_subsidy_review = {
-  status: "CANDIDATE_ONLY_NOT_ACCEPTED",
+  status: "BLOCKED_AGGREGATE_SEMANTICS",
   fee_rows: feeRows?.length ?? null,
   reward_rows: rewardRows?.length ?? null,
-  matched_avg_height_rows: matchedFeeRewardRows.length,
+  matched_avg_height_rows: matchedRawRows.length,
   fee_rows_without_reward_match: (feeRows?.length ?? 0) - matchedRawRows.length,
   reward_rows_without_fee_match: (rewardRows?.length ?? 0) - matchedRawRows.length,
   matched_timestamp_mismatch_rows: timestampMismatchRows,
-  derived_subsidy_raw_unique_values: derivedSubsidies,
-  expected_subsidy_raw_for_current_era: expectedSubsidyRaw,
-  subsidy_consistency: subsidyConsistency,
-  latest_matched_candidate: latestMatched,
-  rule: "Pair fee/reward rows by exact avgHeight and compare timestamps. The denominator is candidate avgRewards - avgFees; matching expected subsidy is an internal consistency check only, not source acceptance. No unmatched rows are interpolated."
+  aggregate_ratio_calculated: false,
+  rule: "Do not derive a fee/subsidy ratio from averaged series. Equal avgHeight values do not prove equal block sets or time windows, especially when timestamps differ. Use a bounded sample of individual block records to validate source fields and units before defining a reproducible calculation."
 };
 
 await capture({
@@ -290,7 +321,7 @@ console.log(JSON.stringify({
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w"];
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w", "mempool-block-rewards-1w", "mempool-tip-height", "mempool-individual-block-sample"];
 const requiredCaptureFailed = requiredNames.some(name =>
   !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
 const etfCaptureSucceeded = manifest.sources.some(source =>
