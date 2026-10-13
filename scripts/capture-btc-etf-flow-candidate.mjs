@@ -107,7 +107,7 @@ async function readJsonRpcResponse(response) {
   if (!response.ok) throw new Error(`mcp_http_${response.status}`);
   if (!body.trim()) return null;
   const payloadText = type.includes("text/event-stream")
-    ? body.split(/\\r?\\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).filter(Boolean).at(-1)
+    ? body.split(/\r?\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).filter(Boolean).at(-1)
     : body.trim();
   if (!payloadText) return null;
   return JSON.parse(payloadText);
@@ -119,7 +119,7 @@ async function callMcp(fetchImpl, method, params, id, sessionId) {
     headers: {
       "content-type": "application/json",
       accept: "application/json",
-      ...(sessionId ? { "mcp-session-id": sessionId } : {})
+      ...(sessionId ? { "mcp-session-id": sessionId, "MCP-Protocol-Version": "2025-03-26" } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
     signal: AbortSignal.timeout(20_000)
@@ -144,7 +144,7 @@ async function captureViaPublicMcp({ fetchImpl, now, retrievedAt }) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      accept: "application/json, text/event-stream",
+      accept: "application/json",
       ...(sessionId ? { "mcp-session-id": sessionId } : {})
     },
     body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
