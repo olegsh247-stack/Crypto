@@ -113,11 +113,11 @@ The next implementation step is a fail-closed input gate, not a scenario predict
 
 | Input | Requirement before evaluation |
 |---|---|
-| BTC spot price | Numeric, source-linked, marked CURRENT, observed within 24 hours |
-| Network hashrate | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within 5 days |
-| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked and CURRENT; latest within 48 hours |
+| BTC spot price | Numeric, source-linked, marked CURRENT, observed within the registry's 1-hour window |
+| Network hashrate | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked; latest observation must be CURRENT and within the registry's 36-hour window |
 
 All observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. A missing required metric is a blocker, not an implicit neutral signal.
 
@@ -266,3 +266,20 @@ The readiness gate therefore must return `not_evaluable` for the current accepte
 6. Save the evaluation output as a review artifact only. Do not write `scenario_states`, `monitoring_events`, alter published probabilities, or connect scheduled production ingestion as part of this step.
 
 **Decision:** the BTC scenario definition and deterministic rule are ready for a controlled evaluation, but the current real-world input set is not. The honest result is `not_evaluable`; Base remains the published research baseline, not a fresh evaluated state.
+
+
+## Reproducible scenario gate — live candidate isolated, 2026-10-13
+
+The latest standard CI set for the BTC Kraken branch is green on commit `72becab84d2def726df838204083822221410d2e`:
+
+- [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967535) — success.
+- [Seed observation idempotency rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967510) — success.
+- [Validate VPS Release Workflow](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967585) — success.
+
+The live Kraken rollback rehearsal proved a single source candidate can be parsed and written only inside a disposable transaction, with duplicate handling and rollback verified. The captured sample was 83,590.3 USD/BTC at `2026-10-13T07:09:13.118Z`, retrieved at `2026-10-13T07:09:25.872Z`; it is historical evidence of the capture path, not a claim that the quote remains fresh now.
+
+A new regression test passes a real-shaped, source-registered Kraken candidate into the scenario readiness gate alongside no other inputs. The expected result is `not_evaluable`, with explicit missing blockers for hashrate, fee/subsidy economics, DXY and the required ETF-flow series, and `can_persist_scenario_state=false`. This prevents one fresh price from being mistaken for a complete scenario input set.
+
+The gate's age limits now documented here follow the canonical metric registry: spot price 1 hour, hashrate 48 hours, fee/subsidy ratio 48 hours, DXY 48 hours and latest ETF flow 36 hours. These are data-quality limits, not directional scoring thresholds.
+
+**Current decision: no live scenario evaluation is accepted yet.** Next, source-verified inputs must be acquired for the remaining required metrics and at least five distinct ETF-flow days, with canonical units, source registration, observation timestamps, freshness and calculation windows. Fee/subsidy must be sourced as a documented rolling series before any factor confirmation/invalidation assessment. No scenario state or monitoring event is persisted by this change.
