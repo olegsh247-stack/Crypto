@@ -1,6 +1,6 @@
 # BTC Directional Series Gate — 2026-10-13
 
-**Status: implementation contract clarified; candidate capture still required.**
+**Status: candidate series captured and parser tests passed; source acceptance remains blocked.**
 **Scope:** BTC only, read-only source review. No production database access, observation writes, scenario-state writes, monitoring writes, or published-probability changes.
 
 ## Purpose
@@ -30,6 +30,17 @@ The repository currently distinguishes `market.kraken` (point-in-time Trades can
 - Formula: `(latest_completed_daily_hashrate / daily_hashrate_7_days_earlier) - 1`.
 - A weekly-smoothed estimate must not be relabeled as an instantaneous measurement. Record the endpoint's averaging/smoothing semantics as part of the method.
 
+## Fresh candidate capture — 2026-10-13
+
+Read-only staging workflow [run #38362350907](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907) passed its six deterministic parser tests and captured both endpoints. Artifact [ID 11795391910](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907/artifacts/11795391910), archive SHA-256 `7ad8a07ef0b818c0c2f3ac24bf05f2a515adafb1552d486dea6ce911d1de8c49`. Raw response bodies and row-level series are retained in the artifact. The capture is `PASS_CANDIDATE_ONLY`, not accepted scenario input.
+
+| Series | Captured result | Raw payload SHA-256 | Acceptance |
+|---|---|---|---|
+| Kraken daily OHLC | HTTP 200; completed daily candles through 2026-10-12; latest close **81,737.1 USD/BTC**; close seven days earlier **85,751.5 USD/BTC**; calculated 7-day return **−4.6814%** | `97628c0fb352d68b5625c7d58d8fa3a4cb70c633bd9df63936797130f67d666a` | Candidate only. Kraken returns at most 720 OHLC rows; source ID `market_kraken` still needs reconciliation with canonical `market.spot_price` priority `market.kraken`. |
+| Mempool hashrate history | HTTP 200; daily points through 2026-10-12; latest candidate **1,028.5949 EH/s**; seven days earlier **946.4696 EH/s**; calculated 7-day change **+8.6770%** | `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1` | Candidate only. Bucket timestamp/smoothing convention is not yet authoritatively confirmed. |
+
+The calculations are reproducible from the preserved candidate rows; they are not yet approved directional inputs. The Kraken daily series must not be silently treated as the registered Trades source, and the hashrate change must not be interpreted until the source's daily bucket convention is verified. The separate public-source capture still records ETF HTTP 403 and DXY as unresolved.
+
 ## Acceptance rules
 
 A candidate series is accepted for offline scenario review only when all of these hold:
@@ -44,10 +55,11 @@ A successful HTTP response alone is not acceptance. Passing this gate does not a
 
 ## Current blockers and next action
 
-- Implement a read-only historical series capture for the Kraken daily OHLC and Mempool historical hashrate endpoints, with deterministic tests for incomplete candles, gaps, duplicates, invalid values, source identity, and return calculations.
-- Capture one current artifact and review its exact rows, time bounds, hashes and formulas.
-- Resolve the `market.kraken` versus `market_kraken` source mapping before considering the price series accepted.
-- Keep the scenario `not_evaluable` until the ETF flow, DXY, fee/subsidy metric contract and all other required inputs also pass their acceptance gates.
+- Resolve the Kraken OHLC versus Trades source identity without aliasing `market_kraken` and `market.kraken`.
+- Verify Mempool's hashrate timestamp and smoothing semantics; keep the series candidate-only until then.
+- Acquire an authorized current ETF series and an approved DXY source.
+- Reconcile the fee/subsidy rolling-144-block method with the existing daily metric contract and authoritative field/unit semantics.
+- Only when every required input passes, run the fixed-manifest readiness gate and one deterministic BTC rule offline/read-only. Keep the scenario `not_evaluable` until then.
 
 ## References
 
