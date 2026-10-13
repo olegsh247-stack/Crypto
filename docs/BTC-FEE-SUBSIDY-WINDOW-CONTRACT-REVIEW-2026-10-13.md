@@ -18,6 +18,20 @@ The source registry's Mempool description refers to a documented rolling block w
 
 These statements reveal an unresolved window contract. `frequency: 1d` describes observation cadence; it does not alone decide whether the calculation period is a UTC calendar day or a rolling block window. A daily-sampled rolling series and a completed-day series are different definitions and must not be mixed under the same metric ID without an explicit contract.
 
+## Public API constraints verified
+
+The [Mempool.space REST API documentation](https://mempool.space/docs/api/rest) describes:
+
+- `GET /api/v1/blocks/:startHeight` as returning the 15 blocks up to and including the requested height, with fee/mining details in `extras`.
+- `GET /api/v1/blocks-bulk/:minHeight/:maxHeight` as returning an inclusive range of up to 10 blocks.
+- `GET /api/blocks/tip/height` and `GET /api/blocks/tip/hash` as separate tip reference endpoints.
+
+Consequences for a 144-block candidate:
+- A single `/api/v1/blocks/:startHeight` response is not a 144-block window.
+- The documented bulk endpoint requires multiple bounded requests; respect public API rate limits and retain each request's status, URL, retrieval time and raw payload hash.
+- Capture tip height and hash, then validate the requested block range against the best chain. Re-check the boundary hash/tip after collection to detect a tip change or reorg during capture.
+- Do not assume `extras.totalFees` and `extras.reward` semantics/units from field names alone; verify against the documented implementation/source and fixtures before using `reward - fees` as subsidy.
+
 ## Options to resolve
 
 ### Option A — completed UTC calendar day
