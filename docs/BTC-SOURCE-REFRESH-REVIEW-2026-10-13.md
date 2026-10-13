@@ -1,19 +1,19 @@
 # BTC Source Refresh and Candidate Manifest Review — 2026-10-13
 
-**Capture workflow:** [BTC Public Source Staging #12](https://github.com/olegsh247-stack/Crypto/actions/runs/38352444862)  
-**Capture commit:** `0d1676053249890d07097bf3d3fc76343d742c5a`  
-**Artifact:** `btc-public-source-review`, ID `11791187759`, SHA-256 `193f6a5d680dd2c546ee538aeff5f5ff27a1dec23330bbf404317ae3d3941f37`, retention through 2026-10-20.  
+**Capture workflow:** [BTC Public Source Staging #13](https://github.com/olegsh247-stack/Crypto/actions/runs/38352757095)  
+**Capture commit:** `b3fc3d9decaa223bbf69d28f3c41eed088233f9e`  
+**Artifact:** `btc-public-source-review`, ID `11791287861`, SHA-256 `36e8594ae94f8d5612f087e1d310b576b0961084bbe68f9a3771e99553f00439`, retention through 2026-10-20.  
 **Mode:** read-only public source capture. No production database access, observation writes, historical cleanup, scenario persistence, monitoring writes, or probability changes.
 
 ## Capture findings
 
 | Input | New capture evidence | Freshness / definition gate | Decision |
 |---|---|---|---|
-| BTC spot price — Kraken | 83,534.50 USD/BTC; source trade time 2026-10-13 05:38:42.141 UTC; retrieved 05:38:44.255 UTC; raw payload SHA-256 `766c3123b40e2a5d52b2b73a2a4fd31a84ee1bef524bdcb89dfe68062ce04157` | Age 2 seconds at capture; 1-hour gate **PASS** at capture time | **Candidate only.** Still needs source-registry/runtime-adapter confirmation and logical-key comparison before ingestion. |
-| Hashrate — Mempool.space | Latest daily point 999.342298838022 EH/s at 2026-10-13 00:00 UTC; retrieved 05:38:44.394 UTC; 7 series points; raw payload SHA-256 `fe47b1bb6dd96cb5507cde7f945fcb3493f7e0a3ca9ee2a856024ce89e8c6bde` | Age 20,324 seconds (about 5h 39m); 48-hour gate **PASS** at capture time | **Candidate only.** Bucket/aggregation semantics still need acceptance; do not treat this as instantaneous hashrate. |
-| Fee/subsidy — Mempool.space | 835 raw records; retrieved 05:38:44.917 UTC; raw payload SHA-256 `97a18a42b555fb96f645f2a53674acc8331a68f8474fbd28cc9637f29df29c7b` | **Blocked by definition.** Fee unit/aggregation and matched subsidy window are not established; row count is not block count. | Raw evidence only; no ratio calculated. |
+| BTC spot price — Kraken | 83,550.20 USD/BTC; source trade time 2026-10-13 05:42:15.531 UTC; retrieved 05:42:20.954 UTC; raw payload SHA-256 `6d77e123978d4f3bc7164f8f40530052653cfd9c115516e1d7ad8c69fdd6c801` | Age 5 seconds at capture; 1-hour gate **PASS** at capture time | **Candidate only.** Still needs source-registry/runtime-adapter confirmation and logical-key comparison before ingestion. |
+| Hashrate — Mempool.space | Latest daily point 999.342298838022 EH/s at 2026-10-13 00:00 UTC; retrieved 05:42:21.216 UTC; 7 series points; raw payload SHA-256 `fe47b1bb6dd96cb5507cde7f945fcb3493f7e0a3ca9ee2a856024ce89e8c6bde` | Age 20,324 seconds (about 5h 39m); 48-hour gate **PASS** at capture time | **Candidate only.** Bucket/aggregation semantics still need acceptance; do not treat this as instantaneous hashrate. |
+| Fee/subsidy — Mempool.space | 835 records from each of the fees and rewards endpoints; both series match on all 835 `avgHeight` values. Latest matched point: height 971198 at 2026-10-13 05:29:20 UTC; `avgFees=929,443`, `avgRewards=313,429,443`, candidate denominator `312,500,000`, candidate ratio `0.0029742176`. Fees payload SHA-256 `23a9dc460a12ba7b73e21280bb9de6060de8ec982e731432fbfc254d0f709472`; rewards payload SHA-256 `c53d7d278ea7aaeea1b05a4753321601cf6acdaf18d83e0c1cf6334a65c7d306` | **Candidate calculation available, not accepted.** Pairing by exact `avgHeight` is possible; confirm the units/meaning of `avgFees` and `avgRewards`, bucket averaging semantics and denominator interpretation before accepting the ratio. Row count is not block count. | Raw evidence only; no ratio calculated. |
 | ETF flows — Farside | HTTP 403 at 05:38:45.026 UTC; response hash `2e8f98d028b1e992517e4d35d55f0eec9eb91ce1354c06df71fb892bb0d22f63` | No usable flow observation returned | Blocked. HTTP failure is not zero flow. |
-| ETF flows — TFTC mirror | HTTP 200; 705 rows; `updatedThrough=2026-10-09`; retrieved 05:38:45.066 UTC; raw payload SHA-256 `dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e` | Too old for the 36-hour latest-row gate; mixed lineage/revision semantics unresolved | Unapproved fallback candidate only; do not promote it silently. |
+| ETF flows — TFTC mirror | HTTP 200; 705 rows; `updatedThrough=2026-10-09`; retrieved 05:42:22.010 UTC; raw payload SHA-256 `dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e` | Too old for the 36-hour latest-row gate; mixed lineage/revision semantics unresolved | Unapproved fallback candidate only; do not promote it silently. |
 | DXY | No capture | No approved specific DXY endpoint and daily-close timestamp convention | Blocked; no substitute value used. |
 
 ## Candidate manifest and duplicate comparison
