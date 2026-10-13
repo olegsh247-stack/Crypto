@@ -191,13 +191,13 @@ await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2)
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
   sources: manifest.sources.map(({
-    name, status, http_status, error,
+    name, status, http_status, error, retrieved_at, body_sha256,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
     latest_series_timestamp, latest_series_value_eh_s,
     freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
     acceptance_status, updated_through, row_count
   }) => ({
-    name, status, http_status, error,
+    name, status, http_status, error, retrieved_at, body_sha256,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
     latest_series_timestamp, latest_series_value_eh_s,
     freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
