@@ -162,22 +162,50 @@ if (latestTipHeight !== null) {
       const rows = Array.isArray(data) ? data : [];
       const sample = rows.map(row => {
         const extras = row && typeof row.extras === "object" && row.extras !== null ? row.extras : null;
+        const feesRaw = Number(extras?.totalFees);
+        const rewardRaw = Number(extras?.reward);
+        const subsidyRaw = rewardRaw - feesRaw;
+        const fieldsPresent = Number.isFinite(feesRaw) && feesRaw >= 0
+          && Number.isFinite(rewardRaw) && rewardRaw > feesRaw;
         return {
           height: row.height ?? null,
           id: row.id ?? row.hash ?? null,
           timestamp: row.timestamp ?? null,
+          total_fees_raw: Number.isFinite(feesRaw) ? feesRaw : null,
+          total_reward_raw: Number.isFinite(rewardRaw) ? rewardRaw : null,
+          derived_subsidy_raw: fieldsPresent ? subsidyRaw : null,
+          fee_to_subsidy_ratio: fieldsPresent && subsidyRaw > 0 ? feesRaw / subsidyRaw : null,
+          fields_present: fieldsPresent,
+          subsidy_matches_current_era: fieldsPresent ? subsidyRaw === 312500000 : false,
           top_level_keys: row && typeof row === "object" ? Object.keys(row).sort() : [],
-          extras_keys: extras ? Object.keys(extras).sort() : [],
-          extras_sample: extras
+          extras_keys: extras ? Object.keys(extras).sort() : []
         };
       });
+      const validRows = sample.filter(row => row.fields_present);
+      const subsidyMismatchRows = validRows.filter(row => !row.subsidy_matches_current_era).length;
+      const individualBlockReview = {
+        status: validRows.length === rows.length && rows.length > 0 && subsidyMismatchRows === 0
+          ? "SAMPLE_VALIDATION_PASS_CANDIDATE_ONLY"
+          : "SAMPLE_VALIDATION_FAILED",
+        sample_count: rows.length,
+        valid_field_rows: validRows.length,
+        subsidy_mismatch_rows: subsidyMismatchRows,
+        expected_current_subsidy_raw: 312500000,
+        fee_field: "extras.totalFees",
+        reward_field: "extras.reward",
+        calculation: "fee_to_subsidy_ratio = totalFees / (reward - totalFees)",
+        unit_assessment: "Raw values are consistent with satoshis because reward minus totalFees equals the current 312,500,000-satoshi subsidy in this sample; confirm against the documented API contract before production use.",
+        production_approved: false
+      };
+      manifest.individual_block_review = individualBlockReview;
       return {
         response_shape: Array.isArray(data) ? "array" : typeof data,
         row_count: rows.length,
         requested_tip_height: latestTipHeight,
+        individual_block_review: individualBlockReview,
         sample,
-        acceptance_status: "SCHEMA_DISCOVERY_ONLY",
-        note: "Raw individual-block response is retained. Do not infer fee/subsidy field names, units, or a calculation until the captured payload and official contract are reviewed."
+        acceptance_status: individualBlockReview.status,
+        note: "Bounded individual-block sample validates candidate fields and arithmetic only. Raw response is retained; source-contract confirmation, broader boundary tests and duplicate dry-run remain required before production acceptance."
       };
     }
   });
