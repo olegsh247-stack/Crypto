@@ -24,6 +24,21 @@ export interface KrakenSpotCapture extends KrakenSpotCandidate {
   raw_response_body: string;
 }
 
+/** Exact canonical observation fields, ready for a separately authorized rehearsal writer. */
+export interface KrakenObservationCandidateRow {
+  metric_id: "market.spot_price";
+  asset_id: "btc";
+  value_numeric: number;
+  unit: "USD/BTC";
+  observed_at: string;
+  source_id: "market.kraken";
+  source_url: typeof KRAKEN_BTC_USD_TRADES_URL;
+  methodology: string;
+  status: "NORMAL";
+  freshness: "CURRENT";
+  revision: 1;
+}
+
 type KrakenTrade = [string | number, string | number, string | number, ...unknown[]];
 
 function parseInstant(value: string | Date, label: string): number {
@@ -95,6 +110,57 @@ export function parseKrakenBtcUsdTrades(
     age_seconds: ageSeconds,
     freshness: ageSeconds <= BTC_SPOT_MAX_AGE_SECONDS ? "CURRENT" : "STALE",
     acceptance_status: "CANDIDATE_ONLY"
+  };
+}
+
+/**
+ * Fail-closed mapper for a candidate observation rehearsal.
+ * Rejects anything except a current, source-provenanced candidate; performs no writes.
+ */
+export function toKrakenObservationCandidateRow(
+  capture: KrakenSpotCapture
+): KrakenObservationCandidateRow {
+  if (capture.acceptance_status !== "CANDIDATE_ONLY") {
+    throw new Error("Kraken observation candidate: acceptance status is not candidate-only");
+  }
+  if (capture.freshness !== "CURRENT" || capture.age_seconds < 0 || capture.age_seconds > BTC_SPOT_MAX_AGE_SECONDS) {
+    throw new Error("Kraken observation candidate: candidate is not current");
+  }
+  if (!Number.isFinite(capture.value) || capture.value <= 0) {
+    throw new Error("Kraken observation candidate: price must be a positive finite number");
+  }
+  if (capture.metric_id !== "market.spot_price" || capture.asset_id !== "btc" ||
+      capture.source_id !== "market.kraken" || capture.unit !== "USD/BTC" ||
+      capture.requested_pair !== KRAKEN_BTC_USD_PAIR ||
+      !["XXBTZUSD", "XBTUSD"].includes(capture.returned_pair_key)) {
+    throw new Error("Kraken observation candidate: canonical identity mismatch");
+  }
+  if (capture.source_url !== KRAKEN_BTC_USD_TRADES_URL || capture.http_status !== 200) {
+    throw new Error("Kraken observation candidate: source URL or HTTP status is not accepted");
+  }
+  if (!/^[a-f0-9]{64}$/.test(capture.raw_payload_sha256)) {
+    throw new Error("Kraken observation candidate: missing raw payload SHA-256");
+  }
+  if (!capture.raw_response_body || !Number.isFinite(Date.parse(capture.observed_at)) ||
+      !Number.isFinite(Date.parse(capture.retrieved_at))) {
+    throw new Error("Kraken observation candidate: missing raw body or valid timestamps");
+  }
+  if (Date.parse(capture.observed_at) > Date.parse(capture.retrieved_at)) {
+    throw new Error("Kraken observation candidate: observed time is after retrieval time");
+  }
+
+  return {
+    metric_id: "market.spot_price",
+    asset_id: "btc",
+    value_numeric: capture.value,
+    unit: "USD/BTC",
+    observed_at: new Date(capture.observed_at).toISOString(),
+    source_id: "market.kraken",
+    source_url: capture.source_url,
+    methodology: `kraken-trades-candidate-v1;retrieved_at=${new Date(capture.retrieved_at).toISOString()};raw_payload_sha256=${capture.raw_payload_sha256};pair=${capture.returned_pair_key}`,
+    status: "NORMAL",
+    freshness: "CURRENT",
+    revision: 1
   };
 }
 
