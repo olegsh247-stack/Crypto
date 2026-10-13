@@ -234,7 +234,7 @@ async function captureIndividualBlockWindow() {
   };
   try {
     if (latestTipHeight === null) throw new Error("Tip height unavailable; no fallback height is substituted.");
-    const targetCount = 150;
+    const targetCount = 165;
     const pageSize = 15;
     const pagesNeeded = Math.ceil(targetCount / pageSize);
     const byHeight = new Map();
