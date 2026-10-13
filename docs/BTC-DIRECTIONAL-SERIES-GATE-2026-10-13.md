@@ -69,3 +69,12 @@ A successful HTTP response alone is not acceptance. Passing this gate does not a
 - Mempool.space REST API reference: https://mempool.space/docs/api/rest
 
 These references describe public API interfaces; they do not by themselves prove that the repository's canonical source IDs, timestamp conventions, or metric semantics have been accepted.
+
+## Latest refresh — staging run #38388459518
+
+The newest read-only capture on 2026-10-13 11:11 UTC is available in artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469). The parser suite passed 6/6 tests.
+
+- Kraken daily OHLC: completed close on 2026-10-12 **81,737.1 USD/BTC**; close seven days earlier **85,751.5 USD/BTC**; candidate return **−4.6814%**; raw payload SHA-256 `4f38e355bb145a386c383915659c186842df1815e9d2848d2ce0d19c2d138c5f`.
+- Mempool daily-average hashrate: latest 2026-10-12 **1,028.5949 EH/s**; seven days earlier **946.4696 EH/s**; candidate change **+8.6770%**; raw payload SHA-256 `1fd7446253f1e097fd9ccef69d4eb7578f4aa3ee1ed7a1629a8fb0a5e0509c6e`.
+
+Both remain `CANDIDATE_ONLY`. The current capture clarifies the hashrate method as provider-labelled daily averages and excludes the current UTC date, but does not change source registration. Kraken OHLC remains distinct from the canonical `market.kraken` Trades source. No accepted BTC directional inputs or scenario evaluation were created.
