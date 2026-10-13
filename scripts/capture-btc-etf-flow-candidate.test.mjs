@@ -69,7 +69,8 @@ test("capture without a key uses the public read-only MCP endpoint", async () =>
   assert.equal(calls.every(call => !call.options.headers.authorization), true);
   assert.equal(result.capture_status, "PASS_CANDIDATE_ONLY");
   assert.equal(result.evidence.transport, "MCP Streamable HTTP, tools/call get_asset_flows");
-  assert.equal(result.parsed.freshness_gate, "BLOCKED");\n  assert.equal(result.parsed.source_url, "https://mcp.cryptoetf.today/api/mcp");
+  assert.equal(result.parsed.freshness_gate, "BLOCKED");
+  assert.equal(result.parsed.source_url, "https://mcp.cryptoetf.today/api/mcp");
   assert.equal(result.production_database_accessed, false);
   assert.equal(result.production_writes_performed, false);
 });
