@@ -90,7 +90,11 @@ await capture({
       latest_trade_epoch_seconds: epochSeconds,
       latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
       trade_rows_in_response: trades.length,
-      note: "Latest trade timestamp is source observation time; retrieved_at is capture time."
+      freshness_max_age_seconds: 3600,
+      age_seconds_at_capture: Math.max(0, Math.floor((Date.now() - epochSeconds * 1000) / 1000)),
+      freshness_at_capture: Date.now() - epochSeconds * 1000 <= 3600 * 1000 ? "PASS" : "FAIL_STALE",
+      acceptance_status: "CANDIDATE_ONLY",
+      note: "Freshness is evaluated at capture time only. Source timestamp is the trade time; retrieved_at is capture time. Passing freshness does not approve ingestion."
     };
   }
 });
@@ -116,7 +120,11 @@ await capture({
       row_count: rows.length,
       latest_series_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
       latest_series_value_eh_s: Number.isFinite(hashrate) ? hashrate / 1e18 : null,
-      note: "Raw response retained. Confirm bucket/window semantics and units before treating the latest point as an observation; do not label a rolling estimate as instantaneous hashrate."
+      freshness_max_age_seconds: 48 * 3600,
+      age_seconds_at_capture: Number.isFinite(epochSeconds) ? Math.max(0, Math.floor((Date.now() - epochSeconds * 1000) / 1000)) : null,
+      freshness_at_capture: Number.isFinite(epochSeconds) ? (Date.now() - epochSeconds * 1000 <= 48 * 3600 * 1000 ? "PASS" : "FAIL_STALE") : "FAIL_NO_TIMESTAMP",
+      acceptance_status: "CANDIDATE_ONLY",
+      note: "Freshness is evaluated against the series bucket timestamp, but is not proof that the bucket semantics are accepted. Raw response retained; do not label a rolling estimate as instantaneous hashrate."
     };
   }
 });
@@ -131,7 +139,8 @@ await capture({
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       row_count: Array.isArray(data) ? data.length : null,
-      note: "Raw response retained. Fee/subsidy values are not calculated until fee units, block window, and subsidy denominator are verified."
+      acceptance_status: "BLOCKED_DEFINITION",
+      note: "Raw response retained. Fee/subsidy values are not calculated until fee units, block window, and subsidy denominator are verified. Row count is not assumed to equal block count."
     };
   }
 });
