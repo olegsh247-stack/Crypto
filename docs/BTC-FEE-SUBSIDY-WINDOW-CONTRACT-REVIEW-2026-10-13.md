@@ -2,11 +2,11 @@
 
 **Date:** 2026-10-13  
 **Scope:** BTC-only metric contract review.  
-**Status:** Proposed contract for review; not activated in code or registries.
+**Status:** Contract options documented; no option activated in code or registries.
 
 ## Finding
 
-The current canonical metric entry for `security.fee_subsidy_ratio` specifies:
+The canonical metric entry for `security.fee_subsidy_ratio` specifies:
 
 - unit: `ratio`
 - frequency: `1d`
@@ -14,47 +14,55 @@ The current canonical metric entry for `security.fee_subsidy_ratio` specifies:
 - source priority: `network.primary`
 - validation: value is non-negative
 
-The BTC monitoring readiness matrix describes this input as a **consistent rolling series** and explicitly says a one-off 144-block context value is not yet a validated rolling trend.
+The source registry's Mempool description refers to a documented rolling block window. The monitoring readiness matrix requires a consistent rolling series and says a one-off 144-block context value is not yet a validated trend.
 
-These statements are compatible. The metric's `frequency: 1d` specifies the observation cadence; it does not, by itself, require the numerator and denominator to be bounded by UTC calendar-day boundaries. Treating cadence and calculation window as the same concept created the apparent conflict.
+These statements reveal an unresolved window contract. `frequency: 1d` describes observation cadence; it does not alone decide whether the calculation period is a UTC calendar day or a rolling block window. A daily-sampled rolling series and a completed-day series are different definitions and must not be mixed under the same metric ID without an explicit contract.
 
-## Recommended v1 contract
+## Options to resolve
 
-For each daily observation, calculate the ratio across the latest **144 consecutive completed Bitcoin blocks** available at the observation cutoff:
+### Option A — completed UTC calendar day
 
-`ratio = sum(transaction_fees_sats) / sum(block_subsidy_sats)`
+For each completed UTC date, select all canonical main-chain blocks whose consensus timestamps fall in `[00:00:00, next 00:00:00)`.
 
-Contract details:
+`ratio = sum(block_fees_sats) / sum(block_subsidy_sats)`
 
-1. Use completed canonical-chain blocks only; never include a partial or future block.
-2. Use the same exact block set for fee and subsidy totals.
-3. Define the observation timestamp as the UTC cutoff/retrieval time, and retain the first/last block heights and hashes, block count, calculation version, raw source URL, retrieval time, and raw payload hash.
-4. Require 144 consecutive heights, unique block hashes, valid non-negative fee totals, and positive total subsidy for the window. Fail closed if any check fails.
-5. Emit at most one accepted observation per UTC day for v1. If the window is incomplete or provenance is insufficient, emit no observation rather than a partial ratio.
-6. Keep the 144-block window explicit in metadata. Do not silently substitute a UTC-calendar-day ratio, a fee-per-block average, a USD-denominated value, or a single-block ratio.
-7. Preserve raw source observations and make repeated logical-key writes idempotent in a future approved ingestion path.
+- Use the exact same block set for numerator and denominator.
+- Publish only after the UTC day is complete.
+- Retain included block heights/hashes and timestamps, calculation version, raw source URL, retrieval time and payload hash.
+- Missing blocks, reorgs, duplicate heights/hashes, or missing fee/subsidy fields block the observation; never substitute zero.
+- The number of blocks per day may vary. Use the actual subsidy at each included height.
 
-The 144-block window is a rolling approximation of roughly one day of blocks, not a fixed 24-hour duration. Its exact block boundaries must remain auditable.
+This aligns directly with the registry's `frequency: 1d` and gives an unambiguous calendar period. It is the default recommendation in the earlier decision note, conditional on reconciling the source registry's rolling-window wording.
 
-## Why this is the better fit
+### Option B — rolling 144-block window
 
-- It matches the monitoring matrix's rolling-series requirement.
-- It preserves daily observation cadence without pretending that block production is uniform in wall-clock time.
-- Fees and subsidy are aggregated over the same blocks, avoiding mismatched calendar windows.
-- It makes trend comparisons more reproducible than treating one point-in-time 144-block calculation as a trend.
+Select the latest 144 consecutive completed canonical main-chain blocks ending at a captured tip height.
 
-A completed-UTC-day ratio remains a possible alternative only if the product explicitly chooses calendar-day economics over the existing rolling-series requirement. Do not combine the two definitions in one time series.
+`ratio = sum(fees_sats over window) / sum(subsidy_sats over window)`
+
+- Record first/last heights and hashes, tip hash, timestamps, retrieval time, calculation version and raw payload hash.
+- Require 144 consecutive heights, unique hashes, canonical-chain continuity, valid fee units and subsidy at each height, and a documented reorg/revision policy.
+- A rolling-window observation timestamp identifies the window endpoint; it must not be presented as a UTC calendar-day value.
+- Daily sampling may be used, but the window and freshness semantics must be explicitly represented in the metric contract.
+
+This aligns with the source registry's rolling-window wording, but requires an explicit calculation-window contract rather than relying on `frequency: 1d` alone.
+
+## Decision boundary
+
+**No final metric-window decision is made by this review.** The earlier decision note recommends Option A for v1 because the canonical metric registry states `frequency: 1d`; this note records the conflicting rolling-window wording and the alternative Option B so the conflict is visible rather than silently selecting one interpretation.
+
+Before implementation, the product contract must choose exactly one option and align the metric registry, source registry, monitoring matrix and calculation tests. Do not calculate both definitions into one time series or label one as the other.
 
 ## Acceptance gates before activation
 
-- [ ] Confirm the Mempool.space endpoint/raw fields and unit conversions for fees and subsidy at block level.
-- [ ] Validate the window against 144 consecutive completed blocks and retain first/last heights and hashes.
-- [ ] Add deterministic tests for gaps, duplicate heights/hashes, zero subsidy, malformed values, stale retrieval, and a reorg/revision affecting the window.
+- [ ] Confirm Mempool.space endpoint/raw fields and fee/subsidy units for individual blocks.
+- [ ] Choose Option A or Option B and align registry wording.
+- [ ] Add deterministic tests for missing blocks, duplicate heights/hashes, malformed values, zero fees, subsidy-era boundaries, stale retrieval and reorg/revision behavior.
 - [ ] Define the natural key and revision/reorg policy.
-- [ ] Update the metric registry or attach a machine-readable calculation contract so the rolling window is not implicit.
+- [ ] Preserve the raw source payload and calculation inputs for every candidate.
 - [ ] Run only a disposable/local PostgreSQL rehearsal; do not write candidate observations to production.
 - [ ] Re-run BTC scenario readiness after all required input contracts are accepted.
 
 ## Safety boundary
 
-This document changes no calculation, source priority, registry entry, probability, scenario state, monitoring event, or database record. Captured values remain candidates. The BTC scenario remains `not_evaluable` until the complete input acceptance gates are satisfied.
+This document changes no calculation, source priority, registry entry, probability, scenario state, monitoring event, or database record. Captured values remain candidates. The BTC scenario remains `not_evaluable` until all required input acceptance gates are satisfied.
