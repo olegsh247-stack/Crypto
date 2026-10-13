@@ -132,3 +132,29 @@ test("metric registry unit drift blocks readiness", () => {
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "metric_unit_contract_mismatch"));
 });
+
+
+test("a real-shaped Kraken spot candidate alone cannot unlock scenario evaluation", () => {
+  // The live capture is a candidate only; this fixture proves the gate requires
+  // the remaining independent metrics and ETF history before any rule can run.
+  const candidateOnly = [{
+    metric_id: "market.spot_price",
+    observed_at: "2026-10-13T07:09:13.118Z",
+    value_numeric: 83590.3,
+    freshness: "CURRENT",
+    source_id: "market.kraken",
+    source_url: "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+    source_registered: true,
+    unit: "USD/BTC",
+    expected_unit: "USD/BTC",
+    revision: 1,
+  }];
+  const result = assessBtcScenarioReadiness(candidateOnly, new Date("2026-10-13T07:10:00.000Z"));
+  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.can_persist_scenario_state, false);
+  assert.ok(result.blockers.some(x => x.metric_id === "security.hashrate" && x.reason === "missing"));
+  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio" && x.reason === "missing"));
+  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "missing"));
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"));
+  assert.equal(result.selected_inputs["market.spot_price"].value, 83590.3);
+});
