@@ -107,7 +107,7 @@ async function readJsonRpcResponse(response) {
   if (!response.ok) throw new Error(`mcp_http_${response.status}`);
   if (!body.trim()) return null;
   const payloadText = type.includes("text/event-stream")
-    ? body.split("\\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).filter(Boolean).at(-1)
+    ? body.split(/\\r?\\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).filter(Boolean).at(-1)
     : body.trim();
   if (!payloadText) return null;
   return JSON.parse(payloadText);
