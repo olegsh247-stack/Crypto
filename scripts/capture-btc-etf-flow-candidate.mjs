@@ -69,7 +69,7 @@ export function parseCryptoEtfBtcFlows(body, { now = new Date(), retrievedAt = n
   const freshness = latestFreshnessAgeMs >= 0 && latestFreshnessAgeMs <= MAX_AGE_MS && publicationTimestampAvailable;
   return {
     source_id_candidate: "institutional.cryptoetf_today",
-    source_url: URL,
+    source_url: sourceUrl,
     metric_id_candidate: "institutional.etf_net_flow",
     unit: "USD million/day",
     provider_updated_at: payload.updatedAt,
