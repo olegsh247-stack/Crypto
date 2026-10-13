@@ -55,6 +55,18 @@ Added `vps/worker/src/krakenSpotPriceLiveRehearsal.ts` and `.github/workflows/bt
 - Assertions verify the first insert, duplicate no-op, one logical row, and exact persisted candidate fields. The transaction ends with `ROLLBACK`; the workflow then verifies no Kraken BTC observations remain before deleting the disposable database.
 - Logs include the candidate price, exchange observation time, retrieval time, freshness, source URL, pair key and raw response SHA-256, but not the full raw payload.
 
-The live rehearsal has **not yet been executed**. The manual workflow is on the open PR branch and requires the workflow file to be available from the repository's default branch before GitHub can dispatch it. No live Kraken price or live database-write test is claimed until a successful workflow run exists.
+The live rehearsal subsequently **passed** in [BTC Kraken Live Candidate Rehearsal #2](https://github.com/olegsh247-stack/Crypto/actions/runs/38360852900) on commit `e7d553732d9a05a8c9952cc200645150275e99b3`. The first attempt (#1) failed at the explicit-confirmation step before any database or external API action; the guard was corrected, and the next run passed end-to-end. The successful run captured a candidate price of 83,590.3 USD/BTC at exchange time `2026-10-13T07:09:13.118Z`, retrieved at `2026-10-13T07:09:25.872Z` (12 seconds old), HTTP 200, returned pair key `XXBTZUSD`, raw payload SHA-256 `02f5b8a02d5668d1855de3ce5c413d779954706a276f15c210af42dde0459284`. It inserted one row, verified a duplicate was a no-op, checked the stored fields, rolled back, then independently confirmed `persisted_rows=0`. The price remains `CANDIDATE_ONLY`; this does not approve production ingestion or scenario use.
 
 This remains rehearsal-only: no production DB credentials are used, no production observations are written, scheduled ingestion remains unchanged, and BTC scenario/monitoring state and published probabilities remain untouched.
+
+
+## Live candidate rehearsal result — 2026-10-13
+
+- Run: https://github.com/olegsh247-stack/Crypto/actions/runs/38360852900 — **SUCCESS**.
+- Candidate: BTC/USD 83,590.3 USD/BTC; source timestamp 2026-10-13 07:09:13.118 UTC; retrieved 2026-10-13 07:09:25.872 UTC; age 12 seconds; freshness CURRENT; HTTP 200.
+- Returned pair key: `XXBTZUSD`; source: `https://api.kraken.com/0/public/Trades?pair=XBTUSD`.
+- Raw payload SHA-256: `02f5b8a02d5668d1855de3ce5c413d779954706a276f15c210af42dde0459284`.
+- The temporary PostgreSQL database was loopback-only (`127.0.0.1`, `crypto_test)); repository migrations passed. The rehearsal inserted once, confirmed a duplicate insert did nothing, verified the candidate fields, rolled back, and then independently confirmed `persisted_rows=0`. The disposable database was removed.
+- No production database credentials were used; no production observation, scenario, monitoring state, or published probability was changed.
+- Workflow #1 failed only at the confirmation guard before building or contacting Kraken. The guard was corrected, and workflow #2 passed all steps.
+- The workflow keeps a narrow `push` trigger limited to changes to its own workflow file on this feature branch, so this one-off rehearsal can be repeated by explicitly updating that file; it is not scheduled and ordinary documentation/code pushes do not trigger the live network capture.
