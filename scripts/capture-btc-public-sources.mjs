@@ -190,8 +190,19 @@ await capture({
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
-  sources: manifest.sources.map(({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count }) =>
-    ({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count })),
+  sources: manifest.sources.map(({
+    name, status, http_status, error,
+    latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_series_timestamp, latest_series_value_eh_s,
+    freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
+    acceptance_status, updated_through, row_count
+  }) => ({
+    name, status, http_status, error,
+    latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_series_timestamp, latest_series_value_eh_s,
+    freshness_max_age_seconds, age_seconds_at_capture, freshness_at_capture,
+    acceptance_status, updated_through, row_count
+  })),
   unresolved: manifest.unresolved
 }, null, 2));
 
