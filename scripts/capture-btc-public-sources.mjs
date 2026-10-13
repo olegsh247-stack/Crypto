@@ -193,13 +193,35 @@ const matchedFeeRewardRows = (feeRows ?? []).flatMap(fee => {
   }];
 });
 const latestMatched = matchedFeeRewardRows.at(-1) ?? null;
+const rewardByHeight = new Map((rewardRows ?? []).map(row => [String(row.avgHeight), row]));
+const matchedRawRows = (feeRows ?? []).flatMap(fee => {
+  const reward = rewardByHeight.get(String(fee.avgHeight));
+  if (!reward) return [];
+  return [{ fee, reward }];
+});
+const timestampMismatchRows = matchedRawRows.filter(({ fee, reward }) =>
+  Number(fee.timestamp) !== Number(reward.timestamp)).length;
+const derivedSubsidies = [...new Set(matchedFeeRewardRows.map(row => row.derived_subsidy_raw))].sort((a, b) => a - b);
+const expectedSubsidyRaw = 312500000; // 3.125 BTC in satoshis for the current halving era.
+const subsidyConsistency = matchedFeeRewardRows.length > 0
+  && timestampMismatchRows === 0
+  && derivedSubsidies.length === 1
+  && derivedSubsidies[0] === expectedSubsidyRaw
+  ? "PASS_INTERNAL_CONSISTENCY_ONLY"
+  : "REVIEW_REQUIRED";
 manifest.fee_subsidy_review = {
   status: "CANDIDATE_ONLY_NOT_ACCEPTED",
   fee_rows: feeRows?.length ?? null,
   reward_rows: rewardRows?.length ?? null,
   matched_avg_height_rows: matchedFeeRewardRows.length,
+  fee_rows_without_reward_match: (feeRows?.length ?? 0) - matchedRawRows.length,
+  reward_rows_without_fee_match: (rewardRows?.length ?? 0) - matchedRawRows.length,
+  matched_timestamp_mismatch_rows: timestampMismatchRows,
+  derived_subsidy_raw_unique_values: derivedSubsidies,
+  expected_subsidy_raw_for_current_era: expectedSubsidyRaw,
+  subsidy_consistency: subsidyConsistency,
   latest_matched_candidate: latestMatched,
-  rule: "Pair fee/reward rows by exact avgHeight. The denominator is candidate avgRewards - avgFees and is not accepted until source field semantics, bucket construction, and units are confirmed. No unmatched rows are interpolated."
+  rule: "Pair fee/reward rows by exact avgHeight and compare timestamps. The denominator is candidate avgRewards - avgFees; matching expected subsidy is an internal consistency check only, not source acceptance. No unmatched rows are interpolated."
 };
 
 await capture({
