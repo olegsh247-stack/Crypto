@@ -33,3 +33,17 @@ The read-only staging workflow captures this artifact alongside the existing BTC
 4. Scenario readiness requires every other input as well; a DXY candidate cannot independently unlock evaluation.
 
 **Decision:** use the Yahoo result for source feasibility and calculation review only. Do not ingest it as an accepted observation or use it in the scenario rule until source authorization and timestamp semantics are explicitly accepted. If those cannot be established, retain DXY as a blocker or change the methodology only through a separately reviewed decision.
+
+## Live candidate capture — 2026-10-13
+
+Read-only staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518) passed the DXY parser tests and captured the Yahoo chart endpoint with HTTP 200. Artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469), archive retained by GitHub Actions for seven days.
+
+- Latest completed New York session date: **2026-10-12**
+- Latest daily close: **102.5800**
+- Close five observed trading sessions earlier: **102.1700**
+- Candidate five-session change: **+0.4013%**
+- Retrieval time: `2026-10-13T11:11:14Z`
+- Raw payload SHA-256: `79eb39867cbc33ea1b5dffbfd8c3d7a9a37d9ee1d3f5c12a9fa2a052d1272170`
+- Capture freshness status: `BLOCKED_SOURCE_CONTRACT_REVIEW`; acceptance: `CANDIDATE_ONLY`
+
+This proves technical availability of a historical series through a public third-party endpoint. It does **not** prove feed authorization or the exact ICE close/publication timestamp. The candidate is not an accepted observation, and `macro.primary` remains unchanged.
