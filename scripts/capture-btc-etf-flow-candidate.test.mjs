@@ -46,11 +46,29 @@ test("ETF parser never fills absent trading dates with zero", () => {
   assert.equal(parsed.days.length, 4);
 });
 
-test("capture without a key makes no request and fails closed", async () => {
-  let calls = 0;
-  const result = await capture({ apiKey: "", fetchImpl: async () => { calls++; throw new Error("must not call"); }, now });
-  assert.equal(calls, 0);
-  assert.equal(result.capture_status, "BLOCKED_NO_CREDENTIAL");
+test("capture without a key uses the public read-only MCP endpoint", async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, options });
+    const request = JSON.parse(options.body);
+    if (request.method === "initialize") {
+      return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-03-26", capabilities: {}, serverInfo: { name: "test", version: "1" } } }), { status: 200, headers: { "content-type": "application/json", "mcp-session-id": "test-session" } });
+    }
+    if (request.method === "notifications/initialized") return new Response("", { status: 202 });
+    if (request.method === "tools/list") {
+      return new Response(JSON.stringify({ jsonrpc: "2.0", id: 2, result: { tools: [{ name: "get_asset_flows", inputSchema: { type: "object", properties: { asset: { type: "string" } }, required: ["asset"] } }] } }), { status: 200, headers: { "content-type": "application/json", "mcp-session-id": "test-session" } });
+    }
+    assert.equal(request.method, "tools/call");
+    assert.deepEqual(request.params.arguments, { asset: "btc" });
+    return new Response(JSON.stringify({ jsonrpc: "2.0", id: 3, result: { content: [{ type: "text", text: body }] } }), { status: 200, headers: { "content-type": "application/json", "mcp-session-id": "test-session" } });
+  };
+  const result = await capture({ apiKey: "", fetchImpl, now });
+  assert.equal(calls.length, 4);
+  assert.equal(calls.every(call => call.url === "https://mcp.cryptoetf.today/api/mcp"), true);
+  assert.equal(calls.every(call => !call.options.headers.authorization), true);
+  assert.equal(result.capture_status, "PASS_CANDIDATE_ONLY");
+  assert.equal(result.evidence.transport, "MCP Streamable HTTP, tools/call get_asset_flows");
+  assert.equal(result.parsed.freshness_gate, "BLOCKED");
   assert.equal(result.production_database_accessed, false);
   assert.equal(result.production_writes_performed, false);
 });
