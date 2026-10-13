@@ -80,3 +80,28 @@ Before implementation, the product contract must choose exactly one option and a
 ## Safety boundary
 
 This document changes no calculation, source priority, registry entry, probability, scenario state, monitoring event, or database record. Captured values remain candidates. The BTC scenario remains `not_evaluable` until all required input acceptance gates are satisfied.
+
+
+## Capture implementation inspection
+
+The read-only capture script on branch `btc-capture-freshness-gates-2026-10-13` was inspected against the endpoint constraints above. It currently requests the individual-block endpoint in 11 pages of 15 blocks (165 validation rows), then separately slices the latest 144 rows as a **proposed** metric window. This is sufficient in shape to collect more than one response, but it is not yet a complete reorg-safe or contract-approved observation pipeline.
+
+Specific gaps to close before accepting the candidate:
+
+- The capture obtains the tip height but does not capture the tip hash before collection and re-check the tip/boundary hash after collection. A height-only anchor cannot detect every tip change or reorganization during the multi-request capture.
+- Page evidence records URL, HTTP payload hash, and retrieval time, but not each response's HTTP status code or content type in the page manifest. Preserve these so failed/non-JSON responses are auditable without relying only on thrown errors.
+- The code derives subsidy as `extras.reward - extras.totalFees` and compares every sampled block to the current-era subsidy constant. That is a useful recent-block diagnostic, not a general definition across subsidy-era boundaries. Contract tests should derive/validate the expected subsidy from block height and halving rules, or explicitly constrain the sample to a single known era.
+- The current parser allows repeated heights with the same hash to overwrite an earlier row, and does not assert that each page contains the exact expected heights or the expected page length. Final missing-height checks catch gaps in the union, but page-level boundary and overlap checks should be explicit.
+- The review payload calls the validation window 165 blocks in its fields, while a nearby note says “Last 150 individual blocks”. Align labels to the actual 165-row validation set to avoid misleading audit evidence.
+- The script records a candidate ratio, but it must remain candidate-only until the product contract explicitly chooses the 144-block window or UTC-day method and the registry/source/monitoring definitions agree.
+
+These are implementation-review findings, not production failures: the script is explicitly read-only and the captured ratio is not accepted. No metric, registry, scenario, monitoring or database state was changed by this review.
+
+## Next implementation sequence
+
+1. Add tip-height **and tip-hash** capture before the first page; after the last page, re-read both and block the candidate if the anchor changes. Where practical, also verify the first/last boundary hashes against the captured chain view.
+2. Preserve per-page HTTP status, content type, retrieval timestamp, requested start height, returned heights and raw payload hash.
+3. Reject malformed pages, unexpected heights, duplicate heights (even if the hash is identical), conflicting hashes, missing rows, and any gap/overlap not explicitly expected by the paging contract.
+4. Make the subsidy check height-aware, with deterministic fixtures for the current era and halving boundaries.
+5. Correct the 150-versus-165 wording and add regression tests for all gates above.
+6. Keep the resulting ratio candidate-only; do not enable ingestion or scenario evaluation as part of these changes.
