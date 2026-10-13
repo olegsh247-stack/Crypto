@@ -208,14 +208,20 @@
     ],
     "required_staging_gate": true,
     "production_approved": false,
-    "commit": "982fc772b708f98485e6c68a84a928dfbd5cad06",
-    "execution_status": "NOT_RUN",
+    "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
+    "execution_status": "NOT_CONFIRMED",
     "unresolved": [
-      "run the staging capture against the updated script",
-      "confirm endpoint field/unit contract",
+      "verify the staging workflow run for the updated capture commit and inspect its uploaded artifact",
+      "confirm endpoint field and unit contract",
       "reconcile ratio window/frequency with metric registry and SQL migration",
       "reconcile source ID/runtime mapping",
       "perform separately scoped read-only duplicate dry-run"
     ]
+  },
+  "staging_gate_manifest_update": {
+    "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
+    "change": "Capture the final required-capture, ETF-capture and 150-block validation outcome in manifest.json before artifact upload; the process exit code uses the same recorded gate status.",
+    "execution_status": "NOT_CONFIRMED",
+    "production_approved": false
   }
 }
