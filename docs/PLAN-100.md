@@ -579,3 +579,13 @@ The current review of the eight open PRs is documented in [OPEN-PR-RECONCILIATIO
 ### PR #73 contract follow-up — 2026-10-13
 
 The targeted API/Web contract gap has been ported to `main` in focused commits, rather than merging the stale PR branch wholesale. Web now declares BTC `scenario_readiness` and scenario `snapshot_id`; the API response-shape test and Web compile-time fixture are included in CI. VPS Build Rehearsal #491 and Web Build #139 passed. Release Gate #203 was still in progress at the time of this update. See [open PR reconciliation](./OPEN-PR-RECONCILIATION-2026-10-13.md) and [Product Contour audit](./PRODUCT-CONTOUR-V1-CONTRACT-AUDIT.md).
+
+
+## Execution update — 2026-10-13 (PR #82 validation)
+
+- PR [#82](https://github.com/olegsh247-stack/Crypto/pull/82), head `9b63a574829b96fc3bbc664c433a8455ebee1dc1`: VPS API Build Rehearsal #849 and BTC Block Window Validation #32 both completed successfully.
+- Rehearsal #849 passed against disposable PostgreSQL and validates repository/runtime contracts only; it is not a current production/target-database audit.
+- Validation #32 passed syntax and deterministic tests. Live capture and public-source capture were skipped because this run was triggered by `pull_request`; prior live capture evidence remains candidate-only and is separately documented.
+- The completed UTC-day fee/subsidy calculation is reproducible, but the candidate is not accepted into canonical observations. Kraken spot and Mempool hashrate remain on hold until the actual target runtime/source-adapter mapping is verified. ETF freshness is unresolved; DXY remains blocked. No scenario state, monitoring event, score, probability, published snapshot, or production observation was changed.
+- Current PR reconciliation remains a prerequisite before advancing to the offline BTC scenario. PR #80 contains the isolated read-only Kraken parser/runtime-mapping work; PR #69 proposes broader opt-in collectors and remains source-contract-blocked. Compare their current diffs and ancestry with `main`; do not merge stale branches wholesale or enable persistence.
+- Next action: finish the narrow open-PR overlap review, then close the remaining source/metric acceptance contracts and run a no-write staging diff. The BTC scenario stays `not_evaluable` until every required input passes.
