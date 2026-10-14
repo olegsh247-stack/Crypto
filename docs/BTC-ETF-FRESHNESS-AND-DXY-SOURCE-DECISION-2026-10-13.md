@@ -130,3 +130,10 @@ Official source documentation was checked before changing any contract:
 4. DXY remains blocked unless an ICE-authorized feed with a documented endpoint and terms suitable for the intended use is identified. Do not scrape retail charts or silently substitute a broad USD series.
 
 No database access or writes, registry changes, scenario/monitoring changes, or PR merge were performed.
+
+
+## 2026-10-14 — session-lag policy helper added, activation still gated
+
+The source-contract module now evaluates ETF row freshness against an explicit caller-supplied trading-session calendar and explicit `maxSessionLag`. No implicit lag limit is selected. The helper never manufactures `observed_at`, rejects incomplete constituent rows, rejects dates absent from the supplied calendar, and requires strict real calendar dates. Fixture tests cover fresh-within-policy, stale, incomplete, missing-calendar and invalid-date cases.
+
+This is a contract primitive only. Before activation, the project must identify and document the authoritative session-calendar source and choose a lag threshold based on the Farside update behavior and expected review cadence. Until those choices are explicit, the ETF candidate remains non-canonical and cannot drive scoring or scenario state.
