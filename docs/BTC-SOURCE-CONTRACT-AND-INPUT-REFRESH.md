@@ -29,7 +29,7 @@ The freshness gates below are aligned to \`data/CryptoDataModel/registry/metric-
 |---|---|---:|---|
 | \`market.spot_price\` | \`USD/BTC\` | 1 h | One named exchange/pair and actual timestamp; never average unrelated exchange quotes into a synthetic point |
 | \`security.hashrate\` | \`EH/s\` | 48 h | Store source's raw daily estimate and documented aggregation; distinguish daily estimate from rolling mean |
-| \`security.fee_subsidy_ratio\` | \`ratio\` | 48 h | Value must state numerator, denominator, block/window range and calculation version; one 144-block point is context, not a validated rolling trend |
+| \`security.fee_subsidy_ratio\` | \`ratio\` | 48 h | Use one completed UTC day (registry frequency \`1d\`): sum per-block fees / sum expected subsidy over the same included blocks; preserve day boundaries, height range and calculation version. A rolling 144-block value is diagnostic only. |
 | \`macro.dxy\` | \`index\` | 48 h | One selected provider and defined daily close/time convention; reconcile materially conflicting vendor values before acceptance |
 | \`institutional.etf_net_flow\` | \`USD million/day\` | 36 h | At least five distinct recent trading dates; latest source row must be valid/current; dashes or a placeholder total are not zero |
 
@@ -39,7 +39,7 @@ For every metric, the observation's \`unit\` must match both the required canoni
 
 The repository registry has now been inspected directly:
 
-- `security.hashrate` and `security.fee_subsidy_ratio` point first to registered `network.primary` (Mempool.space); the exact endpoint, aggregation window and stored-method mapping still need to be confirmed.
+- `security.hashrate` and `security.fee_subsidy_ratio` point first to registered `network.primary` (Mempool.space). For hashrate, the pinned upstream implementation at [commit 7e790680](https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/mining/mining.ts) confirms that each daily estimate covers the preceding 24-hour UTC window and is timestamped at the end-exclusive UTC midnight. The current candidate is 999.342299 EH/s for 2026-10-12. For fee/subsidy, the block endpoint and satoshi units for `extras.totalFees` and `extras.reward` are supported by the pinned upstream implementation at [mempool/mempool commit 7e790680](https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/blocks.ts) and the frontend's satoshi display/conversion. The persisted fee/subsidy observation window is recommended to be a completed UTC day because the metric registry declares `frequency: 1d`; production acceptance remains pending the target runtime's read-only source-registry check and formal input acceptance.
 - `institutional.etf_net_flow` still points to `institutional.primary` (Farside Investors) in the metric registry. `institutional.tftc` is registered in repository JSON and SQL seed as an unvalidated fallback candidate, but is deliberately not added to `source_priority` pending lineage, discrepancy and observation-time review. Neither source candidate has been verified in the live production `sources` table.
 - `market.spot_price` points to `market.kraken` in the metric registry and the source registry. A repository audit found that `infrastructure/postgres/seed-v1.sql` had not seeded this source, so a clean database could reject Kraken observations as unregistered. The seed now includes `market.kraken` with the public Trades endpoint for `XBTUSD`; this is a repository-only correction and does not alter any deployed database. The actual production `sources` table and adapter still require independent verification. Preserve the raw trade payload and convert Kraken's returned trade epoch timestamp to UTC.
 - `macro.dxy` currently points to generic `macro.primary` (Treasury/Federal Reserve/BLS) rather than a specific registered DXY data endpoint and close-time convention. This input is **blocked by source specificity**.
@@ -68,7 +68,7 @@ These are source-review candidates only. They have **not** been inserted into th
 - **DXY:** provider/time disagreement must be resolved by selecting one canonical source and observation convention.
 - **Units:** expected units are \`USD/BTC\`, \`EH/s\`, \`ratio\`, \`index\`, and \`USD million/day\`. Unit validation must check both the observation and metric registry.
 - **Repeated observations:** do not delete duplicate history. First export every row in each logical-key group; classify exact duplicates, revisions, conflicting values, and missing provenance. Define a deterministic winner/retention rule, preserve audit lineage, and only then propose a separate reviewed remediation.
-- **Readiness:** because current price/source selection, the current hashrate series, a valid rolling fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
+- **Readiness:** because current price/source selection, the current hashrate series, a production-accepted completed-UTC-day fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
 
 ## 4A. Read-only database audit — 2026-10-12 18:20 UTC
 
@@ -125,10 +125,68 @@ Keep the published research probabilities unchanged: Bull 30%, Base 50%, Bear 20
 - [ ] Current BTC quote fetched from the selected registered exchange feed.
 - [ ] Five distinct completed ETF-flow sessions staged; placeholder rows excluded; latest-row freshness checked at run time.
 - [ ] Hashrate raw series refreshed through latest complete UTC day and method recorded.
-- [ ] Fee/subsidy rolling series computed from documented raw observations.
+- [ ] Fee/subsidy completed-UTC-day series computed from documented raw block observations and accepted in the canonical metric/source/monitoring contracts.
 - [ ] DXY provider and daily observation convention selected; discrepancies resolved.
 - [ ] Staging rows pass source, unit, timestamp, freshness and numeric validation.
 - [ ] Duplicate-group payloads classified; dry-run remediation reviewed; no blind historical deletion.
 - [ ] Readiness passes on the reviewed candidate set.
 - [ ] Reproducible scenario evaluation is run read-only only after separate rule review.
 - [ ] No scenario state/event persistence and no probability changes.
+
+
+## 4C. Completed UTC-day block capture — 2026-10-13
+
+A read-only Mempool.space capture fetched 330 contiguous blocks (heights 970932–971261) across 22 pages. All pages returned HTTP 200; their raw-body SHA-256 values matched the manifest. The tip height/hash anchor remained unchanged. No missing heights, duplicate heights/hashes, future-timestamp violations or Median Time Past violations were found.
+
+The capture artifact is [btc-block-window-review-38421354649](https://github.com/olegsh247-stack/Crypto/actions/runs/38421354649/artifacts/11825714284), SHA-256 `dde8265c9ff0ac1791751d5907f95509c50b6dc64011ca8d05bcc4083beabdcc`. The permanent review is [BTC UTC-Day Candidate Review](BTC-UTC-DAY-CANDIDATE-REVIEW-2026-10-13.md).
+
+- Completed UTC day: 2026-10-12, 00:00 UTC inclusive to 2026-10-13 00:00 UTC exclusive.
+- Included blocks: 152, heights 971006–971157.
+- Fees: 286,069,738 sats; expected subsidy over the same blocks: 47,500,000,000 sats.
+- Candidate ratio: 0.0060225208 (about 0.602252%).
+- Rolling 144-block diagnostic: 0.0057881996 (about 0.578820%).
+
+The repository metric registry's `frequency: 1d` makes the completed UTC-day definition the recommended persisted observation contract. The 144-block value remains diagnostic-only. Both candidates remain unaccepted; no database or product state was changed.
+
+## 9. Contract reconciliation checkpoint — 2026-10-14
+
+The BTC fee/subsidy candidate is now pinned by a regression test to the repository's canonical metric registry. The test asserts that `security.fee_subsidy_ratio` remains `ratio`, has `frequency: 1d`, has a `48h` freshness window, and prioritizes only `network.primary`. It also asserts that the staged candidate matches the registry's unit and source while remaining `HOLD_CONTRACT_ACCEPTANCE`. This is a repository fixture/regression check; it does not authorize ingestion.
+
+### Input-gate status
+
+| Input | Current contract status | Blocking item before acceptance |
+|---|---|---|
+| `security.fee_subsidy_ratio` | Completed UTC-day arithmetic and source provenance are reproducible for 2026-10-12 | Formal candidate acceptance and independent read-only verification of runtime source registration; no production write authorized |
+| `market.spot_price` | Registry remains `15m`, freshness `1h`; Kraken hourly OHLC helper is fixture-only | **Cadence mismatch:** do not wire the hourly helper into a 15-minute contract. Choose a 15-minute documented candle contract or explicitly review a change to hourly before changing the registry |
+| `security.hashrate` | Registry is daily, freshness `48h`; documented upstream daily estimate semantics are available | Current candidate series and runtime source registration still require independent acceptance |
+| `institutional.etf_net_flow` | Registry is daily, freshness `36h`; canonical priority remains `institutional.primary` | Farside runner access returned HTTP 403; do not bypass it or promote TFTC automatically. Obtain an authorized access method and resolve publication-time/terms blockers |
+| `macro.dxy` | Registry is daily, freshness `48h` | `macro.primary` is not a specific DXY endpoint/close convention; select and document an authorized canonical provider before use |
+
+### Gate decision
+
+- **Fixture/regression tests:** the pinned block-window and candidate contract checks have passed on prior commits; the new registry-alignment test must pass CI on its own commit before it is considered verified.
+- **Live source access:** not established by these fixture tests; do not infer it.
+- **Runtime source registration:** not independently rechecked in the target database/runtime during this checkpoint.
+- **Production / scenario acceptance:** not approved. Keep BTC scenario readiness `not_evaluable`; do not create scenario state or monitoring events, change probabilities, ingest candidates, or alter source priority.
+
+Next implementation step after CI: resolve the spot-price cadence mismatch as a documented contract decision, then continue the remaining BTC inputs under the same source/time/unit/freshness contract. No provider calls or production writes are part of that documentation/test change.
+
+### BTC spot cadence decision — 2026-10-14
+
+**Decision:** source-supported cadence is acceptable; 15 minutes is not a fixed requirement. For the first BTC research path, the canonical contract now specifies a completed hourly candle candidate:
+- `market.spot_price.frequency = 1h`;
+- `freshness_window = 1h` remains a separate limit measured from the completed observation window, not from retrieval time;
+- unit remains `USD/BTC`;
+- source priority remains `market.kraken`;
+- use only a completed `XBTUSD` candle, identified by its UTC start/end; never treat the current uncommitted row as final;
+- do not silently mix hourly closes with ticker snapshots, trades, USDT-quoted prices or other providers.
+
+This changes only the BTC repository metric contract and its regression test. It does **not** activate the collector, perform live requests, prove provider-use rights, verify runtime registration, write observations, or authorize scenario evaluation. Earlier notes saying the 15-minute registry cadence must be preserved are superseded by this explicit cadence decision; the remaining source terms/access/runtime gates still apply.
+
+If a later source offers a reliable 15-minute observation, it can be evaluated on its merits. Frequency should follow the selected source and accepted research method, while freshness remains independently defined.
+
+### Hourly candle timestamp semantics — 2026-10-14
+
+The fixture normalizer now sets `observed_at` to the **end of the completed candle's observation window** (`bar_end_at`). This is the logical timestamp of the hourly aggregate, not a claim that Kraken published the row at that instant. `source_published_at` remains null, and `retrieved_at` remains the actual capture time. The helper still blocks a missing capture timestamp, a capture before the scheduled candle close, an absent candle, or malformed/duplicate rows.
+
+This removes a false blocker that treated the absence of a separate publication timestamp as if the candle had no defensible observation window. It does not clear the independent terms/permitted-use, live access, runtime registration, or production acceptance gates. The timestamp interpretation is covered by a fixture regression test.

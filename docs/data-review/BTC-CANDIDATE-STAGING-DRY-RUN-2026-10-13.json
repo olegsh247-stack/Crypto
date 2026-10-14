@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "asset_id": "btc",
+  "created_at": "2026-10-13T15:30:00Z",
+  "mode": "read-only-candidate-staging-dry-run",
+  "production_database_accessed": false,
+  "production_writes_performed": false,
+  "decision": "NO_INSERTS_AUTHORIZED",
+  "source_artifacts": [
+    {
+      "name": "BTC block window 330-block capture",
+      "workflow_run_id": 38421354649,
+      "artifact_id": 11825714284,
+      "artifact_sha256": "dde8265c9ff0ac1791751d5907f95509c50b6dc64011ca8d05bcc4083beabdcc"
+    },
+    {
+      "name": "BTC public source refresh",
+      "workflow_run_id": 38422001808,
+      "artifact_id": 11826249171,
+      "artifact_sha256": "b3ca27c5157d3ab016d2566377ce8d892263beb4f2723832a366a8a77981eda5"
+    }
+  ],
+  "baseline": {
+    "type": "last_read_only_database_audit",
+    "observed_at": "2026-10-12T18:20:00Z",
+    "warning": "This is the last verified database snapshot available in this workflow, not a fresh live database read on 2026-10-13. Re-audit the target database read-only before treating any classification as a current database diff.",
+    "known_state": {
+      "market.spot_price": {
+        "latest_value": 81043,
+        "unit": "USD/BTC",
+        "observed_at": "2026-09-19T06:38:00Z",
+        "source_id": "market.primary",
+        "status": "STALE",
+        "market.kraken_in_live_sources_registry": false
+      },
+      "security.hashrate": {
+        "latest_value": 1001,
+        "unit": "EH/s",
+        "observed_at": "2026-09-19T00:00:00Z",
+        "status": "STALE"
+      },
+      "security.fee_subsidy_ratio": {
+        "observation_exists": false
+      },
+      "institutional.etf_net_flow": {
+        "latest_value": 324.6,
+        "unit": "USD million/day",
+        "observed_at": "2026-09-18T00:00:00Z",
+        "status": "STALE"
+      },
+      "macro.dxy": {
+        "observation_exists": false
+      },
+      "duplicate_logical_key_groups": 9,
+      "duplicate_rows_in_groups": 18
+    }
+  },
+  "candidates": [
+    {
+      "metric_id": "market.spot_price",
+      "source_id": "market.kraken",
+      "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+      "unit": "USD/BTC",
+      "value": 83588.1,
+      "observed_at": "2026-10-13T15:26:08.170Z",
+      "retrieved_at": "2026-10-13T15:26:13.228Z",
+      "age_seconds_at_retrieval": 5.058,
+      "freshness_window": "1h",
+      "source_row_identity": {
+        "requested_pair": "XBTUSD",
+        "returned_pair_key": "XXBTZUSD",
+        "response_trade_rows": 1000
+      },
+      "raw_body_sha256": "366489edb7a76a768c51ca9f5d9066c0b865506b26ed8801d88d08d633206fe3",
+      "dry_run_classification": "HOLD_SOURCE_REGISTRY_RUNTIME_UNVERIFIED",
+      "reason": "Fresh source timestamp and valid price, but the last database audit found market.kraken absent from the live sources table. Do not insert until a read-only runtime registry/adapter check passes."
+    },
+    {
+      "metric_id": "security.hashrate",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/hashrate/1w",
+      "unit": "EH/s",
+      "value": 999.342298838022,
+      "observed_at": "2026-10-13T00:00:00Z",
+      "retrieved_at": "2026-10-13T15:26:13.580Z",
+      "age_hours_at_retrieval": 15.437,
+      "freshness_window": "48h",
+      "raw_body_sha256": "379aa3569f6b1841f1445463936abd22ac7efcbaa2900929896d74823bf8c764",
+      "dry_run_classification": "HOLD_TARGET_DATABASE_READ_ONLY_REAUDIT",
+      "reason": "The UTC-day bucket and estimator semantics are verified against pinned upstream code. The last available target-database audit is from 2026-10-12, so recheck the current registered source and adapter before accepting this candidate.",
+      "window_start_utc": "2026-10-12T00:00:00Z",
+      "window_end_utc_exclusive": "2026-10-13T00:00:00Z",
+      "aggregation_method": "Network hashrate estimate from blocks counted in the preceding 24-hour UTC window; timestamp labels the end-exclusive UTC midnight.",
+      "method_source_url": "https://github.com/mempool/mempool/blob/7e79068004e97ecc73415f4c0b1a5aeab347faa0/backend/src/api/mining/mining.ts"
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/blocks/:startHeight",
+      "unit": "ratio",
+      "value": 0.0060225208,
+      "window_start_utc": "2026-10-12T00:00:00Z",
+      "window_end_utc_exclusive": "2026-10-13T00:00:00Z",
+      "first_height": 971006,
+      "last_height": 971157,
+      "block_count": 152,
+      "total_fees_sats": 286069738,
+      "total_subsidy_sats": 47500000000,
+      "retrieved_at": "2026-10-13T15:21:36.811Z",
+      "freshness_window": "48h",
+      "raw_artifact_sha256": "dde8265c9ff0ac1791751d5907f95509c50b6dc64011ca8d05bcc4083beabdcc",
+      "dry_run_classification": "HOLD_CONTRACT_ACCEPTANCE",
+      "reason": "The calculation is reproducible and its window matches the registry's 1d frequency, but the contract recommendation has not been accepted as a canonical registry/monitoring change."
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.primary",
+      "source_url": "https://farside.co.uk/btc/",
+      "unit": "USD million/day",
+      "value": -65.4,
+      "session_date": "2026-10-12",
+      "observed_at": null,
+      "retrieved_at": "2026-10-13T15:26:13.815Z",
+      "freshness_window": "36h",
+      "raw_body_sha256": "72e023672deeb8968520a408bf890f76b5cf0f06f51c2bf07b33784b39a154ce",
+      "cross_check": {
+        "source_id": "institutional.tftc",
+        "value_usd_millions": -65.401,
+        "updated_through": "2026-10-12",
+        "raw_body_sha256": "e579b9e607fd25a089d63d0cf509ef00d314d8581e68d131d7094faa54530ad2"
+      },
+      "dry_run_classification": "HOLD_OBSERVATION_TIME_FRESHNESS_UNRESOLVED",
+      "reason": "The 12 Oct session total reconciles to Farside's displayed precision, but the page provides a date rather than a defensible publication timestamp. The 13 Oct dash/0.0 row is not a confirmed zero. TFTC remains an unapproved mirror."
+    },
+    {
+      "metric_id": "macro.dxy",
+      "source_id": "macro.primary",
+      "source_url": null,
+      "unit": "index",
+      "value": null,
+      "observed_at": null,
+      "dry_run_classification": "BLOCKED_NO_CANONICAL_SOURCE",
+      "reason": "No specific DXY feed, endpoint, daily close convention or source timestamp contract has been approved."
+    }
+  ],
+  "dry_run_summary": {
+    "candidate_count": 5,
+    "ready_for_insert": 0,
+    "hold": 4,
+    "blocked": 1,
+    "inserted": 0,
+    "updated": 0,
+    "deleted": 0,
+    "scenario_or_monitoring_writes": 0
+  },
+  "next_gate": [
+    "Perform a fresh read-only audit of the target database's sources and observations; the baseline above is from 2026-10-12 and is not a current live diff.",
+    "Resolve market.kraken registration/adapter parity.",
+    "Recheck the current target database's registered network.primary source and adapter; the hashrate UTC-day bucket convention is now verified against pinned upstream code.",
+    "Accept the UTC-day fee/subsidy contract across metric/source/monitoring docs before promoting the candidate.",
+    "Define ETF session-date observation-time semantics and apply the 36-hour freshness rule without treating dashes as zero.",
+    "Select a canonical DXY source.",
+    "Re-run the dry-run diff and require zero unresolved blockers before any ingestion review."
+  ]
+}

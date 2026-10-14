@@ -10,7 +10,7 @@
       "category": "market",
       "unit": "USD/BTC",
       "update_mode": "AUTO",
-      "frequency": "15m",
+      "frequency": "1h",
       "freshness_window": "1h",
       "source_priority": [
         "market.kraken"

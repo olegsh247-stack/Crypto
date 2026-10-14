@@ -7,6 +7,8 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { normalizeKrakenLegacyTrades, parseFarsideHtmlTable, evaluateFarsideSessionFreshness } from "./btc-source-contracts.mjs";
+import { getUsEquitySessionDates2026 } from "./us-equity-session-calendar.mjs";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
 await mkdir(outDir, { recursive: true });
@@ -38,7 +40,7 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     metric_id: metricId,
     source_id: sourceId,
     url,
-    retrieved_at: new Date().toISOString(),
+    retrieved_at: null,
     status: "FAILED"
   };
   try {
@@ -49,11 +51,12 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     item.http_status = response.status;
     item.content_type = response.headers.get("content-type");
     const body = await response.text();
+    item.retrieved_at = new Date().toISOString();
     item.body_sha256 = await sha256(body);
     item.body_file = `${name}.raw`;
     await writeFile(join(outDir, item.body_file), body, "utf8");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const parsed = parse ? parse(body) : null;
+    const parsed = parse ? parse(body, item) : null;
     item.status = "CAPTURED";
     if (parsed) Object.assign(item, parsed);
   } catch (error) {
@@ -73,24 +76,24 @@ await capture({
   metricId: "market.spot_price",
   sourceId: "market.kraken",
   url: "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
-  parse: body => {
+  parse: (body, captureMeta) => {
+    const normalized = normalizeKrakenLegacyTrades(JSON.parse(body), {
+      retrievedAt: captureMeta.retrieved_at,
+      requestedPair: "XBTUSD",
+    });
     const data = JSON.parse(body);
-    if (Array.isArray(data.error) && data.error.length) throw new Error(`Kraken API error: ${data.error.join(", ")}`);
-    const result = data.result ?? {};
-    const pairKey = Object.keys(result).find(key => key !== "last");
-    const trades = result[pairKey];
-    if (!pairKey || !Array.isArray(trades) || trades.length === 0) throw new Error("Kraken response has no trade rows");
-    const latest = trades.reduce((best, row) => Number(row[2]) > Number(best[2]) ? row : best);
-    const epochSeconds = Number(latest[2]);
-    if (!Number.isFinite(epochSeconds) || !Number.isFinite(Number(latest[0]))) throw new Error("Kraken latest trade has invalid price/timestamp");
+    const trades = data.result[normalized.source_pair_key];
     return {
-      pair_key: pairKey,
-      requested_pair: "XBTUSD",
-      latest_trade_price_usd_per_btc: Number(latest[0]),
-      latest_trade_epoch_seconds: epochSeconds,
-      latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
+      pair_key: normalized.source_pair_key,
+      requested_pair: normalized.requested_pair,
+      latest_trade_price_usd_per_btc: normalized.value,
+      latest_trade_epoch_seconds: Date.parse(normalized.observed_at) / 1000,
+      latest_trade_observed_at: normalized.observed_at,
+      latest_trade_volume: normalized.raw_trade_volume,
+      latest_trade_raw_row: normalized.raw_trade_row,
       trade_rows_in_response: trades.length,
-      note: "Latest trade timestamp is source observation time; retrieved_at is capture time."
+      timestamp_semantics: normalized.timestamp_semantics,
+      note: "Latest source trade timestamp is observation time; retrieved_at is recorded after the response body is read."
     };
   }
 });
@@ -140,11 +143,32 @@ await capture({
   name: "farside-btc-etf-page",
   metricId: "institutional.etf_net_flow",
   sourceId: "institutional.primary",
-  url: "https://farside.co.uk/btc/",
-  parse: body => ({
-    html_characters: body.length,
-    note: "Raw page retained for parser review. Retrieval time is not treated as ETF observation/publication time; dash/placeholder rows must not become zero."
-  })
+  url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+  parse: (body, captureMeta) => {
+    const parsed = parseFarsideHtmlTable(body, { retrievedAt: captureMeta.retrieved_at });
+    let freshness;
+    const maxSessionLagRaw = process.env.BTC_ETF_MAX_SESSION_LAG;
+    if (parsed.latest_session_date.slice(0, 4) !== "2026") {
+      freshness = { status: "BLOCKED_CALENDAR_YEAR_UNSUPPORTED", fresh: false, observed_at: null, retrieved_at: captureMeta.retrieved_at };
+    } else if (maxSessionLagRaw == null || maxSessionLagRaw.trim() === "" || !/^\\d+$/.test(maxSessionLagRaw)) {
+      freshness = { status: "BLOCKED_POLICY_THRESHOLD_UNCONFIGURED", fresh: false, max_session_lag: null, observed_at: null, retrieved_at: captureMeta.retrieved_at };
+    } else {
+      const calendar = getUsEquitySessionDates2026({ from: "2026-01-01", through: parsed.latest_session_date });
+      freshness = evaluateFarsideSessionFreshness(parsed.latest_row, {
+        retrievedAt: captureMeta.retrieved_at,
+        expectedSessionDates: calendar,
+        maxSessionLag: Number(maxSessionLagRaw)
+      });
+    }
+    return {
+      html_characters: body.length,
+      ...parsed,
+      freshness,
+      candidate_value: freshness.fresh ? parsed.latest_row.value : null,
+      candidate_status: freshness.fresh ? "CANDIDATE_ONLY" : freshness.status,
+      note: "Raw HTML and SHA-256 are preserved. This is candidate-only parsing; no ETF value is eligible for scenario use without an explicit session-lag policy and runtime/source acceptance."
+    };
+  }
 });
 
 await capture({
