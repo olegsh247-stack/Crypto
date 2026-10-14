@@ -221,3 +221,14 @@ The first BTC scenario should not calculate every available metric by default. E
 ### Consequence for implementation
 
 This is a scope decision, not a change to runtime behavior. The metric registry, readiness gate and tests currently contain a fee/subsidy contract and treat the metric as a gated input; reconcile those definitions before implementation so a deferred metric is not accidentally still mandatory. Do not remove source provenance or research notes already collected, but do not build or run a recurring fee calculation just to populate a field. The aggregate Mempool reward-stats endpoint remains insufficient as sole continuity evidence; no ratio has been calculated, no live API was queried, no database was accessed or written, and no scenario/monitoring/probability was changed. BTC remains not_evaluable until the active inputs and scenario rules pass their own gates.
+
+ 
+## 6. Scope decision applied to the readiness gate — 2026-10-14
+
+The first-scenario scope decision has now been applied in code:
+
+- Removed hashrate and fee/subsidy ratio from the mandatory readiness list. Hashrate remains supporting network-health context; fee/subsidy remains deferred and is not calculated.
+- The metric registry now labels fee/subsidy ratio as manual/on-demand with no active freshness expectation while deferred. Its identity is retained for future research; it is not a live required input.
+- Tests were updated so the two deferred/context metrics do not block readiness, while provenance tests continue to cover mandatory inputs.
+
+CI has not yet confirmed the final commits at the time of this note. BTC remains `not_evaluable` until its actual required inputs pass all source, freshness, unit and series checks. This change does not authorize scenario evaluation, probability changes, persisted state, production ingestion, database writes or deployment.
