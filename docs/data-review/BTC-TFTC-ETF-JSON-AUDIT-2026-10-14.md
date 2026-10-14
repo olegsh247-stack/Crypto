@@ -52,3 +52,18 @@ The 16 zero rows have no `perEtfUsd` breakdown and no total assets. The JSON doe
 6. Re-run the review against a captured immutable artifact. Only then consider a separate, explicit source-priority change.
 
 **Current implementation:** the review-only mapper intentionally blocks TFTC ETF rows. It does not write observations or change source priority. BTC remains `not_evaluable`; the first scenario must not use these values yet.
+
+
+## 5. Comparison with the previously staged Farside snapshot
+
+The repository's Farside staging artifact was retrieved on 2026-10-12 and explicitly records date-only retrieval precision, `observed_at: null`, and a HOLD decision. Its rounded completed-session totals compare with the TFTC JSON snapshot captured on 2026-10-14 as follows:
+
+| Session date | Farside staged value (USD million) | TFTC aggregate (USD million) | TFTC minus Farside (USD million) |
+|---|---:|---:|---:|
+| 2026-10-05 | -89.800000 | -89.897783 | -0.097783 |
+| 2026-10-06 | 118.800000 | 118.862452 | 0.062452 |
+| 2026-10-07 | -484.900000 | -487.067412 | -2.167412 |
+| 2026-10-08 | -244.100000 | -244.125629 | -0.025629 |
+| 2026-10-09 | 21.100000 | 21.128079 | 0.028079 |
+
+Most differences are consistent with the display precision of the staged Farside totals, but 7 October differs by about **$2.17 million**. The Farside artifact is a prior snapshot, and the live Farside endpoint returned HTTP 403 from the current runner; this is therefore a cross-snapshot discrepancy that needs reconciliation, not a claim that one provider is definitively wrong. TFTC's per-fund values sum to its own aggregate for these five recent dates, but that does not establish agreement with Farside or prove source authority.
