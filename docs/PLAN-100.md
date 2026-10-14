@@ -962,3 +962,9 @@ This is not source activation. The helper does not perform network access and do
 A follow-up fixture review added a fail-closed guard: if the supplied capture time precedes the scheduled close of the requested hourly candle, the helper returns no value and blocks the candidate. A regression test also confirms duplicate candle start times are rejected. This is still fixture-only work; source rights, intended use, live access, runtime registration and end-to-end acceptance remain separate gates.
 
 The fixture contract now also fails closed when capture/retrieval time is omitted: without it, freshness cannot be audited. A regression test verifies that a candle with no `retrieved_at` returns a null value and `BLOCKED_RETRIEVAL_TIMESTAMP_MISSING`. The readiness CI gate passing confirms code/tests and registry contracts only; it does not clear provider-use terms, live access, runtime registration, or end-to-end acceptance.
+
+### Plan 100 execution update — BTC spot cadence, 2026-10-14
+
+The user clarified that BTC spot-price cadence must follow the reliable source contract: 15 minutes is not a fixed requirement; a completed hourly candle is acceptable when that is what the source reliably provides. The BTC-only metric registry now declares `market.spot_price.frequency: 1h`, preserving `USD/BTC`, `market.kraken` priority, and the separate `1h` freshness window. A regression test pins this contract. This is a repository contract decision only, not source activation or production acceptance.
+
+Remaining gates: CI on the newest commit; provider terms/permitted-use review; authorized live access check when permitted; runtime source registration; and end-to-end acceptance. Until those pass, BTC scenario readiness remains `not_evaluable`. No live provider call, production write, collector activation, scenario-state change, probability change, or PR merge was performed.
