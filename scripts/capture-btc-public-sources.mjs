@@ -50,6 +50,8 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     item.content_type = response.headers.get("content-type");
     const body = await response.text();
     item.body_sha256 = await sha256(body);
+    // Same digest is carried under the database-contract field name for later review-only mapping.
+    item.source_payload_sha256 = item.body_sha256;
     item.body_file = `${name}.raw`;
     await writeFile(join(outDir, item.body_file), body, "utf8");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -90,6 +92,10 @@ await capture({
       latest_trade_price_usd_per_btc: Number(latest[0]),
       latest_trade_epoch_seconds: epochSeconds,
       latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
+      observed_at: new Date(epochSeconds * 1000).toISOString(),
+      source_row_key: `XBTUSD:${epochSeconds}:${String(latest[0])}:${String(latest[1])}:${String(latest[3] ?? "")}:${String(latest[4] ?? "")}:${String(latest[5] ?? "")}`,
+      methodology: "kraken-public-trades-latest-trade-v1",
+      methodology_version: "1",
       trade_rows_in_response: trades.length,
       note: "Latest trade timestamp is source observation time; retrieved_at is capture time."
     };
@@ -116,6 +122,10 @@ await capture({
       latest_trade_price_usdt_per_btc: price,
       latest_trade_epoch_ms: epochMs,
       latest_trade_observed_at: new Date(epochMs).toISOString(),
+      observed_at: new Date(epochMs).toISOString(),
+      source_row_key: `BTCUSDT:${String(latest.id)}`,
+      methodology: "binance-public-trades-latest-trade-v1",
+      methodology_version: "1",
       trade_rows_in_response: rows.length,
       role: "independent cross-check candidate; not canonical USD/BTC",
       note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
@@ -143,6 +153,10 @@ await capture({
       latest_trade_price_usdt_per_btc: price,
       latest_trade_epoch_ms: epochMs,
       latest_trade_observed_at: new Date(epochMs).toISOString(),
+      observed_at: new Date(epochMs).toISOString(),
+      source_row_key: `BTC-USDT:${String(latest.tradeId)}`,
+      methodology: "okx-public-trades-latest-trade-v1",
+      methodology_version: "1",
       trade_rows_in_response: data.data.length,
       role: "independent cross-check candidate; not canonical USD/BTC",
       note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
@@ -171,6 +185,10 @@ await capture({
       latest_trade_price_usdt_per_btc: price,
       latest_trade_epoch_ms: epochMs,
       latest_trade_observed_at: new Date(epochMs).toISOString(),
+      observed_at: new Date(epochMs).toISOString(),
+      source_row_key: `BTCUSDT:${String(latest.execId ?? latest.exec_id ?? latest.time)}`,
+      methodology: "bybit-public-recent-trade-latest-trade-v1",
+      methodology_version: "1",
       trade_rows_in_response: rows.length,
       role: "independent cross-check candidate; not canonical USD/BTC",
       note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
