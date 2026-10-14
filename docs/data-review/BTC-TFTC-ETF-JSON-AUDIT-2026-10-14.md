@@ -67,3 +67,19 @@ The repository's Farside staging artifact was retrieved on 2026-10-12 and explic
 | 2026-10-09 | 21.100000 | 21.128079 | 0.028079 |
 
 Most differences are consistent with the display precision of the staged Farside totals, but 7 October differs by about **$2.17 million**. The Farside artifact is a prior snapshot, and the live Farside endpoint returned HTTP 403 from the current runner; this is therefore a cross-snapshot discrepancy that needs reconciliation, not a claim that one provider is definitively wrong. TFTC's per-fund values sum to its own aggregate for these five recent dates, but that does not establish agreement with Farside or prove source authority.
+
+## 6. Component-level follow-up — 2026-10-14
+
+A component-level review of the captured TFTC row and the previously staged Farside row narrows the 7 October difference:
+
+| Field | Farside staged snapshot | TFTC captured JSON |
+|---|---:|---:|
+| BRRR | 0.0 USD million | -2.1 USD million |
+| Displayed daily total | -484.9 USD million | -487.1 USD million |
+| TFTC minus Farside total | — | -2.167412 USD million using TFTC's unrounded aggregate |
+
+The BRRR row is therefore a plausible explanation for most of the difference: the -2.1 million BRRR component accounts for the majority of the -2.167 million aggregate delta, with the remainder consistent with displayed rounding/precision. The other listed fund components in the reviewed 7 October rows appear aligned at the displayed 0.1-million precision.
+
+**This narrows the discrepancy but does not resolve source authority.** The comparison is between snapshots captured/retrieved at different times; the old Farside artifact does not include a provider publication timestamp or revision identity, and the live Farside endpoint was inaccessible from the GitHub runner. We cannot establish from these artifacts alone whether BRRR was revised, reported differently, or captured at a different source revision. Do not overwrite either value or promote TFTC based on this comparison.
+
+This is a one-time source reconciliation, not a recurring daily calculation. The next meaningful step is to obtain a comparable, immutable Farside response (or an authorized primary-source row-level record) and retain its retrieval time, raw-body hash, reporting date, and any available publication/revision metadata. Until then, keep the ETF input blocked and BTC `not_evaluable`.
