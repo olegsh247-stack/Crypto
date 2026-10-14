@@ -161,9 +161,9 @@ test("non-canonical unit cannot pass readiness", () => {
 
 
 test("metric registry unit drift blocks readiness", () => {
-  const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
-    ? { ...x, expected_unit: "USD/BTC" } : x);
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, expected_unit: "USDT/BTC" } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "metric_unit_contract_mismatch"));
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price" && x.reason === "metric_unit_contract_mismatch"));
 });
