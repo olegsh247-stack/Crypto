@@ -94,8 +94,14 @@ test("UTC-day fee/subsidy candidate is arithmetically reproducible but remains u
   assert.equal(candidate.unit, "ratio");
   assert.equal(candidate.window_start_utc, "2026-10-12T00:00:00Z");
   assert.equal(candidate.window_end_utc_exclusive, "2026-10-13T00:00:00Z");
+  assert.equal(candidate.source_id, "network.primary");
+  assert.equal(candidate.source_url, "https://mempool.space/api/v1/blocks/:startHeight");
+  assert.equal(candidate.first_height, 971006);
+  assert.equal(candidate.last_height, 971157);
   assert.equal(candidate.block_count, 152);
   assert.equal(candidate.last_height - candidate.first_height + 1, candidate.block_count);
+  assert.equal(candidate.retrieved_at, "2026-10-13T15:21:36.811Z");
+  assert.equal(candidate.raw_artifact_sha256, "dde8265c9ff0ac1791751d5907f95509c50b6dc64011ca8d05bcc4083beabdcc");
   assert.equal(candidate.total_fees_sats, 286069738);
   assert.equal(candidate.total_subsidy_sats, 47500000000);
   assert.ok(Math.abs(candidate.value - candidate.total_fees_sats / candidate.total_subsidy_sats) < 1e-12);
