@@ -167,7 +167,7 @@ test("ETF freshness contract consumes the official calendar fixture rather than 
     source_row_status: "COMPLETE_CANDIDATE",
     value: -65.4,
   };
-  const calendar = getUsEquitySessionDates2026({ from: "2026-10-01", through: "2026-10-14" });
+  const calendar = getUsEquitySessionDates2026({ from: "2026-10-01", through: "2026-10-13" });
   const result = evaluateFarsideSessionFreshness(row, {
     retrievedAt: "2026-10-14T10:00:00Z",
     expectedSessionDates: calendar,
