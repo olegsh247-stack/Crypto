@@ -128,3 +128,16 @@ test("fee/subsidy candidate stays aligned with the canonical metric registry", a
   assert.equal(candidate.source_id, metric.source_priority[0]);
   assert.equal(candidate.dry_run_classification, "HOLD_CONTRACT_ACCEPTANCE");
 });
+
+
+test("BTC spot-price registry cadence matches the completed hourly Kraken candidate", async () => {
+  const registryPath = resolve(import.meta.dirname, "../data/CryptoDataModel/registry/metric-registry.json");
+  const registry = JSON.parse(await readFile(registryPath, "utf8"));
+  assert.deepEqual(registry.asset_scope, ["btc"]);
+  const metric = registry.metrics.find((item) => item.metric_id === "market.spot_price");
+  assert.ok(metric, "canonical BTC spot-price metric must exist in the registry");
+  assert.equal(metric.unit, "USD/BTC");
+  assert.equal(metric.frequency, "1h");
+  assert.equal(metric.freshness_window, "1h");
+  assert.deepEqual(metric.source_priority, ["market.kraken"]);
+});
