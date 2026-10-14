@@ -138,12 +138,12 @@ test("untraceable observations are rejected", () => {
 });
 
 
-test("unregistered source cannot pass even with an HTTPS URL", () => {
-  const inputs = completeInputs().map(x => x.metric_id === "security.hashrate"
+test("unregistered source cannot pass even with an HTTPS URL for a required input", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, source_registered: false } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "security.hashrate" && x.reason === "source_not_registered"));
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price" && x.reason === "source_not_registered"));
 });
 
 test("approved source ID with an unrelated HTTPS URL cannot pass provenance gate", () => {
