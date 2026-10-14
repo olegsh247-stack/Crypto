@@ -1380,3 +1380,10 @@ Findings: 707 unique dated rows (2024-01-11–2026-10-13), but no row-level obse
 The latest read-only capture artifact was inspected field by field against its raw Kraken response. The SHA-256 matched across raw body, manifest and candidate; the selected price and source trade timestamp matched the raw trade row; and the stable source-row key was reproducible from that row. BTC Scenario Readiness Gate #197 passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38608820923. Capture run #64 passed and produced one normalized canonical candidate plus five explicitly blocked entries: https://github.com/olegsh247-stack/Crypto/actions/runs/38608794818.
 
 The blocked entries now explain why the other exchanges are not substituted: Binance/Bybit requests failed from the runner, while OKX succeeded but quotes BTC in USDT rather than USD. The two ETF feeds remain blocked until reporting-date/publication semantics and lineage are accepted. No production writes or scenario-state changes were made.
+
+
+## ETF cross-snapshot comparison — 2026-10-14
+
+Compared the TFTC capture with the repository's earlier Farside staging artifact. Four of five completed sessions differ only by roughly $0.03–$0.10 million at the displayed precision; 7 October differs by approximately **$2.17 million** (TFTC `-$487.067m` versus the staged Farside `-$484.9m`). The detailed comparison is recorded in `docs/data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md`.
+
+The Farside artifact is a prior snapshot and the current endpoint was HTTP 403 from the GitHub runner, so this discrepancy remains unresolved. TFTC's internal aggregate/per-fund agreement on the recent five sessions does not make it authoritative. No source-priority change is justified yet; keep both feeds out of canonical ingestion until a comparable source snapshot and revision/reporting-time contract are established.
