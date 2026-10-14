@@ -709,3 +709,17 @@ The repository inspection is documented in [Source Architecture — Current-Stat
 - Added deterministic tests against the frozen 2026-10-13 dry-run manifest and wired them into the BTC Scenario Readiness Gate.
 - This is a repository/CI-only step. It does not change source or metric registries, database rows, scenario state, monitoring events, scores, probabilities, or published snapshots. No production data writes are authorized.
 - Validation status at documentation time: implementation and workflow wiring committed to the working branch; CI result still pending. Do not mark the BTC scenario ready based on normalization alone.
+
+
+### 2026-10-14 — official source documentation reviewed before adapter decisions
+
+Reviewed the provider documentation instead of inferring timestamp or source behavior from retrieved values:
+
+- Kraken's documented Spot Post-Trade API distinguishes trade execution time (`trade_ts`) from publication time (`publication_ts`). The existing capture script still uses the legacy `/0/public/Trades` tuple response; this is acceptable for candidate capture only, but the adapter contract must explicitly pin that response shape or migrate to the documented endpoint and test the field mapping.
+- Mempool.space documents separate mining-hashrate, block-fee, and reward endpoints. The BTC candidate hashrate must remain a dated trailing-window average with its UTC bucket semantics, not be relabelled as instantaneous. Fee/subsidy remains based on validated block-level data over a completed UTC day, with the same block set used for fees and subsidy.
+- Farside's published table includes dashes alongside numeric daily totals, including all-dash rows displaying `0.0`. A dash is missing/unreported data, not zero. The table page describes typical evening/night US updates but does not provide a row-level publication timestamp; ETF freshness therefore requires an explicit, tested session-lag/calendar/revision contract and complete constituent data.
+- ICE's official catalog identifies DXY as its own six-currency benchmark and lists ICE delivery products, not a documented anonymous public endpoint. The Federal Reserve's broad trade-weighted USD series is a different index and cannot be used as `macro.dxy`.
+
+**Resulting next step:** implement fixture-based source-contract tests and adapter mapping for the existing BTC candidates, beginning with Kraken and Farside completeness; keep source/metric registries unchanged until the contracts and terms are explicit. DXY stays blocked pending an authorized exact feed. No live target-database read-only path was available in this session, so runtime source registration remains unverified. No database writes, scenario/monitoring writes, or PR merge occurred.
+
+Official references: [Kraken Post-Trade API](https://docs.kraken.com/api/docs/rest-api/get-post-trade); [Mempool.space REST API](https://mempool.space/docs/api/rest); [Farside all-data table](https://farside.co.uk/bitcoin-etf-flow-all-data/); [ICE DXY data catalog](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices); [Federal Reserve broad USD index](https://fred.stlouisfed.org/series/DTWEXBGS).
