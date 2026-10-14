@@ -43,6 +43,9 @@ test("maps canonical Kraken capture into a review-only normalized observation", 
   assert.equal(candidate.retrieved_at, "2026-10-14T16:53:33.900Z");
   assert.equal(candidate.source_payload_sha256, hash);
   assert.equal(candidate.source_updated_at, null);
+  assert.equal(candidate.revision, 1);
+  assert.equal(candidate.revision_scope, "local_candidate_observation_record");
+  assert.equal(candidate.revision_identity_status, "not_a_provider_revision");
   assert.equal(candidate.persistable, false);
   assert.equal(result.production_writes_performed, false);
 });
