@@ -10,6 +10,8 @@ on:
       - "scripts/validate-source-metric-registries.mjs"
       - "scripts/validate-source-metric-registries.test.mjs"
       - "scripts/btc-candidate-staging.test.mjs"
+      - "scripts/normalize-btc-candidate-manifest.mjs"
+      - "scripts/normalize-btc-candidate-manifest.test.mjs"
       - "docs/data-review/BTC-CANDIDATE-STAGING-DRY-RUN-2026-10-13.json"
       - "vps/shared/src/btc-scenario-readiness.ts"
       - "data/CryptoDataModel/registry/metric-registry.json"
@@ -36,4 +38,4 @@ jobs:
       - name: Validate shared source and metric registries
         run: node scripts/validate-source-metric-registries.mjs
       - name: Test scenario input-quality, directional rules, and registry contracts
-        run: node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs scripts/validate-source-metric-registries.test.mjs scripts/btc-candidate-staging.test.mjs
+        run: node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs scripts/validate-source-metric-registries.test.mjs scripts/btc-candidate-staging.test.mjs scripts/normalize-btc-candidate-manifest.test.mjs
