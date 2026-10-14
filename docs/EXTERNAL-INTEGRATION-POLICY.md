@@ -112,3 +112,22 @@ This proposal does **not** change `market.spot_price`, source priority, the live
 6. Reconcile price divergence and freshness rules before considering any source as canonical or fallback.
 
 No live provider calls, credentials, production writes, source activation, registry change, or scenario state change were performed during this review.
+
+
+## 7. Exchange market-data terms and permitted-use gate — 2026-10-14
+
+Public endpoint access does not by itself grant rights to store, publish, redistribute, or use data in an analytics product. The intended use must be documented before activation.
+
+Official terms reviewed:
+- **OKX API Agreement** (last updated 2026-07-28): https://www.okx.com/en-us/help/okx-api-agreement. It states that market-data restrictions apply to public unauthenticated endpoints as well as authenticated endpoints, and restricts redistribution/publication and use in competing analytics/data products without written consent. Status: **blocked pending confirmation/authorization for the intended use**.
+- **Bybit API Terms & Conditions** (last updated 2026-03-18): https://www.bybit.com/en/help-center/article/API-Terms. It restricts repackaging/reselling and commercial exploitation and refers to endpoint-specific additional terms. Status: **not yet cleared for storage/analytics-product use; further terms review required**.
+- **Kraken API guide**: https://docs-legacy.kraken.com/api/docs/guides/global-intro/ says use is subject to Kraken Terms and prior permission is required for certain uses, including non-personal commercial use of public market data; it provides marketdata@kraken.com as contact. Regional terms: https://www.kraken.com/legal. Status: **confirm whether intended use is personal/non-commercial; seek permission if not**.
+- **Binance Spot REST documentation**: https://developers.binance.com/en/docs/products/spot/rest-api establishes public market-data access and rate-limit behavior but does not, by itself, resolve the complete data license, retention, or redistribution terms for this project. Status: **permitted-use gate remains open**.
+
+Required before activation:
+1. Record intended audience and use (personal/self-hosted, internal, public/third-party, or commercial) and the applicable jurisdiction.
+2. Confirm storage/retention and whether derived outputs may be displayed or shared.
+3. Obtain written provider permission where required; do not treat API accessibility as a license.
+4. Until cleared, limit work to official-doc review and sanitized fixtures; do not make live source calls or persist provider data.
+
+This is a blocker record, not legal advice. No live calls, credentials, registry changes, source activation, or production writes were performed.
