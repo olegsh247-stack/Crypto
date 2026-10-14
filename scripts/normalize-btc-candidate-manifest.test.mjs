@@ -25,7 +25,7 @@ test("normalization preserves provenance, units, observation/window times and ra
   const fees = result.candidates.find(candidate => candidate.metric_id === "security.fee_subsidy_ratio");
   assert.equal(fees.window_start_utc, "2026-10-12T00:00:00Z");
   assert.equal(fees.window_end_utc_exclusive, "2026-10-13T00:00:00Z");
-  assert.match(fees.raw_evidence_sha256, /^[a-f0-9]{64}$/);
+  assert.match(fees.raw_evidence_sha256, /^[a-f0-9]{64}$/);\n  assert.equal(fees.source_details.block_count, 152);\n  assert.equal(fees.source_details.total_fees_sats, 286069738);\n  assert.equal(fees.source_details.freshness_window, "48h");\n  const etf = result.candidates.find(candidate => candidate.metric_id === "institutional.etf_net_flow");\n  assert.equal(etf.source_details.cross_check.source_id, "institutional.tftc");
 });
 
 test("unresolved ETF observation time and blocked DXY remain unresolved", async () => {
