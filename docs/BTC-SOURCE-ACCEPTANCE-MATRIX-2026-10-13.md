@@ -36,19 +36,17 @@ The metric registry currently defines these required contracts:
 ### 2. Network hashrate — Mempool.space
 
 - Captured endpoint returned HTTP 200 with seven daily series points.
-- Latest captured daily point: 1,028.594876 EH/s at 2026-10-12 00:00 UTC after converting the raw hashes/second value.
-- The response's `currentHashrate` field is a different semantic value and has no equivalent timestamp in that field; do not substitute it for the daily series.
-- Canonical repository source ID is `network.primary`; metric unit is `EH/s`; freshness budget is 48 hours.
-- **Not accepted yet:** confirm the API's bucket timestamp convention, estimate/smoothing methodology, and mapping from raw field to stored observation. The captured point also needs a new freshness check at the actual acceptance time.
-- **Acceptance gate:** document the exact endpoint, raw field, conversion, bucket/window semantics, observation timestamp convention, retrieval timestamp, and stable logical key. Keep daily estimate and instantaneous/rolling fields separate.
+- Latest captured point: 1,028.594876 EH/s with timestamp `2026-10-12T00:00:00Z`. Reviewed upstream implementation constructs the daily estimate for `[2026-10-11T00:00:00Z, 2026-10-12T00:00:00Z)`, so that timestamp is the **end boundary** of the preceding UTC day, not its start.
+- The value is an estimate based on the blocks in that 24-hour interval; separate `currentHashrate` is based on the most recent 1,008 blocks and is not interchangeable.
+- **Still blocked:** public service's deployed version has not been pinned to the reviewed upstream code; the captured observation is historical and needs a fresh capture before acceptance.
+- **Acceptance gate:** confirm deployed endpoint parity, preserve `period_start` and `period_end` explicitly, convert raw hashes/s to EH/s, check freshness at acceptance time, and use a stable key for the represented UTC day.
 
 ### 3. Fee/subsidy ratio — Mempool.space
 
-- The captured fees endpoint returned records with `avgHeight`, `timestamp`, `avgFees`, and `USD`.
-- The capture alone does not establish whether `avgFees` is a per-block total, average, or another aggregate, nor its unit and aggregation window.
-- A list containing 144 records must not be described as a 144-block window without evidence that each record represents one block.
-- **Not accepted:** no ratio may be calculated from the captured value until numerator, denominator, block-height range, fee unit, subsidy at the matching heights, and calculation version are documented.
-- **Acceptance gate:** define a reproducible rolling series using a matched block/window denominator; preserve raw fee and subsidy inputs and version the calculation. A single point estimate is not a trend.
+- The captured fees endpoint returned `avgHeight`, `timestamp`, `avgFees`, and optional `USD` fields.
+- Upstream implementation review confirms each row is an average grouped by fixed-duration time bucket: `avgFees = AVG(fees)`, `avgHeight = AVG(height)`, and `timestamp = AVG(blockTimestamp)` for that bucket. It is not one row per block, and `avgHeight` is not an exact block boundary.
+- **Not accepted:** the time-bucket aggregate cannot directly support a ratio over 144 blocks. No ratio has been calculated.
+- **Next candidate for review:** `/api/v1/mining/reward-stats/144`, whose upstream implementation aggregates the most recent 144 non-stale block rows. Verify deployed response fields/units, exact height continuity, meaning of total reward, reorg handling, and the subsidy denominator before approving any methodology or changing endpoint allowlists.
 
 ### 4. US spot BTC ETF net flows — Farside / TFTC candidate
 
