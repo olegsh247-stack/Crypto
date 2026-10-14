@@ -819,3 +819,12 @@ Detailed finding recorded in [Source Architecture Current State](SOURCE-ARCHITEC
 - Contract distinction: legacy `Trades` has tuple/Unix-seconds trade time; documented `PostTrade` has named `price`, `quantity`, `symbol`, `trade_id`, `trade_ts`, and `publication_ts` fields plus `last_ts` cursor. Keep execution, publication, and retrieval times distinct.
 - Next verification is CI on the new HEAD. Then review whether the candidate contract has enough evidence for a source decision; do not silently switch endpoints. Live access, cursor/pagination behavior, limits/SLA, permitted data use, and target-runtime registration remain unverified.
 - No database, registry, source-priority, scenario, monitoring, score, probability, or published-snapshot changes. PR #82 stays open/unmerged.
+
+
+### Kraken 15-minute price bucket follow-up — 2026-10-14
+
+- CI on commit `ab975f8dd9a5e97cb206730dab1c8dc351d1dd97` passed: [BTC Scenario Readiness Gate](https://github.com/olegsh247-stack/Crypto/actions/runs/38557072834), [BTC Block Window Validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38557072849), and [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38557072885).
+- Added a pure selector for explicit UTC 15-minute buckets using `[start,end)`, selecting the last trade inside the bucket by source `trade_ts`; a bucket without a trade is blocked, not filled with an old value or zero. Added boundary and empty-window fixtures.
+- This follows the metric registry's `market.spot_price` cadence (`15m`) without changing registry/source priority or the live capture endpoint. The helper requires caller-supplied bounds and does not claim to prove full API interval coverage.
+- Next gate: run CI on the new HEAD; then review request pagination/cursor completeness and how aligned UTC bucket boundaries and the 1h freshness rule are supplied. Do not switch the collector or accept price observations yet.
+- No production DB writes, source activation, scenario/monitoring changes, deployment, or PR merge. PR #82 remains open.
