@@ -56,7 +56,9 @@ export function validateRegistries(sourceRegistry, metricRegistry) {
       if (source && (
         source.url == null ||
         source.reliability === "to_validate" ||
-        /^(market data provider|data provider)$/i.test(source.name ?? "")
+        /^(market data provider|data provider)$/i.test(source.name ?? "") ||
+        /individual metric adapters should map/i.test(source.notes ?? "") ||
+        source.source_id === "macro.primary"
       )) placeholderIds.add(sourceId);
     }
   }
