@@ -951,3 +951,5 @@ This is not source activation. The helper does not perform network access and do
 ### Kraken OHLC contract hardening — 2026-10-14
 
 A follow-up fixture review added a fail-closed guard: if the supplied capture time precedes the scheduled close of the requested hourly candle, the helper returns no value and blocks the candidate. A regression test also confirms duplicate candle start times are rejected. This is still fixture-only work; source rights, intended use, live access, runtime registration and end-to-end acceptance remain separate gates.
+
+The fixture contract now also fails closed when capture/retrieval time is omitted: without it, freshness cannot be audited. A regression test verifies that a candle with no `retrieved_at` returns a null value and `BLOCKED_RETRIEVAL_TIMESTAMP_MISSING`. The readiness CI gate passing confirms code/tests and registry contracts only; it does not clear provider-use terms, live access, runtime registration, or end-to-end acceptance.
