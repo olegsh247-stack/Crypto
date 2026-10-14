@@ -109,3 +109,22 @@ test("UTC-day fee/subsidy candidate is arithmetically reproducible but remains u
   assert.equal(manifest.production_writes_performed, false);
   assert.equal(manifest.decision, "NO_INSERTS_AUTHORIZED");
 });
+
+
+test("fee/subsidy candidate stays aligned with the canonical metric registry", async () => {
+  const registryPath = resolve(import.meta.dirname, "../data/CryptoDataModel/registry/metric-registry.json");
+  const registry = JSON.parse(await readFile(registryPath, "utf8"));
+  const metric = registry.metrics.find((item) => item.metric_id === "security.fee_subsidy_ratio");
+  assert.ok(metric, "canonical fee/subsidy metric must exist in the registry");
+  assert.equal(metric.unit, "ratio");
+  assert.equal(metric.frequency, "1d");
+  assert.equal(metric.freshness_window, "48h");
+  assert.deepEqual(metric.source_priority, ["network.primary"]);
+
+  const manifest = await loadManifest();
+  const candidate = manifest.candidates.find((item) => item.metric_id === "security.fee_subsidy_ratio");
+  assert.ok(candidate);
+  assert.equal(candidate.unit, metric.unit);
+  assert.equal(candidate.source_id, metric.source_priority[0]);
+  assert.equal(candidate.dry_run_classification, "HOLD_CONTRACT_ACCEPTANCE");
+});
