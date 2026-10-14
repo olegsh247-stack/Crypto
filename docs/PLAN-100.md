@@ -780,3 +780,16 @@ Farside review: the official [all-data page](https://farside.co.uk/bitcoin-etf-f
 
 
 Farside documentation review was extended to its official [team/contact page](https://farside.co.uk/team/) and [Privacy Policy](https://farside.co.uk/privacy-policy/). The privacy notice covers personal-data processing, not a license or technical specification for the ETF-flow table. No public API specification or explicit automated-access/data-licensing terms were found in the reviewed official pages/navigation. This remains a provider-clarification item, not an invitation to bypass the 403.
+
+
+### 2026-10-14 — current open-PR reconciliation and CI
+
+A fresh GitHub API check found four open PRs (#82, #81, #80, #69), all targeting `main`. No PR was merged or closed.
+
+- PR #82 head `2047324a122345ab31736c3535a3ff99a333a14d` passed the latest-head [BTC Scenario Readiness Gate](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431026), [BTC Block Window Validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431043), and [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431466). These are CI/disposable-environment results, not a fresh audit of the target database.
+- PR #81 proposes persisting a rolling 144-block fee/subsidy ratio. That conflicts with the newer completed-UTC-day candidate contract aligned to the metric registry's `frequency: 1d`; 144 blocks remain diagnostic-only. Do not merge #81 as-is.
+- PR #80 contains useful isolated Kraken parser/tests but also older capture assumptions and a migration; defer migration, scheduled collection and persistence until target-runtime source registration can be audited read-only and metric contracts are accepted.
+- PR #69 remains dirty/non-mergeable and bundles unaccepted source/window/freshness assumptions. Do not port its persistence or scheduler path.
+- Full rationale and safe dispositions: [Open PR reconciliation](OPEN-PR-RECONCILIATION-2026-10-13.md).
+
+**Next actionable gate:** continue the single-asset BTC path using read-only/offline evidence; keep ETF blocked pending authorized provider access and defensible freshness semantics; keep DXY blocked until a canonical source with permitted-use terms is selected. The fresh target-database audit cannot be claimed until an approved target runtime is available. No PR merge/closure, production access/write, source activation, scenario-state change or deployment was performed.
