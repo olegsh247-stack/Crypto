@@ -64,21 +64,18 @@ test("historical ETF sessions count toward the five-day series even when they ar
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
-test("missing fee-market metric blocks evaluation", () => {
+test("deferred fee/subsidy ratio is not required for the first BTC scenario", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_subsidy_ratio");
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio" && x.reason === "missing"));
+  assert.ok(!result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio"));
 });
 
-test("fee/subsidy ratio remains blocked until a calculation method is approved", () => {
-  const inputs = completeInputs().map(x => x.metric_id === "security.fee_subsidy_ratio"
-    ? { ...x, methodology: "some-unreviewed-method-v99", period_start: "2026-10-10T00:00:00.000Z", period_end: "2026-10-11T00:00:00.000Z" }
-    : x);
+test("supporting hashrate is not a mandatory directional input", () => {
+  const inputs = completeInputs().filter(x => x.metric_id !== "security.hashrate");
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio"
-    && x.reason === "calculation_method_not_approved"));
+  assert.ok(!result.blockers.some(x => x.metric_id === "security.hashrate"));
 });
 
 test("spot price must be positive", () => {
