@@ -23,9 +23,14 @@ function dateMs(value: unknown): number {
 
 function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string, allowedSourceIds?: string[], allowedSourceUrlPrefixes?: string[], approvedMethodologyIds?: string[]): boolean {
   const observedMs = dateMs(row?.observed_at);
+  const retrievedMs = dateMs(row?.retrieved_at);
   const value = row?.value_numeric ?? row?.value_integer;
   return Number.isFinite(observedMs)
     && observedMs <= nowMs
+    && Number.isFinite(retrievedMs)
+    && retrievedMs <= nowMs
+    && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
+    && (row?.source_payload_sha256 == null || /^[0-9a-f]{64}$/i.test(String(row.source_payload_sha256)))
     && nowMs - observedMs <= maxAgeHours * 3600000
     && String(row?.freshness ?? "").toUpperCase() === "CURRENT"
     && value !== null && value !== undefined && Number.isFinite(Number(value))
@@ -73,7 +78,13 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
                 ? "source_url_not_approved_for_metric"
                 : requirement.approvedMethodologyIds && !requirement.approvedMethodologyIds.includes(String(latest.methodology ?? ""))
                   ? "calculation_method_not_approved"
-                  : typeof latest.unit !== "string" || !latest.unit.trim()
+                  : !Number.isFinite(dateMs(latest.retrieved_at)) || dateMs(latest.retrieved_at) > nowMs
+              ? "retrieval_timestamp_missing_or_invalid"
+              : typeof latest.source_row_key !== "string" || !latest.source_row_key.trim()
+              ? "source_row_key_missing"
+              : latest.source_payload_sha256 != null && !/^[0-9a-f]{64}$/i.test(String(latest.source_payload_sha256))
+              ? "source_payload_hash_invalid"
+              : typeof latest.unit !== "string" || !latest.unit.trim()
               ? "unit_missing"
               : requirement.unit && latest.expected_unit !== requirement.unit
               ? "metric_unit_contract_mismatch"
@@ -85,8 +96,14 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     }
     selected[requirement.metricId] = {
       observed_at: latest.observed_at,
+      source_updated_at: latest.source_updated_at ?? null,
+      retrieved_at: latest.retrieved_at,
       source_id: latest.source_id,
       source_url: latest.source_url,
+      source_row_key: latest.source_row_key,
+      source_payload_sha256: latest.source_payload_sha256 ?? null,
+      methodology: latest.methodology ?? null,
+      methodology_version: latest.methodology_version ?? null,
       unit: latest.unit,
       revision: Number(latest.revision ?? 1),
       value: Number(latest.value_numeric ?? latest.value_integer),
@@ -124,6 +141,10 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && nowMs - periodMs <= 14 * 24 * 3600000
       && Number.isFinite(observedMs)
       && observedMs <= nowMs
+      && Number.isFinite(dateMs(row?.retrieved_at))
+      && dateMs(row.retrieved_at) <= nowMs
+      && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
+      && (row?.source_payload_sha256 == null || /^[0-9a-f]{64}$/i.test(String(row.source_payload_sha256)))
       && value !== null && value !== undefined && Number.isFinite(Number(value))
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
@@ -154,6 +175,12 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
         unit: row.unit,
         revision: Number(row.revision ?? 1),
         observed_at: row.observed_at,
+        source_updated_at: row.source_updated_at ?? null,
+        retrieved_at: row.retrieved_at,
+        source_row_key: row.source_row_key,
+        source_payload_sha256: row.source_payload_sha256 ?? null,
+        methodology: row.methodology ?? null,
+        methodology_version: row.methodology_version ?? null,
       }));
   }
 
