@@ -1456,3 +1456,12 @@ No production database access/write, source-priority promotion, scenario evaluat
 
 **Next:** finish the ETF observation-time/revision contract and keep DXY blocked until an authorized, specific source is available or the research contract is explicitly changed. BTC remains `not_evaluable`; no ingestion, scenario evaluation, state write or probability change occurred.
 
+### BTC exchange cross-check — Binance market-data endpoint verified (2026-10-14)
+
+- BTC Public Source Staging #69 passed on commit `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`: https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154. Artifact ID `11920754280`, SHA-256 `9ee840277935cd3423fb7c6970414d6a71e915098089da4e7be5a8a3a9af06f9`.
+- Binance's regular public trades endpoint `api.binance.com` returns HTTP 451 from the GitHub runner, but the official market-data-only domain `data-api.binance.vision` returns HTTP 200. The second endpoint is now captured separately; this is an access-path correction for cross-checking, not a source-priority change.
+- In this read-only capture, Binance BTCUSDT was 81,752 USDT/BTC at `2026-10-14T18:52:18.384Z`; OKX BTC-USDT was 81,749.9 USDT/BTC at `2026-10-14T18:52:17.813Z`. The near-simultaneous difference was 2.1 USDT/BTC (about 0.00257%). Kraken's separate BTC/USD trade was 81,670 USD/BTC at `2026-10-14T18:52:10.633Z`; because quote currencies and timestamps differ, it is not directly equated with or averaged into the USDT quotes.
+- Bybit's public recent-trade endpoint still returns HTTP 403 from the runner. This is an environment-specific capture failure, not evidence that Bybit is globally unavailable. Keep the candidate visible as blocked rather than silently dropping it.
+- These exchange rows remain review-only. Kraken is still the canonical USD/BTC candidate; Binance and OKX are USDT/BTC cross-checks. No observation was ingested, no source priority changed, and no scenario state or probability was changed.
+- Detailed record: [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json).
+
