@@ -1,0 +1,90 @@
+{
+  "review_date": "2026-10-14",
+  "capture_run": {
+    "workflow": "BTC Public Source Staging (Read Only)",
+    "run_number": 61,
+    "run_id": 38601923755,
+    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755",
+    "artifact_id": 11912919926,
+    "artifact_url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755/artifacts/11912919926",
+    "result": "success",
+    "purpose": "Read-only public-source staging; no PostgreSQL access or ingestion."
+  },
+  "sources": [
+    {
+      "source_id": "market.kraken",
+      "name": "Kraken XBT/USD trades",
+      "status": "CAPTURED",
+      "http_status": 200,
+      "pair_key": "XXBTZUSD",
+      "unit": "USD/BTC",
+      "latest_trade_price": 81826.7,
+      "observed_at": "2026-10-14T16:53:33.584Z",
+      "role": "Canonical price-source candidate; still requires controlled acceptance."
+    },
+    {
+      "source_id": "market.okx",
+      "name": "OKX BTC-USDT trades",
+      "status": "CAPTURED",
+      "http_status": 200,
+      "pair": "BTC-USDT",
+      "unit": "USDT/BTC",
+      "latest_trade_price": 81914.1,
+      "observed_at": "2026-10-14T16:53:33.741Z",
+      "role": "Independent cross-check only; not a USD/BTC observation and not approved as canonical."
+    },
+    {
+      "source_id": "market.binance",
+      "name": "Binance BTCUSDT trades",
+      "status": "FAILED",
+      "http_status": 451,
+      "role": "The GitHub Actions capture environment could not retrieve this endpoint; this does not prove the source is globally unavailable."
+    },
+    {
+      "source_id": "market.bybit",
+      "name": "Bybit BTCUSDT trades",
+      "status": "FAILED",
+      "http_status": 403,
+      "role": "The GitHub Actions capture environment could not retrieve this endpoint; this does not prove the source is globally unavailable."
+    },
+    {
+      "source_id": "institutional.primary",
+      "name": "Farside BTC ETF flow page",
+      "status": "FAILED",
+      "http_status": 403,
+      "role": "Canonical candidate remains blocked for this capture environment; do not silently substitute another source."
+    },
+    {
+      "source_id": "institutional.tftc",
+      "name": "TFTC BTC ETF JSON candidate",
+      "status": "CAPTURED",
+      "http_status": 200,
+      "row_count": 707,
+      "role": "Reconciliation candidate only; source lineage and publication/observation timestamp are not yet approved."
+    },
+    {
+      "source_id": "network.primary",
+      "name": "Mempool hashrate series",
+      "status": "CAPTURED",
+      "http_status": 200,
+      "row_count": 7,
+      "role": "Supporting network-health evidence only; not a mandatory first-scenario input."
+    },
+    {
+      "source_id": "network.primary",
+      "name": "Mempool block-fees aggregate series",
+      "status": "CAPTURED",
+      "http_status": 200,
+      "row_count": 838,
+      "role": "Raw source research only; no fee/subsidy ratio is calculated or required for the first scenario."
+    }
+  ],
+  "decisions": [
+    "Do not compare BTC/USDT directly as USD/BTC or silently assume USDT equals USD.",
+    "Do not average exchange prices into a synthetic quote.",
+    "Keep Kraken as the current canonical price candidate until source capture and all provenance gates are accepted.",
+    "ETF flow remains blocked: Farside was inaccessible from this runner and TFTC remains an unapproved mirror candidate.",
+    "DXY remains blocked until a specific accessible feed and observation-time convention are approved.",
+    "No observations were ingested; no database, scenario state, monitoring state or probabilities were changed."
+  ]
+}
