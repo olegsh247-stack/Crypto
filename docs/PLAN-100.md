@@ -735,3 +735,10 @@ Implemented on the PR branch:
 - `scripts/btc-source-contracts.test.mjs` covers these cases and is wired into BTC Scenario Readiness Gate.
 
 These tests enforce the source semantics found in official provider documentation and observed table structure; they do **not** certify a live adapter or target-database registration. The existing ETF candidate remains on hold until a versioned session-lag/calendar/revision contract is approved and implemented. DXY remains blocked pending an exact, permitted feed. No source/metric registry, database row, scenario/monitoring state, score, probability, or published snapshot was changed. PR #82 remains open and unmerged.
+
+
+### 2026-10-14 — Kraken candidate capture now uses the tested contract
+
+The read-only capture script now calls `normalizeKrakenLegacyTrades` instead of duplicating the tuple parsing logic. It retains the raw trade row and volume, maps the source epoch to `observed_at`, and records per-source `retrieved_at` after the response body has been read. The source capture remains candidate-only and still writes only local review artifacts; it does not connect to the database or persist product state.
+
+The readiness workflow now watches the capture script as well as the pure contract module and tests. Verification must be reported only for the workflow run on the resulting latest HEAD.
