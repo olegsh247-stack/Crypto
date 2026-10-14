@@ -2,10 +2,10 @@
 
 > **СТАТУС ДОКУМЕНТА: ГЛАВНЫЙ ПРИОРИТЕТ ПРОЕКТА.** Этот документ задаёт обязательную последовательность работ. При конфликте с отдельными старыми задачами, комментариями, ветками или PR приоритет имеет актуальная версия «План 100», кроме случаев, когда пользователь явно изменил план.
 
-**Актуальность снимка:** 13 октября 2026 года (Europe/Riga)  
+**Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последний проверенный code/CI baseline SHA `main`:** `f12ce13f41fe3fdca857dedf4bcdbfc70f7151cf` (VPS rehearsal #481 passed; subsequent commits through `d276dfe` only update audit documentation).  
+**Текущий `main` SHA на момент обновления:** `a89db247f8a6951631b2e7fa43213b653f316735`. Последние изменения source gate требуют отдельной проверки CI; не считать их проверенными до результата workflow.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -543,7 +543,7 @@ The live GitHub query returned eight open PRs. Their ahead/behind counts below w
 | 1. Hosting architecture | `REPO AUDIT ACCEPTED; cutover facts deferred` | Self-hosted target stack and scanner verified in CI. Cloudflare/GitHub App/legacy endpoint account-level inspection is deferred and does not block BTC product development; it remains required before disabling legacy resources or switching traffic. No VPS provisioned. |
 | 2. PR audit | `IN PROGRESS` | Eight open PRs were reviewed for scope; useful fixes from #73 and #71 are now ported to main and the relevant Web and Worker checks are green. No PR merged or closed. Finish remaining overlap/base-ancestry review; no need to spend further product time on the external Workers check itself. |
 | 3. Product Contour v1 | `IN PROGRESS` | The relevant checks passed: [Web build #137](https://github.com/olegsh247-stack/Crypto/actions/runs/38310894055), [Worker DST regression rehearsal #476](https://github.com/olegsh247-stack/Crypto/actions/runs/38311361017), [VPS Build Rehearsal #481](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800274), and read-only source capture [#9](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800272). The progress type/build mismatch and Worker London offset defect are fixed on main. Continue with remaining freshness/type/data lineage checks; live endpoint payload is not verifiable until the legacy endpoint is available through an approved read-only path or VPS is provisioned. |
-| 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | Read-only capture [#9](https://github.com/olegsh247-stack/Crypto/actions/runs/38311800272) succeeded; reviewed in [BTC source capture report](./BTC-SOURCE-CAPTURE-REVIEW-2026-10-13.md). Kraken and mempool responses are candidates only; Farside is HTTP 403, TFTC is stale/unapproved, fee/subsidy ratio and DXY remain blocked. No DB writes. |
+| 4. BTC source contracts | `IN PROGRESS`, inputs not accepted | 14 Oct: readiness gate now enforces exact approved source IDs; registered TFTC cannot substitute for canonical Farside, and DXY is explicitly blocked until a specific feed is approved. Spot metric cadence changed from fixed `15m` to `event-driven` (Kraken trade timestamp); 1h remains the maximum freshness age, not the source's update frequency. Contract/acceptance docs and regression tests updated. CI result still pending verification. ETF and DXY source blockers remain; no live data query or DB write. |
 | 5. BTC reproducible scenario | `BLOCKED` | Не начинать до закрытия входных blockers и contract audit. |
 | 6. BTC end-to-end acceptance | `NOT STARTED` | После воспроизводимой оценки. |
 | 7. VPS provisioning/deploy | `BLOCKED` до появления реального VPS | Только локальные/CI rehearsals пока хоста нет. |
@@ -551,6 +551,16 @@ The live GitHub query returned eight open PRs. Their ahead/behind counts below w
 | 9. Operations | `IN PROGRESS` на уровне проектирования, не production-validated | Довести runbooks, alerts и реальные backup tests после provisioning. |
 | 10. Asset/research expansion | `NOT STARTED BY DESIGN` | Запрещено до успешного BTC E2E. |
 | 11. Final acceptance | `NOT STARTED` | После прохождения всех предыдущих gates. |
+
+
+### BTC source-gate follow-up — 2026-10-14
+
+- Corrected a contract mismatch: `market.spot_price.frequency` no longer claims a fixed 15-minute cadence for the Kraken Trades endpoint; it is `event-driven`. The one-hour freshness window is separate from source update frequency.
+- Tightened the read-only readiness gate so registered-source membership alone is insufficient: the observation must use the metric's explicitly approved source identity. `institutional.tftc` cannot pass as an ETF substitute. DXY has an empty approved-source allowlist until a specific feed and timestamp convention are reviewed, so the scenario remains `not_evaluable`.
+- Updated source contract and acceptance matrix; added regression coverage for unapproved source substitution and the DXY blocker.
+- Changes are repository-only. No live source capture, production database access/write, scenario evaluation, monitoring persistence, deployment or PR merge was performed in this step.
+- **Next:** verify the CI/test result on current `main`; then continue reviewing the fee/subsidy calculation definition and the exact observation/publication timestamp semantics. Do not approve ETF/DXY substitutions by assumption.
+
 
 ---
 
