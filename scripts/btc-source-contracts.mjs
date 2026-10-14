@@ -212,3 +212,75 @@ export function parseFarsideHtmlTable(html, { retrievedAt = null } = {}) {
     note: "Parsed from captured HTML by column headers. Retrieval time is not source publication time; only the newest dated row is considered for freshness and missing fund values remain missing."
   };
 }
+
+
+/**
+ * Normalize Kraken's documented Spot Post-Trade response.
+ * This is a separate candidate adapter; it does not replace the legacy Trades adapter.
+ * Keep execution time (trade_ts), publication time (publication_ts), and retrieval time distinct.
+ */
+export function normalizeKrakenPostTrade(payload, { retrievedAt, requestedSymbol = "BTC/USD" } = {}) {
+  if (!payload || !Array.isArray(payload.error)) {
+    throw new TypeError("Kraken Post-Trade payload must contain an error array");
+  }
+  if (payload.error.length) throw new Error(`Kraken Post-Trade API error: ${payload.error.join(", ")}`);
+  const result = payload.result;
+  if (!result || typeof result !== "object" || !Array.isArray(result.trades)) {
+    throw new TypeError("Kraken Post-Trade payload is missing result.trades");
+  }
+  if (result.trades.length === 0) throw new Error("Kraken Post-Trade response has no trade rows");
+  if (typeof requestedSymbol !== "string" || !requestedSymbol.trim()) {
+    throw new TypeError("requestedSymbol must be a non-empty string");
+  }
+  if (retrievedAt != null && (typeof retrievedAt !== "string" || !Number.isFinite(Date.parse(retrievedAt)))) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
+  }
+
+  const trades = result.trades.map(row => {
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      throw new TypeError("Kraken Post-Trade row must be an object");
+    }
+    const price = finiteNumber(row.price);
+    const quantity = finiteNumber(row.quantity);
+    if (row.symbol !== requestedSymbol) {
+      throw new TypeError(`Kraken Post-Trade symbol mismatch: expected ${requestedSymbol}`);
+    }
+    if (price == null || price <= 0 || quantity == null || quantity < 0) {
+      throw new TypeError("Kraken Post-Trade row has invalid price or quantity");
+    }
+    if (typeof row.trade_ts !== "string" || !Number.isFinite(Date.parse(row.trade_ts))) {
+      throw new TypeError("Kraken Post-Trade row has invalid trade_ts");
+    }
+    if (typeof row.publication_ts !== "string" || !Number.isFinite(Date.parse(row.publication_ts))) {
+      throw new TypeError("Kraken Post-Trade row has invalid publication_ts");
+    }
+    if (typeof row.trade_id !== "string" || !row.trade_id) {
+      throw new TypeError("Kraken Post-Trade row is missing trade_id");
+    }
+    return { price, quantity, tradeTs: row.trade_ts, publicationTs: row.publication_ts, tradeId: row.trade_id, rawTrade: row };
+  });
+  const latest = trades.reduce((best, row) => {
+    const currentTime = Date.parse(row.tradeTs);
+    const bestTime = Date.parse(best.tradeTs);
+    if (currentTime > bestTime) return row;
+    if (currentTime === bestTime && row.tradeId.localeCompare(best.tradeId) > 0) return row;
+    return best;
+  });
+
+  return {
+    source_id: "market.kraken",
+    metric_id: "market.spot_price",
+    requested_pair: requestedSymbol,
+    source_pair_key: requestedSymbol,
+    value: latest.price,
+    unit: "USD/BTC",
+    observed_at: latest.tradeTs,
+    source_published_at: latest.publicationTs,
+    retrieved_at: retrievedAt ?? null,
+    raw_trade_quantity: latest.quantity,
+    raw_trade_id: latest.tradeId,
+    raw_trade_row: latest.rawTrade,
+    timestamp_semantics: "Kraken documented Post-Trade: trade_ts is engine match time; publication_ts is market-data publication time; retrieved_at is capture time",
+    adapter_contract: "kraken-spot-post-trade-v1",
+  };
+}
