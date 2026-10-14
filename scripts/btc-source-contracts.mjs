@@ -526,3 +526,99 @@ export function normalizeKrakenTicker(payload, { retrievedAt, requestedPair = "X
   };
 }
 
+
+
+/**
+ * Fixture-only normalizer for Kraken /0/public/OHLC with interval=60.
+ * Kraken documents that the final OHLC row is always the current, uncommitted
+ * candle; this helper excludes it and selects only the exact requested bar start.
+ * It does not fetch data or change any registry/collector.
+ */
+export function normalizeKrakenHourlyOhlc(payload, {
+  retrievedAt,
+  requestedPairKey = "XXBTZUSD",
+  windowStart,
+} = {}) {
+  const validTimestamp = value => typeof value === "string" && Number.isFinite(Date.parse(value));
+  if (!payload || !Array.isArray(payload.error)) {
+    throw new TypeError("Kraken OHLC payload must contain an error array");
+  }
+  if (payload.error.length) throw new Error(`Kraken OHLC API error: ${payload.error.join(", ")}`);
+  if (!validTimestamp(windowStart)) throw new TypeError("windowStart must be a valid ISO timestamp");
+  if (retrievedAt != null && !validTimestamp(retrievedAt)) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
+  }
+  const windowStartMs = Date.parse(windowStart);
+  if (windowStartMs % 3_600_000 !== 0) {
+    throw new TypeError("windowStart must be aligned to a UTC hour boundary");
+  }
+  const result = payload.result;
+  if (!result || typeof result !== "object") throw new TypeError("Kraken OHLC payload is missing result");
+  const rows = result[requestedPairKey];
+  if (!Array.isArray(rows) || rows.length < 2) {
+    throw new TypeError("Kraken OHLC response must contain at least one closed row and the current uncommitted row");
+  }
+
+  const parseRow = (row, index) => {
+    if (!Array.isArray(row) || row.length < 8) {
+      throw new TypeError(`Kraken OHLC row ${index} must contain 8 documented fields`);
+    }
+    const epochSeconds = finiteNumber(row[0]);
+    const open = finiteNumber(row[1]);
+    const high = finiteNumber(row[2]);
+    const low = finiteNumber(row[3]);
+    const close = finiteNumber(row[4]);
+    if (epochSeconds == null || epochSeconds <= 0 || !Number.isInteger(epochSeconds)
+      || [open, high, low, close].some(value => value == null || value <= 0)
+      || high < Math.max(open, close, low) || low > Math.min(open, close, high)) {
+      throw new TypeError(`Kraken OHLC row ${index} has invalid timestamp or OHLC prices`);
+    }
+    return { epochSeconds, open, high, low, close };
+  };
+
+  const closedRows = rows.slice(0, -1).map(parseRow);
+  const starts = new Set();
+  for (const row of closedRows) {
+    if (starts.has(row.epochSeconds)) throw new TypeError("Kraken OHLC response contains duplicate candle start times");
+    starts.add(row.epochSeconds);
+  }
+  const selected = closedRows.find(row => row.epochSeconds * 1000 === windowStartMs);
+  if (!selected) {
+    return {
+      source_id: "market.kraken",
+      metric_id: "market.spot_price",
+      requested_pair_key: requestedPairKey,
+      unit: "USD/BTC",
+      interval_minutes: 60,
+      value: null,
+      status: "BLOCKED_CLOSED_HOURLY_CANDLE_NOT_FOUND",
+      window_start: new Date(windowStartMs).toISOString(),
+      window_end: new Date(windowStartMs + 3_600_000).toISOString(),
+      observed_at: null,
+      source_published_at: null,
+      retrieved_at: retrievedAt ?? null,
+      blockers: ["REQUESTED_CLOSED_HOURLY_CANDLE_NOT_PRESENT"],
+    };
+  }
+
+  return {
+    source_id: "market.kraken",
+    metric_id: "market.spot_price",
+    requested_pair_key: requestedPairKey,
+    unit: "USD/BTC",
+    value: selected.close,
+    open: selected.open,
+    high: selected.high,
+    low: selected.low,
+    interval_minutes: 60,
+    status: "CLOSED_HOURLY_CANDLE_CANDIDATE",
+    window_start: new Date(windowStartMs).toISOString(),
+    window_end: new Date(windowStartMs + 3_600_000).toISOString(),
+    observed_at: null,
+    bar_end_at: new Date(windowStartMs + 3_600_000).toISOString(),
+    source_published_at: null,
+    retrieved_at: retrievedAt ?? null,
+    timestamp_semantics: "bar_end_at is the scheduled end of the selected hourly candle, not a provider publication timestamp; retrieved_at is capture time only",
+    blockers: ["PROVIDER_PUBLICATION_TIMESTAMP_UNAVAILABLE", "TERMS_AND_RUNTIME_ACCESS_NOT_CLEARED"],
+  };
+}
