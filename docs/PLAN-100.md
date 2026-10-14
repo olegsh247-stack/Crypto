@@ -699,3 +699,13 @@ The repository inspection is documented in [Source Architecture — Current-Stat
 Структурная проверка выявляет два семейства unresolved placeholder sources: `market.primary` для futures open interest/perpetual funding/options open interest; `macro.primary` для DXY и US 10Y yield. Не заменять их произвольными источниками. Target DB не подключалась; ingestion, production writes, scenario/monitoring writes и PR merge не выполнялись.
 
 **Следующий продуктовый шаг:** строить детерминированную нормализацию BTC source captures в frozen candidate manifest с source-declared observation/window semantics, raw hash и revision handling. Сохранять candidate-only/no-write режим. Реальный BTC scenario остаётся заблокирован до свежего read-only target-runtime audit, решения по ETF publication/session time, принятия completed-UTC-day fee/subsidy контракта и выбора разрешённого DXY источника. Не расширять активы до сквозной приёмки BTC.
+
+
+## 2026-10-14 — Deterministic BTC candidate normalization
+
+- Added `scripts/normalize-btc-candidate-manifest.mjs`: an offline, pure normalization step over a frozen BTC candidate manifest. It does not fetch live data, read the clock, connect to a database, or authorize inserts.
+- Normalized records preserve metric/source IDs, value and canonical unit, observation and retrieval timestamps, UTC window or session identity, source-row identity, raw evidence SHA-256, current dry-run classification, and a declared append-only revision policy.
+- Candidate ordering is stable; duplicate logical keys fail closed instead of silently selecting a value. ETF remains blocked without defensible observation time; DXY remains blocked without an approved canonical source.
+- Added deterministic tests against the frozen 2026-10-13 dry-run manifest and wired them into the BTC Scenario Readiness Gate.
+- This is a repository/CI-only step. It does not change source or metric registries, database rows, scenario state, monitoring events, scores, probabilities, or published snapshots. No production data writes are authorized.
+- Validation status at documentation time: implementation and workflow wiring committed to the working branch; CI result still pending. Do not mark the BTC scenario ready based on normalization alone.
