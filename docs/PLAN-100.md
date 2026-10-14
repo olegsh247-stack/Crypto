@@ -850,3 +850,15 @@ Added fixture-only `auditKrakenPostTradePageChain` and tests. The helper checks 
 **Cadence clarification:** the current `15m` registry cadence is not a user requirement or a fixed product promise. A one-hour bucket or another source-supported observation interval may be acceptable if it produces a robust, reproducible and fresh-enough input for the research scenario. This is a product/metric-contract decision to evaluate later, not an instruction to change the registry now. Widening the bucket alone does not resolve cursor completeness; first establish whether the chosen retrieval method can produce a complete and defensible candidate window. The existing `1h` freshness window remains a separate policy from the sampling interval.
 
 CI on the previous HEAD `119820bcb41fe5f969a0f95d205ee02610891750` is green for BTC Scenario Readiness Gate, BTC Block Window Validation, and VPS API Build Rehearsal. The new helper/tests are on the newer HEAD and require their own CI run before they can be treated as passing.
+
+
+### Alternative spot-price capture reviewed: Kraken Ticker — 2026-10-14
+
+Official docs reviewed: https://docs.kraken.com/api/docs/rest-api/get-ticker-information (reviewed 2026-10-14). Ticker returns a current market snapshot without the Post-Trade pagination/cursor chain. Its documented fields include ask, bid and last-trade close, but the response schema shown in the reviewed docs does not expose a per-quote trade/publication timestamp.
+
+This is a viable alternative to evaluate if the product needs a dependable current spot-price input rather than a historically complete trade-window close. It changes the data semantics, so it is not an automatic replacement:
+- **Ticker last trade (c[0])**: last-trade price, but the source trade time is not returned in this response.
+- **Bid/ask midpoint**: a reproducible snapshot-derived estimate, but it is not the same metric as last-trade price.
+- **Capture timestamp**: can document when our system observed the response, but must not be mislabeled as Kraken's trade/publication timestamp.
+
+Next comparison should assess whether the BTC research metric needs last-trade price or a point-in-time quote estimate. The user has clarified that 15-minute cadence is not mandatory; 1h or another suitable cadence can be considered if it gives sufficient freshness and a more reliable contract. Do not change registry/source priority or the live collector until semantics and freshness are explicitly selected. Official ticker docs reviewed; no live API call was made.
