@@ -769,3 +769,11 @@ Scope is deliberately limited: this calendar is a documented input to the contra
 
 
 Follow-up live-capture finding (2026-10-14): the legacy `https://farside.co.uk/btc/` route returned HTTP 403 from the GitHub Actions runner, so it did not exercise the parser against live Farside HTML. The capture now targets Farside's published all-data table URL, `https://farside.co.uk/bitcoin-etf-flow-all-data/`, and the next read-only staging run must confirm whether that route is accessible and whether the header-driven parser matches its live table. A successful capture of the TFTC mirror does not make TFTC canonical; ETF remains blocked until live parsing, calendar freshness policy, source lineage and runtime acceptance are resolved.
+
+
+
+### 2026-10-14 — mandatory documentation-first rule for external integrations
+
+Added repository-wide `AGENTS.md`, GitHub Copilot instructions, and `docs/EXTERNAL-INTEGRATION-POLICY.md`. Before any external connection is implemented, changed, debugged, or relied upon, the official documentation, access model, terms/licensing, auth, limits, schema, units, timestamp semantics, freshness, errors/retries, versioning, secrets, and intended-runtime access must be reviewed and recorded. Undocumented behavior stays explicitly unverified; HTTP 403 must not be bypassed; mirrors cannot silently replace canonical sources. Readiness must distinguish fixture tests, live access, runtime registration, and end-to-end acceptance.
+
+Farside review: the official [all-data page](https://farside.co.uk/bitcoin-etf-flow-all-data/) says the table is generated automatically in real time and disclaims errors/inaccuracies. The reviewed pages provide no public API specification or documented per-row publication timestamp contract. Both Farside routes returned HTTP 403 from the GitHub Actions read-only capture on 2026-10-14. The documented decision is to treat machine access/terms as unresolved, not bypass the restriction, not treat TFTC as canonical, and keep ETF flow blocked from scenario use until an authorized access method and full validation are confirmed.
