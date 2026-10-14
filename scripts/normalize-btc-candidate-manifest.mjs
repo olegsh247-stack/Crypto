@@ -81,6 +81,7 @@ export function normalizeBtcCandidateManifest(manifest) {
       dry_run_classification: candidate.dry_run_classification,
       reason: candidate.reason ?? null,
       revision_policy: REVISION_POLICY,
+      source_details: sourceDetails,
     };
   });
 
