@@ -166,3 +166,49 @@ export function evaluateFarsideSessionFreshness(row, {
     note: "Session freshness is a policy classification, not a source publication timestamp. Calendar must be approved and supplied by caller.",
   };
 }
+
+
+/** Parse the Farside HTML table by header names; fail closed on layout drift. */
+export function parseFarsideHtmlTable(html, { retrievedAt = null } = {}) {
+  if (typeof html !== "string" || !html.trim()) throw new TypeError("Farside HTML must be a non-empty string");
+  const decode = value => value.replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&minus;/gi, "−").replace(/&#8211;|&ndash;/gi, "–").replace(/&#8212;|&mdash;/gi, "—").replace(/&#39;|&apos;/gi, "'").replace(/&quot;/gi, '"').replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
+  const clean = cell => decode(cell.replace(/<br\s*\/?\s*>/gi, " ").replace(/<[^>]*>/g, " ").replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+  const rows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(match => [...match[1].matchAll(/<(?:th|td)\b[^>]*>([\s\S]*?)<\/(?:th|td)>/gi)].map(cell => clean(cell[1]))).filter(row => row.length);
+  const header = rows.find(row => row.some(cell => /^date$/i.test(cell)) && row.some(cell => /^total$/i.test(cell)));
+  if (!header) throw new Error("Farside table header with Date and Total was not found");
+  const dateIndex = header.findIndex(cell => /^date$/i.test(cell));
+  const totalIndex = header.findIndex(cell => /^total$/i.test(cell));
+  const fundColumns = header.filter((_, index) => index !== dateIndex && index !== totalIndex);
+  if (!fundColumns.length) throw new Error("Farside table has no constituent fund columns");
+  const monthMap = { jan:"01", feb:"02", mar:"03", apr:"04", may:"05", jun:"06", jul:"07", aug:"08", sep:"09", oct:"10", nov:"11", dec:"12" };
+  const parseDate = value => {
+    const match = value.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+    if (!match || !monthMap[match[2].toLowerCase()]) return null;
+    const iso = `${match[3]}-${monthMap[match[2].toLowerCase()]}-${match[1].padStart(2,"0")}`;
+    const date = new Date(iso + "T00:00:00Z");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === iso ? iso : null;
+  };
+  const dataRows = rows.slice(rows.indexOf(header) + 1).map(cells => {
+    if (cells.length !== header.length) return { cells, sessionDate: null, parseStatus: "BLOCKED_COLUMN_COUNT_MISMATCH" };
+    const sessionDate = parseDate(cells[dateIndex]);
+    if (!sessionDate) return { cells, sessionDate: null, parseStatus: "BLOCKED_INVALID_SESSION_DATE" };
+    const funds = Object.fromEntries(fundColumns.map(column => [column, cells[header.indexOf(column)]]));
+    return { cells, sessionDate, parseStatus: "PARSED", candidate: classifyFarsideEtfRow({ sessionDate, funds, total: cells[totalIndex], retrievedAt, fundColumns }) };
+  });
+  if (!dataRows.length) throw new Error("Farside table contains no data rows");
+  const validRows = dataRows.filter(row => row.sessionDate).sort((a,b) => a.sessionDate.localeCompare(b.sessionDate));
+  if (!validRows.length) throw new Error("Farside table contains no rows with valid session dates");
+  const latest = validRows[validRows.length - 1];
+  return {
+    parser_version: "farside-html-header-map-v1",
+    table_header: header,
+    fund_columns: fundColumns,
+    rows_seen: dataRows.length,
+    rows_with_valid_dates: validRows.length,
+    invalid_rows: dataRows.filter(row => row.parseStatus !== "PARSED").map(row => ({ cells: row.cells, status: row.parseStatus })),
+    latest_row: latest.candidate,
+    latest_raw_cells: latest.cells,
+    latest_session_date: latest.sessionDate,
+    note: "Parsed from captured HTML by column headers. Retrieval time is not source publication time; only the newest dated row is considered for freshness and missing fund values remain missing."
+  };
+}
