@@ -644,3 +644,7 @@ Open PR #81 proposes a rolling 144-consecutive-block observation and therefore c
 - Official ICE materials were checked for DXY delivery and usage. ICE lists licensed data channels and states that DXY's formulation/values/methods are proprietary and require express written consent for use. No suitable public anonymous canonical API was established. Keep `macro.dxy` blocked unless an authorized feed and its terms are verified, or a distinct replacement metric is explicitly designed and reviewed. See [DXY source decision record](BTC-ETF-FRESHNESS-AND-DXY-SOURCE-DECISION-2026-10-13.md).
 
 **Next executable gate:** a real target-runtime read-only SQL audit still needs a verified least-privilege connection path. Until then, source registration and adapter acceptance remain blocked. No target DB connection, ingestion, observation write, scenario-state write, monitoring-event write, or PR merge occurred in this step.
+
+### 2026-10-14 — ETF row completeness recheck
+
+A current read-only review of the public Farside page found that its 2026-10-13 total displays **+109.8 USD million**, but the IBIT constituent field is a dash while other fund columns are populated. The row is therefore held as incomplete/unconfirmed rather than accepted as a full daily ETF flow. The page's availability on 14 October proves retrieval date only, not the source-declared publication time required by the existing 36-hour gate. No zero is inferred, no fallback to TFTC is authorized, and no input is accepted.
