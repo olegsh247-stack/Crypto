@@ -828,3 +828,16 @@ Detailed finding recorded in [Source Architecture Current State](SOURCE-ARCHITEC
 - This follows the metric registry's `market.spot_price` cadence (`15m`) without changing registry/source priority or the live capture endpoint. The helper requires caller-supplied bounds and does not claim to prove full API interval coverage.
 - Next gate: run CI on the new HEAD; then review request pagination/cursor completeness and how aligned UTC bucket boundaries and the 1h freshness rule are supplied. Do not switch the collector or accept price observations yet.
 - No production DB writes, source activation, scenario/monitoring changes, deployment, or PR merge. PR #82 remains open.
+
+
+### Kraken Post-Trade pagination/cursor audit — 2026-10-14
+
+Official API reference reviewed: https://docs.kraken.com/api/docs/rest-api/get-post-trade (reviewed 2026-10-14). The documented endpoint is `GET https://api.kraken.com/0/public/PostTrade`; `count` is 1–1000 (default 1000), `from_ts` filters trades **after** a timestamp, `to_ts` filters trades **before or at** a timestamp, and the response exposes `result.count`, `result.trades` in ascending timestamp order, and `result.last_ts` described as the latest trade timestamp and usable as the next request's `from_ts`.
+
+**Decision: pagination is not yet accepted as a proof of complete 15-minute bucket coverage.** A cursor chain can be checked for advancement, ordering, count consistency, duplicates and the 1000-row ceiling, but the reviewed contract does not explain how a timestamp-only cursor handles multiple trades sharing the same `trade_ts` at a page boundary. Since `from_ts` is documented as strict (“after”), blindly using `last_ts` could omit same-timestamp rows. Do not claim that a successful cursor walk proves completeness until Kraken documentation/provider confirmation or a verified endpoint behavior contract resolves this edge case.
+
+The interval contract also needs careful translation: the metric selector uses UTC half-open buckets `[start,end)`, while the API's `to_ts` filter is inclusive. The future caller must explicitly exclude trades at `windowEnd` after retrieval, retain raw pages/cursors and retrieval timestamps as permitted, stop safely on empty/short pages, and fail closed on non-advancing cursors, inconsistent counts, malformed ordering, duplicates, or a full final page without a verified continuation. No live Post-Trade request was made for this review.
+
+- Registry remains unchanged: `market.spot_price` is `15m` with `freshness_window: 1h` and source priority `market.kraken`.
+- The pure normalizer and bucket selector remain fixture-only candidate helpers. No collector endpoint switch, source acceptance, database write, or scenario-state change.
+- Next action: add deterministic fixture tests for page-chain invariants only if the intended fail-closed behavior is explicit; separately resolve the timestamp-tie cursor limitation before representing Post-Trade capture as complete. If it cannot be resolved from official docs, retain the existing legacy capture and mark the documented Post-Trade path blocked rather than guessing.
