@@ -399,10 +399,12 @@ test("Kraken hourly OHLC selects an exact closed candle and excludes the current
   assert.equal(result.interval_minutes, 60);
   assert.equal(result.window_start, "2026-10-12T16:00:00.000Z");
   assert.equal(result.window_end, "2026-10-12T17:00:00.000Z");
-  assert.equal(result.observed_at, null);
+  assert.equal(result.observed_at, "2026-10-12T17:00:00.000Z");
   assert.equal(result.bar_end_at, "2026-10-12T17:00:00.000Z");
+  assert.equal(result.source_published_at, null);
   assert.equal(result.retrieved_at, "2026-10-12T18:01:00Z");
-  assert.ok(result.blockers.includes("PROVIDER_PUBLICATION_TIMESTAMP_UNAVAILABLE"));
+  assert.equal(result.timestamp_semantics.includes("source_published_at is unknown"), true);
+  assert.deepEqual(result.blockers, ["TERMS_AND_RUNTIME_ACCESS_NOT_CLEARED"]);
 
   const early = normalizeKrakenHourlyOhlc(payload, {
     windowStart: "2026-10-12T16:00:00Z",
