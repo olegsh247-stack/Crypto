@@ -304,3 +304,20 @@ The read-only readiness gate now requires every ETF flow row to carry an explici
 The latest row must have a valid reporting date no more than 14 days old, and must separately pass the existing 36-hour observation freshness gate. Historical rows count toward the five-session minimum only when their reporting date is explicit, valid, not future-dated, and inside the 14-day window. Missing reporting dates fail closed; duplicate rows are still deduplicated by logical reporting date, not by fetch time.
 
 A regression test removes `period_start` while leaving the observation timestamp current and confirms that ETF readiness is blocked. This is a contract/test change only: it does not backfill existing observations, access a database, or promote a source. Farside remains the intended canonical source; TFTC and SoSoValue remain unapproved candidates.
+
+
+## 12. Storage contract for source provenance metadata — 2026-10-14
+
+The PostgreSQL observation model previously had `observed_at`, `period_start`, `period_end`, `source_url`, `methodology`, and `revision`, but no dedicated fields for retrieval time, provider update/publication time, raw source-row identity, payload hash, or methodology version. That made the documented provenance contract more complete than the physical schema.
+
+The schema and a forward migration now add nullable metadata columns:
+
+| Column | Meaning |
+|---|---|
+| `source_updated_at` | Provider-supplied publication/update time, when the source exposes one |
+| `retrieved_at` | Time the collector fetched the provider response |
+| `source_row_key` | Stable provider row/event identity when available |
+| `source_payload_sha256` | SHA-256 fingerprint of the exact source row/payload representation retained for review; 64 hexadecimal characters |
+| `methodology_version` | Version of the calculation/normalization method, especially for derived metrics |
+
+These fields are intentionally nullable for backward compatibility and do not invent metadata for existing observations. `observed_at` remains the actual observation time/window; `period_start`/`period_end` remain the logical measurement interval. The migration adds schema only: it does not backfill rows, ingest market data, rewrite revisions, or change scenario state. Collectors and acceptance checks must be updated before claiming these fields are populated in runtime data.
