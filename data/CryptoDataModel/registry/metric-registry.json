@@ -81,9 +81,9 @@
       "name": "Fee / subsidy ratio",
       "category": "security",
       "unit": "ratio",
-      "update_mode": "AUTO",
-      "frequency": "1d",
-      "freshness_window": "48h",
+      "update_mode": "MANUAL",
+      "frequency": "on-demand",
+      "freshness_window": "not-applicable-while-deferred",
       "source_priority": [
         "network.primary"
       ],
