@@ -50,9 +50,9 @@ test("flags material aggregate-versus-fund discrepancies instead of normalizing 
 });
 
 test("allows only the one-decimal rounding envelope for aggregate reconciliation", () => {
-  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "(1.8)", "0.0", "0.0", "0.0", "(39.3)", "0.0", "(484.9)"];
+  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "(2.1)", "0.0", "0.0", "0.0", "(39.3)", "0.0", "(484.0)"];
   const parsed = parseFarsideEtfTable(row("07 Oct 2026", values)).latest_rows[0];
-  assert.equal(parsed.calculated_fund_sum_usd_million, -483.2);
-  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 1.7);
-  assert.equal(parsed.reconciliation_status, "MATERIAL_DIFFERENCE");
+  assert.equal(parsed.calculated_fund_sum_usd_million, -483.5);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0.5);
+  assert.equal(parsed.reconciliation_status, "MATCHES_DISPLAY_ROUNDING");
 });
