@@ -98,3 +98,65 @@ test("does not treat HTTP response headers as the metric observation timestamp",
   assert.equal(result.candidates[0].retrieved_at, "2026-10-14T16:53:33.900Z");
   assert.equal(result.candidates[0].source_updated_at, null);
 });
+
+
+test("normalizes Farside reporting rows while keeping publication time, provider revision, and finality unknown", () => {
+  const result = prepareBtcObservationCandidates({
+    retrieved_at: "2026-10-14T19:30:00.000Z",
+    sources: [{
+      metric_id: "institutional.etf_net_flow",
+      source_id: "institutional.primary",
+      url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+      status: "CAPTURED",
+      retrieved_at: "2026-10-14T19:30:00.000Z",
+      http_date: "Wed, 14 Oct 2026 10:01:30 GMT",
+      provider_last_modified: null,
+      etag: null,
+      body_file: "farside-btc-etf-all-data-page.raw",
+      body_sha256: hash,
+      source_payload_sha256: hash,
+      latest_rows: [
+        {
+          period_start: "2026-10-13",
+          period_end: "2026-10-13",
+          status: "REPORTED_CANDIDATE",
+          reported_total_usd_million: 175.7,
+          calculated_fund_sum_usd_million: 175.7,
+          fund_sum_minus_reported_total_usd_million: 0,
+          reconciliation_status: "MATCHES_DISPLAY_ROUNDING"
+        },
+        {
+          period_start: "2026-10-14",
+          period_end: "2026-10-14",
+          status: "UNREPORTED_PLACEHOLDER",
+          reported_total_usd_million: 0,
+          calculated_fund_sum_usd_million: null,
+          fund_sum_minus_reported_total_usd_million: null,
+          reconciliation_status: "UNREPORTED"
+        }
+      ]
+    }]
+  });
+  assert.equal(result.candidates.length, 0);
+  assert.equal(result.etf_review_rows.length, 2);
+  const reported = result.etf_review_rows[0];
+  assert.equal(reported.metric_id, "institutional.etf_net_flow");
+  assert.equal(reported.period_start, "2026-10-13");
+  assert.equal(reported.value_numeric, 175.7);
+  assert.equal(reported.observed_at, null);
+  assert.equal(reported.source_updated_at, null);
+  assert.equal(reported.retrieved_at, "2026-10-14T19:30:00.000Z");
+  assert.equal(reported.http_date, "Wed, 14 Oct 2026 10:01:30 GMT");
+  assert.equal(reported.source_row_key, "farside-btc-etf-flow:2026-10-13");
+  assert.equal(reported.source_payload_sha256, hash);
+  assert.equal(reported.source_payload_hash_scope, "full_http_response_body_not_individual_row");
+  assert.equal(reported.provider_revision, null);
+  assert.equal(reported.revision_identity_status, "provider_revision_unknown");
+  assert.equal(reported.finalization_status, "unknown");
+  assert.equal(reported.persistable, false);
+  assert.ok(reported.reasons.includes("provider_observation_or_publication_timestamp_unverified"));
+  const placeholder = result.etf_review_rows[1];
+  assert.equal(placeholder.value_numeric, null);
+  assert.ok(placeholder.reasons.includes("unreported_placeholder_not_a_zero_observation"));
+  assert.equal(placeholder.persistable, false);
+});
