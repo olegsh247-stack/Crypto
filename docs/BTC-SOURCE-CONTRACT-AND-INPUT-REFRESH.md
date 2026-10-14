@@ -258,3 +258,23 @@ The updated capture completed successfully in [workflow run #61](https://github.
 - Mempool raw hashrate and aggregate fee responses were captured for research continuity only. Hashrate is not a mandatory directional input; no fee/subsidy ratio was calculated.
 
 **Acceptance outcome:** no source is promoted by this capture alone. Kraken remains the canonical price candidate; OKX is a unit-distinct cross-check; ETF evidence and DXY remain blockers. The workflow accessed no PostgreSQL database and wrote no observations, scenario states, monitoring events or probabilities.
+
+
+## 9. DXY provider decision and exchange-source guard tests — 2026-10-14
+
+### DXY: official index is identifiable, but the feed is not yet accepted
+
+ICE's own documentation identifies ICE as administrator of the ICE U.S. Dollar Index (DXY) and describes intraday and daily data products. Its methodology says the official closing level is the last calculated level disseminated on the index business day; regular intraday calculation/publishing hours differ by weekday. These semantics can anchor a daily-close contract, but they do not establish that this project has access to the licensed data delivery endpoint.
+
+- Official product documentation: [ICE Currency Indices](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices).
+- Official methodology: [ICE FX Indices methodology](https://www.theice.com/publicdocs/data/ICE_FX_Indexes_Methodology.pdf).
+- The source registry now includes `macro.ice_dxy_candidate` explicitly as an **unapproved candidate**. Its URL is documentation, not a data endpoint. The source ID has not been added to `macro.dxy`'s metric `source_priority`, and the readiness gate still fails closed for DXY.
+- FRED's `DTWEXBGS` is the Federal Reserve's Nominal Broad U.S. Dollar Index, with a different basket and index base. It is not DXY and is not an acceptable replacement for the existing DXY factor. See [FRED series notes](https://fred.stlouisfed.org/series/DTWEXBGS).
+
+**Decision:** do not select a random public chart/scrape or silently substitute a broad USD index. Before accepting DXY, identify an actually accessible provider feed, confirm access/licensing, obtain a real response, preserve the provider's source date/time and retrieval time separately, and define how its official close maps to the UTC observation contract. Until then, DXY remains a blocker.
+
+### Exchange candidates cannot bypass canonical price provenance
+
+Added three automated readiness tests covering registered Binance, OKX and Bybit sources. Even if the observation is numeric, current, registered and timestamped, each is rejected for `market.spot_price` unless the canonical source contract is explicitly changed. This protects against accidentally promoting a BTC/USDT quote into the required USD/BTC input. Source-registry notes now mark those venues as cross-check candidates only; Kraken remains the sole canonical candidate.
+
+Validation: BTC Scenario Readiness Gate run [#186](https://github.com/olegsh247-stack/Crypto/actions/runs/38604259925) passed after the three tests were added. VPS Build Rehearsal [#1131](https://github.com/olegsh247-stack/Crypto/actions/runs/38604293350) is running against the subsequent source-registry update; do not treat it as passed until it completes.
