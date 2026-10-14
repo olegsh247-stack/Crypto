@@ -419,3 +419,18 @@ ETF rows must not be normalized into accepted observations until the following t
 ### Current decision
 
 **ETF source remains blocked for ingestion and scenario readiness.** The official all-data endpoint is reachable and its table parser/reconciliation checks are working, but no defensible provider publication timestamp, provider revision ID, or finalization signal has been established. The next technical step is a review-only row normalizer that emits the contract above and carries the response-level provenance unchanged; it must leave unavailable fields null/unknown and set `persistable: false`. Do not change the source priority, run scenario evaluation, or write production observations as part of that step.
+
+
+## 19. Spot-candidate revision semantics — 2026-10-14
+
+The Kraken latest-trade mapper currently emits `revision: 1` because the downstream observation shape carries a numeric revision field. That value is a local candidate-record placeholder, **not** a Kraken-provided revision number and not evidence that a trade was revised by the exchange.
+
+The review-only spot candidate now labels this explicitly:
+
+- `revision_scope: "local_candidate_observation_record"`
+- `revision_identity_status: "not_a_provider_revision"`
+- `source_row_key` remains the stable event identity derived from the individual Kraken trade record.
+- `source_payload_sha256` identifies the exact captured response body, not an exchange revision.
+- `observed_at` comes from the exchange trade event timestamp; `retrieved_at` remains the collector's response retrieval time.
+
+When ingestion is eventually reviewed, the persistence layer must define whether its `revision` means a local version of the logical observation or a source/provider revision. Do not imply provider revision support where the provider does not expose it. The candidate remains `persistable: false`; no database operation is authorized by this contract.
