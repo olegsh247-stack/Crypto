@@ -60,19 +60,19 @@ create table if not exists observations (
   retrieved_at timestamptz,
   -- Optional provenance for reproducing a provider row/payload and versioned derivations.
   source_row_key text,
-  source_payload_sha256 text check (
-    source_payload_sha256 is null or source_payload_sha256 ~ '^[0-9a-fA-F]{64}
+  source_payload_sha256 text,
+  methodology text,
+  methodology_version text,
+  status text not null default 'NORMAL' check (status in ('NORMAL','WATCH','REVIEW')),
   freshness text not null default 'CURRENT' check (freshness in ('CURRENT','STALE','EXPIRED')),
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
-  check (
-    num_nonnulls(value_numeric, value_integer, value_boolean, value_text, value_json) = 1
-  ),
-  check (
-    period_end is null or period_start is null or period_end >= period_start
-  ),
+  check (num_nonnulls(value_numeric, value_integer, value_boolean, value_text, value_json) = 1),
+  check (period_end is null or period_start is null or period_end >= period_start),
   constraint observations_source_payload_sha256_format_chk check (
-    source_payload_sha256 is null or source_payload_sha256 ~ '^[0-9a-fA-F]{64}
+    source_payload_sha256 is null or source_payload_sha256 ~ '^[0-9a-fA-F]{64}$'
+  )
+);
 
 create index if not exists observations_metric_asset_time_idx
   on observations (metric_id, asset_id, observed_at desc);
