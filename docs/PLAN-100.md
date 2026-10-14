@@ -1401,3 +1401,10 @@ Completed the repository-side contract work without pretending a feed is availab
 Official reference links are included in that review. A current methodology and real authorized sample payload are still required. FRED `DTWEXBGS` remains a different broad dollar index, and DX futures settlement is not the DXY cash index; neither is an acceptable silent substitute.
 
 No production database access/write, source-priority promotion, scenario evaluation, probability change, state persistence or deployment occurred. BTC remains `not_evaluable`. Next: run the current-head gate, then continue ETF reconciliation and seek an actual authorized DXY feed/sample rather than inventing an endpoint.
+
+### ETF discrepancy follow-up — 2026-10-14
+
+- Re-reviewed the 7 October Farside/TFTC comparison at fund-component level. The captured TFTC row has BRRR at -$2.1m while the earlier Farside snapshot shows BRRR at $0.0m; this accounts for most of the -$2.167m total difference. The remaining amount is consistent with displayed precision.
+- Recorded this as a **plausible explanation, not a resolved source discrepancy** in [the ETF audit](data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md). Snapshots are not time-aligned and the Farside capture has no provider publication timestamp or revision identity, so neither value is promoted and TFTC remains candidate-only.
+- This was a one-time provenance/reconciliation check, not a recurring daily-sum calculation. No production ingestion, source-priority change, database/state write, scenario evaluation or probability update occurred.
+- Next: obtain a comparable immutable Farside/authorized primary-source row-level capture with raw hash and available publication/revision metadata. If runner access remains blocked, preserve that as an explicit access blocker; do not treat a web-indexed display as an immutable raw source artifact. BTC remains `not_evaluable`.
