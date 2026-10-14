@@ -1343,3 +1343,15 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - The BTC scenario remains **`not_evaluable`**: a canonical DXY source is not approved and current ETF provenance/reporting-time acceptance is not yet complete.
 
 **Next required work:** build and test a review-only mapping from captured source artifacts to the normalized observation contract, with no database writes. Do not start ingestion or change source priorities until that mapping, ETF reporting semantics, idempotency keys, and duplicate/revision rules have been reviewed.
+
+
+## Review-only BTC candidate mapping — 2026-10-14
+
+The next handoff from raw capture to normalized input has been implemented without creating an ingestion path:
+
+- `scripts/prepare-btc-observation-candidates.mjs` maps the canonical Kraken XBT/USD capture into a normalized **review-only** candidate containing the source event time, retrieval time, stable row key, payload SHA-256, source identity/URL, unit and method/version.
+- The candidate is explicitly marked `persistable: false`; the mapper has no PostgreSQL client and performs no writes.
+- Binance/OKX/Bybit USDT captures are not promoted to canonical USD/BTC observations. ETF capture is explicitly held until row-level daily values, reporting dates and publication/observation timing can be normalized. DXY remains unapproved.
+- Mapping tests cover successful Kraken mapping, missing row/hash rejection, quote-unit separation and the ETF hold. BTC Scenario Readiness Gate #194 passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38607850897. VPS Build Rehearsal #1156 and read-only source capture #62 also passed on the source-capture commit: https://github.com/olegsh247-stack/Crypto/actions/runs/38607581397 and https://github.com/olegsh247-stack/Crypto/actions/runs/38607581037.
+
+**Remaining before any ingestion:** verify the current-head CI after workflow path alignment; validate the candidate artifact against the capture produced by CI; define the ETF row-level parser/reporting-date semantics and the logical idempotency/revision key; review the resulting candidates read-only. No ingestion, source-priority change, scenario evaluation or scenario-state write is authorized by these steps.
