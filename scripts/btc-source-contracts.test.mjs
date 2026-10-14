@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, parseFarsideHtmlTable } from "./btc-source-contracts.mjs";
+import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
@@ -196,4 +196,51 @@ test("Farside HTML parser fails closed on changed headers or malformed dates", (
   const parsed = parseFarsideHtmlTable("<table><tr><th>Date</th><th>IBIT</th><th>Total</th></tr><tr><td>31 Foo 2026</td><td>1</td><td>1</td></tr><tr><td>12 Oct 2026</td><td>1</td><td>1</td></tr></table>");
   assert.equal(parsed.invalid_rows.length, 1);
   assert.equal(parsed.latest_session_date, "2026-10-12");
+});
+
+
+test("Kraken documented Post-Trade keeps trade, publication and retrieval timestamps distinct", () => {
+  const result = normalizeKrakenPostTrade({
+    error: [],
+    result: {
+      count: 2,
+      last_ts: "2026-10-13T15:26:08.170000000Z",
+      trades: [
+        { trade_id: "T-2", price: "83588.10", quantity: "0.02", symbol: "BTC/USD", trade_ts: "2026-10-13T15:26:08.170000000Z", publication_ts: "2026-10-13T15:26:08.190000000Z" },
+        { trade_id: "T-1", price: "83580.00", quantity: "0.01", symbol: "BTC/USD", trade_ts: "2026-10-13T15:26:07.170000000Z", publication_ts: "2026-10-13T15:26:07.180000000Z" },
+      ],
+    },
+  }, { retrievedAt: "2026-10-13T15:26:13.228Z" });
+
+  assert.equal(result.value, 83588.1);
+  assert.equal(result.unit, "USD/BTC");
+  assert.equal(result.observed_at, "2026-10-13T15:26:08.170000000Z");
+  assert.equal(result.source_published_at, "2026-10-13T15:26:08.190000000Z");
+  assert.equal(result.retrieved_at, "2026-10-13T15:26:13.228Z");
+  assert.equal(result.raw_trade_id, "T-2");
+  assert.equal(result.adapter_contract, "kraken-spot-post-trade-v1");
+  assert.notEqual(result.observed_at, result.source_published_at);
+  assert.notEqual(result.source_published_at, result.retrieved_at);
+});
+
+test("Kraken Post-Trade selects by trade timestamp, not response array position", () => {
+  const result = normalizeKrakenPostTrade({
+    error: [],
+    result: {
+      trades: [
+        { trade_id: "T-later", price: "101", quantity: "1", symbol: "BTC/USD", trade_ts: "2026-10-13T15:26:08Z", publication_ts: "2026-10-13T15:26:09Z" },
+        { trade_id: "T-earlier", price: "99", quantity: "1", symbol: "BTC/USD", trade_ts: "2026-10-13T15:26:07Z", publication_ts: "2026-10-13T15:26:07.1Z" },
+      ],
+    },
+  });
+  assert.equal(result.value, 101);
+  assert.equal(result.raw_trade_id, "T-later");
+});
+
+test("Kraken Post-Trade rejects errors, wrong symbols and malformed timestamp fields", () => {
+  const row = { trade_id: "T-1", price: "100", quantity: "1", symbol: "BTC/USD", trade_ts: "2026-10-13T15:26:08Z", publication_ts: "2026-10-13T15:26:09Z" };
+  assert.throws(() => normalizeKrakenPostTrade({ error: ["EGeneral:Temporary lockout"], result: { trades: [row] } }), /API error/);
+  assert.throws(() => normalizeKrakenPostTrade({ error: [], result: { trades: [{ ...row, symbol: "ETH/USD" }] } }), /symbol mismatch/);
+  assert.throws(() => normalizeKrakenPostTrade({ error: [], result: { trades: [{ ...row, publication_ts: "not-a-time" }] } }), /publication_ts/);
+  assert.throws(() => normalizeKrakenPostTrade({ error: [], result: {} }), /result.trades/);
 });
