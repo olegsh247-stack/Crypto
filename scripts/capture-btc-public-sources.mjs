@@ -7,7 +7,8 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { normalizeKrakenLegacyTrades } from "./btc-source-contracts.mjs";
+import { normalizeKrakenLegacyTrades, parseFarsideHtmlTable, evaluateFarsideSessionFreshness } from "./btc-source-contracts.mjs";
+import { getUsEquitySessionDates2026 } from "./us-equity-session-calendar.mjs";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
 await mkdir(outDir, { recursive: true });
@@ -143,10 +144,31 @@ await capture({
   metricId: "institutional.etf_net_flow",
   sourceId: "institutional.primary",
   url: "https://farside.co.uk/btc/",
-  parse: body => ({
-    html_characters: body.length,
-    note: "Raw page retained for parser review. Retrieval time is not treated as ETF observation/publication time; dash/placeholder rows must not become zero."
-  })
+  parse: (body, captureMeta) => {
+    const parsed = parseFarsideHtmlTable(body, { retrievedAt: captureMeta.retrieved_at });
+    let freshness;
+    const maxSessionLagRaw = process.env.BTC_ETF_MAX_SESSION_LAG;
+    if (parsed.latest_session_date.slice(0, 4) !== "2026") {
+      freshness = { status: "BLOCKED_CALENDAR_YEAR_UNSUPPORTED", fresh: false, observed_at: null, retrieved_at: captureMeta.retrieved_at };
+    } else if (maxSessionLagRaw == null || maxSessionLagRaw.trim() === "" || !/^\\d+$/.test(maxSessionLagRaw)) {
+      freshness = { status: "BLOCKED_POLICY_THRESHOLD_UNCONFIGURED", fresh: false, max_session_lag: null, observed_at: null, retrieved_at: captureMeta.retrieved_at };
+    } else {
+      const calendar = getUsEquitySessionDates2026({ from: "2026-01-01", through: parsed.latest_session_date });
+      freshness = evaluateFarsideSessionFreshness(parsed.latest_row, {
+        retrievedAt: captureMeta.retrieved_at,
+        expectedSessionDates: calendar,
+        maxSessionLag: Number(maxSessionLagRaw)
+      });
+    }
+    return {
+      html_characters: body.length,
+      ...parsed,
+      freshness,
+      candidate_value: freshness.fresh ? parsed.latest_row.value : null,
+      candidate_status: freshness.fresh ? "CANDIDATE_ONLY" : freshness.status,
+      note: "Raw HTML and SHA-256 are preserved. This is candidate-only parsing; no ETF value is eligible for scenario use without an explicit session-lag policy and runtime/source acceptance."
+    };
+  }
 });
 
 await capture({
