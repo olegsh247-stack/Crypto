@@ -5,7 +5,7 @@
 **Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последний проверенный BTC source-gate code SHA:** `067368761af4104b378b1c7d8fb84fcd2463c478`. BTC Scenario Readiness Gate #186 passed after adding explicit rejection tests for Binance, OKX and Bybit as canonical USD/BTC sources. VPS Build Rehearsal #1131 and Readiness Gate #187 for the subsequent source-registry update were running at the time of this update.  
+**Последний проверенный BTC source-gate code SHA:** `10c4f8b35ba5d70775baa6d992ce5541a768d9d1`. BTC Scenario Readiness Gate #189 and VPS Build Rehearsal #1139 both passed; this version includes explicit rejection tests for Binance/OKX/Bybit canonical-price substitution and unapproved ICE DXY/SoSoValue ETF candidates. The subsequent ETF reporting-date contract change is documented below and awaits its own current-head checks.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -1306,3 +1306,12 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - The API documentation does not yet prove an exact publication/finalization timestamp or complete/revision semantics. SoSoValue remains candidate-only and is not in metric `source_priority`; the readiness gate still rejects it until response shape, time convention, revisions, units and reconciliation against other sources are validated.
 - Official docs: [SoSoValue/SoDEX ETF Summary History API](https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history). Source-registry and source-contract updates are committed. No source priority, production data or scenario state was changed.
 - CI verified on current main head `23e4232f`: [BTC Scenario Readiness Gate #188 passed](https://github.com/olegsh247-stack/Crypto/actions/runs/38604442941) and [VPS Build Rehearsal #1136 passed](https://github.com/olegsh247-stack/Crypto/actions/runs/38604493446). The registry/documentation changes are build-green; this does not clear the ETF/DXY/data-acceptance blockers.
+
+
+### ETF reporting-date contract — 2026-10-14
+
+- Tightened the shared read-only BTC readiness gate: an ETF flow row must carry explicit `period_start` (provider trading/reporting date). The gate no longer falls back to `observed_at`, which represents observation/publication time and must not be used to invent a trading session.
+- Historical ETF rows count toward the five-session minimum only when their explicit reporting dates are valid, non-future and within the 14-day window. The latest row must independently pass the existing 36-hour freshness gate.
+- Added a regression test that removes `period_start` but leaves `observed_at` current; the row must fail readiness. Source-contract documentation now explains the distinction between reporting date, observation time and retrieval time.
+- Files changed: `vps/shared/src/btc-scenario-readiness.ts`, `scripts/btc-scenario-readiness.test.mjs`, `docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md`. Code commit: [`32d2bccb`](https://github.com/olegsh247-stack/Crypto/commit/32d2bccbc5828fe4610031f7fca68d0f639afd45); regression test commit: [`c37daddf`](https://github.com/olegsh247-stack/Crypto/commit/c37daddf9ab661b744267a70e0a72d67388b4193).
+- This change is contract hardening only. It does not backfill or rewrite stored observations, access a database, approve Farside/TFTC/SoSoValue, change source priority, evaluate the scenario, or write scenario state. BTC remains `not_evaluable` until the canonical ETF evidence, DXY feed and current spot observation pass their independent gates.
