@@ -48,6 +48,14 @@ async function capture({ name, metricId, sourceId, url, parse }) {
     });
     item.http_status = response.status;
     item.content_type = response.headers.get("content-type");
+    // Preserve provider/transport metadata for source-revision review. These headers
+    // are evidence only; they must not be relabeled as the metric's observed_at.
+    item.response_url = response.url;
+    item.http_date = response.headers.get("date");
+    item.provider_last_modified = response.headers.get("last-modified");
+    item.etag = response.headers.get("etag");
+    item.cache_control = response.headers.get("cache-control");
+    item.expires = response.headers.get("expires");
     const body = await response.text();
     item.body_sha256 = await sha256(body);
     // Same digest is carried under the database-contract field name for later review-only mapping.
