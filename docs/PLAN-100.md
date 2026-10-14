@@ -894,3 +894,30 @@ Initial conclusion:
 
 Next step: compare one candidate endpoint per provider against the chosen metric definition, using sanitized fixtures first and then separately approved read-only access. Keep `market.spot_price` registry, source priority and production collector unchanged until that contract is accepted.
 
+
+
+### Endpoint-level BTC spot-price comparison — decision proposal (2026-10-14)
+
+This is a documentation review only; no provider was called live and no source/metric registry was changed.
+
+| Provider / documented endpoint | Price semantics and timestamp | Practical conclusion |
+|---|---|---|
+| Kraken Spot OHLC, pair `XBTUSD`, interval `60` | Completed hourly candle close; candle has interval start time. The current/incomplete candle must be excluded. | Best candidate for a reproducible **USD-quoted, completed-hour** input because it aligns with the existing Kraken source family and avoids pretending retrieval time is trade time. Confirm exact response shape, inclusive boundaries, quota and allowed use before coding. |
+| Kraken Ticker, pair `XBTUSD` | Last trade and bid/ask are in one snapshot; reviewed schema does not provide a source event timestamp. | Useful as a current snapshot / diagnostic, but cannot alone prove source-event freshness against the existing 1h freshness rule. |
+| Binance Spot `GET /api/v3/klines?symbol=BTCUSDT&interval=1h` | OHLC candle with timestamps in milliseconds by default; candle close is a bar value, not a current last trade. Public market-data base host is documented. | Strong cross-check candidate for a completed-hour bar, but quote is USDT, not USD. Compare only after explicitly deciding whether USDT/USD conversion is acceptable. |
+| OKX `GET /api/v5/market/candles?instId=BTC-USDT&bar=1Hutc` | Candle `ts` is bar opening time; `confirm=1` means completed. Public data requires no auth; market-data caches are independent and may return older data on a later request. | Good completed-hour cross-check candidate; USDT quote and cache ordering/freshness need explicit validation. |
+| Bybit V5 `GET /v5/market/kline?category=spot&symbol=BTCUSDT&interval=60` | Kline OHLC; interval start time is not an event time for the close. Must explicitly select `category=spot`. | Good completed-hour cross-check candidate; USDT quote. Verify the response interval and completion using server time / next interval rather than treating a response timestamp as trade time. |
+| Binance / Bybit ticker snapshots | Last price and/or best bid/ask are distinct measures. Bybit ticker response-level `time` is response/server time, not a documented last-trade timestamp. Binance ticker/book-ticker schemas must be treated endpoint-specifically; do not assume they contain a trade timestamp. | Do not use as interchangeable timestamped last-trade observations. |
+
+Official references reviewed 2026-10-14:
+- Binance Spot REST overview: https://developers.binance.com/en/docs/products/spot/rest-api
+- Binance Spot REST endpoint reference: https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
+- OKX API v5: https://app.okx.com/docs-v5/en
+- Bybit V5 Kline: https://bybit-exchange.github.io/docs/v5/market/kline
+- Bybit V5 Tickers: https://bybit-exchange.github.io/docs/v5/market/tickers
+- Kraken OHLC: https://docs.kraken.com/api/docs/rest-api/get-ohlc-data
+- Kraken Ticker: https://docs.kraken.com/api/docs/rest-api/get-ticker-information
+
+**Recommendation for the first BTC scenario:** prefer a completed hourly `XBTUSD` candle close as the canonical candidate, because the metric is explicitly USD-quoted and has a reproducible bar boundary. Use Binance, OKX and Bybit completed-hour candles as independent diagnostics only, clearly labeled USDT-quoted; do not silently convert or fall back. Keep Kraken Ticker as a separate snapshot diagnostic. This is a recommendation for the next contract review, **not approval to change the collector or registry**.
+
+Before implementation: verify each endpoint's exact schema and rate limit, official terms/retention/redistribution conditions, timestamp and bar-completion semantics, intended-runtime access, then add sanitized fixtures and run a separate read-only live check. Record any unresolved licensing or freshness issue as a blocker. No live requests, credentials, production writes, source activation, metric registry change, source-priority change, or scenario state change were performed.
