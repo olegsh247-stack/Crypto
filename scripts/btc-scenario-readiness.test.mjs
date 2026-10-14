@@ -71,6 +71,23 @@ test("missing fee-market metric blocks evaluation", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio" && x.reason === "missing"));
 });
 
+test("fee/subsidy ratio remains blocked until a calculation method is approved", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "security.fee_subsidy_ratio"
+    ? { ...x, methodology: "some-unreviewed-method-v99", period_start: "2026-10-10T00:00:00.000Z", period_end: "2026-10-11T00:00:00.000Z" }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio"
+    && x.reason === "calculation_method_not_approved"));
+});
+
+test("spot price must be positive", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price" ? { ...x, value_numeric: 0 } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
+});
+
 test("stale observation cannot pass even with a source URL", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, observed_at: "2026-10-10T11:00:00.000Z" } : x);
