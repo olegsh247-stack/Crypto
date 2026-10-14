@@ -600,6 +600,23 @@ export function normalizeKrakenHourlyOhlc(payload, {
       blockers: ["RETRIEVAL_PRECEDES_SCHEDULED_CANDLE_CLOSE"],
     };
   }
+  if (retrievedAt == null) {
+    return {
+      source_id: "market.kraken",
+      metric_id: "market.spot_price",
+      requested_pair_key: requestedPairKey,
+      unit: "USD/BTC",
+      interval_minutes: 60,
+      value: null,
+      status: "BLOCKED_RETRIEVAL_TIMESTAMP_MISSING",
+      window_start: new Date(windowStartMs).toISOString(),
+      window_end: new Date(windowStartMs + 3_600_000).toISOString(),
+      observed_at: null,
+      source_published_at: null,
+      retrieved_at: null,
+      blockers: ["RETRIEVAL_TIMESTAMP_REQUIRED_FOR_FRESHNESS_AUDIT"],
+    };
+  }
   if (!selected) {
     return {
       source_id: "market.kraken",
