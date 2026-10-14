@@ -84,3 +84,23 @@ This follow-up inspects the branch-only implementation files, not just ahead/beh
 | Existing read-only capture + block-window validator | **Keep as current path** | Preserves evidence and allows reproducible review without production writes. |
 
 No production/target database was accessed or changed in this follow-up. No source was accepted, no scenario or monitoring state was written, and no PR was merged or closed.
+
+
+## Current PR reconciliation update — 2026-10-14
+
+### Current open PR set
+
+A fresh GitHub API read found four open PRs: #82, #81, #80 and #69. All target `main`; no PR was merged or closed.
+
+- **PR #82 — current focused path.** Head `2047324a122345ab31736c3535a3ff99a333a14d`. The latest-head runs are green: [BTC Scenario Readiness Gate #125](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431026), [BTC Block Window Validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431043), and [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38554431466). These are repository/CI checks; they do not establish a current read of the unavailable target database or authorize ingestion.
+- **PR #81 — documentation-only fee/subsidy proposal.** It proposes a rolling 144-block ratio as the persisted daily point. This conflicts with the newer evidence and recommendation recorded in PR #82: the metric registry declares `frequency: 1d`, and the accepted candidate contract under review is a completed UTC calendar-day window; the 144-block result is diagnostic-only. Do not merge as-is. Reconcile its document with the UTC-day decision, then request explicit approval before closing it.
+- **PR #80 — broad source-capture branch based on an older base.** It contains useful Kraken spot parser/tests and a guarded disposable PostgreSQL rehearsal, but also carries a larger set of capture logic and a migration. Keep the parser as a reference for a later narrow port; do not port its migration, scheduled collection, or persistence until the target runtime/source registry is available for a fresh read-only audit and the canonical contracts are accepted. Its old 165-block/rolling-window proposal is superseded by the newer 330-block validation and completed-UTC-day review in #82.
+- **PR #69 — broad opt-in collectors.** The branch is still non-mergeable/dirty and combines source assumptions that remain unaccepted (Binance spot mapping, rolling 144-block fee/subsidy, ETF freshness, unresolved DXY). Do not merge or port its persistence/scheduler path. Revisit only as a source of isolated tests after each input passes the acceptance matrix.
+
+### Disposition
+
+1. Continue using PR #82 as the current read-only BTC evidence and policy branch; keep it open and unmerged.
+2. Treat PR #81 as a conflicting proposal that needs documentation reconciliation, not as the current metric contract.
+3. Keep #80 and #69 deferred; no migrations, scheduled collectors, or persistence code are approved by this review.
+4. The target database is not currently available for a fresh read-only audit, and no VPS has been provided. This is a real blocker for runtime source-registration acceptance, not a reason to infer readiness from disposable CI.
+5. No source, metric registry, database row, scenario state, monitoring event, or published snapshot was changed by this reconciliation.
