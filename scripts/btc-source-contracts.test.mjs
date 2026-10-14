@@ -420,9 +420,17 @@ test("Kraken hourly OHLC blocks missing candles and rejects malformed/unclosed r
   ] } };
   const missing = normalizeKrakenHourlyOhlc(payload, {
     windowStart: "2026-10-12T18:00:00Z",
+    retrievedAt: "2026-10-12T19:01:00Z",
   });
   assert.equal(missing.status, "BLOCKED_CLOSED_HOURLY_CANDLE_NOT_FOUND");
   assert.equal(missing.value, null);
+
+  const missingCaptureTime = normalizeKrakenHourlyOhlc(payload, {
+    windowStart: "2026-10-12T16:00:00Z",
+  });
+  assert.equal(missingCaptureTime.status, "BLOCKED_RETRIEVAL_TIMESTAMP_MISSING");
+  assert.equal(missingCaptureTime.value, null);
+  assert.ok(missingCaptureTime.blockers.includes("RETRIEVAL_TIMESTAMP_REQUIRED_FOR_FRESHNESS_AUDIT"));
   assert.throws(() => normalizeKrakenHourlyOhlc({ error: ["EGeneral:Temporary lockout"], result: {} }, {
     windowStart: "2026-10-12T16:00:00Z",
   }), /API error/);
