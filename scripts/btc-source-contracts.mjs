@@ -280,6 +280,7 @@ export function normalizeKrakenPostTrade(payload, { retrievedAt, requestedSymbol
     raw_trade_quantity: latest.quantity,
     raw_trade_id: latest.tradeId,
     raw_trade_row: latest.rawTrade,
+    normalized_trades: trades,
     timestamp_semantics: "Kraken documented Post-Trade: trade_ts is engine match time; publication_ts is market-data publication time; retrieved_at is capture time",
     adapter_contract: "kraken-spot-post-trade-v1",
   };
