@@ -5,14 +5,14 @@ import { parseFarsideEtfTable } from "./parse-farside-etf-table.mjs";
 const row = (date, values) => `<tr><td><span class="tabletext">${date}</span></td>${values.map(v => `<td><div><span class="tabletext">${v}</span></div></td>`).join("")}</tr>`;
 
 test("parses reported daily fund values, negatives in parentheses, and USD-million units", () => {
-  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "0.0", "(3.5)", "0.0", "0.0", "(39.3)", "0.0", "(484.9)"];
+  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "(3.5)", "0.0", "0.0", "0.0", "(39.3)", "0.0", "(484.9)"];
   const result = parseFarsideEtfTable(row("07 Oct 2026", values));
   assert.equal(result.parsed_reporting_row_count, 1);
   const parsed = result.latest_rows[0];
   assert.equal(parsed.period_start, "2026-10-07");
   assert.equal(parsed.unit, "USD million/day");
   assert.equal(parsed.fund_flows.IBIT, -207.7);
-  assert.equal(parsed.fund_flows.BRRR, 0);
+  assert.equal(parsed.fund_flows.BRRR, -3.5);
   assert.equal(parsed.reported_total_usd_million, -484.9);
   assert.equal(parsed.calculated_fund_sum_usd_million, -484.9);
   assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0);
