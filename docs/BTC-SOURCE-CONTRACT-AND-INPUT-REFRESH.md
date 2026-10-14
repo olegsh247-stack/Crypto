@@ -277,7 +277,7 @@ ICE's own documentation identifies ICE as administrator of the ICE U.S. Dollar I
 
 Added three automated readiness tests covering registered Binance, OKX and Bybit sources. Even if the observation is numeric, current, registered and timestamped, each is rejected for `market.spot_price` unless the canonical source contract is explicitly changed. This protects against accidentally promoting a BTC/USDT quote into the required USD/BTC input. Source-registry notes now mark those venues as cross-check candidates only; Kraken remains the sole canonical candidate.
 
-Validation: BTC Scenario Readiness Gate run [#186](https://github.com/olegsh247-stack/Crypto/actions/runs/38604259925) passed after the three tests were added. VPS Build Rehearsal [#1131](https://github.com/olegsh247-stack/Crypto/actions/runs/38604293350) is running against the subsequent source-registry update; do not treat it as passed until it completes.
+Validation: BTC Scenario Readiness Gate run [#186](https://github.com/olegsh247-stack/Crypto/actions/runs/38604259925) passed after the three tests were added. The follow-up registry and documentation commits also passed the BTC Scenario Readiness Gate [#188](https://github.com/olegsh247-stack/Crypto/actions/runs/38604442941) and current-head VPS Build Rehearsal [#1136](https://github.com/olegsh247-stack/Crypto/actions/runs/38604493446).
 
 
 ## 10. ETF source options — official SoSoValue API candidate — 2026-10-14
