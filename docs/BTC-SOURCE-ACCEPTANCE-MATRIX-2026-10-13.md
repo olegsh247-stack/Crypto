@@ -91,3 +91,8 @@ A candidate can be promoted only after all checks below pass:
 - [BTC Source Contract and Controlled Input Refresh v1](./BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md)
 - [Canonical metric registry](../data/CryptoDataModel/registry/metric-registry.json)
 - [Canonical source registry](../data/CryptoDataModel/registry/source-registry.json)
+
+
+### Follow-up — reward-stats candidate (2026-10-14)
+
+The upstream query for `/api/v1/mining/reward-stats/:blockCount` aggregates the latest N rows marked non-stale and returns min/max heights, total reward, total fees and transaction count. It does not return the full height list, and the query alone does not establish consecutive-height coverage. The public REST summary does not define the payload's numeric units or sufficiently certify `reward` semantics. Keep this endpoint **candidate only**; fee/subsidy remains blocked until deployed-version parity, units, exact canonical height coverage, reorg handling and the protocol-subsidy denominator are verified. No ratio or method ID approved.
