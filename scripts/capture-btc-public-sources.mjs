@@ -86,6 +86,7 @@ await capture({
     return {
       pair_key: pairKey,
       requested_pair: "XBTUSD",
+      quote_unit: "USD/BTC",
       latest_trade_price_usd_per_btc: Number(latest[0]),
       latest_trade_epoch_seconds: epochSeconds,
       latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
@@ -263,8 +264,15 @@ await capture({
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
-  sources: manifest.sources.map(({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count }) =>
-    ({ name, status, http_status, error, latest_trade_observed_at, latest_trade_price_usd_per_btc, row_count })),
+  sources: manifest.sources.map(({
+    name, status, http_status, error, pair, pair_key, quote_unit,
+    latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+  }) => ({
+    name, status, http_status, error, pair: pair ?? pair_key, quote_unit,
+    latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+  })),
   unresolved: manifest.unresolved
 }, null, 2));
 
