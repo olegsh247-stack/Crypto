@@ -136,3 +136,18 @@ Keep the published research probabilities unchanged: Bull 30%, Base 50%, Bear 20
 - [ ] Readiness passes on the reviewed candidate set.
 - [ ] Reproducible scenario evaluation is run read-only only after separate rule review.
 - [ ] No scenario state/event persistence and no probability changes.
+
+
+## 4C. Method review — 2026-10-14 (documentation-only; no live capture)
+
+The official Mempool REST reference documents `/api/v1/mining/hashrate/:timePeriod` only as returning network-wide hashrate and difficulty figures over a trailing period. It does not specify in that endpoint description whether each returned series timestamp denotes the beginning, end, or representative time of a daily bucket, nor the estimator/smoothing window for the stored point. The prior capture's 00:00 UTC labels are evidence of the returned labels, not proof of bucket boundaries. **Decision: do not approve a hashrate methodology ID yet.** Keep the daily input blocked until the exact response schema/implementation and the timestamp-to-observation-window mapping are documented. Do not substitute the un-timestamped `currentHashrate` field.
+
+For `security.fee_subsidy_ratio`, the official reference describes the selected endpoint as average total fees for blocks in a trailing period, ordered oldest to newest. That description alone does not establish an auditable per-row block denominator or an observation window aligned with protocol subsidy. The 830 rows in the historical capture are not a valid block count. **Decision: no ratio calculated and no methodology approved.**
+
+A candidate methodology to evaluate against source documentation (not approved or implemented): for a fixed, explicitly versioned window of 144 consecutive confirmed block heights, compute
+`sum(transaction_fees_btc for those heights) / sum(protocol_subsidy_btc for those same heights)`.
+The numerator must exclude subsidy; the denominator must be the protocol subsidy for each exact height, not total miner reward and not reward-minus-fees inferred from a provider aggregate. The raw block heights, timestamps, fees, subsidy schedule/version, window endpoints, and calculation version must be retained. This is only a proposal: before approval, verify that the selected provider's block-level payload exposes the needed fields with documented BTC units and that the full height range can be captured consistently. If not, choose a documented block-level source deliberately and review its identity/endpoint before any source-registry change. Do not use the aggregate fees endpoint as a shortcut.
+
+No live API was queried for this review. The 2026-10-12 capture remains historical evidence only. No database was accessed or written, no observation was staged, no scenario was evaluated, and no source-priority or production setting was changed. ETF/Farside access and DXY provider selection remain independent blockers and must not be resolved by silent substitution.
+
+Reference: [Mempool REST API documentation](https://mempool.space/docs/api/rest) (reviewed 2026-10-14).
