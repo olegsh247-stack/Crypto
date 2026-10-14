@@ -330,3 +330,14 @@ The BTC API readiness query now passes `period_start` and the persisted provenan
 For core inputs that can make the first BTC scenario evaluable, the gate now requires a valid non-future retrieval timestamp and a non-empty stable source-row key. A supplied SHA-256 payload hash must be 64 hexadecimal characters. Historical rows lacking retrieval/key metadata remain in storage but cannot silently qualify as current scenario inputs; there is no automatic backfill. ETF history applies the same retrieval/key checks while still requiring the explicit provider reporting date `period_start`.
 
 This is a repository/CI contract change only. It does not insert observations, infer source timestamps, apply a production migration, calculate a scenario, or persist a scenario state. The capture script remains a review-only artifact producer; mapping raw capture artifacts into persisted observations is a separate controlled ingestion task.
+
+
+## 14. Review-only capture-to-observation mapping — 2026-10-14
+
+Added `scripts/prepare-btc-observation-candidates.mjs` as a deliberately non-persistent handoff. It reads a capture manifest and emits a normalized candidate artifact only for the approved Kraken XBT/USD latest-trade shape, mapping the value, `USD/BTC` unit, source event time, retrieval time, source URL/ID, stable row key, payload SHA-256, method/version, revision placeholder and raw-body filename to the observation contract.
+
+The output explicitly says `candidate_state: REVIEW_ONLY` and `persistable: false`; it never opens PostgreSQL or writes observations. It rejects missing/invalid source timestamps, row key, hash, canonical URL, or unit. USDT exchange cross-checks are not promoted to canonical observations. ETF capture remains blocked because row-level values, provider reporting dates and defensible publication/observation timing are not yet normalized. DXY remains unresolved.
+
+The candidate mapper has unit tests for successful Kraken mapping, missing row/hash rejection, quote-unit separation and the ETF hold. BTC Scenario Readiness Gate #194 passed after the mapper and its tests were added: https://github.com/olegsh247-stack/Crypto/actions/runs/38607850897. The workflow was then updated to include the same paths for pull requests as well as pushes; the resulting current-head gate is tracked separately.
+
+This closes only the **review-only mapping** step. It does not approve ingestion or source priority, and it does not change the current `not_evaluable` scenario status.
