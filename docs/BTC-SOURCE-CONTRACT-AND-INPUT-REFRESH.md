@@ -245,3 +245,16 @@ Binance, OKX and Bybit are valid candidates for independent market-data corrobor
 - DXY remains a separate blocker. ICE identifies itself as administrator of the ICE U.S. Dollar Index and lists intraday, daily and historical data delivery, but this review has not established an accessible, approved endpoint and observation-time convention for the project. Do not relabel a broad trade-weighted dollar series as DXY or scrape a vendor page as if it were a canonical feed.
 
 Source references for API contract review: [Binance public Spot market-data documentation](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md), [OKX API v5 documentation](https://www.okx.com/docs-v5/en/), [Bybit V5 market tickers](https://bybit-exchange.github.io/docs/v5/market/tickers), and [ICE U.S. Dollar Index product information](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices). These references establish candidate API documentation, not current observations or source acceptance.
+
+
+## 8. Read-only exchange capture result — 2026-10-14
+
+The updated capture completed successfully in [workflow run #61](https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755). The raw responses and manifest are preserved in the seven-day artifact [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755/artifacts/11912919926). A permanent summary is recorded in [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json).
+
+- Kraken returned HTTP 200. The newest captured XBT/USD trade was 81,826.70 USD/BTC at 2026-10-14 16:53:33.584 UTC.
+- OKX returned HTTP 200. The newest captured BTC-USDT trade was 81,914.10 USDT/BTC at 2026-10-14 16:53:33.741 UTC. Keep this as an independent cross-check; do not calculate a USD spread from these values without a timestamp-aligned USDT/USD conversion.
+- Binance returned HTTP 451 and Bybit HTTP 403 from this GitHub Actions capture environment. These access outcomes do not establish that either exchange is globally unavailable; keep both as candidates and review alternate permitted public-data access before deciding.
+- Farside returned HTTP 403; TFTC's JSON candidate returned HTTP 200 with 707 rows. TFTC remains a reconciliation candidate only, not the canonical ETF source, until source lineage, reporting dates, revisions and observation/publication time are validated.
+- Mempool raw hashrate and aggregate fee responses were captured for research continuity only. Hashrate is not a mandatory directional input; no fee/subsidy ratio was calculated.
+
+**Acceptance outcome:** no source is promoted by this capture alone. Kraken remains the canonical price candidate; OKX is a unit-distinct cross-check; ETF evidence and DXY remain blockers. The workflow accessed no PostgreSQL database and wrote no observations, scenario states, monitoring events or probabilities.
