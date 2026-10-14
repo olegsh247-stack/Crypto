@@ -1408,3 +1408,11 @@ No production database access/write, source-priority promotion, scenario evaluat
 - Recorded this as a **plausible explanation, not a resolved source discrepancy** in [the ETF audit](data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md). Snapshots are not time-aligned and the Farside capture has no provider publication timestamp or revision identity, so neither value is promoted and TFTC remains candidate-only.
 - This was a one-time provenance/reconciliation check, not a recurring daily-sum calculation. No production ingestion, source-priority change, database/state write, scenario evaluation or probability update occurred.
 - Next: obtain a comparable immutable Farside/authorized primary-source row-level capture with raw hash and available publication/revision metadata. If runner access remains blocked, preserve that as an explicit access blocker; do not treat a web-indexed display as an immutable raw source artifact. BTC remains `not_evaluable`.
+
+### VPS rehearsal after ETF audit update — 2026-10-14
+
+- VPS API Build Rehearsal #1182 passed on commit `14c3c5a3f6e1212a749374d9af53e95256bc60e3`: https://github.com/olegsh247-stack/Crypto/actions/runs/38611372091
+- Successful checks included VPS-only repository guard, shared runtime/Worker/API builds, response-contract tests, Compose network-boundary validation, PostgreSQL migration/bootstrap rehearsal, canonical BTC input registry and read-only provenance audit, idempotency/duplicate reconciliation rehearsal, backup/restore, API/Worker E2E, offline invariants, evidence/snapshot lineage, persisted history/candle finalization and admin boundaries.
+- This validates the repository's isolated rehearsal only. The temporary PostgreSQL instance was cleaned up by the workflow; this is not a production deployment or approval to ingest data.
+- Current-head source capture is still the next evidence task. The staging workflow is explicitly read-only and supports manual dispatch, but this session's GitHub connector has no workflow-dispatch action; do not fake a new capture or label the older artifact as current. The latest reviewed capture remains run #64, where Farside was HTTP 403 and TFTC was candidate-only.
+- BTC remains `not_evaluable` until ETF source provenance/reporting-time requirements and the other mandatory input gates are satisfied.
