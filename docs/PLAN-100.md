@@ -749,3 +749,12 @@ The readiness workflow now watches the capture script as well as the pure contra
 Added `evaluateFarsideSessionFreshness` to the pure BTC source-contract module. It requires the caller to supply an approved list of expected trading-session dates and an explicit `maxSessionLag`; it does not guess weekends/holidays, does not infer a publication timestamp, and does not set `observed_at`. It blocks rows outside the supplied calendar, incomplete rows, and rows older than the chosen session-lag limit. Strict date validation rejects impossible calendar dates.
 
 Fixture tests now cover a complete row within an explicitly supplied lag limit, a stale row, an incomplete row, missing calendar input, and invalid dates. The limit is deliberately not defaulted: a policy owner must select it before operational use. This is a tested policy helper, not yet a production adapter or approval to activate ETF data. Runtime source registration and live DB state remain unverified. No DB or scenario/monitoring writes and no merge.
+
+
+### 2026-10-14 — official U.S. equity calendar source selected for 2026
+
+Checked the exchange-published calendars rather than guessing U.S. market holidays: [NYSE Holidays & Trading Hours](https://www.nyse.com/trade/hours-calendars) and [Nasdaq U.S. Market Holidays & Trading Hours](https://www.nasdaq.com/market-activity/stock-market-holiday-schedule). The 2026 full-day closures agree for the dates used by this implementation. Early-close dates remain trading sessions; they are not excluded from the session sequence.
+
+Added `scripts/us-equity-session-calendar.mjs`, a deterministic 2026-only session calendar. It generates weekdays minus the ten official full-day closures, rejects invalid dates, and fails closed outside 2026 rather than silently extrapolating a calendar. Fixture tests cover Independence Day observed (July 3), Thanksgiving and the following early-close session (November 27), invalid dates, reversed ranges, and unsupported years. The ETF freshness helper can now be supplied this calendar's session list, but it still requires an explicit `maxSessionLag`; no operational threshold is chosen implicitly.
+
+Scope is deliberately limited: this calendar is a documented input to the contract, not yet connected to the Farside page parser or canonical runtime adapter. For 2027 onward the calendar must be extended from official exchange schedules and tested before those dates are eligible. No DB/source-registry/scenario writes and no merge.
