@@ -98,7 +98,11 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
+  const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
   if (!latestEtf
+      || !Number.isFinite(latestEtfPeriodMs)
+      || latestEtfPeriodMs > nowMs
+      || nowMs - latestEtfPeriodMs > 14 * 24 * 3600000
       || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/"])) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
@@ -107,15 +111,19 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   }
 
   // Historical daily ETF rows are allowed to be older than the latest-row
-  // freshness window. They still need valid timestamps, values, canonical
-  // units, registered HTTPS provenance, and must fall within the 14-day series.
-  // The latest row is checked separately above against the 36-hour registry gate.
+  // freshness window. The provider's logical reporting date (period_start) is
+  // mandatory: observed_at is an observation/publication timestamp, not a
+  // substitute for the ETF trading date. Rows without a valid period_start
+  // fail closed and cannot count toward the five-session minimum.
   const etfRows = allEtfRows.filter(row => {
+    const periodMs = dateMs(row?.period_start);
     const observedMs = dateMs(row?.observed_at);
     const value = row?.value_numeric ?? row?.value_integer;
-    return Number.isFinite(observedMs)
+    return Number.isFinite(periodMs)
+      && periodMs <= nowMs
+      && nowMs - periodMs <= 14 * 24 * 3600000
+      && Number.isFinite(observedMs)
       && observedMs <= nowMs
-      && nowMs - observedMs <= 14 * 24 * 3600000
       && value !== null && value !== undefined && Number.isFinite(Number(value))
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
@@ -127,7 +135,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   });
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
-    const day = new Date(dateMs(row.period_start ?? row.observed_at)).toISOString().slice(0, 10);
+    const day = new Date(dateMs(row.period_start)).toISOString().slice(0, 10);
     if (!uniqueByDay.has(day)) uniqueByDay.set(day, row);
   }
   if (uniqueByDay.size < 5) {
