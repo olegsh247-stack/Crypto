@@ -468,3 +468,61 @@ export function auditKrakenPostTradePageChain(pages, { maxPageSize = 1000 } = {}
     note: "Fixture-only structural validation; never treats a cursor walk as proof of complete market-data coverage.",
   };
 }
+
+/**
+ * Normalize Kraken's documented public Ticker response as a snapshot candidate.
+ * Does not infer a source trade/quote timestamp: retrievedAt is capture time only.
+ * Returns both last-trade and bid/ask-midpoint semantics; callers must choose
+ * the intended metric explicitly before any registry or collector wiring.
+ */
+export function normalizeKrakenTicker(payload, { retrievedAt, requestedPair = "XBTUSD" } = {}) {
+  if (!payload || !Array.isArray(payload.error)) {
+    throw new TypeError("Kraken Ticker payload must contain an error array");
+  }
+  if (payload.error.length) throw new Error(`Kraken Ticker API error: ${payload.error.join(", ")}`);
+  const result = payload.result;
+  if (!result || typeof result !== "object") {
+    throw new TypeError("Kraken Ticker payload is missing result");
+  }
+  const pairKey = Object.keys(result)[0];
+  const ticker = pairKey ? result[pairKey] : null;
+  if (!ticker || typeof ticker !== "object") {
+    throw new TypeError("Kraken Ticker response is missing a pair result");
+  }
+  const parsePrice = (field, label) => {
+    if (!Array.isArray(field) || field.length < 1) {
+      throw new TypeError(`Kraken Ticker ${label} must be a non-empty array`);
+    }
+    const price = finiteNumber(field[0]);
+    if (price == null || price <= 0) {
+      throw new TypeError(`Kraken Ticker ${label} price must be positive and finite`);
+    }
+    return price;
+  };
+  const ask = parsePrice(ticker.a, "ask");
+  const bid = parsePrice(ticker.b, "bid");
+  const lastTrade = parsePrice(ticker.c, "last trade");
+  if (bid > ask) throw new TypeError("Kraken Ticker bid must not exceed ask");
+  if (retrievedAt != null && (typeof retrievedAt !== "string" || !Number.isFinite(Date.parse(retrievedAt)))) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
+  }
+
+  return {
+    source_id: "market.kraken",
+    metric_id: "market.spot_price",
+    requested_pair: requestedPair,
+    source_pair_key: pairKey,
+    unit: "USD/BTC",
+    last_trade_price: lastTrade,
+    bid_price: bid,
+    ask_price: ask,
+    bid_ask_midpoint: (bid + ask) / 2,
+    observed_at: null,
+    source_published_at: null,
+    retrieved_at: retrievedAt ?? null,
+    timestamp_semantics: "Kraken Ticker response contains no documented per-trade or per-quote timestamp; retrieved_at is capture time only",
+    status: "SNAPSHOT_CANDIDATE_SEMANTICS_UNSELECTED",
+    blockers: ["METRIC_SEMANTICS_NOT_SELECTED", "SOURCE_EVENT_TIMESTAMP_UNAVAILABLE"],
+  };
+}
+
