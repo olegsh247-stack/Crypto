@@ -933,3 +933,17 @@ A follow-up review found that public API availability is not the same as permiss
 - **Binance:** official developer docs establish supported public market-data endpoints and rate-limit behavior (https://developers.binance.com/en/docs/products/spot/rest-api), but this review has not established a sufficiently specific market-data license/retention/redistribution conclusion for the intended project. **Terms/use rights remain an open gate; do not infer permission solely from a public endpoint.**
 
 **Practical decision:** continue only with endpoint/schema fixture work and documentation. Before live use in the application, record the project's intended audience and use (personal/self-hosted vs. third-party/public/commercial), review the applicable jurisdictional terms and data rights, and seek written permission where required. Do not persist or redistribute provider payloads beyond what the applicable terms allow. This terms review did not activate sources, change registries, or make live requests.
+
+
+### Kraken hourly OHLC fixture contract — 2026-10-14
+
+Official documentation: https://docs.kraken.com/api-reference/market-data/get-ohlc-data (reviewed 2026-10-14). Endpoint is `GET https://api.kraken.com/0/public/OHLC`; the `pair` parameter is required and `interval=60` means 60 minutes. Response candle rows are `[time, open, high, low, close, vwap, volume, count]`; timestamps are Unix seconds. Crucially, Kraken documents that the final row is always the current, not-yet-committed timeframe, and that only the latest 720 entries are returned.
+
+Added fixture-only `normalizeKrakenHourlyOhlc` to:
+- select a caller-specified UTC hour by exact candle-start timestamp;
+- exclude the last response row because it is uncommitted;
+- validate row shape, positive OHLC values, high/low consistency, hour alignment and duplicate starts;
+- return candle close as a USD/BTC candidate while keeping scheduled `bar_end_at`, unknown source publication time and capture `retrieved_at` distinct;
+- fail closed if the requested completed candle is missing.
+
+This is not source activation. The helper does not perform network access and does not modify the registry, collector, cadence, scenario, or database. Terms/permitted use and runtime access remain blockers. Kraken's OHLC endpoint does not establish a publication timestamp; the scheduled bar end is not mislabeled as one. Fixture tests are added, and CI must validate this commit before the helper is treated as passing.
