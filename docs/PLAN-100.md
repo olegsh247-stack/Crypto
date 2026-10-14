@@ -862,3 +862,17 @@ This is a viable alternative to evaluate if the product needs a dependable curre
 - **Capture timestamp**: can document when our system observed the response, but must not be mislabeled as Kraken's trade/publication timestamp.
 
 Next comparison should assess whether the BTC research metric needs last-trade price or a point-in-time quote estimate. The user has clarified that 15-minute cadence is not mandatory; 1h or another suitable cadence can be considered if it gives sufficient freshness and a more reliable contract. Do not change registry/source priority or the live collector until semantics and freshness are explicitly selected. Official ticker docs reviewed; no live API call was made.
+
+### Kraken Ticker snapshot candidate — fixture-only contract — 2026-10-14
+
+Added `normalizeKrakenTicker` and deterministic tests against the documented response shape from the official [Kraken Ticker API reference](https://docs.kraken.com/api/docs/rest-api/get-ticker-information). The helper validates API errors, pair result, positive finite ask/bid/last-trade prices, quote ordering, and caller-supplied capture time. It returns last-trade price and bid/ask midpoint as distinct candidate values; it does not select between them or wire either into collection.
+
+The response does not provide a documented per-trade/per-quote timestamp. Therefore `observed_at` and `source_published_at` remain null, while `retrieved_at` records only the caller-supplied capture time. The candidate status remains `SNAPSHOT_CANDIDATE_SEMANTICS_UNSELECTED` with explicit blockers. This avoids falsely presenting retrieval time as source event time.
+
+**Decision remains open:** Ticker avoids Post-Trade cursor pagination but changes the available temporal semantics. Before accepting it for `market.spot_price`, choose whether the product requires last-trade price or a quote midpoint, and approve how snapshot capture time satisfies the separate `freshness_window: 1h` policy. Cadence may be hourly or another suitable interval; changing cadence alone does not imply acceptance.
+
+- Official API docs reviewed: https://docs.kraken.com/api/docs/rest-api/get-ticker-information (2026-10-14).
+- No live request was made; fixture tests only.
+- Metric/source registries, source priority, collector endpoint, database, scenario state, monitoring, scores, probabilities and published snapshots remain unchanged.
+- Next gate: CI on this HEAD; then compare the contract evidence and choose the spot-price semantic explicitly before any live read-only access or wiring.
+
