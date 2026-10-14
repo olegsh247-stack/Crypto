@@ -256,6 +256,20 @@ await capture({
   })
 });
 
+// Official Farside all-data page is captured separately as an access/reconciliation
+// diagnostic. The runtime source allowlist remains restricted to /btc/ until this
+// alternate endpoint and its parser are reviewed; this is not a source-priority change.
+await capture({
+  name: "farside-btc-etf-all-data-page",
+  metricId: "institutional.etf_net_flow",
+  sourceId: "institutional.primary",
+  url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+  parse: body => ({
+    html_characters: body.length,
+    note: "Official Farside all-data page captured for read-only access/reconciliation diagnostics only; no row-level publication timestamp is inferred and this URL is not yet in the canonical runtime allowlist."
+  })
+});
+
 await capture({
   name: "tftc-btc-etf-json-candidate",
   metricId: "institutional.etf_net_flow",
