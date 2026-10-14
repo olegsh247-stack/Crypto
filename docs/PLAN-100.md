@@ -841,3 +841,12 @@ The interval contract also needs careful translation: the metric selector uses U
 - Registry remains unchanged: `market.spot_price` is `15m` with `freshness_window: 1h` and source priority `market.kraken`.
 - The pure normalizer and bucket selector remain fixture-only candidate helpers. No collector endpoint switch, source acceptance, database write, or scenario-state change.
 - Next action: add deterministic fixture tests for page-chain invariants only if the intended fail-closed behavior is explicit; separately resolve the timestamp-tie cursor limitation before representing Post-Trade capture as complete. If it cannot be resolved from official docs, retain the existing legacy capture and mark the documented Post-Trade path blocked rather than guessing.
+
+
+### Kraken page-chain structural guard and cadence decision — 2026-10-14
+
+Added fixture-only `auditKrakenPostTradePageChain` and tests. The helper checks page envelopes/counts/limits, ascending timestamps, duplicate trade IDs, `last_ts` consistency, cursor-chain alignment and cursor advancement. It deliberately returns `STRUCTURE_VALID_COMPLETENESS_UNPROVEN` for a structurally clean chain; it cannot prove that timestamp-tied trades were not skipped between pages. Invalid chains fail closed.
+
+**Cadence clarification:** the current `15m` registry cadence is not a user requirement or a fixed product promise. A one-hour bucket or another source-supported observation interval may be acceptable if it produces a robust, reproducible and fresh-enough input for the research scenario. This is a product/metric-contract decision to evaluate later, not an instruction to change the registry now. Widening the bucket alone does not resolve cursor completeness; first establish whether the chosen retrieval method can produce a complete and defensible candidate window. The existing `1h` freshness window remains a separate policy from the sampling interval.
+
+CI on the previous HEAD `119820bcb41fe5f969a0f95d205ee02610891750` is green for BTC Scenario Readiness Gate, BTC Block Window Validation, and VPS API Build Rehearsal. The new helper/tests are on the newer HEAD and require their own CI run before they can be treated as passing.
