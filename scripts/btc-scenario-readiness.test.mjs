@@ -10,9 +10,16 @@ const units = {
   "macro.dxy": "index",
   "institutional.etf_net_flow": "USD million/day",
 };
-const row = (metric_id, observed_at, value_numeric = 1) => ({
+const canonicalSources = {
+  "market.spot_price": "market.kraken",
+  "security.hashrate": "network.primary",
+  "security.fee_subsidy_ratio": "network.primary",
+  "macro.dxy": "macro.primary",
+  "institutional.etf_net_flow": "institutional.primary",
+};
+const row = (metric_id, observed_at, value_numeric = 1, sourceId = canonicalSources[metric_id]) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
-  source_id: "source.test", source_url: "https://example.com/data",
+  source_id: sourceId, source_url: "https://example.com/data",
   source_registered: true, unit: units[metric_id], expected_unit: units[metric_id],
 });
 
@@ -29,11 +36,12 @@ function completeInputs() {
   ];
 }
 
-test("fresh and traceable inputs pass readiness but do not create a scenario", () => {
+test("fresh inputs still block while no canonical DXY source is approved", () => {
   const result = assessBtcScenarioReadiness(completeInputs(), now);
-  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.status, "not_evaluable");
   assert.equal(result.can_persist_scenario_state, false);
-  assert.equal(result.blockers.length, 0);
+  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.selected_inputs["market.spot_price"].source_id, "market.kraken");
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
@@ -44,7 +52,8 @@ test("historical ETF sessions count toward the five-day series even when they ar
       ? { ...x, freshness: "STALE" }
       : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
@@ -114,6 +123,16 @@ test("unregistered source cannot pass even with an HTTPS URL", () => {
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "security.hashrate" && x.reason === "source_not_registered"));
+});
+
+test("registered but unapproved ETF mirror cannot pass canonical-source gate", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
+    ? { ...x, source_id: "institutional.tftc" } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
+    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
 });
 
 test("non-canonical unit cannot pass readiness", () => {
