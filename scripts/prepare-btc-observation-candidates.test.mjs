@@ -42,6 +42,7 @@ test("maps canonical Kraken capture into a review-only normalized observation", 
   assert.equal(candidate.observed_at, "2026-10-14T16:53:33.584Z");
   assert.equal(candidate.retrieved_at, "2026-10-14T16:53:33.900Z");
   assert.equal(candidate.source_payload_sha256, hash);
+  assert.equal(candidate.source_updated_at, null);
   assert.equal(candidate.persistable, false);
   assert.equal(result.production_writes_performed, false);
 });
@@ -71,4 +72,29 @@ test("keeps ETF capture blocked until row-level values and reporting dates are n
   });
   assert.equal(result.candidates.length, 0);
   assert.deepEqual(result.blocked[0].reasons, ["row_level_values_and_provider_reporting_dates_not_yet_normalized"]);
+});
+
+test("blocks a source event timestamp later than the capture retrieval time", () => {
+  const result = prepareBtcObservationCandidates(manifest({
+    latest_trade_observed_at: "2026-10-14T16:54:00.000Z",
+    observed_at: "2026-10-14T16:54:00.000Z",
+    retrieved_at: "2026-10-14T16:53:33.900Z",
+    http_date: "Wed, 14 Oct 2026 16:53:00 GMT",
+    provider_last_modified: "Wed, 14 Oct 2026 16:50:00 GMT",
+    etag: '"provider-revision-example"'
+  }));
+  assert.equal(result.candidates.length, 0);
+  assert.ok(result.blocked[0].reasons.includes("source_observation_timestamp_after_retrieval"));
+});
+
+test("does not treat HTTP response headers as the metric observation timestamp", () => {
+  const result = prepareBtcObservationCandidates(manifest({
+    http_date: "Wed, 14 Oct 2026 16:53:34 GMT",
+    provider_last_modified: "Wed, 14 Oct 2026 16:50:00 GMT",
+    etag: '"provider-revision-example"'
+  }));
+  assert.equal(result.candidates.length, 1);
+  assert.equal(result.candidates[0].observed_at, "2026-10-14T16:53:33.584Z");
+  assert.equal(result.candidates[0].retrieved_at, "2026-10-14T16:53:33.900Z");
+  assert.equal(result.candidates[0].source_updated_at, null);
 });
