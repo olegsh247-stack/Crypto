@@ -337,10 +337,8 @@
       "update_mode": "AUTO",
       "frequency": "1d",
       "freshness_window": "48h",
-      "source_priority": [
-        "macro.primary"
-      ],
-      "validation_rule": "value > 0",
+      "source_priority": [],
+      "validation_rule": "value > 0; blocked until an approved DXY feed, endpoint, daily observation convention and access terms are recorded",
       "research_blocks": [
         "09",
         "15"
