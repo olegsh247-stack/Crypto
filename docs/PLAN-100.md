@@ -661,3 +661,23 @@ The repository inspection is documented in [Source Architecture — Current-Stat
 - Development should not revolve around manually rechecking daily changing totals. The next product work is to define and test stable source/metric/asset contracts, automate collection/normalization, and use deterministic fixtures plus a frozen no-write BTC manifest.
 - Sequence: stabilize the shared catalog and metric contracts now; prove one complete BTC path; only after BTC end-to-end acceptance extend metric mappings to ETH and other assets. Do not claim multi-asset readiness or expand scope prematurely.
 - Documentation-only change on PR #82 branch: commit `6430227ae56fed4882ee3e9995bc0bf806472cd0` adds the architecture audit. No registry/runtime code, database, ingestion, scenario state, monitoring state, or PR status was changed by that commit.
+
+
+### 2026-10-14 — автоматическая проверка shared source/metric registries
+
+Добавлены `scripts/validate-source-metric-registries.mjs` и `scripts/validate-source-metric-registries.test.mjs`; workflow `BTC Scenario Readiness Gate` теперь запускает их на PR при изменении реестров и проверок.
+
+Проверки, которые блокируют CI:
+- уникальность `source_id` и `metric_id`;
+- наличие непустых ID и канонических единиц метрик;
+- наличие `source_priority` у каждой метрики;
+- разрешимость всех ссылок `source_priority` в общий source registry;
+- корректность URL, если URL у источника задан.
+
+Отдельно выводятся предупреждения, но пока не блокируется сборка, если конкретная метрика ссылается на общий placeholder или источник со статусом `to_validate`. Первый фактический результат текущего реестра выявил такие места:
+- `market.primary` используется метриками `market.futures_open_interest`, `market.perpetual_funding`, `market.options_open_interest`;
+- `macro.primary` используется метрикой `macro.dxy`.
+
+Это реальные нерешённые контракты, а не доказательство работающих адаптеров. Я не заменял их догадкой и не активировал источники: `macro.dxy` остаётся заблокированным; рыночные метрики с `market.primary` требуют выбора и проверки конкретного провайдера до принятия данных.
+
+Проверки не утверждают, что источник реально зарегистрирован в target DB или что адаптер доступен. Это структурный CI-контроль JSON-контрактов и раннее предупреждение о placeholder-источниках. Target DB не подключалась, записи/ingestion и scenario/monitoring state не менялись. Результат CI для нового HEAD ожидается отдельно; успешный прогон заранее не заявляется.
