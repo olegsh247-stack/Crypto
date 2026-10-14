@@ -19,6 +19,10 @@ Every observation submitted for review must contain:
 - source publication/update time where available, retrieval time, method/window, revision/raw-row identity;
 - idempotency key based on the metric's logical observation window, not retrieval time.
 
+**Frequency is source-defined, not forced to a uniform polling interval.** For Kraken Trades, the observation is an individual trade and its source-provided epoch timestamp; the metric registry uses `event-driven`, while the one-hour value is a maximum accepted age, not a promise that the source emits a trade every hour or every 15 minutes. For daily series, preserve the provider's documented bucket/session semantics. Always keep `observed_at`, source publication/update time (when provided), and `retrieved_at` distinct. A successful retrieval only proves the endpoint answered; it does not make the returned observation current.
+
+The readiness gate now also enforces the approved source identity for each metric, not merely that some source ID is registered. ETF input must use `institutional.primary` (Farside) until a separately reviewed source-priority change is approved. `institutional.tftc` remains a candidate and cannot pass the canonical-source gate. DXY has no approved source ID yet, so it intentionally remains blocked even if a row is recent, numeric, and registered; `macro.primary` is too generic to establish a DXY feed.
+
 Do not manufacture an observation timestamp from a web page's crawl time. Do not treat missing, dash, placeholder, or unreported values as numeric zero. Preserve source payloads and review metadata so that a candidate can be reproduced.
 
 ## 2. Canonical metric contract and gates
