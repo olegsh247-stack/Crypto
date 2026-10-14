@@ -4,6 +4,8 @@
  * Offline only: no network, database access, clock reads, or persistence.
  */
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const REVISION_POLICY = "append_revision_preserve_prior_versions_review_corrections";
 
@@ -50,6 +52,15 @@ export function normalizeBtcCandidateManifest(manifest) {
       throw new TypeError("Raw evidence SHA-256 must be a 64-character hex digest");
     }
 
+    const normalizedFields = new Set([
+      "metric_id", "source_id", "source_url", "value", "unit", "observed_at", "retrieved_at",
+      "session_date", "window_start_utc", "window_end_utc_exclusive", "first_height", "last_height",
+      "raw_body_sha256", "raw_artifact_sha256", "source_row_identity", "dry_run_classification", "reason",
+    ]);
+    const sourceDetails = Object.fromEntries(
+      Object.entries(candidate).filter(([key]) => !normalizedFields.has(key)).sort(([a], [b]) => a.localeCompare(b)),
+    );
+
     return {
       candidate_key: stableIdentity(candidate),
       asset_id: "btc",
@@ -93,7 +104,7 @@ export function normalizeBtcCandidateManifest(manifest) {
   };
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const inputPath = process.argv[2] ?? "docs/data-review/BTC-CANDIDATE-STAGING-DRY-RUN-2026-10-13.json";
   const manifest = JSON.parse(await readFile(inputPath, "utf8"));
   process.stdout.write(JSON.stringify(normalizeBtcCandidateManifest(manifest), null, 2) + "\n");
