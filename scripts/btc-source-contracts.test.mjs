@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades } from "./btc-source-contracts.mjs";
+import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, parseFarsideHtmlTable } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
