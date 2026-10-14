@@ -60,3 +60,22 @@ Before canonical acceptance, the project still needs to document this formula an
 ## 5. Safety boundary
 
 No production database was accessed or changed. No observation, historical row, registry, monitoring event, scenario state, score, probability, or published snapshot was written. Both values are `CANDIDATE_ONLY_NOT_ACCEPTED`; BTC remains `not_evaluable`.
+
+
+## Official Mempool API documentation review — 2026-10-14
+
+Reviewed the provider's [official REST API documentation](https://mempool.space/docs/api/rest) before relying on the source contract. The docs describe mining endpoints for aggregate reward/fee statistics, but the exact block-page response contract used by this capture (`GET /api/v1/blocks/:startHeight`, including `extras.totalFees` and `extras.reward`) is not fully specified in the REST reference page reviewed. The field semantics were therefore cross-checked separately against the pinned upstream implementation linked above, rather than inferred from similarly named aggregate endpoints.
+
+### Reviewed integration facts and limits
+
+- Intended runtime access method: unauthenticated HTTPS GET to the public Mempool.space REST host; no credentials are used by the candidate capture.
+- Captured endpoint family: `/api/blocks/tip/height`, `/api/blocks/tip/hash`, and `/api/v1/blocks/:startHeight`.
+- Current implementation assumptions: block-page entries contain integer `height`, block hash `id`, Unix-seconds `timestamp`, and `extras.totalFees` / `extras.reward` expressed in satoshis. The capture validates these assumptions and checks `reward - totalFees` against the consensus subsidy expected at that height.
+- The REST documentation reviewed does not establish a durable per-response publication timestamp, a guaranteed service-level availability contract, or an endpoint-specific request quota for this use. Capture time is retained as retrieval time only; it is not misrepresented as source observation time.
+- The provider docs reviewed do not by themselves establish permission to redistribute or indefinitely republish captured payloads. Raw response retention here is limited to local candidate evidence/artifacts; licensing/retention terms must be checked before making this a public hosted data product.
+- The capture uses sequential GET requests with a timeout and fails closed on non-200 status, unexpected content type, malformed values, missing/duplicate heights, duplicate hashes, inconsistent reward/subsidy, or a changed tip anchor. It currently does not implement a retry loop; a failed request fails the candidate run rather than silently falling back.
+- Live capture and deterministic validation prove a reproducible candidate, not a production adapter or target-database registration. No production source activation or database write is authorized.
+
+### Decision
+
+The official documentation review supports continuing the read-only candidate path, with the pinned implementation serving as supplemental field-semantics evidence. It does **not** by itself close production access/terms, runtime registration, or ingestion acceptance. Keep the UTC-day ratio as the proposed persisted contract aligned with `frequency: 1d`; keep rolling 144-block values diagnostic-only until the metric contract is formally reconciled. No registry, database, scenario, monitoring or published snapshot state was changed by this documentation review.
