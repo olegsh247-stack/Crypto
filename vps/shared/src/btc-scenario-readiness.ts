@@ -7,8 +7,10 @@
  */
 const REQUIRED = [
   { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
-  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/hashrate/1w"], label: "network hashrate" },
-  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/blocks/fees/1w"], label: "fee-market/security economics" },
+  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/hashrate/1w"], approvedMethodologyIds: [], label: "network hashrate" },
+  // The raw fees endpoint is not itself a fee/subsidy ratio. Keep this input blocked
+  // until its units, block/window semantics, subsidy denominator and method version are reviewed.
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/blocks/fees/1w"], approvedMethodologyIds: [], label: "fee-market/security economics" },
   // No specific DXY feed has been approved. Empty identity/URL allowlists fail closed.
   { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", sourceIds: [], sourceUrlPrefixes: [], label: "macro liquidity proxy (DXY)" },
 ];
@@ -18,7 +20,7 @@ function dateMs(value: unknown): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string, allowedSourceIds?: string[], allowedSourceUrlPrefixes?: string[]): boolean {
+function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string, allowedSourceIds?: string[], allowedSourceUrlPrefixes?: string[], approvedMethodologyIds?: string[]): boolean {
   const observedMs = dateMs(row?.observed_at);
   const value = row?.value_numeric ?? row?.value_integer;
   return Number.isFinite(observedMs)
@@ -26,11 +28,16 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number, expected
     && nowMs - observedMs <= maxAgeHours * 3600000
     && String(row?.freshness ?? "").toUpperCase() === "CURRENT"
     && value !== null && value !== undefined && Number.isFinite(Number(value))
+    && (row?.metric_id !== "market.spot_price" || Number(value) > 0)
+    && (row?.metric_id !== "security.hashrate" || Number(value) > 0)
+    && (row?.metric_id !== "security.fee_subsidy_ratio" || Number(value) >= 0)
+    && (row?.metric_id !== "macro.dxy" || Number(value) > 0)
     && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
     && typeof row?.source_id === "string" && row.source_id.trim().length > 0
     && row?.source_registered === true
     && Array.isArray(allowedSourceIds) && allowedSourceIds.includes(String(row?.source_id ?? ""))
     && Array.isArray(allowedSourceUrlPrefixes) && allowedSourceUrlPrefixes.some(prefix => String(row?.source_url ?? "").startsWith(prefix))
+    && (!approvedMethodologyIds || approvedMethodologyIds.includes(String(row?.methodology ?? "")))
     && typeof row?.unit === "string" && row.unit.trim().length > 0
     && (!expectedUnit || (row.unit === expectedUnit && row.expected_unit === expectedUnit));
 }
@@ -52,7 +59,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       blockers.push({ metric_id: requirement.metricId, reason: "missing" });
       continue;
     }
-    if (!validObservation(latest, nowMs, requirement.maxAgeHours, requirement.unit, requirement.sourceIds, requirement.sourceUrlPrefixes)) {
+    if (!validObservation(latest, nowMs, requirement.maxAgeHours, requirement.unit, requirement.sourceIds, requirement.sourceUrlPrefixes, requirement.approvedMethodologyIds)) {
       blockers.push({
         metric_id: requirement.metricId,
         reason: String(latest.freshness ?? "").toUpperCase() !== "CURRENT"
@@ -63,7 +70,9 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
               ? "source_not_approved_for_metric"
               : !requirement.sourceUrlPrefixes.some(prefix => String(latest.source_url ?? "").startsWith(prefix))
                 ? "source_url_not_approved_for_metric"
-                : typeof latest.unit !== "string" || !latest.unit.trim()
+                : requirement.approvedMethodologyIds && !requirement.approvedMethodologyIds.includes(String(latest.methodology ?? ""))
+                  ? "calculation_method_not_approved"
+                  : typeof latest.unit !== "string" || !latest.unit.trim()
               ? "unit_missing"
               : requirement.unit && latest.expected_unit !== requirement.unit
               ? "metric_unit_contract_mismatch"
