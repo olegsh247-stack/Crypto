@@ -163,19 +163,21 @@ export function prepareBtcObservationCandidates(manifest) {
       const mirrorRow = typeof date === "string" ? tftcByDate.get(date) : null;
       if (!mirrorRow) continue;
       const farsideTotal = row?.status === "REPORTED_CANDIDATE"
-        && Number.isFinite(Number(row.reported_total_usd_million))
-        ? Number(row.reported_total_usd_million) : null;
-      const tftcTotal = Number.isFinite(Number(mirrorRow.netFlowUsd))
-        ? Number(mirrorRow.netFlowUsd) / 1_000_000 : null;
+        && typeof row.reported_total_usd_million === "number"
+        && Number.isFinite(row.reported_total_usd_million)
+        ? row.reported_total_usd_million : null;
+      const tftcTotal = typeof mirrorRow.netFlowUsd === "number" && Number.isFinite(mirrorRow.netFlowUsd)
+        ? mirrorRow.netFlowUsd / 1_000_000 : null;
       const delta = farsideTotal !== null && tftcTotal !== null
         ? Number((tftcTotal - farsideTotal).toFixed(9)) : null;
       const fundDeltas = {};
       const tftcFunds = mirrorRow.perEtfUsd && typeof mirrorRow.perEtfUsd === "object"
         ? mirrorRow.perEtfUsd : {};
       for (const [fund, farsideValue] of Object.entries(row?.fund_flows ?? {})) {
-        if (Number.isFinite(Number(farsideValue)) && Object.prototype.hasOwnProperty.call(tftcFunds, fund)
-          && Number.isFinite(Number(tftcFunds[fund]))) {
-          const difference = Number(tftcFunds[fund]) / 1_000_000 - Number(farsideValue);
+        if (typeof farsideValue === "number" && Number.isFinite(farsideValue)
+          && Object.prototype.hasOwnProperty.call(tftcFunds, fund)
+          && typeof tftcFunds[fund] === "number" && Number.isFinite(tftcFunds[fund])) {
+          const difference = tftcFunds[fund] / 1_000_000 - farsideValue;
           if (Math.abs(difference) > 0.000000001) fundDeltas[fund] = Number(difference.toFixed(9));
         }
       }
