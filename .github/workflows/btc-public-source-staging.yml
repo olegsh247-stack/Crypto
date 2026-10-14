@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "scripts/capture-btc-public-sources.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -21,7 +22,9 @@ jobs:
           node-version: 22
       - name: Capture public source responses for review only
         run: node scripts/capture-btc-public-sources.mjs
-      - name: Upload raw responses and provenance manifest
+      - name: Prepare normalized observation candidates (review only)
+        run: node scripts/prepare-btc-observation-candidates.mjs
+      - name: Upload raw responses, provenance manifest, and review-only candidates
         if: always()
         uses: actions/upload-artifact@v4
         with:
