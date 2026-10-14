@@ -80,27 +80,27 @@
     }
   ],
   "decisions": [
-    "Do not compare BTC/USDT directly as USD/BTC or silently assume USDT equals USD.",
-    "Do not average exchange prices into a synthetic quote.",
-    "Keep Kraken as the canonical price-source candidate; every captured trade remains review-only until all readiness and acceptance gates pass.",
-    "ETF flow remains blocked: Farside returned HTTP 403 from the runner and TFTC remains an unapproved mirror candidate with unresolved row timestamp/revision semantics.",
-    "DXY remains blocked until a specific accessible feed and observation-time convention are approved; third-party DXY reconstructions are not official ICE DXY.",
-    "Mempool hashrate and block-fees remain research-only; no fee/subsidy ratio is calculated or required for the first BTC scenario.",
-    "HTTP Date/Last-Modified/ETag/cache headers are preserved as response metadata, not treated as metric observed_at or proof of provider revision.",
-    "The candidate mapper now blocks a source event timestamp later than retrieval time; regression tests confirm HTTP headers do not populate source_updated_at.",
-    "No observations were ingested; no database, scenario state, monitoring state or probabilities were changed."
+    "The official Farside all-data page is accessible from the GitHub runner (HTTP 200) and is linked from the official /btc/ page (which returns HTTP 403); the readiness allowlist now accepts both URLs under the same institutional.primary source identity.",
+    "Do not compare BTC/USDT directly as USD/BTC or average exchange quotes into a synthetic quote.",
+    "Keep Kraken as the canonical price-source candidate; captured trades remain review-only until acceptance gates pass.",
+    "ETF daily rows are now parsed reproducibly from the official Farside all-data HTML. The parser preserves dashes as null, marks the all-dash 14 Oct row as UNREPORTED_PLACEHOLDER, and leaves observed_at null.",
+    "Farside and TFTC values agree within display rounding on 5, 6, 8, 9, 12 and 13 Oct; 7 Oct remains a material delta largely attributable to BRRR, but revision/time alignment is unresolved.",
+    "TFTC remains an unapproved mirror candidate; no source priority was changed.",
+    "DXY remains blocked until a specific accessible authorized feed and observation-time convention are approved.",
+    "HTTP Date/Last-Modified/ETag/cache headers are response metadata, not metric observed_at or proof of provider revision.",
+    "No observations were ingested; no production database, scenario state, monitoring state or probabilities were changed."
   ],
   "latest_capture": {
     "workflow": "BTC Public Source Staging (Read Only)",
-    "run_number": 66,
-    "run_id": 38617442716,
-    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38617442716",
-    "artifact_id": 11920178002,
-    "artifact_url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38617442716/artifacts/11920178002",
-    "artifact_sha256": "3730e69a31ead29cec4fd33764e3af8feb81f12c0610d10067f0a359533ead20",
-    "captured_at": "2026-10-14T18:42:44.521Z",
+    "run_number": 68,
+    "run_id": 38617818435,
+    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38617818435",
+    "artifact_id": 11919518954,
+    "artifact_url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38617818435/artifacts/11919518954",
+    "artifact_sha256": "70983d4d86d0c5462e2315a74c684ad4a5a0f42f64af04a25c3e255d11d5ae5b",
+    "captured_at": "2026-10-14T18:45:19.744Z",
     "result": "success",
-    "purpose": "Read-only staging; artifact inspected, no production database access or writes.",
+    "purpose": "Read-only source capture; raw artifact inspected, no production database access or writes.",
     "sources": [
       {
         "source_id": "market.kraken",
@@ -108,13 +108,10 @@
         "status": "CAPTURED",
         "http_status": 200,
         "unit": "USD/BTC",
-        "latest_trade_price": 81460.6,
-        "observed_at": "2026-10-14T18:42:41.878Z",
-        "retrieved_at": "2026-10-14T18:42:44.521Z",
-        "source_row_key": "XBTUSD:1792003361.8781514:81460.60000:0.00208334:b:l:",
-        "raw_body_sha256": "8feea1dd837ecccc07ee1c8ff1412191d3feb5d1d06c3cb6a426e4a540307814",
-        "response_http_date": "Wed, 14 Oct 2026 18:42:44 GMT",
-        "provider_last_modified": "Wed, 14 Oct 2026 18:42:44 GMT",
+        "latest_trade_price": 81478.1,
+        "observed_at": "2026-10-14T18:45:17.357Z",
+        "retrieved_at": "2026-10-14T18:45:19.745Z",
+        "raw_body_sha256": "48d5fba135d510f535cb841b7ec4ddcd343ccdeb91fb90bde1bad88cc0163ead",
         "role": "Review-only candidate; not accepted into production."
       },
       {
@@ -123,19 +120,19 @@
         "status": "CAPTURED",
         "http_status": 200,
         "unit": "USDT/BTC",
-        "latest_trade_price": 81565.1,
-        "observed_at": "2026-10-14T18:42:43.032Z",
-        "retrieved_at": "2026-10-14T18:42:44.889Z",
-        "raw_body_sha256": "6d0108bb5705f2f625102e646ec80e9ef9f6a0d01f01dcf3de40f6846de9d0bb",
-        "role": "Independent cross-check only; not a USD/BTC observation and not approved as canonical."
+        "latest_trade_price": 81575.9,
+        "observed_at": "2026-10-14T18:45:18.964Z",
+        "retrieved_at": "2026-10-14T18:45:20.221Z",
+        "raw_body_sha256": "c645e0ef18642bb61f2a3fdb67d5092d55fc4b05b35827c41caf524fc0cfefa8",
+        "role": "Independent cross-check only; not a USD/BTC observation."
       },
       {
         "source_id": "market.binance",
         "name": "Binance BTCUSDT trades",
         "status": "FAILED",
         "http_status": 451,
-        "raw_body_sha256": "79c1db471a4cdc1c8565b5dfc52e0ed2d29962738ee4d28597696fcd0920e348",
-        "role": "Runner-specific access failure; does not prove global source unavailability."
+        "raw_body_sha256": "79c1db471a4cdc1c8565bdfc52e0ed2d29962738ee4d28597696fcd0920e348",
+        "role": "Runner-specific access failure."
       },
       {
         "source_id": "market.bybit",
@@ -143,15 +140,38 @@
         "status": "FAILED",
         "http_status": 403,
         "raw_body_sha256": "7ef856c945703d5772f1b1f2a8c65913247c9b0769302b10facfe14fa1e2083c",
-        "role": "Runner-specific access failure; does not prove global source unavailability."
+        "role": "Runner-specific access failure."
       },
       {
         "source_id": "institutional.primary",
-        "name": "Farside BTC ETF flow page",
+        "name": "Farside BTC ETF landing page",
         "status": "FAILED",
         "http_status": 403,
-        "raw_body_sha256": "d8bb94be91878756736383ef7859e61671032fb214b380863b5b811af24c1fa3",
-        "role": "Canonical candidate remains inaccessible from this runner; response body is an error, not ETF data."
+        "raw_body_sha256": "c12e5529beb3ac8553fdc2ca1b488ce5b640e79ba26e26064aad2987cdd4d2d5",
+        "role": "Landing URL remains inaccessible from runner."
+      },
+      {
+        "source_id": "institutional.primary",
+        "name": "Farside official all-data page",
+        "status": "CAPTURED",
+        "http_status": 200,
+        "unit": "USD million/day",
+        "parsed_reporting_row_count": 708,
+        "latest_confirmed_period": "2026-10-13",
+        "latest_confirmed_total_usd_million": 175.7,
+        "latest_confirmed_funds": {
+          "IBIT": 65.9,
+          "FBTC": 103.1,
+          "MSBT": 6.7
+        },
+        "unreported_placeholder_period": "2026-10-14",
+        "unreported_placeholder_total_usd_million": 0,
+        "unreported_placeholder_fund_values": null,
+        "http_date": "Wed, 14 Oct 2026 18:45:22 GMT",
+        "provider_last_modified": null,
+        "etag": null,
+        "raw_body_sha256": "6407d3589d3ba07f8af5b851fd9ac475a2e6095c46a49eccea237fa1444614c5",
+        "role": "Same official Farside source identity, alternate page now allowlisted; reporting rows are parsed, but no observed_at/publication timestamp is inferred."
       },
       {
         "source_id": "institutional.tftc",
@@ -160,10 +180,10 @@
         "http_status": 200,
         "row_count": 707,
         "updated_through": "2026-10-13",
-        "retrieved_at": "2026-10-14T18:42:45.501Z",
+        "retrieved_at": "2026-10-14T18:45:22.250Z",
         "response_http_date": "Wed, 14 Oct 2026 10:01:30 GMT",
         "raw_body_sha256": "7de15bff268133dffb3621da9f2355ff07204464bb0f53ecee073791dcccd51d",
-        "role": "Reconciliation candidate only; date-only updatedThrough and no row-level publication/revision contract."
+        "role": "Reconciliation candidate only; not approved canonical source."
       },
       {
         "source_id": "network.primary",
@@ -181,24 +201,79 @@
         "name": "Mempool block-fees aggregate series",
         "status": "CAPTURED",
         "http_status": 200,
-        "row_count": 838,
-        "raw_body_sha256": "0d2cd9ff3374a3e938d3e7f09055e44de37050c0bd202efd427349be1e426c1a",
-        "role": "Raw research only; no fee/subsidy ratio calculated or required for first BTC scenario."
+        "row_count": 839,
+        "raw_body_sha256": "9ed8c5029434dc92a26f37eb076dbbafd176d3de297289d1eae4068bed1899d5",
+        "role": "Raw research only; fee/subsidy ratio not calculated or required for first BTC scenario."
       }
     ],
     "candidate_mapping": {
       "status": "success",
       "normalized_candidates": 1,
-      "blocked_entries": 5,
+      "blocked_entries": 6,
       "candidate_metric": "market.spot_price",
-      "candidate_value": 81460.6,
+      "candidate_value": 81478.1,
       "candidate_unit": "USD/BTC",
       "persistable": false,
       "unresolved": [
-        "institutional.etf_net_flow: Farside returned HTTP 403; TFTC remains unapproved and its row-level publication/revision semantics are unresolved.",
+        "institutional.etf_net_flow: official Farside rows are now captured through the all-data page, but provider publication/observation time and revision/finalization semantics are not available; no observed_at is assigned.",
+        "institutional.etf_net_flow: 7 October Farside/TFTC component discrepancy remains (BRRR 0.0m vs -2.114298m); source revision/time alignment not established.",
         "macro.dxy: no accessible approved canonical feed/time convention.",
-        "market.spot_price: Kraken trade is review-only; readiness gate does not approve the staged candidate for persistence."
+        "market.spot_price: Kraken trade remains review-only; readiness acceptance and ingestion approval remain separate."
       ]
+    },
+    "etf_reconciliation": {
+      "source": "Farside official all-data page vs TFTC JSON candidate",
+      "rows": [
+        {
+          "date": "2026-10-05",
+          "farside_usd_million": -89.8,
+          "tftc_usd_million": -89.897783,
+          "delta_tftc_minus_farside_usd_million": -0.097783
+        },
+        {
+          "date": "2026-10-06",
+          "farside_usd_million": 118.8,
+          "tftc_usd_million": 118.86245188,
+          "delta_tftc_minus_farside_usd_million": 0.06245188
+        },
+        {
+          "date": "2026-10-07",
+          "farside_usd_million": -484.9,
+          "tftc_usd_million": -487.0674115,
+          "delta_tftc_minus_farside_usd_million": -2.1674115,
+          "component_note": "Farside BRRR 0.0m; TFTC BRRR -2.114298m; likely explains most of difference, not proven due missing revision/time alignment."
+        },
+        {
+          "date": "2026-10-08",
+          "farside_usd_million": -244.1,
+          "tftc_usd_million": -244.125629175,
+          "delta_tftc_minus_farside_usd_million": -0.025629175
+        },
+        {
+          "date": "2026-10-09",
+          "farside_usd_million": 21.1,
+          "tftc_usd_million": 21.12807855,
+          "delta_tftc_minus_farside_usd_million": 0.02807855
+        },
+        {
+          "date": "2026-10-12",
+          "farside_usd_million": -65.4,
+          "tftc_usd_million": -65.401,
+          "delta_tftc_minus_farside_usd_million": -0.001
+        },
+        {
+          "date": "2026-10-13",
+          "farside_usd_million": 175.7,
+          "tftc_usd_million": 175.617407245,
+          "delta_tftc_minus_farside_usd_million": -0.082592755
+        }
+      ],
+      "placeholder": {
+        "date": "2026-10-14",
+        "farside_fund_values": "all dashes",
+        "displayed_total_usd_million": 0,
+        "decision": "UNREPORTED_PLACEHOLDER; never map to numeric zero observation."
+      }
     }
   }
 }

@@ -83,3 +83,17 @@ The BRRR row is therefore a plausible explanation for most of the difference: th
 **This narrows the discrepancy but does not resolve source authority.** The comparison is between snapshots captured/retrieved at different times; the old Farside artifact does not include a provider publication timestamp or revision identity, and the live Farside endpoint was inaccessible from the GitHub runner. We cannot establish from these artifacts alone whether BRRR was revised, reported differently, or captured at a different source revision. Do not overwrite either value or promote TFTC based on this comparison.
 
 This is a one-time source reconciliation, not a recurring daily calculation. The next meaningful step is to obtain a comparable, immutable Farside response (or an authorized primary-source row-level record) and retain its retrieval time, raw-body hash, reporting date, and any available publication/revision metadata. Until then, keep the ETF input blocked and BTC `not_evaluable`.
+
+## 7. Official Farside all-data capture and parser — 2026-10-14 18:45 UTC
+
+A newer immutable capture resolves the runner access issue without changing source identity or promoting TFTC:
+
+- Workflow: [BTC Public Source Staging #68](https://github.com/olegsh247-stack/Crypto/actions/runs/38617818435), artifact ID `11919518954`, ZIP SHA-256 `70983d4d86d0c5462e2315a74c684ad4a5a0f42f64af04a25c3e255d11d5ae5b`.
+- `https://farside.co.uk/btc/` still returned HTTP 403 from the runner. The official linked all-data page `https://farside.co.uk/bitcoin-etf-flow-all-data/` returned HTTP 200 and parsed 708 dated reporting rows. Its HTTP Date was 2026-10-14 18:45:22 GMT; Last-Modified and ETag were absent.
+- The pure parser and unit tests are in `scripts/parse-farside-etf-table.mjs` and `scripts/parse-farside-etf-table.test.mjs`. The staging workflow tests the parser before capturing data. Dashes remain null; the 14 Oct all-dash row with total 0.0 is `UNREPORTED_PLACEHOLDER`, not a zero-flow observation. No `observed_at` is manufactured.
+- Latest confirmed rows in the capture: 12 Oct −65.4m and 13 Oct +175.7m USD million/day. TFTC has −65.401m and +175.617407245m respectively; these are consistent with Farside's one-decimal display precision.
+- The 7 Oct difference remains material: Farside total −484.9m with BRRR 0.0m; TFTC total −487.0674115m with BRRR −2.114298m. The BRRR component explains most of the difference, but the sources do not expose enough publication/revision evidence to prove why the rows differ.
+- The source registry now points to the verified official all-data page. The runtime gate accepts both this URL and the original Farside landing URL for the same `institutional.primary` source identity. **No source-priority change** was made.
+
+This fixes the *transport endpoint* blocker and makes row parsing reproducible. It does **not** satisfy the ETF timestamp/revision gate. The captured reporting date identifies the session, not when the provider published/finalized the value; HTTP Date is response metadata. Keep ETF candidates blocked until a defensible observation-time/revision contract exists.
+

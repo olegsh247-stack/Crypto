@@ -5,7 +5,7 @@
 **Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #200 passed on code SHA `be4bcad17c25c9b852f62c517bc09d6374e279e6` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38609739359)); VPS Build Rehearsal #1182 passed on documentation commit `14c3c5a3f6e1212a749374d9af53e95256bc60e3` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38611372091)). Readiness Gate #200 predates the latest documentation-only commits; do not present it as a fresh run on current HEAD. The source-gate implementation passed, and the ETF source discrepancy remains unresolved.  
+**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #68 passed with parsed official Farside rows ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617818435)); VPS Build Rehearsal #1192 passed on code SHA `19bfd11c3d2882dcc1e7ab42ac7ce7128c9016fc` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617818406)). VPS Build Rehearsal #1193 and Crypto VPS Release Gate #220 are still in progress on `ffeff568...` and must not be represented as passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -1442,4 +1442,17 @@ No production database access/write, source-priority promotion, scenario evaluat
 - Постоянный отчёт источников обновлён: [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json).
 
 **Следующий шаг:** продолжать только обязательные входы BTC. ETF остаётся заблокированным до доказуемой отчётной даты/происхождения и сверки расхождения; DXY — до доступного авторизованного feed либо отдельного утверждённого изменения исследовательского контракта. Не запускать сценарную оценку и не менять probabilities/state, пока readiness gate не проходит на подтверждённых входах. VPS Build Rehearsal #1188/#1189 ещё проверяются на момент записи; результат не заявлять до завершения.
+
+### ETF blocker — official Farside all-data endpoint and parser verified (2026-10-14)
+
+- The original Farside landing URL `https://farside.co.uk/btc/` returns HTTP 403 from GitHub Actions, but the official all-data page linked from that landing page — `https://farside.co.uk/bitcoin-etf-flow-all-data/` — returns HTTP 200 from the same runner. This is an endpoint correction within the existing `institutional.primary` (Farside) source identity; **source priority has not changed**.
+- Added pure parser `scripts/parse-farside-etf-table.mjs` plus unit tests and wired them into the read-only source-staging workflow. The parser extracts reporting date, 12 fund columns, displayed daily total and canonical `USD million/day` unit; parentheses become negative numbers. Dashes stay `null`, not zero. The all-dash 14 Oct row with displayed total 0.0 is explicitly `UNREPORTED_PLACEHOLDER` and `observed_at` stays null.
+- BTC Public Source Staging #68 passed; captured artifact ID `11919518954`, SHA-256 `70983d4d86d0c5462e2315a74c684ad4a5a0f42f64af04a25c3e255d11d5ae5b`: https://github.com/olegsh247-stack/Crypto/actions/runs/38617818435. Parser test step passed.
+- Latest confirmed Farside reporting date in this capture is 13 Oct 2026, displayed total +175.7m; 12 Oct is -65.4m. TFTC JSON reports +175.617407245m and -65.401m respectively, differences consistent with Farside's 0.1m display precision.
+- Cross-source comparison for 5–9 Oct remains unchanged: 5, 6, 8 and 9 Oct differences are consistent with displayed rounding; 7 Oct is -2.1674115m (TFTC minus Farside), with BRRR 0.0m in Farside versus -2.114298m in TFTC. This is a plausible explanation for most of the delta, not a proven revision history.
+- Farside response HTTP `Date` is captured, but `Last-Modified` and `ETag` are absent. The reporting date is not the provider publication timestamp. Therefore, the endpoint-access blocker is resolved, but **ETF acceptance remains blocked** until observation/publication timestamp and revision/finalization semantics are defensible.
+- The canonical readiness allowlist accepts both the official `/btc/` landing endpoint (for historical provenance) and the verified all-data endpoint. Gate #203 passed after this change: https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879.
+- Detailed source report: [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json); TFTC review: [BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md](data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md).
+
+**Next:** finish the ETF observation-time/revision contract and keep DXY blocked until an authorized, specific source is available or the research contract is explicitly changed. BTC remains `not_evaluable`; no ingestion, scenario evaluation, state write or probability change occurred.
 
