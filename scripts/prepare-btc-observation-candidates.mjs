@@ -88,7 +88,7 @@ export function prepareBtcObservationCandidates(manifest) {
         for (const row of source.latest_rows) {
           const reported = row?.status === "REPORTED_CANDIDATE";
           const reconciliationAcceptableForReview = row?.reconciliation_status === "MATCHES_DISPLAY_ROUNDING";
-          const date = typeof row?.period_start === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(row.period_start)
+          const date = typeof row?.period_start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.period_start)
             ? row.period_start : null;
           const reasons = [];
           if (!date) reasons.push("provider_reporting_date_missing_or_invalid");
