@@ -876,3 +876,21 @@ The response does not provide a documented per-trade/per-quote timestamp. Theref
 - Metric/source registries, source priority, collector endpoint, database, scenario state, monitoring, scores, probabilities and published snapshots remain unchanged.
 - Next gate: CI on this HEAD; then compare the contract evidence and choose the spot-price semantic explicitly before any live read-only access or wiring.
 
+### Exchange-source comparison for BTC spot price — 2026-10-14
+
+The project has not ignored Binance, OKX or Bybit. They have not yet been approved as canonical or fallback sources because the current task is to define one reproducible BTC input, not to add providers before their contracts are compared. Multiple exchanges are useful, but a multi-source design needs explicit pair, price semantics, timestamp, freshness, outlier and fallback rules; otherwise it can silently mix unlike values.
+
+Official documentation reviewed:
+- Binance Spot REST: https://developers.binance.com/en/docs/products/spot/rest-api and public market-data access: https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md. Public market-data endpoints include ticker, book ticker, trades and klines; the docs specify millisecond timestamps by default for time fields. The price-ticker endpoint and trade/kline endpoints have different timestamp/aggregation semantics.
+- OKX API v5: https://app.okx.com/docs-v5/en. Public market-data endpoints do not require authentication. Its docs warn that market-data services use independent caches and a later request may return data older than an earlier response; this must be accounted for in freshness/ordering checks.
+- Bybit V5 Get Tickers: https://bybit-exchange.github.io/docs/v5/market/tickers. Public endpoint `GET /v5/market/tickers` provides last price and best bid/ask; the documented example has a response-level `time` timestamp. The endpoint covers several product categories, so the contract must explicitly choose spot (not linear/inverse derivatives) and symbol.
+
+Initial conclusion:
+1. These providers are technically viable candidates for later read-only evaluation. They should not be excluded by default.
+2. A `BTCUSDT` price is not automatically identical to `BTC/USD`: it is quoted in USDT. It must not be relabelled USD/BTC without an explicit conversion/peg policy. Prefer an actual BTC/USD spot pair where available, or define a USDT-denominated metric separately.
+3. Do not combine last trade, bid/ask midpoint, candle close, index price and mark price as if they were the same metric. Per-source semantics must be recorded.
+4. Recommended architecture for the first BTC scenario: one explicitly selected canonical input plus independent read-only cross-check sources. Use secondary sources to flag divergence/staleness, not as silent fallbacks. A fallback requires a documented priority and equivalent metric semantics; an exchange-specific snapshot alone does not establish a consolidated market price.
+5. No provider has been activated or called live as part of this documentation review. Terms/licensing, exact rate limits for the selected endpoints, access from the intended runtime, timestamp/freshness behavior and fixture/live checks remain to be verified before activation.
+
+Next step: compare one candidate endpoint per provider against the chosen metric definition, using sanitized fixtures first and then separately approved read-only access. Keep `market.spot_price` registry, source priority and production collector unchanged until that contract is accepted.
+
