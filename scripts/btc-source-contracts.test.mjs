@@ -177,3 +177,23 @@ test("ETF freshness contract consumes the official calendar fixture rather than 
   assert.equal(result.session_lag, 1);
   assert.equal(result.fresh, true);
 });
+
+
+test("Farside HTML parser maps columns by header and never turns dashes into zero", () => {
+  const html = `<table><thead><tr><th>Date</th><th>IBIT</th><th>FBTC</th><th>GBTC</th><th>Total</th></tr></thead><tbody><tr><td>12 Oct 2026</td><td>(50.0)</td><td>-10.0</td><td>-5.4</td><td>(65.4)</td></tr><tr><td>13 Oct 2026</td><td>-</td><td>-</td><td>-</td><td>0.0</td></tr></tbody></table>`;
+  const parsed = parseFarsideHtmlTable(html, { retrievedAt: "2026-10-14T10:00:00Z" });
+  assert.deepEqual(parsed.fund_columns, ["IBIT", "FBTC", "GBTC"]);
+  assert.equal(parsed.rows_seen, 2);
+  assert.equal(parsed.latest_session_date, "2026-10-13");
+  assert.equal(parsed.latest_row.source_row_status, "UNREPORTED_SESSION_ROW");
+  assert.equal(parsed.latest_row.value, null);
+  assert.equal(parsed.latest_row.observed_at, null);
+  assert.equal(parsed.latest_row.retrieved_at, "2026-10-14T10:00:00Z");
+});
+
+test("Farside HTML parser fails closed on changed headers or malformed dates", () => {
+  assert.throws(() => parseFarsideHtmlTable("<table><tr><th>Day</th><th>Fund</th></tr><tr><td>12 Oct 2026</td><td>1</td></tr></table>"), /header with Date and Total/);
+  const parsed = parseFarsideHtmlTable("<table><tr><th>Date</th><th>IBIT</th><th>Total</th></tr><tr><td>31 Foo 2026</td><td>1</td><td>1</td></tr><tr><td>12 Oct 2026</td><td>1</td><td>1</td></tr></table>");
+  assert.equal(parsed.invalid_rows.length, 1);
+  assert.equal(parsed.latest_session_date, "2026-10-12");
+});
