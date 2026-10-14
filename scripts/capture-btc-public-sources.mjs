@@ -95,6 +95,88 @@ await capture({
   }
 });
 
+// These exchange feeds are corroboration candidates only. BTC/USDT is not BTC/USD;
+// keep the unit and venue separate, and never merge these rows into the canonical quote.
+await capture({
+  name: "binance-btcusdt-trades",
+  metricId: "market.spot_price",
+  sourceId: "market.binance",
+  url: "https://api.binance.com/api/v3/trades?symbol=BTCUSDT&limit=1000",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Binance response has no trade rows");
+    const latest = rows.reduce((best, row) => Number(row.time) > Number(best.time) ? row : best);
+    const price = Number(latest.price);
+    const epochMs = Number(latest.time);
+    if (!(price > 0) || !Number.isFinite(epochMs)) throw new Error("Binance latest trade has invalid price/timestamp");
+    return {
+      pair: "BTCUSDT",
+      quote_unit: "USDT/BTC",
+      latest_trade_price_usdt_per_btc: price,
+      latest_trade_epoch_ms: epochMs,
+      latest_trade_observed_at: new Date(epochMs).toISOString(),
+      trade_rows_in_response: rows.length,
+      role: "independent cross-check candidate; not canonical USD/BTC",
+      note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
+    };
+  }
+});
+
+await capture({
+  name: "okx-btcusdt-trades",
+  metricId: "market.spot_price",
+  sourceId: "market.okx",
+  url: "https://www.okx.com/api/v5/market/trades?instId=BTC-USDT&limit=500",
+  parse: body => {
+    const data = JSON.parse(body);
+    if (String(data.code) !== "0" || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error(`OKX API response invalid: code=${data.code ?? "missing"}`);
+    }
+    const latest = data.data.reduce((best, row) => Number(row.ts) > Number(best.ts) ? row : best);
+    const price = Number(latest.px);
+    const epochMs = Number(latest.ts);
+    if (!(price > 0) || !Number.isFinite(epochMs)) throw new Error("OKX latest trade has invalid price/timestamp");
+    return {
+      pair: "BTC-USDT",
+      quote_unit: "USDT/BTC",
+      latest_trade_price_usdt_per_btc: price,
+      latest_trade_epoch_ms: epochMs,
+      latest_trade_observed_at: new Date(epochMs).toISOString(),
+      trade_rows_in_response: data.data.length,
+      role: "independent cross-check candidate; not canonical USD/BTC",
+      note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
+    };
+  }
+});
+
+await capture({
+  name: "bybit-btcusdt-trades",
+  metricId: "market.spot_price",
+  sourceId: "market.bybit",
+  url: "https://api.bybit.com/v5/market/recent-trade?category=spot&symbol=BTCUSDT&limit=1000",
+  parse: body => {
+    const data = JSON.parse(body);
+    if (Number(data.retCode) !== 0 || !Array.isArray(data.result?.list) || data.result.list.length === 0) {
+      throw new Error(`Bybit API response invalid: retCode=${data.retCode ?? "missing"}`);
+    }
+    const rows = data.result.list;
+    const latest = rows.reduce((best, row) => Number(row.time) > Number(best.time) ? row : best);
+    const price = Number(latest.price);
+    const epochMs = Number(latest.time);
+    if (!(price > 0) || !Number.isFinite(epochMs)) throw new Error("Bybit latest trade has invalid price/timestamp");
+    return {
+      pair: "BTCUSDT",
+      quote_unit: "USDT/BTC",
+      latest_trade_price_usdt_per_btc: price,
+      latest_trade_epoch_ms: epochMs,
+      latest_trade_observed_at: new Date(epochMs).toISOString(),
+      trade_rows_in_response: rows.length,
+      role: "independent cross-check candidate; not canonical USD/BTC",
+      note: "Trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
+    };
+  }
+});
+
 await capture({
   name: "mempool-hashrate-1w",
   metricId: "security.hashrate",
