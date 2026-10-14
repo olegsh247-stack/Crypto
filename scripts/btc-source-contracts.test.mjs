@@ -21,6 +21,7 @@ test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
   assert.equal(result.observed_at, "2026-10-13T15:26:08.170Z");
   assert.equal(result.retrieved_at, "2026-10-13T15:26:13.228Z");
   assert.notEqual(result.observed_at, result.retrieved_at);
+  assert.match(result.timestamp_semantics, /trade epoch seconds/);
 });
 
 test("Kraken rejects API errors and malformed trade tuples", () => {
