@@ -17,8 +17,8 @@ The metric registry currently defines these required contracts:
 | Metric ID | Canonical source priority | Unit | Maximum age | Capture review decision |
 |---|---|---|---:|---|
 | `market.spot_price` | `market.kraken` | `USD/BTC` | 1 hour | **Candidate only** |
-| `security.hashrate` | `network.primary` | `EH/s` | 48 hours | **Candidate only** |
-| `security.fee_subsidy_ratio` | `network.primary` | `ratio` | 48 hours | **Rejected for now: definition incomplete** |
+| `security.hashrate` | `network.primary` | `EH/s` | 48 hours | **Blocked pending explicit daily-bucket/aggregation method approval** |
+| `security.fee_subsidy_ratio` | `network.primary` | `ratio` | 48 hours | **Blocked pending versioned numerator/denominator/window method approval** |
 | `institutional.etf_net_flow` | `institutional.primary` (Farside) | `USD million/day` | 36 hours | **Blocked: canonical source unavailable in capture runner** |
 | `macro.dxy` | `macro.primary` | `index` | 48 hours | **Blocked: source ID is too generic to establish a canonical DXY feed** |
 
@@ -81,7 +81,7 @@ A candidate can be promoted only after all checks below pass:
 
 ## Disposition and next action
 
-- The readiness implementation now fails closed on unapproved source IDs and endpoint URLs. `institutional.tftc` cannot pass as an ETF substitute; a correct ID paired with an unrelated HTTPS URL is also rejected. DXY remains blocked because no specific source ID/endpoint has been approved. The generic `macro.primary` source is not accepted as a DXY feed.
+- The readiness implementation now fails closed on unapproved source IDs, endpoint URLs, and unapproved calculation methods. Hashrate and fee/subsidy remain blocked until their methods are explicitly approved; the raw fee endpoint is not itself a ratio. It also rejects non-positive spot prices. `institutional.tftc` cannot pass as an ETF substitute; a correct ID paired with an unrelated HTTPS URL is also rejected. DXY remains blocked because no specific source ID/endpoint has been approved. The generic `macro.primary` source is not accepted as a DXY feed.
 - Current BTC dataset remains **`not_evaluable`**.
 - No source capture in this review is approved for production ingestion.
 - No observation, snapshot, scenario state, monitoring event, published probability, or historical row may be changed based on this document.
