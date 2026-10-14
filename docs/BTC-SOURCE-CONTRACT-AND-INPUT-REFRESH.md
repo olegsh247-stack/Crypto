@@ -278,3 +278,16 @@ ICE's own documentation identifies ICE as administrator of the ICE U.S. Dollar I
 Added three automated readiness tests covering registered Binance, OKX and Bybit sources. Even if the observation is numeric, current, registered and timestamped, each is rejected for `market.spot_price` unless the canonical source contract is explicitly changed. This protects against accidentally promoting a BTC/USDT quote into the required USD/BTC input. Source-registry notes now mark those venues as cross-check candidates only; Kraken remains the sole canonical candidate.
 
 Validation: BTC Scenario Readiness Gate run [#186](https://github.com/olegsh247-stack/Crypto/actions/runs/38604259925) passed after the three tests were added. VPS Build Rehearsal [#1131](https://github.com/olegsh247-stack/Crypto/actions/runs/38604293350) is running against the subsequent source-registry update; do not treat it as passed until it completes.
+
+
+## 10. ETF source options — official SoSoValue API candidate — 2026-10-14
+
+Farside remains the intended canonical source under the current contract, but its page returned HTTP 403 from GitHub Actions. TFTC remains a reconciliation mirror, not an approved substitute. A further candidate has now been registered for investigation: **SoSoValue's documented ETF Summary History API**.
+
+- Official API docs: [ETF Summary History](https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history); base URL `https://openapi.sosovalue.com/openapi/v1`; endpoint `GET /etfs/summary-history`; request requires `symbol=BTC` and `country_code=US`, with optional date range and limit. The API requires an `x-soso-api-key` header; no key was supplied or queried in this review.
+- The documented response provides `date` (trading date) and `total_net_inflow` (USD) along with traded value, net assets and cumulative flow. It is reverse-chronological, excludes non-trading days and only supports the most recent month. Normalize USD to the registry's USD-million unit only with an explicit, tested conversion.
+- The docs provide a trading date, not an exact publication timestamp. A daily total may be revised as issuers report or provider data is refreshed; this review has not established a publication/finalization timestamp or revision policy from the primary API documentation. Therefore do not manufacture `observed_at` from retrieval time or treat the API's latest date as proof that all issuer reports are complete.
+- Registry entry `institutional.sosovalue` is candidate-only and is not in `institutional.etf_net_flow` source priority. The readiness gate continues to allow only Farside. Do not add a secret or query the API until the access path and terms are intentionally arranged.
+- Before any source-priority decision, compare at least five distinct completed US trading dates against Farside and TFTC, preserve raw payloads, identify revised/partial rows, confirm date/time conventions, quantify discrepancies, and document a deterministic rule for excluding unreported fund rows. No automatic source substitution.
+
+This candidate is potentially more machine-readable than a scraped page, but it is not yet accepted and does not remove the current ETF blocker.
