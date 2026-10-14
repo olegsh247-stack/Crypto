@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { auditKrakenPostTradePageChain, classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
+import { auditKrakenPostTradePageChain, classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, normalizeKrakenTicker, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
@@ -337,3 +337,41 @@ test("Kraken page-chain audit blocks malformed counts, ordering and last_ts mism
   const wrongLastTs = postTradePage(valid, "2026-10-14T10:00:03Z");
   assert.equal(auditKrakenPostTradePageChain([{ payload: wrongLastTs }]).pages[0].status, "BLOCKED_LAST_TS_MISMATCH");
 });
+
+test("Kraken Ticker keeps last trade and quote midpoint separate and never invents source time", () => {
+  const result = normalizeKrakenTicker({
+    error: [],
+    result: {
+      XXBTZUSD: {
+        a: ["84010.0", "1.2", "1.2"],
+        b: ["84000.0", "0.8", "0.8"],
+        c: ["84005.0", "0.03"],
+      },
+    },
+  }, { retrievedAt: "2026-10-14T10:15:00.000Z" });
+
+  assert.equal(result.source_pair_key, "XXBTZUSD");
+  assert.equal(result.last_trade_price, 84005);
+  assert.equal(result.bid_price, 84000);
+  assert.equal(result.ask_price, 84010);
+  assert.equal(result.bid_ask_midpoint, 84005);
+  assert.equal(result.observed_at, null);
+  assert.equal(result.source_published_at, null);
+  assert.equal(result.retrieved_at, "2026-10-14T10:15:00.000Z");
+  assert.equal(result.status, "SNAPSHOT_CANDIDATE_SEMANTICS_UNSELECTED");
+  assert.ok(result.blockers.includes("METRIC_SEMANTICS_NOT_SELECTED"));
+});
+
+test("Kraken Ticker rejects API errors, invalid prices, crossed quotes and invalid capture time", () => {
+  assert.throws(() => normalizeKrakenTicker({ error: ["EGeneral:Temporary lockout"], result: {} }), /API error/);
+  assert.throws(() => normalizeKrakenTicker({
+    error: [], result: { XXBTZUSD: { a: ["0"], b: ["1"], c: ["1"] } },
+  }), /ask price must be positive/);
+  assert.throws(() => normalizeKrakenTicker({
+    error: [], result: { XXBTZUSD: { a: ["100"], b: ["101"], c: ["100"] } },
+  }), /bid must not exceed ask/);
+  assert.throws(() => normalizeKrakenTicker({
+    error: [], result: { XXBTZUSD: { a: ["100"], b: ["99"], c: ["100"] } },
+  }, { retrievedAt: "not-a-time" }), /retrievedAt/);
+});
+
