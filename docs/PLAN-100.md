@@ -1387,3 +1387,17 @@ The blocked entries now explain why the other exchanges are not substituted: Bin
 Compared the TFTC capture with the repository's earlier Farside staging artifact. Four of five completed sessions differ only by roughly $0.03–$0.10 million at the displayed precision; 7 October differs by approximately **$2.17 million** (TFTC `-$487.067m` versus the staged Farside `-$484.9m`). The detailed comparison is recorded in `docs/data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md`.
 
 The Farside artifact is a prior snapshot and the current endpoint was HTTP 403 from the GitHub runner, so this discrepancy remains unresolved. TFTC's internal aggregate/per-fund agreement on the recent five sessions does not make it authoritative. No source-priority change is justified yet; keep both feeds out of canonical ingestion until a comparable source snapshot and revision/reporting-time contract are established.
+
+
+## DXY source-contract stage — 2026-10-14
+
+Completed the repository-side contract work without pretending a feed is available:
+
+- Removed generic `macro.primary` from `macro.dxy.source_priority`; there is currently no approved canonical DXY source.
+- Kept `macro.ice_dxy_candidate` registered as a candidate only. ICE's official catalog describes intraday/daily data products and delivery methods, but the catalog page is not itself a public quote endpoint; actual access, license, payload schema and current close-time convention remain unverified.
+- Defined the required candidate mapping: index business date in `period_start`, actual provider timestamp in `observed_at`, collector retrieval time in `retrieved_at`, plus exact feed URL, stable row key, payload hash and methodology version. No timestamp may be fabricated from retrieval time.
+- Added a detailed review at `docs/data-review/BTC-DXY-SOURCE-CONTRACT-2026-10-14.md` and a test asserting the metric registry cannot advertise generic/unapproved DXY as canonical.
+
+Official reference links are included in that review. A current methodology and real authorized sample payload are still required. FRED `DTWEXBGS` remains a different broad dollar index, and DX futures settlement is not the DXY cash index; neither is an acceptable silent substitute.
+
+No production database access/write, source-priority promotion, scenario evaluation, probability change, state persistence or deployment occurred. BTC remains `not_evaluable`. Next: run the current-head gate, then continue ETF reconciliation and seek an actual authorized DXY feed/sample rather than inventing an endpoint.
