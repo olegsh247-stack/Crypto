@@ -105,3 +105,9 @@ A further check of ICE's own published materials supports the existing block rat
 **Decision remains `BLOCKED_NO_CANONICAL_SOURCE`.** This is not a claim that every possible personal/internal use requires the same commercial subscription; it means the repository has not established an exact accessible feed and permitted-use basis for this intended automated use. Do not scrape a retail chart or use an unofficial endpoint as a substitute. The viable next path is either a documented ICE-authorized provider/feed with terms confirmed for this use, or a separately reviewed replacement metric with its own ID and contract. `DTWEXBGS` remains a different broad USD index, not DXY.
 
 This research changes no source registry, metric registry, observation, scenario, monitoring state or other runtime data.
+
+## 2026-10-14 — current Farside completeness check
+
+A fresh public-page review on 2026-10-14 shows the 2026-10-13 row with a displayed total of **+109.8 USD million**, but the IBIT column is a dash while other fund columns have values. This is not equivalent to a fully reported daily total: the missing major-fund field means the day's displayed aggregate may be partial or provisional. Do not accept the +109.8 value as a complete daily ETF observation until Farside confirms that the row is finalized or all constituent fields are complete. The page's retrieval date is not a source-declared publication timestamp, so it still does not satisfy the existing 36-hour freshness rule on its own.
+
+Classification: `HOLD_INCOMPLETE_SESSION_ROW_AND_OBSERVATION_TIME_UNRESOLVED`. Preserve the row as source-review evidence only; do not substitute zero for the dash, infer `observed_at` from retrieval time, or fall back to TFTC as canonical.
