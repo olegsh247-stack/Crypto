@@ -27,6 +27,9 @@ const canonicalUrls = {
 const row = (metric_id, observed_at, value_numeric = 1, sourceId = canonicalSources[metric_id]) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
   ...(metric_id === "institutional.etf_net_flow" ? { period_start: String(observed_at).slice(0, 10) } : {}),
+  retrieved_at: String(observed_at),
+  source_row_key: metric_id === "institutional.etf_net_flow" ? String(observed_at).slice(0, 10) : `${metric_id}:${observed_at}`,
+  source_payload_sha256: "a".repeat(64),
   source_id: sourceId, source_url: canonicalUrls[metric_id],
   source_registered: true, unit: units[metric_id], expected_unit: units[metric_id],
 });
@@ -246,4 +249,34 @@ test("ETF observation timestamp cannot substitute for a missing reporting date",
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
     && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
   assert.ok(!result.selected_inputs["institutional.etf_net_flow"]);
+});
+
+
+test("missing retrieval timestamp blocks an otherwise fresh canonical observation", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, retrieved_at: null } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"
+    && x.reason === "retrieval_timestamp_missing_or_invalid"));
+});
+
+test("missing stable source-row key blocks an otherwise traceable observation", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, source_row_key: null } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"
+    && x.reason === "source_row_key_missing"));
+});
+
+test("readiness result carries source provenance for offline review", () => {
+  const result = assessBtcScenarioReadiness(completeInputs(), now);
+  const spot = result.selected_inputs["market.spot_price"];
+  assert.equal(spot.retrieved_at, spot.observed_at);
+  assert.equal(spot.source_row_key, "market.spot_price:2026-10-12T11:00:00.000Z");
+  assert.equal(spot.source_payload_sha256, "a".repeat(64));
+  const etf = result.selected_inputs["institutional.etf_net_flow"][0];
+  assert.ok(etf.retrieved_at);
+  assert.ok(etf.source_row_key);
 });
