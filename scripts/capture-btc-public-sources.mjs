@@ -143,7 +143,7 @@ await capture({
   name: "farside-btc-etf-page",
   metricId: "institutional.etf_net_flow",
   sourceId: "institutional.primary",
-  url: "https://farside.co.uk/btc/",
+  url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
   parse: (body, captureMeta) => {
     const parsed = parseFarsideHtmlTable(body, { retrievedAt: captureMeta.retrieved_at });
     let freshness;
