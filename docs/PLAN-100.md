@@ -1472,3 +1472,13 @@ No production database access/write, source-priority promotion, scenario evaluat
 - Added tests for aggregate reconciliation, material discrepancy, missing/dash placeholder and the one-decimal rounding envelope. The test step passed in BTC Public Source Staging #72; the newest code/test capture #73 is running and must be checked before claiming the final revision passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38621215105.
 - Capture comments now correctly distinguish the read-only readiness URL allowlist from approval to ingest ETF observations. Farside remains the preferred candidate, but ETF observations are blocked until reporting/session date, publication/observation-time policy, revision/finalization and source reconciliation are agreed.
 - No production writes, observation ingestion, source-priority change, scenario-state change or probability update occurred.
+
+
+### Продолжение Плана 100 — контракт времени и ревизий ETF, 2026-10-14
+
+- Успешно завершена VPS Build Rehearsal #1205 на HEAD `de0a60bec122e876fb40d9115edfdfef8710ab6a`: https://github.com/olegsh247-stack/Crypto/actions/runs/38621298802.
+- В `docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md` добавлен отдельный контракт для ETF: дата отчётной сессии, время наблюдения, время публикации/обновления поставщика, время получения ответа, HTTP-заголовки, SHA-256 тела, идентификатор строки, ревизия и статус финализации имеют раздельные значения.
+- Важное ограничение: HTTP `Date` — метаданные HTTP-ответа, а не подтверждённое время публикации ETF-данных. Отсутствие `Last-Modified`/`ETag` не позволяет вывести номер ревизии или финальность строки. SHA-256 всего ответа доказывает идентичность захваченного тела, но не идентичность отдельной строки или время публикации.
+- Для текущего Farside-кандидата `period_start` берётся из даты строки; `observed_at` и `source_updated_at` остаются неизвестными, `finalization_status` — `unknown`. Статус сверки суммы фондов с total — отдельный диагностический сигнал, он не закрывает временные и ревизионные блокеры.
+- Следующий шаг — review-only нормализатор ETF-строк, который сохранит метаданные ответа, сформирует стабильный ключ строки и оставит отсутствующие временные/ревизионные поля пустыми. Кандидат должен явно оставаться `persistable: false`; никакой записи в PostgreSQL, изменения приоритета источника или оценки сценария не делать.
+- BTC остаётся `not_evaluable`. Источники Binance/OKX — независимые USDT-кросс-проверки, Kraken — кандидат для канонического USD/BTC; DXY остаётся заблокирован до конкретного разрешённого feed и его временного контракта.
