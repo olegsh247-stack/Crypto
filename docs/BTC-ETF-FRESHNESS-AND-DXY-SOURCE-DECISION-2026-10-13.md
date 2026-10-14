@@ -93,3 +93,15 @@ Current classification remains `BLOCKED_NO_CANONICAL_SOURCE`.
 - [TFTC public ETF-flow JSON candidate](https://www.tftc.io/bitcoin-etf-flows/data.json)
 - [BTC Source Acceptance Matrix](BTC-SOURCE-ACCEPTANCE-MATRIX-2026-10-13.md)
 - [BTC Candidate Staging Dry Run](data-review/BTC-CANDIDATE-STAGING-DRY-RUN-2026-10-13.json)
+
+## 2026-10-14 — official DXY rights and delivery-path check
+
+A further check of ICE's own published materials supports the existing block rather than identifying a free canonical API:
+
+- ICE's official [DXY data catalog](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices) lists intraday, daily, delayed, end-of-day and historical products, delivered through ICE data channels; it does not document a public anonymous endpoint suitable for this repository.
+- ICE's [U.S. Dollar Index futures page](https://www.ice.com/products/194/US-Dollar-Index-USDX-Futures?cat=204) states that the index formulation, values, weightings and methods are proprietary and that use is prohibited without ICE's express written consent.
+- ICE's [data licensing overview](https://www.ice.com/fixed-income-data-services/data-and-analytics/proprietary-data) describes subscriber/vendor licensing and approval paths for use or redistribution.
+
+**Decision remains `BLOCKED_NO_CANONICAL_SOURCE`.** This is not a claim that every possible personal/internal use requires the same commercial subscription; it means the repository has not established an exact accessible feed and permitted-use basis for this intended automated use. Do not scrape a retail chart or use an unofficial endpoint as a substitute. The viable next path is either a documented ICE-authorized provider/feed with terms confirmed for this use, or a separately reviewed replacement metric with its own ID and contract. `DTWEXBGS` remains a different broad USD index, not DXY.
+
+This research changes no source registry, metric registry, observation, scenario, monitoring state or other runtime data.
