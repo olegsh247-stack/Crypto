@@ -111,3 +111,22 @@ This research changes no source registry, metric registry, observation, scenario
 A fresh public-page review on 2026-10-14 shows the 2026-10-13 row with a displayed total of **+109.8 USD million**, but the IBIT column is a dash while other fund columns have values. This is not equivalent to a fully reported daily total: the missing major-fund field means the day's displayed aggregate may be partial or provisional. Do not accept the +109.8 value as a complete daily ETF observation until Farside confirms that the row is finalized or all constituent fields are complete. The page's retrieval date is not a source-declared publication timestamp, so it still does not satisfy the existing 36-hour freshness rule on its own.
 
 Classification: `HOLD_INCOMPLETE_SESSION_ROW_AND_OBSERVATION_TIME_UNRESOLVED`. Preserve the row as source-review evidence only; do not substitute zero for the dash, infer `observed_at` from retrieval time, or fall back to TFTC as canonical.
+
+
+## 2026-10-14 — upstream documentation review (not inference)
+
+Official source documentation was checked before changing any contract:
+
+- **Kraken Spot API:** the documented [Post-Trade endpoint](https://docs.kraken.com/api/docs/rest-api/get-post-trade) returns trade price, pair, execution timestamp (`trade_ts`) and publication timestamp (`publication_ts`) as distinct fields. The current capture script uses the legacy public `/0/public/Trades?pair=XBTUSD` response shape, whose rows contain an epoch timestamp. Its code selects the row with the greatest trade timestamp and keeps retrieval time separately. That mapping is internally consistent for the captured endpoint, but the repository still needs to choose and pin one documented endpoint contract rather than treating the old tuple shape as universal.
+- **Mempool.space:** the [official REST reference](https://mempool.space/docs/api/rest) documents the mining hashrate series and separate block-fee/reward endpoints. The existing pinned-source review already establishes that the dated hashrate point is a completed 24-hour UTC bucket labelled by its end-exclusive midnight; it is not an instantaneous reading. For fee/subsidy, the repository's block-by-block capture remains the auditable source for the proposed completed UTC-day calculation; the aggregate fee endpoint alone is not sufficient to prove the exact subsidy denominator.
+- **Farside:** its [all-data table](https://farside.co.uk/bitcoin-etf-flow-all-data/) explicitly displays dashes in individual fund columns and also shows rows with dashes and a total of `0.0`. Therefore a dash cannot be normalized as numeric zero, and a displayed total alone does not prove all constituent funds are reported. Farside's site describes updates as real-time, typically evening/night US time, but does not declare a row-level publication timestamp in the inspected table.
+- **DXY:** ICE's [official data catalog](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices) identifies DXY as an ICE-administered, six-currency benchmark and lists data delivery through ICE data products. It does not document a public anonymous endpoint in that catalog. The Federal Reserve/FRED broad trade-weighted dollar series has a different basket/definition and must not be mapped to `macro.dxy`.
+
+### Implementation decision from this review
+
+1. Keep the current canonical registry unchanged; source documentation does not establish that a runtime adapter or target-database source registration is working.
+2. Next implementation work should add deterministic source-contract tests for Kraken response shape/timestamp mapping and Farside row completeness. These tests should use fixtures, not changing live values.
+3. ETF freshness must be implemented as an explicit **session-lag contract** if no source-declared publication time is exposed: parse the session date, require a complete constituent row, preserve the raw row/hash, account for US market holidays and revisions, and never derive `observed_at` from `retrieved_at`. This is a contract change that must be versioned and tested before activation; this note does not activate it.
+4. DXY remains blocked unless an ICE-authorized feed with a documented endpoint and terms suitable for the intended use is identified. Do not scrape retail charts or silently substitute a broad USD series.
+
+No database access or writes, registry changes, scenario/monitoring changes, or PR merge were performed.
