@@ -793,3 +793,13 @@ A fresh GitHub API check found four open PRs (#82, #81, #80, #69), all targeting
 - Full rationale and safe dispositions: [Open PR reconciliation](OPEN-PR-RECONCILIATION-2026-10-13.md).
 
 **Next actionable gate:** continue the single-asset BTC path using read-only/offline evidence; keep ETF blocked pending authorized provider access and defensible freshness semantics; keep DXY blocked until a canonical source with permitted-use terms is selected. The fresh target-database audit cannot be claimed until an approved target runtime is available. No PR merge/closure, production access/write, source activation, scenario-state change or deployment was performed.
+
+
+### 2026-10-14 — Mempool official documentation-first review
+
+Reviewed the official [Mempool REST API documentation](https://mempool.space/docs/api/rest) before continuing to rely on Mempool block data. The docs cover mining reward/fee endpoints, while the exact block-page response used by the candidate capture is not fully specified in the reference reviewed; field semantics are therefore cross-checked against the pinned upstream implementation recorded in [BTC UTC-Day Candidate Review](BTC-UTC-DAY-CANDIDATE-REVIEW-2026-10-13.md).
+
+- Candidate access is unauthenticated HTTPS GET; retrieval timestamps remain distinct from observation/window timestamps.
+- The candidate capture validates block heights/hashes/timestamps, fee/reward units, expected subsidy, continuity and stable tip anchor. Failures fail closed; there is no automatic fallback.
+- Endpoint-specific quota, durable service-level availability, source publication timestamp and payload redistribution/retention rights are not established by the documentation reviewed. These remain explicit limits for any hosted/production reliance.
+- The completed UTC-day ratio remains the proposed persisted contract for the registry's daily cadence; the rolling 144-block ratio remains diagnostic-only. No metric registry change, source activation, production database write, scenario/monitoring write, or deployment was performed.
