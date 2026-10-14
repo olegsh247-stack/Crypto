@@ -648,3 +648,16 @@ Open PR #81 proposes a rolling 144-consecutive-block observation and therefore c
 ### 2026-10-14 — ETF row completeness recheck
 
 A current read-only review of the public Farside page found that its 2026-10-13 total displays **+109.8 USD million**, but the IBIT constituent field is a dash while other fund columns are populated. The row is therefore held as incomplete/unconfirmed rather than accepted as a full daily ETF flow. The page's availability on 14 October proves retrieval date only, not the source-declared publication time required by the existing 36-hour gate. No zero is inferred, no fallback to TFTC is authorized, and no input is accepted.
+
+
+## 2026-10-14 — shared source architecture audit
+
+The repository inspection is documented in [Source Architecture — Current-State Audit and Next Steps](SOURCE-ARCHITECTURE-CURRENT-STATE-2026-10-14.md).
+
+- A shared source catalog already exists at `data/CryptoDataModel/registry/source-registry.json`; do not create a second catalog or per-asset copies.
+- The metric registry links metrics to sources, but its current `asset_scope` is only `btc`. Shared source definitions and asset-specific metric contracts must remain separate.
+- `vps/shared/src/btc-scenario-readiness.ts` is a BTC-specific fail-closed readiness gate, not a universal source-management service. It validates supplied timestamps but cannot prove the upstream semantic meaning of `observed_at` on its own.
+- Remaining source blockers include unverified target-runtime registration/adapter mapping, ETF publication/session timestamp semantics and incomplete rows, the unapproved fee/subsidy aggregation-window contract, and the lack of a concrete permitted DXY feed.
+- Development should not revolve around manually rechecking daily changing totals. The next product work is to define and test stable source/metric/asset contracts, automate collection/normalization, and use deterministic fixtures plus a frozen no-write BTC manifest.
+- Sequence: stabilize the shared catalog and metric contracts now; prove one complete BTC path; only after BTC end-to-end acceptance extend metric mappings to ETH and other assets. Do not claim multi-asset readiness or expand scope prematurely.
+- Documentation-only change on PR #82 branch: commit `6430227ae56fed4882ee3e9995bc0bf806472cd0` adds the architecture audit. No registry/runtime code, database, ingestion, scenario state, monitoring state, or PR status was changed by that commit.
