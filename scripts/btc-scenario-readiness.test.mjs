@@ -199,3 +199,36 @@ for (const [sourceId, sourceUrl] of [
     assert.equal(result.selected_inputs["market.spot_price"], undefined);
   });
 }
+
+
+test("registered ICE DXY candidate cannot bypass the unapproved DXY source contract", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
+    ? {
+        ...x,
+        source_id: "macro.ice_dxy_candidate",
+        source_url: "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices",
+        source_registered: true,
+      }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"
+    && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.selected_inputs["macro.dxy"], undefined);
+});
+
+test("registered SoSoValue ETF candidate cannot bypass the canonical Farside source contract", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
+    ? {
+        ...x,
+        source_id: "institutional.sosovalue",
+        source_url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US",
+        source_registered: true,
+      }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
+    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
+});
