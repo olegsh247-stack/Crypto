@@ -110,3 +110,12 @@ The existing repository candidate path instead targets the legacy `/0/public/Tra
 The documented Post-Trade fields make an explicit distinction between trade-match time and publication time. Any future point-in-time BTC price candidate must retain which timestamp is used as `observed_at`, keep retrieval time separate, validate the requested BTC/USD symbol and price/unit, and record endpoint/version. The documentation review does not by itself establish a provider SLA, request quota for this workload, or permission to redistribute/retain raw payloads indefinitely; those remain open before hosted production reliance.
 
 No live endpoint migration, source-priority change, registry update, database access/write, scheduled collection, or scenario-state change was performed. Kraken spot remains candidate-only until the endpoint and timestamp contract are explicitly accepted.
+
+
+### Kraken spot-price adapter comparison — 2026-10-14
+
+Official contract reviewed: [Kraken Spot Post-Trade API](https://docs.kraken.com/api/docs/rest-api/get-post-trade). It documents `GET /0/public/PostTrade`, optional `symbol`, `from_ts`, `to_ts`, and `count` (maximum 1000), a `result.trades` array ordered by timestamp, and `last_ts` cursor. Each trade exposes string `price`, `quantity`, `symbol`, unique `trade_id`, engine-match `trade_ts`, and market-data publication `publication_ts`.
+
+The existing legacy `/0/public/Trades?pair=XBTUSD` adapter remains separate: its tuple contains a Unix-seconds trade timestamp and legacy pair key. The two contracts are not interchangeable. A new pure fixture-based `normalizeKrakenPostTrade` candidate adapter now validates the documented object schema and exact requested symbol, selects the newest trade by `trade_ts` rather than relying on array position, and preserves execution, publication, and retrieval times separately. The legacy adapter is unchanged.
+
+This closes a **schema/normalization comparison only**. It does not prove live endpoint accessibility, pagination/cursor correctness over long windows, provider SLA/rate limits, data retention/redistribution rights, target-runtime registration, or canonical-source acceptance. No endpoint switch, source-priority change, registry edit, database write, or scenario-state change is authorized. Keep the existing capture on the legacy endpoint until an explicit reviewed decision is made.
