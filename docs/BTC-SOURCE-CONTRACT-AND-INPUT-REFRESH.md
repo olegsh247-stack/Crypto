@@ -47,7 +47,7 @@ The repository registry has now been inspected directly:
 - `institutional.etf_net_flow` still points to `institutional.primary` (Farside Investors) in the metric registry. `institutional.tftc` is registered in repository JSON and SQL seed as an unvalidated fallback candidate, but is deliberately not added to `source_priority` pending lineage, discrepancy and observation-time review. Neither source candidate has been verified in the live production `sources` table.
 - `market.spot_price` points to `market.kraken` in the metric registry and the source registry. A repository audit found that `infrastructure/postgres/seed-v1.sql` had not seeded this source, so a clean database could reject Kraken observations as unregistered. The seed now includes `market.kraken` with the public Trades endpoint for `XBTUSD`; this is a repository-only correction and does not alter any deployed database. The actual production `sources` table and adapter still require independent verification. Preserve the raw trade payload and convert Kraken's returned trade epoch timestamp to UTC.
 - `macro.dxy` currently points to generic `macro.primary` (Treasury/Federal Reserve/BLS) rather than a specific registered DXY data endpoint and close-time convention. This input is **blocked by source specificity**.
-- The canonical metric registry defines freshness windows of 1 h, 48 h, 48 h, 48 h and 36 h for the five gates respectively. The readiness implementation and SQL audit have been aligned to those windows. The readiness gate now fails closed on hashrate until its bucket/aggregation method is approved, and on fee/subsidy until a versioned calculation method is approved; neither an endpoint URL nor a numeric value alone proves that a derived observation is valid. For ETF history, the latest observation must pass the 36-hour gate; the five-session sample is validated as a traceable 14-day historical series, not by requiring every historical day to remain a fresh latest observation.
+- Historical audit note (superseded by the 2026-10-14 scope decision): hashrate is supporting context and fee/subsidy is deferred, so neither is a mandatory first-scenario input. Their older registry freshness windows do not make them required. For ETF history, the latest observation must pass the 36-hour gate; the five-session sample is separately validated as a traceable 14-day historical series.
 
 Kraken's BTC/USD raw trade is now staged in a review artifact with a source-provided trade timestamp, but it has not been ingested into the database. The live production registry/adapter remain unverified. No DXY vendor has been selected because its endpoint and observation-time convention remain unresolved.
 
@@ -72,7 +72,7 @@ These are source-review candidates only. They have **not** been inserted into th
 - **DXY:** provider/time disagreement must be resolved by selecting one canonical source and observation convention.
 - **Units:** expected units are \`USD/BTC\`, \`EH/s\`, \`ratio\`, \`index\`, and \`USD million/day\`. Unit validation must check both the observation and metric registry.
 - **Repeated observations:** do not delete duplicate history. First export every row in each logical-key group; classify exact duplicates, revisions, conflicting values, and missing provenance. Define a deterministic winner/retention rule, preserve audit lineage, and only then propose a separate reviewed remediation.
-- **Readiness:** because current price/source selection, the current hashrate series, a valid rolling fee/subsidy series, canonical DXY, and latest ETF-flow freshness are not all confirmed, the current dataset must remain \`not_evaluable\`.
+- **Readiness:** BTC remains `not_evaluable` because the current price observation has not been accepted through the source contract, canonical DXY is unapproved, and ETF latest-row freshness/provenance plus the five-day series must pass. Hashrate and fee/subsidy are not first-scenario blockers under the 2026-10-14 scope decision.
 
 ## 4A. Read-only database audit — 2026-10-12 18:20 UTC
 
@@ -169,7 +169,7 @@ The upstream implementation of `/api/v1/mining/blocks/fees/:timePeriod` computes
 
 A better candidate to inspect next is Mempool's `/api/v1/mining/reward-stats/144`: upstream code selects the most recent 144 non-stale block rows and returns their minimum/maximum heights plus summed `reward` and `fees`. Before adopting it, verify the public response schema and units, confirm `reward` means total coinbase reward including fees in the deployed version, check that the selected heights are consecutive/canonical and handle reorgs, and document the exact denominator. No ratio has been calculated and no method ID has been approved.
 
-**Disposition:** source semantics are better understood, but both inputs remain blocked for acceptance pending deployment parity/currentness (hashrate) and schema/unit/height validation (fee/subsidy). No live API request, DB read/write, ingestion, scenario evaluation, monitoring write, or probability change occurred.
+**Disposition (historical source research):** these data-quality questions matter only if hashrate is later promoted to a scenario input or fee/subsidy research is resumed; they do not block the first BTC scenario under the 2026-10-14 scope decision. No ratio has been calculated and no method ID has been approved.
 
 
 ## 4E. Reward-stats candidate review — 2026-10-14 (source-code only)
@@ -220,7 +220,7 @@ The first BTC scenario should not calculate every available metric by default. E
 
 ### Consequence for implementation
 
-This is a scope decision, not a change to runtime behavior. The metric registry, readiness gate and tests currently contain a fee/subsidy contract and treat the metric as a gated input; reconcile those definitions before implementation so a deferred metric is not accidentally still mandatory. Do not remove source provenance or research notes already collected, but do not build or run a recurring fee calculation just to populate a field. The aggregate Mempool reward-stats endpoint remains insufficient as sole continuity evidence; no ratio has been calculated, no live API was queried, no database was accessed or written, and no scenario/monitoring/probability was changed. BTC remains not_evaluable until the active inputs and scenario rules pass their own gates.
+This was the pre-implementation scope note. It has since been applied to the readiness gate, tests and metric registry (see Section 6). Do not remove source provenance or research notes already collected, but do not build or run a recurring fee calculation just to populate a field. The aggregate Mempool reward-stats endpoint remains insufficient as sole continuity evidence; no ratio has been calculated, no live API was queried, no database was accessed or written, and no scenario/monitoring/probability was changed. BTC remains not_evaluable until the active inputs and scenario rules pass their own gates.
 
  
 ## 6. Scope decision applied to the readiness gate — 2026-10-14
@@ -231,4 +231,17 @@ The first-scenario scope decision has now been applied in code:
 - The metric registry now labels fee/subsidy ratio as manual/on-demand with no active freshness expectation while deferred. Its identity is retained for future research; it is not a live required input.
 - Tests were updated so the two deferred/context metrics do not block readiness, while provenance tests continue to cover mandatory inputs.
 
-CI has not yet confirmed the final commits at the time of this note. BTC remains `not_evaluable` until its actual required inputs pass all source, freshness, unit and series checks. This change does not authorize scenario evaluation, probability changes, persisted state, production ingestion, database writes or deployment.
+CI follow-up found that the VPS E2E test still asserted that missing fee/subsidy data must block readiness. That stale assertion contradicted the approved scope and has been corrected in `.github/workflows/vps-api-build.yml`; the new run is pending. BTC remains `not_evaluable` until its actual required inputs pass all source, freshness, unit and series checks. This change does not authorize scenario evaluation, probability changes, persisted state, production ingestion, database writes or deployment.
+
+
+## 7. Exchange price-source review — 2026-10-14
+
+Binance, OKX and Bybit are valid candidates for independent market-data corroboration. They should not be ignored, but their prices must not be blended into an unlabeled synthetic BTC/USD observation.
+
+- **Canonical point-price candidate remains Kraken XBT/USD trades** for the current contract because an individual trade carries an exchange-provided trade timestamp and the quote currency is USD. The actual response still needs to be captured and accepted through controlled staging.
+- **Binance Spot, OKX Spot and Bybit Spot** expose public market-data endpoints. Their common liquid BTC spot markets are generally BTC/USDT, while the selected Kraken pair is XBT/USD. USDT is not identical to USD; BTC/USDT cannot be represented as canonical `USD/BTC` without a separately sourced, timestamp-aligned USDT/USD conversion or an explicitly different metric/unit.
+- Keep each venue/pair as its own source observation, with venue, exact symbol, price, source event timestamp (where provided), retrieval timestamp, raw payload hash and unit. A ticker endpoint without a price-event timestamp cannot by itself establish the observation time required by the current gate; prefer timestamped trades for point observations.
+- Use exchange observations to assess availability, freshness, unit semantics and price dispersion. Do not average them into one quote, silently convert USDT to USD, or substitute another venue for Kraken without an approved source-priority change. First step: read-only staging comparison, with no PostgreSQL writes.
+- DXY remains a separate blocker. ICE identifies itself as administrator of the ICE U.S. Dollar Index and lists intraday, daily and historical data delivery, but this review has not established an accessible, approved endpoint and observation-time convention for the project. Do not relabel a broad trade-weighted dollar series as DXY or scrape a vendor page as if it were a canonical feed.
+
+Source references for API contract review: [Binance public Spot market-data documentation](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md), [OKX API v5 documentation](https://www.okx.com/docs-v5/en/), [Bybit V5 market tickers](https://bybit-exchange.github.io/docs/v5/market/tickers), and [ICE U.S. Dollar Index product information](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices). These references establish candidate API documentation, not current observations or source acceptance.
