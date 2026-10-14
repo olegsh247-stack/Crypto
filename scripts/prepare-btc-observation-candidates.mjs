@@ -19,6 +19,7 @@ export function prepareBtcObservationCandidates(manifest) {
   const candidates = [];
   const blocked = [];
   const etfReviewRows = [];
+  const etfCrossSourceComparisons = [];
   const sources = Array.isArray(manifest?.sources) ? manifest.sources : [];
 
   for (const source of sources) {
@@ -143,6 +144,65 @@ export function prepareBtcObservationCandidates(manifest) {
     }
   }
 
+  const farside = sources.find(source =>
+    source?.source_id === "institutional.primary"
+    && source?.url === "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+    && source?.status === "CAPTURED"
+    && Array.isArray(source.latest_rows));
+  const tftc = sources.find(source =>
+    source?.source_id === "institutional.tftc"
+    && source?.url === "https://www.tftc.io/bitcoin-etf-flows/data.json"
+    && source?.status === "CAPTURED"
+    && Array.isArray(source.recent_days));
+  if (farside && tftc) {
+    const tftcByDate = new Map(tftc.recent_days
+      .filter(row => typeof row?.date === "string")
+      .map(row => [row.date, row]));
+    for (const row of farside.latest_rows) {
+      const date = row?.period_start;
+      const mirrorRow = typeof date === "string" ? tftcByDate.get(date) : null;
+      if (!mirrorRow) continue;
+      const farsideTotal = row?.status === "REPORTED_CANDIDATE"
+        && Number.isFinite(Number(row.reported_total_usd_million))
+        ? Number(row.reported_total_usd_million) : null;
+      const tftcTotal = Number.isFinite(Number(mirrorRow.netFlowUsd))
+        ? Number(mirrorRow.netFlowUsd) / 1_000_000 : null;
+      const delta = farsideTotal !== null && tftcTotal !== null
+        ? Number((tftcTotal - farsideTotal).toFixed(9)) : null;
+      const fundDeltas = {};
+      const tftcFunds = mirrorRow.perEtfUsd && typeof mirrorRow.perEtfUsd === "object"
+        ? mirrorRow.perEtfUsd : {};
+      for (const [fund, farsideValue] of Object.entries(row?.fund_flows ?? {})) {
+        if (Number.isFinite(Number(farsideValue)) && Object.prototype.hasOwnProperty.call(tftcFunds, fund)
+          && Number.isFinite(Number(tftcFunds[fund]))) {
+          const difference = Number(tftcFunds[fund]) / 1_000_000 - Number(farsideValue);
+          if (Math.abs(difference) > 0.000000001) fundDeltas[fund] = Number(difference.toFixed(9));
+        }
+      }
+      etfCrossSourceComparisons.push({
+        period_start: date,
+        source_a: "institutional.primary",
+        source_a_url: farside.url,
+        source_a_payload_sha256: farside.source_payload_sha256 ?? farside.body_sha256 ?? null,
+        source_a_total_usd_million: farsideTotal,
+        source_b: "institutional.tftc",
+        source_b_url: tftc.url,
+        source_b_payload_sha256: tftc.source_payload_sha256 ?? tftc.body_sha256 ?? null,
+        source_b_total_usd_million: tftcTotal,
+        delta_b_minus_a_usd_million: delta,
+        absolute_delta_usd_million: delta === null ? null : Math.abs(delta),
+        screening_band_usd_million: 0.65,
+        screening_status: delta === null ? "NOT_COMPARABLE"
+          : Math.abs(delta) > 0.65 ? "DELTA_EXCEEDS_SCREENING_BAND"
+          : "DELTA_WITHIN_SCREENING_BAND",
+        differing_fund_values_usd_million: fundDeltas,
+        source_b_updated_through: tftc.updated_through ?? null,
+        decision: "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE",
+        note: "TFTC is an auxiliary mirror with distinct lineage. The 0.65m band is a screening flag only; cross-source agreement does not approve ingestion, and a difference does not by itself prove which source is wrong."
+      });
+    }
+  }
+
   return {
     schema_version: 1,
     asset_id: "btc",
@@ -151,6 +211,7 @@ export function prepareBtcObservationCandidates(manifest) {
     production_writes_performed: false,
     candidates,
     etf_review_rows: etfReviewRows,
+    etf_cross_source_comparisons: etfCrossSourceComparisons,
     blocked,
     unresolved: Array.isArray(manifest?.unresolved) ? manifest.unresolved : []
   };
