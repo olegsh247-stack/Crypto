@@ -364,3 +364,12 @@ Next, review the actual normalized artifact and the ETF candidate schema/reporti
 Read-only capture run #64 produced artifact `11916637750`; the normalized candidate was compared against the archived Kraken raw response. The raw-response SHA-256 matched both the manifest and candidate; price and event timestamp matched the latest trade row; and the deterministic `source_row_key` matched the raw trade fields. BTC Scenario Readiness Gate #197 passed with the explicit cross-check-blocking tests: https://github.com/olegsh247-stack/Crypto/actions/runs/38608820923. Capture run #64 passed and reported one candidate plus five blocked entries: https://github.com/olegsh247-stack/Crypto/actions/runs/38608794818.
 
 The five blocked entries are deliberate: Binance and Bybit could not be retrieved from this runner (HTTP 451/403), OKX was retrieved but is a USDT quote, and both ETF sources lack accepted row-level reporting-time normalization. These outcomes are retained as evidence, not silently omitted or promoted. The source contract still does not permit ingestion.
+
+
+## 17. DXY source contract — 2026-10-14
+
+The metric registry no longer lists generic `macro.primary` as canonical for `macro.dxy`; its `source_priority` is empty until a specific feed is approved. `macro.ice_dxy_candidate` remains a candidate only. The registry notes now explicitly say that the ICE catalog URL is product documentation, not a public quote endpoint, and that access/license, actual feed schema, daily-close field and timestamps remain unverified.
+
+The detailed decision and acceptance gates are in [BTC-DXY-SOURCE-CONTRACT-2026-10-14.md](data-review/BTC-DXY-SOURCE-CONTRACT-2026-10-14.md). The required observation contract keeps the ICE index business date (`period_start`), actual provider timestamp (`observed_at`), and our retrieval time (`retrieved_at`) separate. A provider-supplied update timestamp must not be invented; the endpoint and current methodology must be verified against an actual authorized feed before acceptance.
+
+This is registry/documentation/test hardening only. The runtime DXY allowlist remains empty and BTC remains `not_evaluable`. No production data or scenario state was changed.
