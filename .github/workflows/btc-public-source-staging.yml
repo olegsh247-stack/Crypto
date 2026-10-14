@@ -1,9 +1,16 @@
+# Explicit public-source capture only: stores raw evidence for review; never writes a database.
 name: BTC Public Source Staging (Read Only)
 
 on:
   push:
     paths:
       - "scripts/capture-btc-public-sources.mjs"
+      - "scripts/capture-btc-directional-series.mjs"
+      - "scripts/capture-btc-directional-series.test.mjs"
+      - "scripts/capture-btc-etf-flow-candidate.mjs"
+      - "scripts/capture-btc-etf-flow-candidate.test.mjs"
+      - "scripts/capture-btc-dxy-candidate.mjs"
+      - "scripts/capture-btc-dxy-candidate.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -13,19 +20,37 @@ permissions:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Capture public source responses for review only
+      - name: Test BTC directional-series parser and return contracts
+        run: node --test scripts/capture-btc-directional-series.test.mjs
+      - name: Test BTC ETF flow candidate contract
+        run: node --test scripts/capture-btc-etf-flow-candidate.test.mjs
+      - name: Test DXY candidate contract
+        run: node --test scripts/capture-btc-dxy-candidate.test.mjs
+      - name: Capture current public-source candidates for review only
         run: node scripts/capture-btc-public-sources.mjs
-      - name: Upload raw responses and provenance manifest
+      - name: Capture historical BTC price and hashrate candidate series
+        run: node scripts/capture-btc-directional-series.mjs
+      - name: Capture ETF flow candidate (public MCP; REST key optional)
+        env:
+          CRYPTOETF_API_KEY: ${{ secrets.CRYPTOETF_API_KEY }}
+        run: node scripts/capture-btc-etf-flow-candidate.mjs
+      - name: Capture DXY candidate from Yahoo Finance for review only
+        run: node scripts/capture-btc-dxy-candidate.mjs
+      - name: Upload raw responses and provenance manifests
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: btc-public-source-review
-          path: tmp/btc-source-review/
+          path: |
+            tmp/btc-source-review/
+            tmp/btc-directional-series-review/
+            tmp/btc-etf-flow-review/
+            tmp/btc-dxy-candidate-review/
           if-no-files-found: error
           retention-days: 7

@@ -104,6 +104,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
         run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-btc-input-provenance.sql
+      - name: BTC Kraken candidate observation contract rehearsal (rollback-only)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: bash scripts/test-btc-kraken-observation-contract.sh
       - name: BTC observation idempotency and duplicate reconciliation rehearsal
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test

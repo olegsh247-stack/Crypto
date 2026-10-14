@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "asset_id": "btc",
+  "capture_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38353759368",
+  "captured_at_utc": "2026-10-13T05:52:56Z",
+  "mode": "read-only-staging-only",
+  "production_database_accessed": false,
+  "production_writes_performed": false,
+  "production_ingestion_approved": false,
+  "candidates": [
+    {
+      "metric_id": "market.spot_price",
+      "source_id": "market.kraken",
+      "source_url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+      "unit": "USD/BTC",
+      "value": 83576.5,
+      "observed_at": "2026-10-13T05:52:52.272Z",
+      "retrieved_at": "2026-10-13T05:52:54.636Z",
+      "age_seconds_at_capture": 2,
+      "max_age_seconds": 3600,
+      "freshness_at_capture": "PASS",
+      "raw_payload_sha256": "be6119c5a27a7d9d5eb572bbe79eb76811054bb99231b47ec73ce6fcdacc73d6",
+      "decision": "CANDIDATE_ONLY",
+      "unresolved": [
+        "verify live source registry and runtime adapter",
+        "compare logical observation key against current database rows"
+      ]
+    },
+    {
+      "metric_id": "security.hashrate",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/hashrate/1w",
+      "unit": "EH/s",
+      "value": 999.342298838022,
+      "observed_at": "2026-10-13T00:00:00.000Z",
+      "retrieved_at": "2026-10-13T05:52:54.944Z",
+      "age_seconds_at_capture": 21174,
+      "max_age_seconds": 172800,
+      "freshness_at_capture": "PASS",
+      "raw_payload_sha256": "f7057dc7e4e4f346877729e311f962cee2ee03a87c9a26a5637fe703ddc8fbaf",
+      "decision": "CANDIDATE_ONLY",
+      "unresolved": [
+        "confirm bucket timestamp and smoothing semantics",
+        "verify live source registry and stored-method mapping"
+      ]
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/blocks/fees/1w",
+      "retrieved_at": "2026-10-13T05:52:55.450Z",
+      "row_count": 834,
+      "raw_payload_sha256": "636cf24736d03de2f6879a70787b7e037b5731379ee4a484e41bb35575185e24",
+      "decision": "BLOCKED_AGGREGATE_SEMANTICS",
+      "unresolved": [
+        "confirm avgFees units and average bucket semantics",
+        "verify matching avgRewards semantics",
+        "Do not calculate ratio from averaged fee/reward series; validate individual-block fields, units and timestamps first."
+      ],
+      "observed_at": "2026-10-13T05:45:31.000Z",
+      "latest_avg_height": 971199,
+      "latest_avg_fees_raw": 2056334,
+      "latest_usd_mark": 83347
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.primary",
+      "source_url": "https://farside.co.uk/btc/",
+      "retrieved_at": "2026-10-13T05:52:55.599Z",
+      "http_status": 403,
+      "raw_payload_sha256": "f5878974ee8d3989f859d4ceec4bcecf7cd04b451ff4a3a3899dba834bb22108",
+      "decision": "BLOCKED_SOURCE_UNAVAILABLE",
+      "unresolved": [
+        "obtain auditable current source rows and observation/publication semantics"
+      ]
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "source_id": "institutional.tftc",
+      "source_url": "https://www.tftc.io/bitcoin-etf-flows/data.json",
+      "retrieved_at": "2026-10-13T05:52:55.730Z",
+      "updated_through": "2026-10-09",
+      "row_count": 705,
+      "raw_payload_sha256": "dd2168e41af07cbeab4bc263bf3cbfd88152a5312486f20d4a6fa3ba3230b87e",
+      "decision": "UNAPPROVED_FALLBACK_STALE",
+      "unresolved": [
+        "36-hour freshness gate",
+        "mixed lineage and revision semantics",
+        "formal canonical source-priority review"
+      ]
+    },
+    {
+      "metric_id": "macro.dxy",
+      "decision": "BLOCKED_NO_CANONICAL_SOURCE",
+      "unresolved": [
+        "select exact source and endpoint",
+        "define observation time, daily close and timezone convention"
+      ]
+    },
+    {
+      "metric_id": "security.fee_subsidy_ratio",
+      "source_id": "network.primary",
+      "source_url": "https://mempool.space/api/v1/mining/blocks/rewards/1w",
+      "unit": "ratio",
+      "observed_at": "2026-10-13T05:29:20.000Z",
+      "retrieved_at": "2026-10-13T05:52:55.525Z",
+      "row_count": 835,
+      "raw_payload_sha256": "777c561ca223fada12e39eb73ad7b7c8c94f246354a5bbfefab8c2f4956695d8",
+      "latest_avg_height": 971198,
+      "latest_avg_rewards_raw": 313429443,
+      "decision": "BLOCKED_AGGREGATE_SEMANTICS",
+      "unresolved": [
+        "confirm avgRewards unit and bucket semantics",
+        "pair by exact avgHeight only; no interpolation",
+        "Do not calculate ratio from averaged fee/reward series; validate individual-block fields, units and timestamps first."
+      ]
+    }
+  ],
+  "database_dry_run": {
+    "status": "NOT_RUN",
+    "reason": "A current production read-only observation/source-registry audit has not been authorized/performed in this capture workflow; no duplicate comparison is claimed."
+  },
+  "disposition": "not_evaluable",
+  "next_gate": "Execute the newly required 150-individual-block staging validation, review its artifact and contract gates, then reconcile source/metric IDs and ratio window before any read-only duplicate audit. ETF and DXY remain blocked.",
+  "fee_subsidy_review": {
+    "status": "BLOCKED_AGGREGATE_SEMANTICS",
+    "fee_rows": 834,
+    "reward_rows": 835,
+    "matched_avg_height_rows": 833,
+    "fee_rows_without_reward_match": 1,
+    "reward_rows_without_fee_match": 2,
+    "matched_timestamp_mismatch_rows": 6,
+    "aggregate_ratio_calculated": false,
+    "rule": "Do not derive a fee/subsidy ratio from averaged series. Individual-block sample validation is now available, but averaged series remain blocked."
+  },
+  "individual_block_review": {
+    "status": "SAMPLE_VALIDATION_PASS_CANDIDATE_ONLY",
+    "source_id": "network.primary",
+    "source_url": "https://mempool.space/api/v1/blocks/971199",
+    "captured_in_workflow": "https://github.com/olegsh247-stack/Crypto/actions/runs/38353759368",
+    "raw_payload_sha256": "c6936234d6b3af353a9283b7dbee6c75769a1834dfe362c3a6569eb87d325b38",
+    "sample_count": 15,
+    "first_height": 971185,
+    "last_height": 971199,
+    "valid_field_rows": 15,
+    "subsidy_mismatch_rows": 0,
+    "expected_current_subsidy_raw": 312500000,
+    "fee_field": "extras.totalFees",
+    "reward_field": "extras.reward",
+    "calculation": "fee_to_subsidy_ratio = totalFees / (reward - totalFees)",
+    "unit_assessment": "Values are internally consistent with satoshis because reward minus totalFees equals the current 312,500,000-satoshi subsidy in all 15 sampled rows; confirm documented API contract and test a wider historical range before production use.",
+    "observed_ratio_min": 0.0010287968,
+    "observed_ratio_max": 0.0074590496,
+    "production_approved": false,
+    "unresolved": [
+      "confirm endpoint field and unit contract against authoritative API documentation",
+      "test wider historical range and edge cases",
+      "verify repository metric/source registry and runtime mapping",
+      "perform separately scoped read-only duplicate dry-run"
+    ]
+  },
+  "registry_audit": {
+    "status": "CONTRACT_MISMATCH_FOUND",
+    "metric_registry": {
+      "market.spot_price": {
+        "unit": "USD/BTC",
+        "source_priority": [
+          "market.kraken"
+        ],
+        "freshness_window": "1h"
+      },
+      "security.hashrate": {
+        "unit": "EH/s",
+        "source_priority": [
+          "network.primary",
+          "analytics"
+        ],
+        "freshness_window": "48h"
+      },
+      "security.fee_subsidy_ratio": {
+        "unit": "ratio",
+        "source_priority": [
+          "network.primary"
+        ],
+        "frequency": "1d",
+        "freshness_window": "48h",
+        "formula_definition": "not specified in JSON registry"
+      }
+    },
+    "source_id_mismatch": "JSON source registry uses market.kraken; SQL migration infrastructure/postgres/migrations/2026-10-11-market-data-sources.sql registers market_kraken. Do not assume these identifiers are interchangeable; reconcile the runtime adapter and DB source ID before ingestion.",
+    "production_database_accessed": false,
+    "production_writes_performed": false
+  },
+  "individual_block_window_review": {
+    "status": "WIDE_WINDOW_VALIDATION_PASS_CANDIDATE_ONLY",
+    "target_block_count": 165,
+    "request_strategy": "11 sequential GET /api/v1/blocks/{start-height} pages of 15 blocks each; latest 144 blocks are the proposed metric window and 21 earlier blocks provide timestamp-consensus context.",
+    "normalized_output": "individual-block-window.json",
+    "raw_page_sha256s_recorded": true,
+    "checks": [
+      "exact height coverage",
+      "conflicting hashes at same height",
+      "unique block hashes",
+      "required hash/timestamp/fee/reward fields",
+      "monotonic timestamps",
+      "current subsidy consistency",
+      "sum(totalFees)/sum(reward-totalFees) over the same validated blocks"
+    ],
+    "required_staging_gate": true,
+    "production_approved": false,
+    "commit": "2e69b81e1d9248529468f8d17342b10e9e07371a",
+    "execution_status": "PASS_CANDIDATE_ONLY",
+    "unresolved": [
+      "confirm endpoint field/unit contract against authoritative API documentation",
+      "approve or revise the proposed 144-block metric window and daily cadence",
+      "reconcile source ID/runtime mapping by data domain",
+      "perform separately scoped read-only duplicate dry-run"
+    ],
+    "unique_block_count": 165,
+    "first_height": 971038,
+    "last_height": 971202,
+    "expected_min_height": 971038,
+    "expected_max_height": 971202,
+    "missing_height_count": 0,
+    "invalid_field_rows": 0,
+    "subsidy_mismatch_rows": 0,
+    "duplicate_hash_count": 0,
+    "timestamp_consensus_valid": true,
+    "median_time_past_violation_count": 0,
+    "future_timestamp_count": 0,
+    "total_fees_raw": 295212981,
+    "total_subsidy_raw": 46875000000,
+    "window_fee_to_subsidy_ratio": 0.006297876928,
+    "execution_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316",
+    "artifact_id": 11793430771,
+    "artifact_sha256": "d92a6925ee0d99aae485535094e8ef5c40092d7cf324e3c7f695998fd1c6925e",
+    "candidate_metric_window_blocks": 144,
+    "candidate_metric_status": "PROPOSED_144_BLOCK_WINDOW_NOT_YET_APPROVED",
+    "candidate_metric_first_height": 971059,
+    "candidate_metric_last_height": 971202,
+    "candidate_metric_total_fees_raw": 286686334,
+    "candidate_metric_total_subsidy_raw": 45000000000,
+    "candidate_metric_fee_to_subsidy_ratio": 0.0063708074222222225,
+    "validation_window_total_fees_raw_165_blocks": 307743303,
+    "validation_window_total_subsidy_raw_165_blocks": 51562500000,
+    "validation_window_fee_to_subsidy_ratio_165_blocks": 0.0059683549672727276
+  },
+  "staging_gate_manifest_update": {
+    "commit": "d33d100cf19b02aa84ee15020ace26b59baade70",
+    "change": "Record final staging gate outcome in manifest.json before artifact upload",
+    "execution_status": "PASS_CANDIDATE_ONLY",
+    "failure_reason": "The first 150-block run exposed an invalid assumption that Bitcoin block timestamps must be monotonic by height; Bitcoin consensus permits non-monotonic timestamps.",
+    "correction_commit": "9261e934b0e5a914c54b938598c67ee03dfb495f",
+    "correction": "Validate median-time-past against the preceding 11 blocks and the two-hour future-time bound instead of strict monotonicity.",
+    "next_step": "Reconcile the repository metric/source contract and timestamp/units; then prepare a separately scoped read-only duplicate dry-run. No production ingestion is approved.",
+    "production_approved": false,
+    "syntax_fix_commit": "f794b046f50743d6f7535b6bde7485f08e3a00da",
+    "syntax_failure": "Run #22 failed before capture due to literal escaped-newline syntax in the newly added timestamp-consensus fields; corrected in the commit above.",
+    "successful_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/38357451316",
+    "artifact_id": 11793430771,
+    "artifact_sha256": "d92a6925ee0d99aae485535094e8ef5c40092d7cf324e3c7f695998fd1c6925e"
+  },
+  "proposed_fee_subsidy_metric_contract": {
+    "status": "PROPOSAL_ONLY_NOT_CANONICAL",
+    "metric_id": "security.fee_subsidy_ratio",
+    "cadence": "one candidate point per day",
+    "window": "latest 144 individual blocks",
+    "formula": "sum(totalFees) / sum(reward - totalFees)",
+    "candidate_fields": "extras.totalFees and extras.reward",
+    "proposed_source_id": "network.primary",
+    "observed_at": "timestamp of the final block in the 144-block metric window",
+    "period_start": "timestamp of the first block in the 144-block metric window",
+    "period_end": "timestamp of the final block in the 144-block metric window",
+    "method_version": "mempool-fee-subsidy-144-block-v1",
+    "note": "Do not alter canonical registry or ingest until endpoint units, source mapping and metric window/cadence are explicitly accepted.",
+    "execution_status": "candidate 144-block calculation reproduced in successful run #26; proposal remains unapproved"
+  }
+}

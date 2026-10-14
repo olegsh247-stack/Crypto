@@ -113,11 +113,11 @@ The next implementation step is a fail-closed input gate, not a scenario predict
 
 | Input | Requirement before evaluation |
 |---|---|
-| BTC spot price | Numeric, source-linked, marked CURRENT, observed within 24 hours |
-| Network hashrate | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within 5 days |
-| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked and CURRENT; latest within 48 hours |
+| BTC spot price | Numeric, source-linked, marked CURRENT, observed within the registry's 1-hour window |
+| Network hashrate | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within the registry's 48-hour window |
+| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked; latest observation must be CURRENT and within the registry's 36-hour window |
 
 All observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. A missing required metric is a blocker, not an implicit neutral signal.
 
@@ -236,3 +236,106 @@ The target VPS API and disposable-PostgreSQL Build Rehearsal now verify the publ
 These are target API contract checks against disposable PostgreSQL. They do not prove that the currently serving public API is on the VPS, do not repair the historical duplicate/stale production observations, and do not authorize a scenario-state or event write.
 
 The current factor-to-input and event acceptance requirements are documented in [BTC Monitoring Readiness Matrix v1](./BTC-MONITORING-READINESS-MATRIX.md). Remaining BTC blockers are source-verified fresh observations, reviewed metric aggregation windows, and explicit confirmation/invalidation conditions before any live state/event is persisted.
+
+
+## Reproducible evaluation gate — 2026-10-13
+
+The deterministic rule implementation is present in `scripts/btc-scenario-direction.mjs` (`BTC-Scenario-Rule-v1`) and is covered by `scripts/btc-scenario-direction.test.mjs`. The read-only readiness gate is implemented in `vps/shared/src/btc-scenario-readiness.ts` and covered by `scripts/btc-scenario-readiness.test.mjs`. These tests prove rule behavior and fail-closed input checks using fixtures; they are not evidence that today's real input set is complete.
+
+### Current result: NOT EVALUABLE
+
+The latest documented source review, `docs/BTC-SOURCE-REFRESH-REVIEW-2026-10-13.md`, explicitly keeps all captured candidates out of production ingestion. The Kraken spot candidate has now also passed a real, rollback-only PostgreSQL rehearsal, but that validates capture and storage contract only. It does not promote the candidate to an accepted scenario input.
+
+| Required input | Current decision | Why it cannot enter the rule yet |
+|---|---|---|
+| Spot-price return, 7 days | Candidate source path validated; historical window still needs accepted, traceable points and logical-key/source contract review | One fresh point is not a 7-day return series |
+| ETF net flow, 5 sessions | Blocked | Farside returned HTTP 403; TFTC mirror is stale and its mixed lineage/revision semantics are unresolved |
+| Hashrate change, 7 days | Candidate only | Daily series bucket/smoothing semantics and stored metric mapping remain to be accepted |
+| DXY change, 5 days | Blocked | No canonical endpoint and daily-close timestamp convention accepted |
+| Fee/subsidy ratio | Blocked / context only | Averaged fees/rewards endpoints were rejected as proof of individual-block values; 165-block staging validation passed, but the proposed 144-block metric window remains candidate-only until its metric contract is accepted |
+
+The readiness gate therefore must return `not_evaluable` for the current accepted-input set. Do not pass hand-entered values, old test fixtures, or candidate-only captures as though they were accepted live observations. In particular, do not use the previously documented illustrative October 12 fixture as today's evaluation.
+
+### Next actions, in order
+
+1. Finalize the fee/subsidy metric contract from the validated individual-block staging artifact: exact block window, numerator/denominator units, timestamp convention, and freshness/aggregation meaning. Keep it candidate-only until reviewed.
+2. Resolve a canonical ETF flow source with current rows, publication timestamps, lineage, and revision semantics; missing/403 values are not zero.
+3. Select and document a canonical DXY endpoint and daily-close convention.
+4. Accept the price and hashrate historical series contracts and compare candidate logical keys against the repository's canonical schema/source registry using a read-only rehearsal.
+5. Assemble an explicit immutable input manifest with source URLs, observed/retrieved timestamps, units, revisions, and payload hashes. Run readiness first; run `BTC-Scenario-Rule-v1` only if readiness returns `ready_for_rule_evaluation`.
+6. Save the evaluation output as a review artifact only. Do not write `scenario_states`, `monitoring_events`, alter published probabilities, or connect scheduled production ingestion as part of this step.
+
+**Decision:** the BTC scenario definition and deterministic rule are ready for a controlled evaluation, but the current real-world input set is not. The honest result is `not_evaluable`; Base remains the published research baseline, not a fresh evaluated state.
+
+
+## Reproducible scenario gate — live candidate isolated, 2026-10-13
+
+The latest standard CI set for the BTC Kraken branch is green on commit `72becab84d2def726df838204083822221410d2e`:
+
+- [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967535) — success.
+- [Seed observation idempotency rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967510) — success.
+- [Validate VPS Release Workflow](https://github.com/olegsh247-stack/Crypto/actions/runs/38360967585) — success.
+
+The live Kraken rollback rehearsal proved a single source candidate can be parsed and written only inside a disposable transaction, with duplicate handling and rollback verified. The captured sample was 83,590.3 USD/BTC at `2026-10-13T07:09:13.118Z`, retrieved at `2026-10-13T07:09:25.872Z`; it is historical evidence of the capture path, not a claim that the quote remains fresh now.
+
+A new regression test passes a real-shaped, source-registered Kraken candidate into the scenario readiness gate alongside no other inputs. The expected result is `not_evaluable`, with explicit missing blockers for hashrate, fee/subsidy economics, DXY and the required ETF-flow series, and `can_persist_scenario_state=false`. This prevents one fresh price from being mistaken for a complete scenario input set.
+
+The gate's age limits now documented here follow the canonical metric registry: spot price 1 hour, hashrate 48 hours, fee/subsidy ratio 48 hours, DXY 48 hours and latest ETF flow 36 hours. These are data-quality limits, not directional scoring thresholds.
+
+**Current decision: no live scenario evaluation is accepted yet.** Next, source-verified inputs must be acquired for the remaining required metrics and at least five distinct ETF-flow days, with canonical units, source registration, observation timestamps, freshness and calculation windows. Fee/subsidy must be sourced as a documented rolling series before any factor confirmation/invalidation assessment. No scenario state or monitoring event is persisted by this change.
+
+
+### Evidence refresh — staging run #27
+
+The latest read-only capture is documented in `docs/BTC-SOURCE-REFRESH-REVIEW-2026-10-13.md` and artifact [BTC Public Source Staging #27](https://github.com/olegsh247-stack/Crypto/actions/runs/38361508900). It refreshed the Kraken candidate to 83,653.8 USD/BTC (exchange timestamp 07:15:24.229 UTC, retrieved 07:15:27.009 UTC) and the daily hashrate series to 999.342298838022 EH/s at 00:00 UTC. The 165-block validation passed; a proposed 144-block rolling ratio was 0.006309380666666667. All are still candidate-only.
+
+The fee/subsidy metric registry says `frequency: 1d`; the proposed 144-block rolling window is not identical to a UTC calendar day. That definition must be decided and tested before using the ratio. Current capture manifest reports no production DB access or writes. ETF and DXY blockers remain open, so no current full-rule evaluation was run.
+
+### Evidence refresh — directional series candidate capture #28
+
+Read-only staging run [#38362350907](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907) passed all six directional-series parser tests and captured the historical Kraken OHLC and Mempool hashrate series. Artifact [11795391910](https://github.com/olegsh247-stack/Crypto/actions/runs/38362350907/artifacts/11795391910), archive SHA-256 `7ad8a07ef0b818c0c2f3ac24bf05f2a515adafb1552d486dea6ce911d1de8c49`.
+
+- Kraken completed daily close through 2026-10-12: 81,737.1 USD/BTC; close seven days earlier: 85,751.5 USD/BTC; candidate return: −4.6814%. Raw payload SHA-256: `97628c0fb352d68b5625c7d58d8fa3a4cb70c633bd9df63936797130f67d666a`.
+- Mempool daily hashrate candidate through 2026-10-12: 1,028.5949 EH/s; seven days earlier: 946.4696 EH/s; candidate change: +8.6770%. Raw payload SHA-256: `875785ad9fbaacb4a70ae209c2a4843377fb2fb38cb4c243b036530b28dd74f1`.
+
+These calculations are reproducible candidate values, **not accepted rule inputs**. Kraken OHLC uses `market_kraken`, while canonical `market.spot_price` priority is `market.kraken`; do not alias the IDs without an explicit source contract decision. Mempool's endpoint is documented as a daily-average hashrate series; the capture now preserves UTC date labels and excludes the current UTC date rather than treating a value as instantaneous. This clarifies the series semantics but does not yet approve its metric-to-observation mapping. ETF source freshness/publication convention and DXY remain blocked. The scenario stays `not_evaluable`; no rule evaluation, production write, scenario/monitoring persistence, or probability change was performed.
+
+### ETF flow source gate — CryptoETF.today candidate adapter
+
+Added a read-only candidate adapter and deterministic tests for CryptoETF.today `/api/v1/flows/btc`. The provider documents daily net flows in USD millions, UTC flow dates, 30 days of free-tier history, and T+1 publication with possible same-day revision. The response's `updatedAt` is a response-level timestamp and is not accepted as the latest row's publication timestamp. The provider's public page reports data for 2026-10-09 published on 2026-10-10 05:47 UTC; at the 2026-10-13 review, that display is stale relative to the registry's 36-hour gate.
+
+Implementation: `scripts/capture-btc-etf-flow-candidate.mjs`, tests: `scripts/capture-btc-etf-flow-candidate.test.mjs`, review: `docs/BTC-ETF-FLOW-CANDIDATE-REVIEW-2026-10-13.md`. The staging workflow uses optional secret `CRYPTOETF_API_KEY`; absent credentials result in `BLOCKED_NO_CREDENTIAL` and no request. The current API row schema does not provide per-row publication timestamps, so freshness remains blocked unless that evidence is added or a conservative method is explicitly approved.
+
+No canonical source priority or metric registry was changed. ETF flow remains an unresolved input; scenario remains `not_evaluable`.
+
+### Live ETF flow candidate captured through public MCP — 2026-10-13
+
+The public MCP candidate capture now works against the provider's actual response shape. Staging [run #38371104698](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698) captured a 30-day BTC flow series; latest row is 2026-10-12 at **−$65.4M**, with six distinct flow dates in the last seven calendar days. Raw payload SHA-256: `4cec024a39ab5355336da610d84fe6ac2bac4700ec04e6b4236179245ea260fb`; artifact [11798629801](https://github.com/olegsh247-stack/Crypto/actions/runs/38371104698/artifacts/11798629801).
+
+The latest flow-date midnight is 32.711 hours before retrieval, inside the 36-hour numerical window, but the response lacks per-row publication timestamps. The global `updatedAt` is not treated as row publication time. This source remains candidate-only until the metric's freshness timestamp convention is explicitly resolved; canonical `institutional.primary` remains unchanged. The scenario remains `not_evaluable` because source acceptance and other required inputs (DXY, hashrate method, fee/subsidy contract) are still unresolved.
+
+
+### Hashrate contract clarification — 2026-10-13
+
+The candidate capture now explicitly treats Mempool's historical hashrate points as provider-labelled **daily averages**, preserves the UTC-midnight date labels without interpreting them as instantaneous samples, and excludes the current UTC date. The parser tests enforce that method label. This aligns the candidate calculation with the provider's historical daily-average series description ([Mempool REST API](https://mempool.space/docs/api/rest); [endpoint documentation example](https://mempool.emzy.de/docs/api)).
+
+The historical candidate change remains +8.6770% through 2026-10-12, but is not yet accepted as a live rule input. The source/method mapping must still be reviewed against the canonical `security.hashrate` metric contract. The Kraken OHLC source ID remains distinct from canonical `market.kraken`; ETF publication freshness remains unresolved; DXY and fee/subsidy remain blocked. Scenario status stays `not_evaluable`.
+
+
+### DXY source feasibility — 2026-10-13
+
+Added a read-only Yahoo Finance candidate capture for ticker `DX-Y.NYB`, which Yahoo identifies as the ICE US Dollar Index. This is only a feasibility candidate: the reviewed ICE product page describes commercial delivery channels but does not establish an unauthenticated public feed, and the Yahoo chart response does not prove the exact ICE daily-close/publication timestamp needed for the 48-hour freshness contract. No canonical source priority or metric registry was changed. See `docs/BTC-DXY-CANDIDATE-REVIEW-2026-10-13.md`.
+
+The staging adapter validates and preserves a candidate five-observed-session change, but marks it `CANDIDATE_ONLY` and `BLOCKED_SOURCE_CONTRACT_REVIEW`. It cannot be used by the scenario readiness gate as accepted DXY input. The scenario remains `not_evaluable`.
+
+
+### DXY candidate capture — 2026-10-13
+
+Staging [run #38388459518](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518) captured the Yahoo Finance `DX-Y.NYB` daily series (HTTP 200). Latest completed New York session was 2026-10-12, close 102.58; close five observed sessions earlier 102.17; candidate five-session change +0.4013%. Raw response SHA-256: `79eb39867cbc33ea1b5dffbfd8c3d7a9a37d9ee1d3f5c12a9fa2a052d1272170`; artifact [11806659469](https://github.com/olegsh247-stack/Crypto/actions/runs/38388459518/artifacts/11806659469).
+
+The result remains `CANDIDATE_ONLY`: third-party source authorization and the exact ICE daily close/publication timestamp are unresolved. No canonical source priority or metric registry was changed. ETF row-publication freshness and fee/subsidy semantics also remain blocked. The BTC scenario remains `not_evaluable`.
+
+
+### Fee/subsidy metric contract — decision note prepared
+
+The current registry defines `security.fee_subsidy_ratio` as daily, while the source description mentions a rolling block window. Added `docs/BTC-FEE-SUBSIDY-CONTRACT-DECISION-2026-10-13.md` comparing the two definitions. It recommends a completed UTC-day ratio for v1 to match the registry's explicit daily frequency, but this remains a recommendation only. No registry change or new ratio calculation was activated; the staging 144-block ratio remains candidate-only.
