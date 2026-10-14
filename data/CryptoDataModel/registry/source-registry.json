@@ -100,7 +100,8 @@
       "url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
       "priority": 1,
       "reliability": "high",
-      "access_method": "REST"
+      "access_method": "REST",
+      "notes": "Independent BTC/USDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
     },
     {
       "source_id": "market.bybit",
@@ -109,7 +110,8 @@
       "url": "https://bybit-exchange.github.io/docs/v5/market/tickers",
       "priority": 1,
       "reliability": "high",
-      "access_method": "REST/WebSocket"
+      "access_method": "REST/WebSocket",
+      "notes": "Independent BTCUSDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
     },
     {
       "source_id": "market.okx",
@@ -118,7 +120,8 @@
       "url": "https://www.okx.com/docs-v5/en/",
       "priority": 1,
       "reliability": "high",
-      "access_method": "REST/WebSocket"
+      "access_method": "REST/WebSocket",
+      "notes": "Independent BTC-USDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
     },
     {
       "source_id": "market.mexc",
@@ -128,6 +131,16 @@
       "priority": 1,
       "reliability": "to_validate",
       "access_method": "REST"
+    },
+    {
+      "source_id": "macro.ice_dxy_candidate",
+      "name": "ICE U.S. Dollar Index (DXY) — source candidate",
+      "type": "official_index_administrator",
+      "url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices",
+      "priority": 2,
+      "reliability": "to_validate",
+      "access_method": "ICE Data API / ICE Connect / licensed data delivery; access unconfirmed",
+      "notes": "ICE is the administrator of DXY and documents intraday and daily data products. This URL is product documentation, not a data endpoint. No project-accessible feed, credentials/terms, response schema or daily close observation contract has been accepted. Candidate only; do not add to macro.dxy source_priority or allow it through readiness until access and timestamp semantics are verified."
     }
   ]
 }
