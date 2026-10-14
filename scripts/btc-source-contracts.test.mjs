@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { auditKrakenPostTradePageChain, classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, normalizeKrakenTicker, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
+import { auditKrakenPostTradePageChain, classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, normalizeKrakenTicker, normalizeKrakenHourlyOhlc, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
@@ -375,3 +375,57 @@ test("Kraken Ticker rejects API errors, invalid prices, crossed quotes and inval
   }, { retrievedAt: "not-a-time" }), /retrievedAt/);
 });
 
+
+
+test("Kraken hourly OHLC selects an exact closed candle and excludes the current uncommitted row", () => {
+  const payload = {
+    error: [],
+    result: {
+      XXBTZUSD: [
+        [1791849600, "83000", "83500", "82900", "83400", "83200", "12.5", 321],
+        [1791853200, "83400", "83800", "83300", "83750", "83600", "8.1", 222],
+        [1791856800, "83750", "84000", "83700", "83900", "83850", "0.5", 10],
+      ],
+      last: 1791856800,
+    },
+  };
+  const result = normalizeKrakenHourlyOhlc(payload, {
+    requestedPairKey: "XXBTZUSD",
+    windowStart: "2026-10-12T16:00:00Z",
+    retrievedAt: "2026-10-12T18:01:00Z",
+  });
+  assert.equal(result.status, "CLOSED_HOURLY_CANDLE_CANDIDATE");
+  assert.equal(result.value, 83400);
+  assert.equal(result.interval_minutes, 60);
+  assert.equal(result.window_start, "2026-10-12T16:00:00.000Z");
+  assert.equal(result.window_end, "2026-10-12T17:00:00.000Z");
+  assert.equal(result.observed_at, null);
+  assert.equal(result.bar_end_at, "2026-10-12T17:00:00.000Z");
+  assert.equal(result.retrieved_at, "2026-10-12T18:01:00Z");
+  assert.ok(result.blockers.includes("PROVIDER_PUBLICATION_TIMESTAMP_UNAVAILABLE"));
+});
+
+test("Kraken hourly OHLC blocks missing candles and rejects malformed/unclosed rows", () => {
+  const payload = { error: [], result: { XXBTZUSD: [
+    [1791849600, "83000", "83500", "82900", "83400", "83200", "12.5", 321],
+    [1791853200, "83400", "83800", "83300", "83750", "83600", "8.1", 222],
+  ] } };
+  const missing = normalizeKrakenHourlyOhlc(payload, {
+    windowStart: "2026-10-12T18:00:00Z",
+  });
+  assert.equal(missing.status, "BLOCKED_CLOSED_HOURLY_CANDLE_NOT_FOUND");
+  assert.equal(missing.value, null);
+  assert.throws(() => normalizeKrakenHourlyOhlc({ error: ["EGeneral:Temporary lockout"], result: {} }, {
+    windowStart: "2026-10-12T16:00:00Z",
+  }), /API error/);
+  assert.throws(() => normalizeKrakenHourlyOhlc({ error: [], result: { XXBTZUSD: [[1, "1"]] } }, {
+    windowStart: "1970-01-01T00:00:00Z",
+  }), /at least one closed row/);
+  assert.throws(() => normalizeKrakenHourlyOhlc({ error: [], result: { XXBTZUSD: [
+    [1791849600, "83000", "82000", "82900", "83400", "83200", "12.5", 321],
+    [1791853200, "83400", "83800", "83300", "83750", "83600", "8.1", 222],
+  ] } }, { windowStart: "2026-10-12T16:00:00Z" }), /invalid timestamp or OHLC prices/);
+  assert.throws(() => normalizeKrakenHourlyOhlc(payload, {
+    windowStart: "2026-10-12T16:30:00Z",
+  }), /hour boundary/);
+});
