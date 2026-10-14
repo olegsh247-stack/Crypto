@@ -341,3 +341,19 @@ The output explicitly says `candidate_state: REVIEW_ONLY` and `persistable: fals
 The candidate mapper has unit tests for successful Kraken mapping, missing row/hash rejection, quote-unit separation and the ETF hold. BTC Scenario Readiness Gate #194 passed after the mapper and its tests were added: https://github.com/olegsh247-stack/Crypto/actions/runs/38607850897. The workflow was then updated to include the same paths for pull requests as well as pushes; the resulting current-head gate is tracked separately.
 
 This closes only the **review-only mapping** step. It does not approve ingestion or source priority, and it does not change the current `not_evaluable` scenario status.
+
+
+## 15. Capture-to-candidate CI rehearsal — 2026-10-14
+
+The read-only staging workflow now runs the normalizer immediately after source capture and uploads the normalized candidate artifact with the raw responses and manifest. Run #63 passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38608092736. The workflow reported one normalized candidate and two blocked ETF source entries; the output explicitly states that no production database was accessed and no writes were performed.
+
+Capture evidence at this run:
+- Kraken XBT/USD returned HTTP 200. Its latest trade in the capture was **81,735.9 USD/BTC at 2026-10-14T17:36:36.135Z**. This is a point-in-time review candidate, not a persisted observation.
+- OKX BTC-USDT returned HTTP 200 and remains a USDT cross-check only.
+- Binance returned HTTP 451 and Bybit HTTP 403 from this GitHub runner. Those responses do not establish that either venue is globally unavailable.
+- Farside returned HTTP 403 in this run. TFTC's candidate JSON returned HTTP 200 with 707 rows, but it remains unapproved and is not converted into canonical ETF observations.
+- DXY remains unresolved; no broad USD index is substituted.
+
+The latest VPS Build Rehearsal #1164 passed on the same code head `53c4b38d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38608092710. This validates the current schema/migration and application rehearsal; it is not a production migration or deployment.
+
+Next, review the actual normalized artifact and the ETF candidate schema/reporting-date contract. Do not persist this Kraken candidate or promote TFTC/Farside until duplicate/revision rules and source acceptance are explicit.
