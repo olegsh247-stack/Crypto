@@ -1373,3 +1373,10 @@ Inspected the raw JSON in the read-only staging artifact, rather than relying on
 Findings: 707 unique dated rows (2024-01-11–2026-10-13), but no row-level observation/publication timestamp or explicit revision/finalization policy; 16 rows have zero aggregate flow and no per-fund breakdown/assets; and 33 rows have aggregate-vs-per-fund differences above $1 million, with a largest difference of $30.65 million. These are unresolved source-contract issues, not reasons to invent timestamps or silently treat missing/holiday rows as zero. The declared lineage is mixed across SoSoValue, Farside-tabulated disclosures and mempool.space.
 
 **Decision:** TFTC remains a reconciliation candidate only. Do not promote it to canonical ETF source. The current mapper intentionally blocks its ETF rows. Next source work is to resolve these semantics and compare the material discrepancies against a defensible primary snapshot; only then consider a source-priority change. No database writes or scenario-state changes were made.
+
+
+## Candidate artifact verification and explicit cross-check disposition — 2026-10-14
+
+The latest read-only capture artifact was inspected field by field against its raw Kraken response. The SHA-256 matched across raw body, manifest and candidate; the selected price and source trade timestamp matched the raw trade row; and the stable source-row key was reproducible from that row. BTC Scenario Readiness Gate #197 passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38608820923. Capture run #64 passed and produced one normalized canonical candidate plus five explicitly blocked entries: https://github.com/olegsh247-stack/Crypto/actions/runs/38608794818.
+
+The blocked entries now explain why the other exchanges are not substituted: Binance/Bybit requests failed from the runner, while OKX succeeded but quotes BTC in USDT rather than USD. The two ETF feeds remain blocked until reporting-date/publication semantics and lineage are accepted. No production writes or scenario-state changes were made.
