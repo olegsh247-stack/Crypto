@@ -723,3 +723,15 @@ Reviewed the provider documentation instead of inferring timestamp or source beh
 **Resulting next step:** implement fixture-based source-contract tests and adapter mapping for the existing BTC candidates, beginning with Kraken and Farside completeness; keep source/metric registries unchanged until the contracts and terms are explicit. DXY stays blocked pending an authorized exact feed. No live target-database read-only path was available in this session, so runtime source registration remains unverified. No database writes, scenario/monitoring writes, or PR merge occurred.
 
 Official references: [Kraken Post-Trade API](https://docs.kraken.com/api/docs/rest-api/get-post-trade); [Mempool.space REST API](https://mempool.space/docs/api/rest); [Farside all-data table](https://farside.co.uk/bitcoin-etf-flow-all-data/); [ICE DXY data catalog](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices); [Federal Reserve broad USD index](https://fred.stlouisfed.org/series/DTWEXBGS).
+
+
+### 2026-10-14 — fixture-based BTC source-contract checks
+
+Implemented on the PR branch:
+
+- `scripts/btc-source-contracts.mjs` adds pure, offline normalizers for the existing Kraken legacy Trades tuple shape and already-parsed Farside rows. They do not fetch data, read the clock, connect to PostgreSQL, or persist anything.
+- Kraken normalization validates price/volume/epoch fields, selects the latest source trade timestamp, and keeps `observed_at` separate from caller-supplied `retrieved_at`.
+- Farside classification distinguishes complete numeric candidate rows, incomplete rows, all-unreported rows, and invalid rows. Dashes/blanks never become zero; even a numeric displayed total is rejected as a candidate if a constituent column is missing. The source publication time remains null.
+- `scripts/btc-source-contracts.test.mjs` covers these cases and is wired into BTC Scenario Readiness Gate.
+
+These tests enforce the source semantics found in official provider documentation and observed table structure; they do **not** certify a live adapter or target-database registration. The existing ETF candidate remains on hold until a versioned session-lag/calendar/revision contract is approved and implemented. DXY remains blocked pending an exact, permitted feed. No source/metric registry, database row, scenario/monitoring state, score, probability, or published snapshot was changed. PR #82 remains open and unmerged.
