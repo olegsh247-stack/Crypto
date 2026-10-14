@@ -41,6 +41,10 @@ export function prepareBtcObservationCandidates(manifest) {
         || !Number.isFinite(Number(source.latest_trade_price_usd_per_btc))) reasons.push("price_missing_or_invalid");
       if (!validIso(source.latest_trade_observed_at) || source.latest_trade_observed_at !== source.observed_at) reasons.push("source_observation_timestamp_missing_or_inconsistent");
       if (!validIso(source.retrieved_at)) reasons.push("retrieval_timestamp_missing_or_invalid");
+      if (validIso(source.latest_trade_observed_at) && validIso(source.retrieved_at)
+        && Date.parse(source.latest_trade_observed_at) > Date.parse(source.retrieved_at)) {
+        reasons.push("source_observation_timestamp_after_retrieval");
+      }
       if (typeof source.source_row_key !== "string" || !source.source_row_key.trim()) reasons.push("source_row_key_missing");
       const hash = source.source_payload_sha256 ?? source.body_sha256;
       if (typeof hash !== "string" || !SHA256_RE.test(hash)) reasons.push("source_payload_sha256_missing_or_invalid");
