@@ -96,3 +96,8 @@ A candidate can be promoted only after all checks below pass:
 ### Follow-up — reward-stats candidate (2026-10-14)
 
 The upstream query for `/api/v1/mining/reward-stats/:blockCount` aggregates the latest N rows marked non-stale and returns min/max heights, total reward, total fees and transaction count. It does not return the full height list, and the query alone does not establish consecutive-height coverage. The public REST summary does not define the payload's numeric units or sufficiently certify `reward` semantics. Keep this endpoint **candidate only**; fee/subsidy remains blocked until deployed-version parity, units, exact canonical height coverage, reorg handling and the protocol-subsidy denominator are verified. No ratio or method ID approved.
+
+
+### Reward-stats response-schema follow-up — 2026-10-14
+
+The official API example for GET /v1/mining/reward-stats/:blockCount shows startBlock, endBlock, and string-valued totalReward, totalFee, and totalTx, but does not explicitly specify the units of the sums. Example magnitudes alone do not establish a canonical unit. The upstream query selects up to N non-stale rows and returns min/max height; it does not prove every height is present and consecutive. Keep this endpoint as a candidate only until deployed-version parity, field units/semantics, exact canonical height coverage, reorg handling, and the protocol-subsidy denominator are verified. No ratio/method ID approved.
