@@ -648,11 +648,13 @@ export function normalizeKrakenHourlyOhlc(payload, {
     status: "CLOSED_HOURLY_CANDLE_CANDIDATE",
     window_start: new Date(windowStartMs).toISOString(),
     window_end: new Date(windowStartMs + 3_600_000).toISOString(),
-    observed_at: null,
+    // A completed candle's logical observation window ends at bar_end_at.
+    // This is not a claim about when Kraken published the row.
+    observed_at: new Date(windowStartMs + 3_600_000).toISOString(),
     bar_end_at: new Date(windowStartMs + 3_600_000).toISOString(),
     source_published_at: null,
-    retrieved_at: retrievedAt ?? null,
-    timestamp_semantics: "bar_end_at is the scheduled end of the selected hourly candle, not a provider publication timestamp; retrieved_at is capture time only",
-    blockers: ["PROVIDER_PUBLICATION_TIMESTAMP_UNAVAILABLE", "TERMS_AND_RUNTIME_ACCESS_NOT_CLEARED"],
+    retrieved_at: retrievedAt,
+    timestamp_semantics: "observed_at/bar_end_at marks the scheduled end of the completed candle's observation window; source_published_at is unknown; retrieved_at is capture time only",
+    blockers: ["TERMS_AND_RUNTIME_ACCESS_NOT_CLEARED"],
   };
 }
