@@ -676,7 +676,7 @@ The repository inspection is documented in [Source Architecture — Current-Stat
 
 Отдельно выводятся предупреждения, но пока не блокируется сборка, если конкретная метрика ссылается на общий placeholder или источник со статусом `to_validate`. Первый фактический результат текущего реестра выявил такие места:
 - `market.primary` используется метриками `market.futures_open_interest`, `market.perpetual_funding`, `market.options_open_interest`;
-- `macro.primary` используется метрикой `macro.dxy`.
+- `macro.primary` используется метриками `macro.dxy` и `macro.us_10y_yield`.
 
 Это реальные нерешённые контракты, а не доказательство работающих адаптеров. Я не заменял их догадкой и не активировал источники: `macro.dxy` остаётся заблокированным; рыночные метрики с `market.primary` требуют выбора и проверки конкретного провайдера до принятия данных.
 
