@@ -141,6 +141,16 @@
       "reliability": "to_validate",
       "access_method": "ICE Data API / ICE Connect / licensed data delivery; access unconfirmed",
       "notes": "ICE is the administrator of DXY and documents intraday and daily data products. This URL is product documentation, not a data endpoint. No project-accessible feed, credentials/terms, response schema or daily close observation contract has been accepted. Candidate only; do not add to macro.dxy source_priority or allow it through readiness until access and timestamp semantics are verified."
+    },
+    {
+      "source_id": "institutional.sosovalue",
+      "name": "SoSoValue ETF Summary History — public API candidate",
+      "type": "institutional",
+      "url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "REST API with x-soso-api-key",
+      "notes": "Official API candidate: GET https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US (date-range/limit parameters documented). Returns daily aggregate total_net_inflow in USD and trading date only; supports only the most recent month and excludes non-trading days. API key required. Documentation does not establish an exact publication timestamp or revision/finalization guarantee. Candidate only; not in institutional.etf_net_flow source_priority and not allowed by readiness until access, response schema, timestamp semantics, revision policy and reconciliation are verified."
     }
   ]
 }
