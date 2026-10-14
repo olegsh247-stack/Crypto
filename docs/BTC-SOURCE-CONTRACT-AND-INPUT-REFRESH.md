@@ -373,3 +373,16 @@ The metric registry no longer lists generic `macro.primary` as canonical for `ma
 The detailed decision and acceptance gates are in [BTC-DXY-SOURCE-CONTRACT-2026-10-14.md](data-review/BTC-DXY-SOURCE-CONTRACT-2026-10-14.md). The required observation contract keeps the ICE index business date (`period_start`), actual provider timestamp (`observed_at`), and our retrieval time (`retrieved_at`) separate. A provider-supplied update timestamp must not be invented; the endpoint and current methodology must be verified against an actual authorized feed before acceptance.
 
 This is registry/documentation/test hardening only. The runtime DXY allowlist remains empty and BTC remains `not_evaluable`. No production data or scenario state was changed.
+
+
+### Farside ETF aggregate reconciliation — parser v2
+
+The read-only HTML parser now reports both the provider's displayed aggregate and the calculated sum of all 12 per-fund values when every fund value is present:
+
+- `calculated_fund_sum_usd_million`
+- `fund_sum_minus_reported_total_usd_million`
+- `reconciliation_status`: `MATCHES_DISPLAY_ROUNDING`, `MATERIAL_DIFFERENCE`, `INCOMPLETE`, or `UNREPORTED`.
+
+The parser uses a diagnostic maximum rounding envelope of **0.65 USD million**: twelve fund values displayed to one decimal can each contribute up to 0.05m of rounding, and the displayed aggregate can contribute another 0.05m. This is a transparent screening threshold, not an ingestion approval or a guarantee that source values are correct. Rows outside it stay visibly discrepant; the parser never adjusts a fund value or overwrites the provider total to force a match. Rows with missing fund values are not assigned a calculated sum, and all-dash placeholder rows remain unreported rather than zero observations.
+
+The parser still does not infer `observed_at`, publication time, finalization, or revision from the reporting date, HTTP Date, retrieval time, or response headers. Those remain separate blockers for accepting ETF observations.
