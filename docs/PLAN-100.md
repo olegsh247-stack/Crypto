@@ -1364,3 +1364,12 @@ The read-only staging workflow now runs `prepare-btc-observation-candidates.mjs`
 The captured Kraken point was 81,735.9 USD/BTC at 2026-10-14T17:36:36.135Z. It is a review artifact only and was not inserted. OKX returned a BTC-USDT cross-check; Binance HTTP 451, Bybit HTTP 403 and Farside HTTP 403 were observed from the GitHub runner only, not treated as proof of global source unavailability. TFTC returned 707 JSON rows but remains an unapproved ETF candidate and was not normalized as canonical flow input.
 
 **Next in Plan 100:** review the produced artifact's field-by-field mapping, then resolve ETF row-level reporting dates/publication semantics and source lineage. Define logical idempotency/revision behavior before any ingestion. BTC remains `not_evaluable`; no scenario or state was written.
+
+
+## One-time TFTC ETF candidate audit — 2026-10-14
+
+Inspected the raw JSON in the read-only staging artifact, rather than relying only on its 707-row count. The audit is saved at `docs/data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md`.
+
+Findings: 707 unique dated rows (2024-01-11–2026-10-13), but no row-level observation/publication timestamp or explicit revision/finalization policy; 16 rows have zero aggregate flow and no per-fund breakdown/assets; and 33 rows have aggregate-vs-per-fund differences above $1 million, with a largest difference of $30.65 million. These are unresolved source-contract issues, not reasons to invent timestamps or silently treat missing/holiday rows as zero. The declared lineage is mixed across SoSoValue, Farside-tabulated disclosures and mempool.space.
+
+**Decision:** TFTC remains a reconciliation candidate only. Do not promote it to canonical ETF source. The current mapper intentionally blocks its ETF rows. Next source work is to resolve these semantics and compare the material discrepancies against a defensible primary snapshot; only then consider a source-priority change. No database writes or scenario-state changes were made.
