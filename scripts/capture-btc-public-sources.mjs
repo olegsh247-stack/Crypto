@@ -290,8 +290,9 @@ await capture({
 });
 
 // Official Farside all-data page is captured separately as an access/reconciliation
-// diagnostic. The runtime source allowlist remains restricted to /btc/ until this
-// alternate endpoint and its parser are reviewed; this is not a source-priority change.
+// diagnostic. The read-only readiness gate recognizes this official URL under the same
+// source identity, but ETF rows remain blocked from ingestion pending timestamp/revision
+// semantics and reconciliation acceptance; this is not a source-priority change.
 await capture({
   name: "farside-btc-etf-all-data-page",
   metricId: "institutional.etf_net_flow",
@@ -300,7 +301,7 @@ await capture({
   parse: body => ({
     html_characters: body.length,
     ...parseFarsideEtfTable(body),
-    note: "Official Farside all-data page captured for read-only access/reconciliation diagnostics only; row-level reporting dates and displayed fund totals are parsed, but no publication timestamp is inferred and this URL is not yet in the canonical runtime allowlist."
+    note: "Official Farside all-data page captured for read-only access/reconciliation diagnostics only; row-level reporting dates and displayed fund totals are parsed, but no publication timestamp is inferred. Readiness recognizes this official URL, while ingestion remains blocked pending timestamp/revision and reconciliation acceptance."
   })
 });
 
