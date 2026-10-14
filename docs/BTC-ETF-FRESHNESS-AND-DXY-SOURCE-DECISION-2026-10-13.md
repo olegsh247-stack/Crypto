@@ -137,3 +137,8 @@ No database access or writes, registry changes, scenario/monitoring changes, or 
 The source-contract module now evaluates ETF row freshness against an explicit caller-supplied trading-session calendar and explicit `maxSessionLag`. No implicit lag limit is selected. The helper never manufactures `observed_at`, rejects incomplete constituent rows, rejects dates absent from the supplied calendar, and requires strict real calendar dates. Fixture tests cover fresh-within-policy, stale, incomplete, missing-calendar and invalid-date cases.
 
 This is a contract primitive only. Before activation, the project must identify and document the authoritative session-calendar source and choose a lag threshold based on the Farside update behavior and expected review cadence. Until those choices are explicit, the ETF candidate remains non-canonical and cannot drive scoring or scenario state.
+
+
+## 2026-10-14 — exchange calendar input
+
+The 2026 ETF session calendar is now sourced from the published NYSE and Nasdaq schedules, not weekday-only assumptions. Full-day closures are excluded; early-close dates remain sessions. Implementation: `scripts/us-equity-session-calendar.mjs`. It intentionally supports only 2026 and rejects other years until their official calendars are added. The freshness helper still requires an explicit lag threshold and is not connected to the canonical adapter. Official sources: [NYSE calendar](https://www.nyse.com/trade/hours-calendars), [Nasdaq calendar](https://www.nasdaq.com/market-activity/stock-market-holiday-schedule).
