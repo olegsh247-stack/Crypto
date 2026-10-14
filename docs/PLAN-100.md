@@ -803,3 +803,10 @@ Reviewed the official [Mempool REST API documentation](https://mempool.space/doc
 - The candidate capture validates block heights/hashes/timestamps, fee/reward units, expected subsidy, continuity and stable tip anchor. Failures fail closed; there is no automatic fallback.
 - Endpoint-specific quota, durable service-level availability, source publication timestamp and payload redistribution/retention rights are not established by the documentation reviewed. These remain explicit limits for any hosted/production reliance.
 - The completed UTC-day ratio remains the proposed persisted contract for the registry's daily cadence; the rolling 144-block ratio remains diagnostic-only. No metric registry change, source activation, production database write, scenario/monitoring write, or deployment was performed.
+
+
+### 2026-10-14 — Kraken official documentation-first review
+
+Reviewed the official [Kraken Post-Trade API reference](https://docs.kraken.com/api/docs/rest-api/get-post-trade). It documents `/0/public/PostTrade`, with trade-match and publication timestamps, a latest-trade cursor, explicit symbol/time filters, and a 1000-row maximum. The current candidate parser instead uses legacy `/0/public/Trades?pair=XBTUSD`; the reviewed reference does not establish that legacy response's exact schema. The two endpoints must not be treated as interchangeable, and no silent endpoint migration is authorized.
+
+Detailed finding recorded in [Source Architecture Current State](SOURCE-ARCHITECTURE-CURRENT-STATE-2026-10-14.md). Next narrow spot-price gate: compare the legacy and documented response contracts and timestamp meanings against official documentation and safe fixtures; choose an endpoint only after that comparison. Keep spot-price candidates unaccepted and do not change source priority or runtime wiring in this step.
