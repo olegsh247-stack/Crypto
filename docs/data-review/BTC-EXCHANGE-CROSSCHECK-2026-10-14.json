@@ -88,7 +88,8 @@
     "TFTC remains an unapproved mirror candidate; no source priority was changed.",
     "DXY remains blocked until a specific accessible authorized feed and observation-time convention are approved.",
     "HTTP Date/Last-Modified/ETag/cache headers are response metadata, not metric observed_at or proof of provider revision.",
-    "No observations were ingested; no production database, scenario state, monitoring state or probabilities were changed."
+    "No observations were ingested; no production database, scenario state, monitoring state or probabilities were changed.",
+    "Official Binance market-data-only endpoint https://data-api.binance.vision/api/v3/trades?symbol=BTCUSDT&limit=1000 is accessible from the GitHub runner (HTTP 200), while api.binance.com returns HTTP 451; this adds a reproducible cross-check path, not a canonical USD/BTC source. Bybit's official recent-trade endpoint still returns runner-specific HTTP 403."
   ],
   "latest_capture": {
     "workflow": "BTC Public Source Staging (Read Only)",
@@ -275,5 +276,72 @@
         "decision": "UNREPORTED_PLACEHOLDER; never map to numeric zero observation."
       }
     }
+  },
+  "followup_capture": {
+    "workflow": "BTC Public Source Staging (Read Only)",
+    "run_number": 69,
+    "run_id": 38618817154,
+    "url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154",
+    "artifact_id": 11920754280,
+    "artifact_url": "https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154/artifacts/11920754280",
+    "artifact_sha256": "9ee840277935cd3423fb7c6970414d6a71e915098089da4e7be5a8a3a9af06f9",
+    "captured_at": "2026-10-14T18:52:10Z",
+    "result": "success",
+    "purpose": "Read-only source capture to test official Binance market-data-only domain; no production database access or writes.",
+    "sources": [
+      {
+        "source_id": "market.kraken",
+        "name": "Kraken XBT/USD latest trade",
+        "status": "CAPTURED",
+        "http_status": 200,
+        "unit": "USD/BTC",
+        "latest_trade_price": 81670,
+        "observed_at": "2026-10-14T18:52:10.633Z",
+        "role": "Review-only canonical price candidate; not accepted into production."
+      },
+      {
+        "source_id": "market.binance",
+        "name": "Binance BTCUSDT via api.binance.com",
+        "status": "FAILED",
+        "http_status": 451,
+        "role": "Runner-specific access restriction; alternative official market-data domain succeeds."
+      },
+      {
+        "source_id": "market.binance",
+        "name": "Binance BTCUSDT via data-api.binance.vision",
+        "status": "CAPTURED",
+        "http_status": 200,
+        "unit": "USDT/BTC",
+        "latest_trade_price": 81752,
+        "observed_at": "2026-10-14T18:52:18.384Z",
+        "role": "Independent cross-check candidate; not canonical USD/BTC."
+      },
+      {
+        "source_id": "market.okx",
+        "name": "OKX BTC-USDT latest trade",
+        "status": "CAPTURED",
+        "http_status": 200,
+        "unit": "USDT/BTC",
+        "latest_trade_price": 81749.9,
+        "observed_at": "2026-10-14T18:52:17.813Z",
+        "role": "Independent cross-check candidate; not canonical USD/BTC."
+      },
+      {
+        "source_id": "market.bybit",
+        "name": "Bybit BTCUSDT latest trade",
+        "status": "FAILED",
+        "http_status": 403,
+        "role": "Runner-specific access restriction; does not prove the source is globally unavailable."
+      }
+    ],
+    "comparison": {
+      "binance_usdt_per_btc": 81752,
+      "okx_usdt_per_btc": 81749.9,
+      "absolute_difference_usdt": 2.1,
+      "relative_difference_percent_approx": 0.00257,
+      "note": "Near-simultaneous exchange cross-check only. USDT is not silently treated as USD; these values are not averaged and do not replace Kraken USD/BTC."
+    },
+    "production_database_accessed": false,
+    "production_writes_performed": false
   }
 }
