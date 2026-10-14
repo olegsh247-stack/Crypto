@@ -170,3 +170,14 @@ The upstream implementation of `/api/v1/mining/blocks/fees/:timePeriod` computes
 A better candidate to inspect next is Mempool's `/api/v1/mining/reward-stats/144`: upstream code selects the most recent 144 non-stale block rows and returns their minimum/maximum heights plus summed `reward` and `fees`. Before adopting it, verify the public response schema and units, confirm `reward` means total coinbase reward including fees in the deployed version, check that the selected heights are consecutive/canonical and handle reorgs, and document the exact denominator. No ratio has been calculated and no method ID has been approved.
 
 **Disposition:** source semantics are better understood, but both inputs remain blocked for acceptance pending deployment parity/currentness (hashrate) and schema/unit/height validation (fee/subsidy). No live API request, DB read/write, ingestion, scenario evaluation, monitoring write, or probability change occurred.
+
+
+## 4E. Reward-stats candidate review — 2026-10-14 (source-code only)
+
+Reviewed the upstream implementation of `BlocksRepository.$getBlockStats(blockCount)`, called by `/api/v1/mining/reward-stats/:blockCount`. It selects rows where `stale = 0`, orders by height descending, limits the selection to the requested count, then returns `startBlock = MIN(height)`, `endBlock = MAX(height)`, `totalReward = SUM(reward)`, `totalFee = SUM(fees)`, and `totalTx = SUM(tx_count)`.
+
+This is a better-structured candidate than the time-bucketed fees endpoint, but it is **not accepted**. The query returns only min/max heights, not the complete selected height list, and does not itself prove the requested rows are consecutive or that the public deployment matches the reviewed source. The REST documentation describes reward stats generally but does not specify numeric units or enough field semantics to independently certify `totalReward` as a BTC-denominated total coinbase reward. The dashboard's human-readable BTC display is not a unit contract for this API payload.
+
+Before approval, verify deployed-version parity; capture and validate the actual public response schema only in a separately authorized capture step; establish units for both sums; prove the selected height set is consecutive and canonical (or use a block-level approach that makes this auditable); define reorg/revision handling; and specify the protocol subsidy for each exact height/window. Do not treat `totalReward - totalFee` as a substitute for a documented subsidy series without validating the provider's units and reward semantics. No ratio or methodology ID is approved.
+
+No endpoint was called in this review. No live data was fetched, no database was accessed or written, and no scenario, monitoring event, or published probability was changed. BTC remains `not_evaluable`.
