@@ -97,3 +97,17 @@ A newer immutable capture resolves the runner access issue without changing sour
 
 This fixes the *transport endpoint* blocker and makes row parsing reproducible. It does **not** satisfy the ETF timestamp/revision gate. The captured reporting date identifies the session, not when the provider published/finalized the value; HTTP Date is response metadata. Keep ETF candidates blocked until a defensible observation-time/revision contract exists.
 
+
+
+## 8. Fresh comparable capture and automated cross-source diagnostic — 2026-10-14 19:18 UTC
+
+A fresh read-only capture now includes the official Farside all-data page and TFTC JSON in the same staging run, so both payloads and their capture metadata are retained together.
+
+- Workflow: [BTC Public Source Staging #83](https://github.com/olegsh247-stack/Crypto/actions/runs/38622568433), artifact ID `11922448792`.
+- The artifact's Farside and TFTC raw response files both match their manifest SHA-256 values. The normalized output has 14 Farside reporting rows, 10 dates common with TFTC's captured recent window, one separate Kraken USD/BTC review candidate, and zero production database/write flags.
+- The normalizer now emits `etf_cross_source_comparisons`, including both payload hashes, per-date aggregate values, the signed delta, differing fund-level values, and the explicit decision `DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE`. The manifest's actual TFTC field name is `recent_days_in_last_14_days`; a regression test now exercises this real field name.
+- The 7 October discrepancy is reproduced in the same staging artifact: Farside `-484.9m`, TFTC `-487.0674115m`, delta `-2.1674115m`. BRRR differs by `-2.114298m`; other visible fund deltas are much smaller. The other nine overlapping dates fall within the provisional 0.65m screening band.
+- The 0.65m value is only a triage threshold reused for diagnostic sorting; it is **not** proof that two sources are equivalent, not a provider precision guarantee for TFTC, and not a source acceptance rule. A delta outside the band does not establish which source is wrong.
+- Readiness Gate #212 and VPS Build Rehearsal #1218 passed on the tested code/test HEAD `7c65e90`: https://github.com/olegsh247-stack/Crypto/actions/runs/38622568340 and https://github.com/olegsh247-stack/Crypto/actions/runs/38622568357. The later Plan 100 documentation commit is being checked by VPS Build Rehearsal #1219: https://github.com/olegsh247-stack/Crypto/actions/runs/38622673801.
+
+**Decision unchanged: HOLD.** This closes the automation/visibility gap for cross-source comparison but does not establish provider revision identity, publication time, or finalization. Do not select TFTC over Farside, overwrite BRRR, ingest ETF rows, or evaluate the BTC scenario using this input.
