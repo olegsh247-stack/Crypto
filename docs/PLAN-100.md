@@ -681,3 +681,21 @@ The repository inspection is documented in [Source Architecture — Current-Stat
 Это реальные нерешённые контракты, а не доказательство работающих адаптеров. Я не заменял их догадкой и не активировал источники: `macro.dxy` остаётся заблокированным; рыночные метрики с `market.primary` требуют выбора и проверки конкретного провайдера до принятия данных.
 
 Проверки не утверждают, что источник реально зарегистрирован в target DB или что адаптер доступен. Это структурный CI-контроль JSON-контрактов и раннее предупреждение о placeholder-источниках. Target DB не подключалась, записи/ingestion и scenario/monitoring state не менялись. Результат CI для нового HEAD ожидается отдельно; успешный прогон заранее не заявляется.
+
+
+### 2026-10-14 — source-registry CI и fail-closed BTC candidate pipeline
+
+На PR #82 добавлены автоматические проверки shared registry и frozen BTC staging manifest:
+
+- `scripts/validate-source-metric-registries.mjs` проверяет уникальность source/metric IDs, обязательные единицы, заполненность `source_priority`, разрешимость ссылок и формат URL. Generic/unvalidated источники выводятся как предупреждения, а не выдаются за работающие адаптеры.
+- `scripts/btc-candidate-staging.test.mjs` закрепляет `NO_INSERTS_AUTHORIZED`, нулевые счётчики записей и отсутствие сценарных/monitoring writes для frozen candidate manifest.
+- Интеграционный тест пропускает этот manifest через настоящий BTC readiness gate и pure scenario evaluator. Текущий candidate набор корректно остаётся `not_evaluable`; сценарий не вычисляется, persistence запрещён.
+
+**Проверки на commit `3a59cbb59a44061078e4538c3fefebe1e71175e2`:**
+- [BTC Scenario Readiness Gate #38535709836](https://github.com/olegsh247-stack/Crypto/actions/runs/38535709836) — success, 27 тестов в сумме, включая staging guard и fail-closed интеграцию.
+- [BTC Block Window Validation #38535709775](https://github.com/olegsh247-stack/Crypto/actions/runs/38535709775) — success; live capture/public-source capture не запускались PR-событием.
+- [VPS API Build Rehearsal #38535709757](https://github.com/olegsh247-stack/Crypto/actions/runs/38535709757) — success на disposable PostgreSQL, включая build/E2E/миграционный rehearsal; это не аудит актуальной target DB.
+
+Структурная проверка выявляет два семейства unresolved placeholder sources: `market.primary` для futures open interest/perpetual funding/options open interest; `macro.primary` для DXY и US 10Y yield. Не заменять их произвольными источниками. Target DB не подключалась; ingestion, production writes, scenario/monitoring writes и PR merge не выполнялись.
+
+**Следующий продуктовый шаг:** строить детерминированную нормализацию BTC source captures в frozen candidate manifest с source-declared observation/window semantics, raw hash и revision handling. Сохранять candidate-only/no-write режим. Реальный BTC scenario остаётся заблокирован до свежего read-only target-runtime audit, решения по ETF publication/session time, принятия completed-UTC-day fee/subsidy контракта и выбора разрешённого DXY источника. Не расширять активы до сквозной приёмки BTC.
