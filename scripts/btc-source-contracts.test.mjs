@@ -159,3 +159,21 @@ test("2026 equity calendar fails closed for unsupported years and invalid dates"
   assert.throws(() => getUsEquitySessionDates2026({ from: "2026-02-31" }), /valid 2026 ISO date/);
   assert.throws(() => getUsEquitySessionDates2026({ from: "2026-10-14", through: "2026-10-13" }), /must not be after/);
 });
+
+
+test("ETF freshness contract consumes the official calendar fixture rather than a hand-written weekday list", () => {
+  const row = {
+    session_date: "2026-10-12",
+    source_row_status: "COMPLETE_CANDIDATE",
+    value: -65.4,
+  };
+  const calendar = getUsEquitySessionDates2026({ from: "2026-10-01", through: "2026-10-14" });
+  const result = evaluateFarsideSessionFreshness(row, {
+    retrievedAt: "2026-10-14T10:00:00Z",
+    expectedSessionDates: calendar,
+    maxSessionLag: 1,
+  });
+  assert.equal(result.status, "SESSION_LAG_WITHIN_POLICY");
+  assert.equal(result.session_lag, 1);
+  assert.equal(result.fresh, true);
+});
