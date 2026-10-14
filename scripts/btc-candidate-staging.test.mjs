@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { assessBtcScenarioReadiness } from "./btc-scenario-readiness.mjs";
+import { evaluateBtcScenarioV1 } from "./btc-scenario-direction.mjs";
 
 const manifestPath = resolve(import.meta.dirname, "../docs/data-review/BTC-CANDIDATE-STAGING-DRY-RUN-2026-10-13.json");
 
@@ -48,4 +50,38 @@ test("candidate values preserve source/window evidence and never infer ETF obser
   assert.ok(etf);
   assert.equal(etf.observed_at, null);
   assert.equal(etf.dry_run_classification, "HOLD_OBSERVATION_TIME_FRESHNESS_UNRESOLVED");
+});
+
+
+test("frozen BTC candidates cannot reach scenario evaluation until source, freshness and ETF-series gates pass", async () => {
+  const manifest = await loadManifest();
+  const observations = manifest.candidates.map((candidate) => ({
+    metric_id: candidate.metric_id,
+    observed_at: candidate.observed_at,
+    value_numeric: candidate.value,
+    freshness: candidate.observed_at ? "CURRENT" : "STALE",
+    source_id: candidate.source_id,
+    source_url: candidate.source_url,
+    // The last target-database audit is stale; runtime source registration has not been reverified.
+    source_registered: false,
+    unit: candidate.unit,
+    expected_unit: candidate.unit,
+    period_start: candidate.session_date ? candidate.session_date + "T00:00:00.000Z" : undefined,
+  }));
+  const readiness = assessBtcScenarioReadiness(observations, new Date("2026-10-14T08:30:00.000Z"));
+  assert.equal(readiness.status, "not_evaluable");
+  assert.equal(readiness.can_persist_scenario_state, false);
+  assert.ok(readiness.blockers.some((blocker) => blocker.metric_id === "macro.dxy"));
+  assert.ok(readiness.blockers.some((blocker) => blocker.metric_id === "institutional.etf_net_flow"));
+  const scenario = evaluateBtcScenarioV1({
+    readiness_status: readiness.status,
+    price_return_7d_pct: 0,
+    etf_net_flow_5d_usd_millions: 0,
+    hashrate_change_7d_pct: 0,
+    dxy_change_5d_pct: 0,
+    fee_subsidy_ratio: 0,
+  });
+  assert.equal(scenario.status, "not_evaluable");
+  assert.equal(scenario.can_persist_scenario_state, false);
+  assert.equal("scenario_type" in scenario, false);
 });
