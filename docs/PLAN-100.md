@@ -758,3 +758,11 @@ Checked the exchange-published calendars rather than guessing U.S. market holida
 Added `scripts/us-equity-session-calendar.mjs`, a deterministic 2026-only session calendar. It generates weekdays minus the ten official full-day closures, rejects invalid dates, and fails closed outside 2026 rather than silently extrapolating a calendar. Fixture tests cover Independence Day observed (July 3), Thanksgiving and the following early-close session (November 27), invalid dates, reversed ranges, and unsupported years. The ETF freshness helper can now be supplied this calendar's session list, but it still requires an explicit `maxSessionLag`; no operational threshold is chosen implicitly.
 
 Scope is deliberately limited: this calendar is a documented input to the contract, not yet connected to the Farside page parser or canonical runtime adapter. For 2027 onward the calendar must be extended from official exchange schedules and tested before those dates are eligible. No DB/source-registry/scenario writes and no merge.
+
+
+### 2026-10-14 — Farside HTML parser connected to candidate capture
+
+- Connected the read-only Farside capture to a header-driven HTML table parser. It identifies the Date, constituent-fund and Total columns by header, preserves raw HTML plus SHA-256, and records the newest dated row and raw cells.
+- The newest row is classified with the existing source contract; dashes and blanks remain missing, and a displayed numeric total cannot override missing constituent values. Unknown headers, malformed dates and column-count drift fail closed or are explicitly reported.
+- Session freshness is evaluated only for the supported 2026 calendar and only when `BTC_ETF_MAX_SESSION_LAG` is explicitly configured as a non-negative integer. Without that policy setting, candidate eligibility stays blocked. Retrieval time is never represented as source publication time; `observed_at` remains null.
+- Added HTML fixture tests for header mapping, dash/zero ambiguity, and parser fail-closed behavior. This is a read-only candidate artifact change, not approval to activate the ETF metric; no registry, database, scenario or monitoring state was changed.
