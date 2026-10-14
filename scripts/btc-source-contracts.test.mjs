@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyFarsideEtfRow, normalizeKrakenLegacyTrades } from "./btc-source-contracts.mjs";
+import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades } from "./btc-source-contracts.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
   const result = normalizeKrakenLegacyTrades({
@@ -91,4 +91,55 @@ test("source-contract helpers reject missing or invalid contract metadata", () =
     total: "1.0",
     fundColumns: ["IBIT"],
   }), /ISO calendar date/);
+});
+
+
+test("Farside session freshness uses supplied trading calendar, not retrieval time as observation time", () => {
+  const row = classifyFarsideEtfRow({
+    sessionDate: "2026-10-12",
+    funds: { IBIT: "-50.0", FBTC: "-10.0", BITB: "-5.4" },
+    total: "-65.4",
+    retrievedAt: "2026-10-14T10:00:00Z",
+    fundColumns: ["IBIT", "FBTC", "BITB"],
+  });
+  const result = evaluateFarsideSessionFreshness(row, {
+    retrievedAt: "2026-10-14T10:00:00Z",
+    expectedSessionDates: ["2026-10-09", "2026-10-12", "2026-10-13"],
+    maxSessionLag: 1,
+  });
+  assert.equal(result.status, "SESSION_LAG_WITHIN_POLICY");
+  assert.equal(result.session_lag, 1);
+  assert.equal(result.fresh, true);
+  assert.equal(result.observed_at, null);
+});
+
+test("Farside freshness blocks stale and incomplete rows", () => {
+  const stale = evaluateFarsideSessionFreshness({
+    session_date: "2026-10-09", source_row_status: "COMPLETE_CANDIDATE", value: 12,
+  }, {
+    retrievedAt: "2026-10-14T10:00:00Z",
+    expectedSessionDates: ["2026-10-09", "2026-10-12", "2026-10-13"],
+    maxSessionLag: 1,
+  });
+  assert.equal(stale.status, "STALE_SESSION_LAG");
+  assert.equal(stale.fresh, false);
+
+  const incomplete = evaluateFarsideSessionFreshness({
+    session_date: "2026-10-13", source_row_status: "INCOMPLETE_SESSION_ROW", value: null,
+  }, {
+    retrievedAt: "2026-10-14T10:00:00Z",
+    expectedSessionDates: ["2026-10-12", "2026-10-13"],
+    maxSessionLag: 1,
+  });
+  assert.equal(incomplete.status, "BLOCKED_ROW_INCOMPLETE");
+  assert.equal(incomplete.fresh, false);
+});
+
+test("Farside freshness requires an approved calendar input and rejects malformed dates", () => {
+  assert.throws(() => evaluateFarsideSessionFreshness({ session_date: "2026-10-12", source_row_status: "COMPLETE_CANDIDATE", value: 1 }, {
+    retrievedAt: "2026-10-14T10:00:00Z", expectedSessionDates: [], maxSessionLag: 1,
+  }), /approved calendar/);
+  assert.throws(() => evaluateFarsideSessionFreshness({ session_date: "2026-02-31", source_row_status: "COMPLETE_CANDIDATE", value: 1 }, {
+    retrievedAt: "2026-10-14T10:00:00Z", expectedSessionDates: ["2026-10-12"], maxSessionLag: 1,
+  }), /valid ISO date/);
 });
