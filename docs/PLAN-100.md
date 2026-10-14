@@ -1323,3 +1323,23 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - Added nullable fields to `observations` in `infrastructure/postgres/schema-v1.sql` and forward migration `infrastructure/postgres/migrations/2026-10-14-observation-source-provenance.sql`: `source_updated_at`, `retrieved_at`, `source_row_key`, `source_payload_sha256`, and `methodology_version`. Payload hashes are constrained to 64 hexadecimal characters.
 - Nullable fields preserve existing rows without fabricating old timestamps. No backfill, observation write, source-priority change, scenario evaluation, deployment or production database migration was performed.
 - Remaining work: verify the migration on the disposable PostgreSQL rehearsal; then wire collector/adapter mapping and provenance acceptance to these fields before claiming runtime provenance is complete. The new columns alone do not mean data has started populating them.
+
+
+## BTC provenance handoff — 2026-10-14 (continued)
+
+**Implemented on `main`:**
+
+- The BTC API's read-only readiness query now includes `period_start` plus the stored provenance fields `source_updated_at`, `retrieved_at`, `source_row_key`, `source_payload_sha256`, `methodology`, and `methodology_version`. This fixes the gap where the ETF reporting-date and new provenance contract existed in storage but were not passed to the readiness evaluator.
+- Readiness now fails closed for core BTC inputs without a valid, non-future retrieval timestamp or a stable non-empty source-row key. If a payload SHA-256 is supplied, it must be a 64-character hexadecimal digest. The selected offline input includes the provenance values for human review. ETF historical rows also require retrieval/key metadata and still require the explicit `period_start`.
+- BTC source capture now carries the raw-body SHA-256 under the storage-contract field name. The canonical Kraken trade capture also records the trade observation time, a deterministic row key, and versioned method identifier. Binance/OKX/Bybit remain quote-separated cross-check candidates; none becomes the canonical USD/BTC source by this change.
+- All changes are repository/CI-only. The capture script remains read-only; no observation ingestion, database write, scenario evaluation, scenario-state persistence, or deployment was performed.
+
+**Verification evidence:**
+
+- BTC Scenario Readiness Gate #193 passed on `9ec55675`: https://github.com/olegsh247-stack/Crypto/actions/runs/38607339069
+- VPS API Build Rehearsal #1155 passed on `7671a0ba`: https://github.com/olegsh247-stack/Crypto/actions/runs/38607351460
+- Read-only BTC Public Source Staging #62 passed on `d69f6e43`: https://github.com/olegsh247-stack/Crypto/actions/runs/38607581037
+- VPS API Build Rehearsal #1156 for `d69f6e43` was still running when this note was written; do not mark that exact head verified until it completes.
+- The BTC scenario remains **`not_evaluable`**: a canonical DXY source is not approved and current ETF provenance/reporting-time acceptance is not yet complete.
+
+**Next required work:** build and test a review-only mapping from captured source artifacts to the normalized observation contract, with no database writes. Do not start ingestion or change source priorities until that mapping, ETF reporting semantics, idempotency keys, and duplicate/revision rules have been reviewed.
