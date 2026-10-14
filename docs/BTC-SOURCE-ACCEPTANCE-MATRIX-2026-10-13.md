@@ -75,11 +75,13 @@ A candidate can be promoted only after all checks below pass:
 3. Actual source observation time or defined aggregation window in UTC, separate from retrieval time.
 4. Retrieval timestamp, endpoint/method, raw response or immutable artifact reference, and content hash.
 5. Metric-specific freshness check at evaluation time; invalid latest data must block readiness rather than silently fall back to older rows.
-6. Defined revision behavior and a deterministic logical observation key based on the source's actual observation window, not fetch time.
-7. Duplicate audit and dry-run diff that classifies inserts, no-ops, conflicting revisions, and rejected candidates. Do not delete or rewrite historical rows during this review.
+6. Exact approved source identity for each metric, in addition to generic registry membership. A registered fallback is not canonical until source priority is reviewed and changed.
+7. Defined revision behavior and a deterministic logical observation key based on the source's actual observation window, not fetch time.
+8. Duplicate audit and dry-run diff that classifies inserts, no-ops, conflicting revisions, and rejected candidates. Do not delete or rewrite historical rows during this review.
 
 ## Disposition and next action
 
+- The readiness implementation now fails closed on unapproved source IDs. `institutional.tftc` cannot pass as an ETF substitute, and DXY remains blocked because no specific source ID has been approved. The generic `macro.primary` source is not accepted as a DXY feed.
 - Current BTC dataset remains **`not_evaluable`**.
 - No source capture in this review is approved for production ingestion.
 - No observation, snapshot, scenario state, monitoring event, published probability, or historical row may be changed based on this document.
