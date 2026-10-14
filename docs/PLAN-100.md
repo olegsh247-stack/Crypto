@@ -1355,3 +1355,12 @@ The next handoff from raw capture to normalized input has been implemented witho
 - Mapping tests cover successful Kraken mapping, missing row/hash rejection, quote-unit separation and the ETF hold. BTC Scenario Readiness Gate #194 passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38607850897. VPS Build Rehearsal #1156 and read-only source capture #62 also passed on the source-capture commit: https://github.com/olegsh247-stack/Crypto/actions/runs/38607581397 and https://github.com/olegsh247-stack/Crypto/actions/runs/38607581037.
 
 **Remaining before any ingestion:** verify the current-head CI after workflow path alignment; validate the candidate artifact against the capture produced by CI; define the ETF row-level parser/reporting-date semantics and the logical idempotency/revision key; review the resulting candidates read-only. No ingestion, source-priority change, scenario evaluation or scenario-state write is authorized by these steps.
+
+
+## Capture-to-candidate CI rehearsal — 2026-10-14
+
+The read-only staging workflow now runs `prepare-btc-observation-candidates.mjs` against each captured manifest and uploads the raw source responses, manifest, and normalized candidate artifact together. BTC Public Source Staging #63 passed and reported **1 normalized Kraken candidate, 2 blocked ETF source entries**, with explicit no-production-access/no-write flags: https://github.com/olegsh247-stack/Crypto/actions/runs/38608092736. VPS Build Rehearsal #1164 also passed on code head `53c4b38d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38608092710.
+
+The captured Kraken point was 81,735.9 USD/BTC at 2026-10-14T17:36:36.135Z. It is a review artifact only and was not inserted. OKX returned a BTC-USDT cross-check; Binance HTTP 451, Bybit HTTP 403 and Farside HTTP 403 were observed from the GitHub runner only, not treated as proof of global source unavailability. TFTC returned 707 JSON rows but remains an unapproved ETF candidate and was not normalized as canonical flow input.
+
+**Next in Plan 100:** review the produced artifact's field-by-field mapping, then resolve ETF row-level reporting dates/publication semantics and source lineage. Define logical idempotency/revision behavior before any ingestion. BTC remains `not_evaluable`; no scenario or state was written.
