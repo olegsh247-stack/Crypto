@@ -1270,7 +1270,7 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - Updated tests to assert that missing hashrate or fee/subsidy data does not block the first scenario, while source-provenance validation still applies to required inputs.
 - Updated the metric registry to mark fee/subsidy ratio as manual and on-demand, with no active freshness expectation while deferred. The metric definition and source research are retained for possible later miner-economics work.
 - This is not a declaration that the scenario is ready: DXY source approval and ETF evidence gates remain. No probabilities, persisted scenario state, production data, ingestion, deployment or database state were changed.
-- VPS API / PostgreSQL / backup / E2E rehearsal #1122 passed after correcting the stale E2E assertion that still required fee/subsidy. The follow-up rehearsal #1123 for the documentation reconciliation is running; do not claim final green until it completes.
+- VPS API / PostgreSQL / backup / E2E rehearsals #1122, #1123, #1124, #1125 and #1126 passed after correcting the stale E2E assertion that still required fee/subsidy. The latest documented source-capture commit has a fresh rehearsal running; final current-head status must be checked before declaring the whole sequence green.
 
 
 ### Exchange price-source review — 2026-10-14
@@ -1280,3 +1280,11 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - The other exchanges' common spot pairs are BTC/USDT. USDT must not be silently treated as USD; compare those records separately unless an explicit, timestamp-aligned conversion contract or distinct metric is approved. Preserve venue, pair, units, event time, retrieval time and raw-payload lineage.
 - DXY remains blocked until a specific accessible provider endpoint and daily observation-time convention are approved. ICE is the index administrator, but no accessible project-ready feed has been accepted. Do not substitute a broad USD index.
 - Next: complete the read-only multi-exchange staging contract, validate canonical ETF evidence/access and DXY feed options, then run source/freshness/unit/duplicate checks. Only after all mandatory gates pass may the reviewed offline BTC rule be evaluated. No production ingestion, state persistence, probability change or deployment is included.
+
+### Read-only BTC exchange capture — 2026-10-14
+
+- The public-source capture workflow passed at [run #61](https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755); raw responses and the manifest are retained in [artifact 11912919926](https://github.com/olegsh247-stack/Crypto/actions/runs/38601923755/artifacts/11912919926).
+- Kraken captured an XBT/USD trade at 81,826.70 USD/BTC, observed 16:53:33.584 UTC. OKX captured a BTC-USDT trade at 81,914.10 USDT/BTC, observed 16:53:33.741 UTC. These are separate observations with different quote units; no synthetic quote or cross-unit spread was calculated.
+- Binance returned HTTP 451 and Bybit HTTP 403 from the GitHub runner; Farside returned HTTP 403. These are runner access results, not proof that the providers are universally unavailable. TFTC JSON returned HTTP 200 but remains an unapproved ETF mirror candidate.
+- Permanent capture summary: [docs/data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json). Source-contract interpretation and caveats are recorded in docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md.
+- Still blocked: canonical ETF input (source access, lineage and observation-time contract), DXY provider/time convention, and acceptance of the actual current price observation through the input gate. BTC stays not_evaluable. No database ingestion, production write, scenario state, monitoring event, probability update or deployment was performed.
