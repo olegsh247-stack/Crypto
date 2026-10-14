@@ -147,3 +147,26 @@ The capture artifact is [btc-block-window-review-38421354649](https://github.com
 - Rolling 144-block diagnostic: 0.0057881996 (about 0.578820%).
 
 The repository metric registry's `frequency: 1d` makes the completed UTC-day definition the recommended persisted observation contract. The 144-block value remains diagnostic-only. Both candidates remain unaccepted; no database or product state was changed.
+
+## 9. Contract reconciliation checkpoint — 2026-10-14
+
+The BTC fee/subsidy candidate is now pinned by a regression test to the repository's canonical metric registry. The test asserts that `security.fee_subsidy_ratio` remains `ratio`, has `frequency: 1d`, has a `48h` freshness window, and prioritizes only `network.primary`. It also asserts that the staged candidate matches the registry's unit and source while remaining `HOLD_CONTRACT_ACCEPTANCE`. This is a repository fixture/regression check; it does not authorize ingestion.
+
+### Input-gate status
+
+| Input | Current contract status | Blocking item before acceptance |
+|---|---|---|
+| `security.fee_subsidy_ratio` | Completed UTC-day arithmetic and source provenance are reproducible for 2026-10-12 | Formal candidate acceptance and independent read-only verification of runtime source registration; no production write authorized |
+| `market.spot_price` | Registry remains `15m`, freshness `1h`; Kraken hourly OHLC helper is fixture-only | **Cadence mismatch:** do not wire the hourly helper into a 15-minute contract. Choose a 15-minute documented candle contract or explicitly review a change to hourly before changing the registry |
+| `security.hashrate` | Registry is daily, freshness `48h`; documented upstream daily estimate semantics are available | Current candidate series and runtime source registration still require independent acceptance |
+| `institutional.etf_net_flow` | Registry is daily, freshness `36h`; canonical priority remains `institutional.primary` | Farside runner access returned HTTP 403; do not bypass it or promote TFTC automatically. Obtain an authorized access method and resolve publication-time/terms blockers |
+| `macro.dxy` | Registry is daily, freshness `48h` | `macro.primary` is not a specific DXY endpoint/close convention; select and document an authorized canonical provider before use |
+
+### Gate decision
+
+- **Fixture/regression tests:** the pinned block-window and candidate contract checks have passed on prior commits; the new registry-alignment test must pass CI on its own commit before it is considered verified.
+- **Live source access:** not established by these fixture tests; do not infer it.
+- **Runtime source registration:** not independently rechecked in the target database/runtime during this checkpoint.
+- **Production / scenario acceptance:** not approved. Keep BTC scenario readiness `not_evaluable`; do not create scenario state or monitoring events, change probabilities, ingest candidates, or alter source priority.
+
+Next implementation step after CI: resolve the spot-price cadence mismatch as a documented contract decision, then continue the remaining BTC inputs under the same source/time/unit/freshness contract. No provider calls or production writes are part of that documentation/test change.
