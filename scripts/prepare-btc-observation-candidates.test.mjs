@@ -160,3 +160,48 @@ test("normalizes Farside reporting rows while keeping publication time, provider
   assert.ok(placeholder.reasons.includes("unreported_placeholder_not_a_zero_observation"));
   assert.equal(placeholder.persistable, false);
 });
+
+
+test("flags material Farside versus TFTC ETF total deltas without approving either source", () => {
+  const result = prepareBtcObservationCandidates({
+    sources: [
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.primary",
+        url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        status: "CAPTURED",
+        source_payload_sha256: hash,
+        latest_rows: [{
+          period_start: "2026-10-07",
+          status: "REPORTED_CANDIDATE",
+          reported_total_usd_million: -484.9,
+          fund_flows: { BRRR: 0 },
+          reconciliation_status: "MATCHES_DISPLAY_ROUNDING"
+        }]
+      },
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.tftc",
+        url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
+        status: "CAPTURED",
+        source_payload_sha256: "c".repeat(64),
+        updated_through: "2026-10-13",
+        recent_days: [{
+          date: "2026-10-07",
+          netFlowUsd: -487067411.5,
+          perEtfUsd: { BRRR: -2114298 }
+        }]
+      }
+    ]
+  });
+  assert.equal(result.etf_cross_source_comparisons.length, 1);
+  const comparison = result.etf_cross_source_comparisons[0];
+  assert.equal(comparison.period_start, "2026-10-07");
+  assert.equal(comparison.source_a_total_usd_million, -484.9);
+  assert.equal(comparison.source_b_total_usd_million, -487.0674115);
+  assert.equal(comparison.delta_b_minus_a_usd_million, -2.1674115);
+  assert.equal(comparison.screening_status, "DELTA_EXCEEDS_SCREENING_BAND");
+  assert.equal(comparison.differing_fund_values_usd_million.BRRR, -2.114298);
+  assert.equal(comparison.decision, "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE");
+  assert.equal(result.candidates.length, 0);
+});
