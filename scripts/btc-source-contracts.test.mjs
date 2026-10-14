@@ -77,3 +77,17 @@ test("Farside rejects invalid numeric cells rather than silently treating them a
   assert.equal(row.source_row_status, "INVALID_ROW");
   assert.equal(row.value, null);
 });
+
+test("source-contract helpers reject missing or invalid contract metadata", () => {
+  assert.throws(() => normalizeKrakenLegacyTrades({
+    error: [],
+    result: { XXBTZUSD: [["100", "1", "1791905168"]] },
+  }, { retrievedAt: "not-a-time" }), /retrievedAt/);
+
+  assert.throws(() => classifyFarsideEtfRow({
+    sessionDate: "13-10-2026",
+    funds: { IBIT: "1.0" },
+    total: "1.0",
+    fundColumns: ["IBIT"],
+  }), /ISO calendar date/);
+});
