@@ -742,3 +742,10 @@ These tests enforce the source semantics found in official provider documentatio
 The read-only capture script now calls `normalizeKrakenLegacyTrades` instead of duplicating the tuple parsing logic. It retains the raw trade row and volume, maps the source epoch to `observed_at`, and records per-source `retrieved_at` after the response body has been read. The source capture remains candidate-only and still writes only local review artifacts; it does not connect to the database or persist product state.
 
 The readiness workflow now watches the capture script as well as the pure contract module and tests. Verification must be reported only for the workflow run on the resulting latest HEAD.
+
+
+### 2026-10-14 — ETF session-lag contract implemented as an explicit, non-activated policy
+
+Added `evaluateFarsideSessionFreshness` to the pure BTC source-contract module. It requires the caller to supply an approved list of expected trading-session dates and an explicit `maxSessionLag`; it does not guess weekends/holidays, does not infer a publication timestamp, and does not set `observed_at`. It blocks rows outside the supplied calendar, incomplete rows, and rows older than the chosen session-lag limit. Strict date validation rejects impossible calendar dates.
+
+Fixture tests now cover a complete row within an explicitly supplied lag limit, a stale row, an incomplete row, missing calendar input, and invalid dates. The limit is deliberately not defaulted: a policy owner must select it before operational use. This is a tested policy helper, not yet a production adapter or approval to activate ETF data. Runtime source registration and live DB state remain unverified. No DB or scenario/monitoring writes and no merge.
