@@ -1224,3 +1224,12 @@ The targeted API/Web contract gap has been ported to `main` in focused commits, 
 - Decision: keep this endpoint as a candidate only. Do not infer that `totalReward` is a verified BTC-denominated total coinbase reward from the REST summary alone, do not calculate a ratio from it, and do not approve a methodology ID. Required next checks: deployed-version parity, response schema and units, reward-versus-fees semantics, exact selected-height continuity/canonicality, reorg handling, and a defensible subsidy denominator for the same exact heights.
 - Hashrate timestamp semantics are clarified in source code but still need deployed-version parity and a fresh observation. ETF/Farside access and DXY source/time convention remain independent blockers.
 - No live endpoint was called; no data was refreshed, staged or written to a database; no scenario or monitoring state was evaluated or persisted. BTC remains `not_evaluable`.
+
+
+### Reward-stats response-schema follow-up — 2026-10-14
+
+- Rechecked CI: VPS API Build Rehearsal #1101, #1102 and #1103 all completed successfully: [#1101](https://github.com/olegsh247-stack/Crypto/actions/runs/38586798822), [#1102](https://github.com/olegsh247-stack/Crypto/actions/runs/38586810854), [#1103](https://github.com/olegsh247-stack/Crypto/actions/runs/38586823731). These are repository build/rehearsal checks only.
+- Reviewed Mempool's documented GET /v1/mining/reward-stats/:blockCount example. It returns startBlock, endBlock, and numeric-string fields totalReward, totalFee, totalTx; the documentation says it covers the past requested block count but does not state the units of the reward/fee sums. Example magnitudes are consistent with satoshis but are not an explicit unit contract, so do not hardcode that assumption.
+- The upstream SQL selects the most recent N rows with stale = 0, but returns only min/max height and sums. It does not prove all heights in the selection are consecutive. The query alone also does not establish deployed-version parity or the exact subsidy denominator.
+- Decision unchanged: endpoint remains a candidate, not an accepted source/method. No ratio calculated and no method ID approved. Next required evidence: explicit unit semantics from implementation/data model, public deployment parity, consecutive canonical heights, reorg/revision handling, and a protocol-subsidy schedule for those same heights. Hashrate, ETF/Farside and DXY blockers remain independent.
+- No live endpoint was called; no data was refreshed or written; BTC remains not_evaluable.
