@@ -636,3 +636,11 @@ Open PR #81 proposes a rolling 144-consecutive-block observation and therefore c
 - DXY remains blocked until an exact, stable, permitted source and observation-time convention are approved. A broad trade-weighted USD index is not interchangeable with DXY.
 
 **Current gate:** BTC remains `not_evaluable`; no candidate is approved for ingestion; no observation, scenario state, monitoring event, score, probability, or published snapshot was changed.
+
+### 2026-10-14 — validation result and DXY source follow-up
+
+- VPS API Build Rehearsal #863 passed on commit `29e619aeceb914efe8eaea9c50932d8eac494a1b`: build, migration bootstrap on disposable PostgreSQL, canonical BTC registry check, read-only provenance audit, idempotency/duplicate rehearsal, backup/restore, API/Worker E2E, BTC evidence lineage and admin boundary checks all passed. This is a disposable-environment rehearsal, not proof of current target-database contents.
+- BTC Block Window Validation #39 passed on the same commit for syntax and deterministic tests. Its live block-window capture and public-source capture steps were skipped on the PR-triggered run; therefore it adds no new live source evidence.
+- Official ICE materials were checked for DXY delivery and usage. ICE lists licensed data channels and states that DXY's formulation/values/methods are proprietary and require express written consent for use. No suitable public anonymous canonical API was established. Keep `macro.dxy` blocked unless an authorized feed and its terms are verified, or a distinct replacement metric is explicitly designed and reviewed. See [DXY source decision record](BTC-ETF-FRESHNESS-AND-DXY-SOURCE-DECISION-2026-10-13.md).
+
+**Next executable gate:** a real target-runtime read-only SQL audit still needs a verified least-privilege connection path. Until then, source registration and adapter acceptance remain blocked. No target DB connection, ingestion, observation write, scenario-state write, monitoring-event write, or PR merge occurred in this step.
