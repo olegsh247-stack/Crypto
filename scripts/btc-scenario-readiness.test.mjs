@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { assessBtcScenarioReadiness } from "./btc-scenario-readiness.mjs";
 
 const now = new Date("2026-10-12T12:00:00.000Z");
@@ -279,4 +280,21 @@ test("readiness result carries source provenance for offline review", () => {
   const etf = result.selected_inputs["institutional.etf_net_flow"][0];
   assert.ok(etf.retrieved_at);
   assert.ok(etf.source_row_key);
+});
+
+
+test("metric registry does not advertise a generic or unlicensed DXY source as canonical", () => {
+  const metricRegistry = JSON.parse(readFileSync("data/CryptoDataModel/registry/metric-registry.json", "utf8"));
+  const metrics = Array.isArray(metricRegistry) ? metricRegistry : metricRegistry.metrics;
+  const dxy = metrics.find(x => x.metric_id === "macro.dxy");
+  assert.ok(dxy, "macro.dxy must remain defined");
+  assert.deepEqual(dxy.source_priority, []);
+  assert.match(dxy.validation_rule, /blocked until an approved DXY feed/i);
+
+  const sourceRegistry = JSON.parse(readFileSync("data/CryptoDataModel/registry/source-registry.json", "utf8"));
+  const sources = Array.isArray(sourceRegistry) ? sourceRegistry : sourceRegistry.sources;
+  const ice = sources.find(x => x.source_id === "macro.ice_dxy_candidate");
+  assert.ok(ice);
+  assert.match(ice.notes, /not a public quote endpoint/i);
+  assert.match(ice.notes, /not in macro\.dxy source_priority/i);
 });
