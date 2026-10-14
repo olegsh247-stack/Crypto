@@ -140,7 +140,7 @@
       "priority": 2,
       "reliability": "to_validate",
       "access_method": "ICE Data API / ICE Connect / licensed data delivery; access unconfirmed",
-      "notes": "ICE is the administrator of DXY and documents intraday and daily data products. This URL is product documentation, not a data endpoint. No project-accessible feed, credentials/terms, response schema or daily close observation contract has been accepted. Candidate only; do not add to macro.dxy source_priority or allow it through readiness until access and timestamp semantics are verified."
+      "notes": "ICE is the administrator of DXY and documents intraday and daily products delivered through ICE Connect, ICE Data API, ICE Consolidated Feed/History and data files. The cited URL is product documentation, not a public quote endpoint. Access, license/redistribution terms, actual project-accessible feed, response schema, daily-close field and source timestamp semantics are unverified. Candidate only; not in macro.dxy source_priority and must fail readiness. Required candidate convention: store the actual source timestamp of the last DXY index level disseminated for that ICE index business day as observed_at; retain the index business date separately as period_start; store retrieval time independently as retrieved_at. Do not infer a timestamp from the retrieval time or from the date label."
     },
     {
       "source_id": "institutional.sosovalue",
