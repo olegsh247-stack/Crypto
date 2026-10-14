@@ -291,3 +291,16 @@ Farside remains the intended canonical source under the current contract, but it
 - Before any source-priority decision, compare at least five distinct completed US trading dates against Farside and TFTC, preserve raw payloads, identify revised/partial rows, confirm date/time conventions, quantify discrepancies, and document a deterministic rule for excluding unreported fund rows. No automatic source substitution.
 
 This candidate is potentially more machine-readable than a scraped page, but it is not yet accepted and does not remove the current ETF blocker.
+
+
+## 11. ETF reporting date is mandatory — 2026-10-14
+
+The read-only readiness gate now requires every ETF flow row to carry an explicit `period_start` representing the provider's logical trading/reporting date. It no longer falls back to `observed_at` to invent a session date. These fields have different meanings:
+
+- `period_start`: the completed ETF reporting/trading date that the flow value belongs to;
+- `observed_at`: the source observation/publication time, when defensible;
+- `retrieved_at`: when the capture process fetched the source.
+
+The latest row must have a valid reporting date no more than 14 days old, and must separately pass the existing 36-hour observation freshness gate. Historical rows count toward the five-session minimum only when their reporting date is explicit, valid, not future-dated, and inside the 14-day window. Missing reporting dates fail closed; duplicate rows are still deduplicated by logical reporting date, not by fetch time.
+
+A regression test removes `period_start` while leaving the observation timestamp current and confirms that ETF readiness is blocked. This is a contract/test change only: it does not backfill existing observations, access a database, or promote a source. Farside remains the intended canonical source; TFTC and SoSoValue remain unapproved candidates.
