@@ -97,3 +97,16 @@ The code validates the timestamp supplied as `observed_at`, but cannot by itself
 7. The offline BTC scenario can be reproduced from versioned inputs and methodology before any state persistence is considered.
 
 **Current status:** shared catalog exists; cross-asset metric model and operational source contracts are incomplete; BTC scenario remains blocked. This audit changes documentation only and does not accept any input for production ingestion.
+
+
+## Official Kraken documentation review — 2026-10-14
+
+Reviewed the official [Kraken API Center — Post-Trade Data](https://docs.kraken.com/api/docs/rest-api/get-post-trade) before changing or relying on the spot-price source contract.
+
+The reviewed current API reference documents `GET https://api.kraken.com/0/public/PostTrade`, with explicit `symbol`, `from_ts`, `to_ts`, and `count` parameters (maximum 1000); trade rows include price, symbol, matched-engine `trade_ts`, and `publication_ts`. It describes trades in ascending timestamp order and exposes a latest-trade cursor `last_ts`.
+
+The existing repository candidate path instead targets the legacy `/0/public/Trades?pair=XBTUSD` response and normalizes its array-shaped rows. These are not assumed interchangeable. The current official page reviewed does not document the legacy endpoint's exact payload shape, so the existing parser is not considered fully documented by this review alone. Do not silently switch endpoints or rewrite the parser: first compare both response contracts and timestamp semantics with official docs and safe fixtures, then make a separately reviewed adapter decision.
+
+The documented Post-Trade fields make an explicit distinction between trade-match time and publication time. Any future point-in-time BTC price candidate must retain which timestamp is used as `observed_at`, keep retrieval time separate, validate the requested BTC/USD symbol and price/unit, and record endpoint/version. The documentation review does not by itself establish a provider SLA, request quota for this workload, or permission to redistribute/retain raw payloads indefinitely; those remain open before hosted production reliance.
+
+No live endpoint migration, source-priority change, registry update, database access/write, scheduled collection, or scenario-state change was performed. Kraken spot remains candidate-only until the endpoint and timestamp contract are explicitly accepted.
