@@ -5,6 +5,8 @@ on:
     paths:
       - "scripts/capture-btc-public-sources.mjs"
       - "scripts/prepare-btc-observation-candidates.mjs"
+      - "scripts/parse-farside-etf-table.mjs"
+      - "scripts/parse-farside-etf-table.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -20,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test Farside ETF table parsing and placeholder handling
+        run: node --test scripts/parse-farside-etf-table.test.mjs
       - name: Capture public source responses for review only
         run: node scripts/capture-btc-public-sources.mjs
       - name: Prepare normalized observation candidates (review only)

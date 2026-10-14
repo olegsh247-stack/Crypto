@@ -6,6 +6,7 @@
  * Does not connect to PostgreSQL, ingest observations, or mutate scenario state.
  */
 import { mkdir, writeFile } from "node:fs/promises";
+import { parseFarsideEtfTable } from "./parse-farside-etf-table.mjs";
 import { join } from "node:path";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
@@ -266,7 +267,8 @@ await capture({
   url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
   parse: body => ({
     html_characters: body.length,
-    note: "Official Farside all-data page captured for read-only access/reconciliation diagnostics only; no row-level publication timestamp is inferred and this URL is not yet in the canonical runtime allowlist."
+    ...parseFarsideEtfTable(body),
+    note: "Official Farside all-data page captured for read-only access/reconciliation diagnostics only; row-level reporting dates and displayed fund totals are parsed, but no publication timestamp is inferred and this URL is not yet in the canonical runtime allowlist."
   })
 });
 
