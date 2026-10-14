@@ -184,3 +184,9 @@ Next implementation step after CI: resolve the spot-price cadence mismatch as a 
 This changes only the BTC repository metric contract and its regression test. It does **not** activate the collector, perform live requests, prove provider-use rights, verify runtime registration, write observations, or authorize scenario evaluation. Earlier notes saying the 15-minute registry cadence must be preserved are superseded by this explicit cadence decision; the remaining source terms/access/runtime gates still apply.
 
 If a later source offers a reliable 15-minute observation, it can be evaluated on its merits. Frequency should follow the selected source and accepted research method, while freshness remains independently defined.
+
+### Hourly candle timestamp semantics — 2026-10-14
+
+The fixture normalizer now sets `observed_at` to the **end of the completed candle's observation window** (`bar_end_at`). This is the logical timestamp of the hourly aggregate, not a claim that Kraken published the row at that instant. `source_published_at` remains null, and `retrieved_at` remains the actual capture time. The helper still blocks a missing capture timestamp, a capture before the scheduled candle close, an absent candle, or malformed/duplicate rows.
+
+This removes a false blocker that treated the absence of a separate publication timestamp as if the candle had no defensible observation window. It does not clear the independent terms/permitted-use, live access, runtime registration, or production acceptance gates. The timestamp interpretation is covered by a fixture regression test.
