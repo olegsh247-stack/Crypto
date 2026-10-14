@@ -947,3 +947,7 @@ Added fixture-only `normalizeKrakenHourlyOhlc` to:
 - fail closed if the requested completed candle is missing.
 
 This is not source activation. The helper does not perform network access and does not modify the registry, collector, cadence, scenario, or database. Terms/permitted use and runtime access remain blockers. Kraken's OHLC endpoint does not establish a publication timestamp; the scheduled bar end is not mislabeled as one. Fixture tests are added, and CI must validate this commit before the helper is treated as passing.
+
+### Kraken OHLC contract hardening — 2026-10-14
+
+A follow-up fixture review added a fail-closed guard: if the supplied capture time precedes the scheduled close of the requested hourly candle, the helper returns no value and blocks the candidate. A regression test also confirms duplicate candle start times are rejected. This is still fixture-only work; source rights, intended use, live access, runtime registration and end-to-end acceptance remain separate gates.
