@@ -1261,7 +1261,7 @@ The targeted API/Web contract gap has been ported to `main` in focused commits, 
 
 For the first BTC scenario, prioritize a verified price anchor, canonical completed-day ETF flow evidence, and a specifically sourced DXY observation because the existing thesis explicitly includes institutional and macro catalysts. Keep hashrate as supporting network-health evidence unless the scenario rules explicitly make it decisive. Defer fee/subsidy ratio and its aggregation implementation until a concrete research question requires it.
 
-This decision does **not** mean the scenario can be evaluated today: price data must be refreshed and validated through an approved capture process; ETF provenance/access and the DXY source contract remain blockers; and all input freshness, units, source lineage, reporting windows, duplicates and revision rules must pass. BTC remains not_evaluable. Do not alter published probabilities, persist scenario state, perform production ingestion, or change runtime required-input rules on the strength of this documentation decision alone. Before implementation, reconcile the metric registry, readiness gate and tests with this scope so they do not accidentally continue requiring a deferred indicator or silently drop evidence.
+This decision does **not** mean the scenario can be evaluated today: price data must be refreshed and validated through approved staging; ETF provenance/access and the DXY source contract remain blockers; and freshness, units, source lineage, reporting windows, duplicates and revision rules must pass. The scope change is implemented in the readiness gate, metric registry and tests; the VPS E2E assertion was also aligned with this scope. BTC remains not_evaluable. Do not alter published probabilities, persist scenario state, perform production ingestion or change database state as part of this work.
 
 
 ### BTC indicator scope implementation — 2026-10-14
@@ -1270,4 +1270,13 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - Updated tests to assert that missing hashrate or fee/subsidy data does not block the first scenario, while source-provenance validation still applies to required inputs.
 - Updated the metric registry to mark fee/subsidy ratio as manual and on-demand, with no active freshness expectation while deferred. The metric definition and source research are retained for possible later miner-economics work.
 - This is not a declaration that the scenario is ready: DXY source approval and ETF evidence gates remain. No probabilities, persisted scenario state, production data, ingestion, deployment or database state were changed.
-- Validation is pending on the latest CI runs; treat the implementation as provisional until build, unit tests and the VPS rehearsal pass.
+- VPS API / PostgreSQL / backup / E2E rehearsal #1122 passed after correcting the stale E2E assertion that still required fee/subsidy. The follow-up rehearsal #1123 for the documentation reconciliation is running; do not claim final green until it completes.
+
+
+### Exchange price-source review — 2026-10-14
+
+- Binance, OKX and Bybit are accepted as candidates for independent market-data corroboration; do not blend their values into a synthetic BTC/USD quote.
+- Kraken XBT/USD trades remain the canonical price candidate for now because the trade record has a source event timestamp and USD quote currency. Acceptance still requires a controlled raw capture.
+- The other exchanges' common spot pairs are BTC/USDT. USDT must not be silently treated as USD; compare those records separately unless an explicit, timestamp-aligned conversion contract or distinct metric is approved. Preserve venue, pair, units, event time, retrieval time and raw-payload lineage.
+- DXY remains blocked until a specific accessible provider endpoint and daily observation-time convention are approved. ICE is the index administrator, but no accessible project-ready feed has been accepted. Do not substitute a broad USD index.
+- Next: complete the read-only multi-exchange staging contract, validate canonical ETF evidence/access and DXY feed options, then run source/freshness/unit/duplicate checks. Only after all mandatory gates pass may the reviewed offline BTC rule be evaluated. No production ingestion, state persistence, probability change or deployment is included.
