@@ -142,6 +142,38 @@ await capture({
   }
 });
 
+// Binance documents a dedicated market-data-only domain. Keep this as a separate
+// capture so a region-restricted api.binance.com response does not hide whether
+// the same public market data is reachable from the runner.
+await capture({
+  name: "binance-btcusdt-trades-market-data",
+  metricId: "market.spot_price",
+  sourceId: "market.binance",
+  url: "https://data-api.binance.vision/api/v3/trades?symbol=BTCUSDT&limit=1000",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Binance market-data response has no trade rows");
+    const latest = rows.reduce((best, row) => Number(row.time) > Number(best.time) ? row : best);
+    const price = Number(latest.price);
+    const epochMs = Number(latest.time);
+    if (!(price > 0) || !Number.isFinite(epochMs)) throw new Error("Binance market-data latest trade has invalid price/timestamp");
+    return {
+      pair: "BTCUSDT",
+      quote_unit: "USDT/BTC",
+      latest_trade_price_usdt_per_btc: price,
+      latest_trade_epoch_ms: epochMs,
+      latest_trade_observed_at: new Date(epochMs).toISOString(),
+      observed_at: new Date(epochMs).toISOString(),
+      source_row_key: `BTCUSDT:${String(latest.id)}`,
+      methodology: "binance-public-market-data-trades-latest-trade-v1",
+      methodology_version: "1",
+      trade_rows_in_response: rows.length,
+      role: "independent cross-check candidate; not canonical USD/BTC",
+      note: "Official Binance market-data-only domain; trade time is source event time. Do not equate USDT with USD or blend into the Kraken quote."
+    };
+  }
+});
+
 await capture({
   name: "okx-btcusdt-trades",
   metricId: "market.spot_price",
