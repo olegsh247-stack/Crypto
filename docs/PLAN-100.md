@@ -1506,3 +1506,12 @@ No production database access/write, source-priority promotion, scenario evaluat
 
 - Подтверждение свежим артефактом BTC Public Source Staging #83: https://github.com/olegsh247-stack/Crypto/actions/runs/38622568433. Получены 10 сравнений дат, включая расхождение 7 Oct `−2.1674115 USD million` и отличие по BRRR `−2.114298 USD million`; все SHA-256 совпали, production DB/write flags — `false`.
 - Readiness Gate #212 прошёл на том же HEAD, VPS Build Rehearsal #1218 также завершился успешно: https://github.com/olegsh247-stack/Crypto/actions/runs/38622568340 и https://github.com/olegsh247-stack/Crypto/actions/runs/38622568357. Rehearsal #1219 для последнего документационного коммита ещё выполняется.
+
+
+### Следующий контрактный барьер BTC: ревизия spot-кандидата — 2026-10-14
+
+- Обнаружена неоднозначность в поле `revision: 1` у review-only Kraken-кандидата: без явного пояснения его можно ошибочно прочитать как ревизию поставщика. Теперь объект содержит `revision_scope: local_candidate_observation_record` и `revision_identity_status: not_a_provider_revision`; ключ события остаётся `source_row_key` из конкретной сделки Kraken.
+- Добавлен тест на эти поля. BTC Public Source Staging #85 и BTC Scenario Readiness Gate #214 прошли на HEAD `939b723fcbe1f0b1fb49e4e42ffda5d024d3b03e`: https://github.com/olegsh247-stack/Crypto/actions/runs/38622921057 и https://github.com/olegsh247-stack/Crypto/actions/runs/38622920906.
+- VPS Build Rehearsal #1219 завершилась успешно для предшествующего документационного коммита `2f0a052`: https://github.com/olegsh247-stack/Crypto/actions/runs/38622673801. Новый коммит с уточнением контракта требует собственной проверки.
+- Свежий staging #83 подтвердил 10 межисточниковых ETF-сравнений; 7 Oct остаётся материалным расхождением `−2.1674115m USD`, преимущественно BRRR `−2.114298m USD`. Все response-body hashes совпали с манифестом, production-флаги — `false`. См. [TFTC ETF audit](data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md).
+- Следующий этап: дождаться сборки текущего HEAD; затем отдельно проверить freshness, регистрацию источника, дедупликацию и логический ключ Kraken-кандидата в контексте существующей модели наблюдений. ETF и DXY не обходить и не подменять: BTC остаётся `not_evaluable`, пока обязательные входы не пройдут контракт.
