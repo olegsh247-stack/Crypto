@@ -85,3 +85,21 @@ test("frozen BTC candidates cannot reach scenario evaluation until source, fresh
   assert.equal(scenario.can_persist_scenario_state, false);
   assert.equal("scenario_type" in scenario, false);
 });
+
+
+test("UTC-day fee/subsidy candidate is arithmetically reproducible but remains unapproved", async () => {
+  const manifest = await loadManifest();
+  const candidate = manifest.candidates.find((item) => item.metric_id === "security.fee_subsidy_ratio");
+  assert.ok(candidate, "fee/subsidy candidate must be present");
+  assert.equal(candidate.unit, "ratio");
+  assert.equal(candidate.window_start_utc, "2026-10-12T00:00:00Z");
+  assert.equal(candidate.window_end_utc_exclusive, "2026-10-13T00:00:00Z");
+  assert.equal(candidate.block_count, 152);
+  assert.equal(candidate.last_height - candidate.first_height + 1, candidate.block_count);
+  assert.equal(candidate.total_fees_sats, 286069738);
+  assert.equal(candidate.total_subsidy_sats, 47500000000);
+  assert.ok(Math.abs(candidate.value - candidate.total_fees_sats / candidate.total_subsidy_sats) < 1e-12);
+  assert.equal(candidate.dry_run_classification, "HOLD_CONTRACT_ACCEPTANCE");
+  assert.equal(manifest.production_writes_performed, false);
+  assert.equal(manifest.decision, "NO_INSERTS_AUTHORIZED");
+});
