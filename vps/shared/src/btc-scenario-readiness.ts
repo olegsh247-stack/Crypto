@@ -7,10 +7,10 @@
  */
 const REQUIRED = [
   { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
-  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/hashrate/1w"], approvedMethodologyIds: [], label: "network hashrate" },
+  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/hashrate/1w"], approvedMethodologyIds: [] as string[], label: "network hashrate" },
   // The raw fees endpoint is not itself a fee/subsidy ratio. Keep this input blocked
   // until its units, block/window semantics, subsidy denominator and method version are reviewed.
-  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/blocks/fees/1w"], approvedMethodologyIds: [], label: "fee-market/security economics" },
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", sourceIds: ["network.primary"], sourceUrlPrefixes: ["https://mempool.space/api/v1/mining/blocks/fees/1w"], approvedMethodologyIds: [] as string[], label: "fee-market/security economics" },
   // No specific DXY feed has been approved. Empty identity/URL allowlists fail closed.
   { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", sourceIds: [], sourceUrlPrefixes: [], label: "macro liquidity proxy (DXY)" },
 ];
