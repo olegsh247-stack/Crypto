@@ -6,10 +6,11 @@
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const REQUIRED = [
-  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", label: "spot price" },
-  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", label: "network hashrate" },
-  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", label: "fee-market/security economics" },
-  { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", label: "macro liquidity proxy (DXY)" },
+  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], label: "spot price" },
+  { metricId: "security.hashrate", maxAgeHours: 48, unit: "EH/s", sourceIds: ["network.primary"], label: "network hashrate" },
+  { metricId: "security.fee_subsidy_ratio", maxAgeHours: 48, unit: "ratio", sourceIds: ["network.primary"], label: "fee-market/security economics" },
+  // No specific DXY feed has been approved. An empty allowlist deliberately fails closed.
+  { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", sourceIds: [], label: "macro liquidity proxy (DXY)" },
 ];
 
 function dateMs(value: unknown): number {
@@ -17,7 +18,7 @@ function dateMs(value: unknown): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string): boolean {
+function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string, allowedSourceIds?: string[]): boolean {
   const observedMs = dateMs(row?.observed_at);
   const value = row?.value_numeric ?? row?.value_integer;
   return Number.isFinite(observedMs)
@@ -28,6 +29,7 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number, expected
     && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
     && typeof row?.source_id === "string" && row.source_id.trim().length > 0
     && row?.source_registered === true
+    && Array.isArray(allowedSourceIds) && allowedSourceIds.includes(String(row?.source_id ?? ""))
     && typeof row?.unit === "string" && row.unit.trim().length > 0
     && (!expectedUnit || (row.unit === expectedUnit && row.expected_unit === expectedUnit));
 }
@@ -49,14 +51,16 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       blockers.push({ metric_id: requirement.metricId, reason: "missing" });
       continue;
     }
-    if (!validObservation(latest, nowMs, requirement.maxAgeHours, requirement.unit)) {
+    if (!validObservation(latest, nowMs, requirement.maxAgeHours, requirement.unit, requirement.sourceIds)) {
       blockers.push({
         metric_id: requirement.metricId,
         reason: String(latest.freshness ?? "").toUpperCase() !== "CURRENT"
           ? "not_marked_current"
           : latest.source_registered !== true
             ? "source_not_registered"
-            : typeof latest.unit !== "string" || !latest.unit.trim()
+            : !requirement.sourceIds.includes(String(latest.source_id ?? ""))
+              ? "source_not_approved_for_metric"
+              : typeof latest.unit !== "string" || !latest.unit.trim()
               ? "unit_missing"
               : requirement.unit && latest.expected_unit !== requirement.unit
               ? "metric_unit_contract_mismatch"
@@ -82,7 +86,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
   if (!latestEtf
-      || !validObservation(latestEtf, nowMs, 36, "USD million/day")) {
+      || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"])) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
       reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
@@ -103,6 +107,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
       && row?.source_registered === true
+      && row?.source_id === "institutional.primary"
       && row?.unit === "USD million/day"
       && row?.expected_unit === "USD million/day";
   });
