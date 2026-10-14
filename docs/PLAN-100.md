@@ -1416,3 +1416,18 @@ No production database access/write, source-priority promotion, scenario evaluat
 - This validates the repository's isolated rehearsal only. The temporary PostgreSQL instance was cleaned up by the workflow; this is not a production deployment or approval to ingest data.
 - Current-head source capture is still the next evidence task. The staging workflow is explicitly read-only and supports manual dispatch, but this session's GitHub connector has no workflow-dispatch action; do not fake a new capture or label the older artifact as current. The latest reviewed capture remains run #64, where Farside was HTTP 403 and TFTC was candidate-only.
 - BTC remains `not_evaluable` until ETF source provenance/reporting-time requirements and the other mandatory input gates are satisfied.
+
+### Текущая проверка BTC Public Source Staging #65 — 2026-10-14
+
+- Read-only workflow #65 завершился успешно на commit `5c981572ab10082a7e6b5ae5594cbc66c5945d7c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38612551627. Артефакт `btc-public-source-review` (ID `11918642088`, SHA-256 `1b3bd45a2cc93633b33864e7ea614f0e277061c6173e14f49da4e7c0046c8ff0`) был скачан и проверен; хранится 7 дней.
+- Kraken XBT/USD: HTTP 200; последняя сделка в снимке — 81,557.8 USD/BTC с event time `2026-10-14T18:08:05.265Z`; время получения `18:08:07.032Z`; сохранены ключ строки и SHA-256 raw payload. Это один review-only кандидат, а не принятое production-наблюдение.
+- OKX BTC-USDT: HTTP 200, 81,640 USDT/BTC — только независимая сверка в другой котируемой единице. Binance HTTP 451 и Bybit HTTP 403; это ошибки доступа из GitHub runner, а не доказательство глобальной недоступности бирж.
+- Farside вернул HTTP 403. TFTC JSON вернул HTTP 200, 707 строк и `updatedThrough=2026-10-13`; в HTTP-заголовке `Date` указано `2026-10-14T10:01:30Z`, но это метаданные HTTP-ответа, не row-level publication time и не доказательство финализации/ревизии. TFTC остаётся только reconciliation candidate; ETF-кандидаты не нормализуются в наблюдения.
+- Mempool hashrate и block-fees сохранены как исходные исследовательские данные. Семантика окна hashrate ещё требует подтверждения; отношение fees/subsidy не рассчитывалось, поскольку это не обязательный вход первого BTC-сценария и единицы/знаменатель ещё не утверждены.
+- Нормализатор завершился успешно: 1 кандидат (Kraken spot) и 5 заблокированных записей. Артефакт подтверждает `production_database_accessed=false`, `production_writes_performed=false`; поле кандидата `persistable=false`.
+- Отдельно сохранены HTTP response URL/Date/Last-Modified/ETag/cache headers. Эти заголовки служат provenance evidence и не подменяют `observed_at`.
+- Постоянный отчёт обновлён: [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json). Новые данные не пересчитывались ежедневно: это одноразовая проверка источников и контракта.
+- **Статус сценария без изменений: BTC `not_evaluable`.** Не выполнялись ingestion, production DB writes, смена source priority, сценарная оценка, изменение вероятностей, monitoring state или deployment.
+
+**Следующий шаг по Плану 100:** не расширять список метрик. Закрыть оставшийся обязательный входной контракт — сначала получить сравнимую первичную ETF-запись с reporting date и проверяемой provenance/revision-семантикой (либо явно зафиксировать, что доступен только блокирующий ответ), затем отдельно разрешить DXY feed/time convention. После этого прогнать актуальный BTC readiness gate на текущем HEAD и только при успешном gate выполнить один offline/read-only сценарий BTC.
+
