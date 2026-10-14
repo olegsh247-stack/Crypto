@@ -321,3 +321,12 @@ The schema and a forward migration now add nullable metadata columns:
 | `methodology_version` | Version of the calculation/normalization method, especially for derived metrics |
 
 These fields are intentionally nullable for backward compatibility and do not invent metadata for existing observations. `observed_at` remains the actual observation time/window; `period_start`/`period_end` remain the logical measurement interval. The migration adds schema only: it does not backfill rows, ingest market data, rewrite revisions, or change scenario state. Collectors and acceptance checks must be updated before claiming these fields are populated in runtime data.
+
+
+## 13. Readiness-to-database provenance handoff — 2026-10-14
+
+The BTC API readiness query now passes `period_start` and the persisted provenance fields into the read-only gate: `source_updated_at`, `retrieved_at`, `source_row_key`, `source_payload_sha256`, `methodology`, and `methodology_version`. The selected offline input object preserves these fields so a reviewer can inspect exactly which source row and method were accepted.
+
+For core inputs that can make the first BTC scenario evaluable, the gate now requires a valid non-future retrieval timestamp and a non-empty stable source-row key. A supplied SHA-256 payload hash must be 64 hexadecimal characters. Historical rows lacking retrieval/key metadata remain in storage but cannot silently qualify as current scenario inputs; there is no automatic backfill. ETF history applies the same retrieval/key checks while still requiring the explicit provider reporting date `period_start`.
+
+This is a repository/CI contract change only. It does not insert observations, infer source timestamps, apply a production migration, calculate a scenario, or persist a scenario state. The capture script remains a review-only artifact producer; mapping raw capture artifacts into persisted observations is a separate controlled ingestion task.
