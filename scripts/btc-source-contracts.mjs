@@ -284,3 +284,70 @@ export function normalizeKrakenPostTrade(payload, { retrievedAt, requestedSymbol
     adapter_contract: "kraken-spot-post-trade-v1",
   };
 }
+
+
+/**
+ * Select a documented Post-Trade row for an explicit UTC observation bucket.
+ * Bounds are caller-supplied; this helper never invents a bucket from retrieval time.
+ * The interval is [windowStart, windowEnd): end-exclusive to avoid double-counting.
+ */
+export function selectKrakenPostTradeWindowCandidate(normalizedTrades, {
+  windowStart,
+  windowEnd,
+  retrievedAt,
+} = {}) {
+  const validTimestamp = value => typeof value === "string" && Number.isFinite(Date.parse(value));
+  if (!Array.isArray(normalizedTrades) || normalizedTrades.length === 0) {
+    throw new TypeError("normalizedTrades must be a non-empty array");
+  }
+  if (!validTimestamp(windowStart) || !validTimestamp(windowEnd)
+    || Date.parse(windowStart) >= Date.parse(windowEnd)) {
+    throw new TypeError("windowStart and windowEnd must be valid increasing timestamps");
+  }
+  if (retrievedAt != null && !validTimestamp(retrievedAt)) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
+  }
+  const start = Date.parse(windowStart);
+  const end = Date.parse(windowEnd);
+  const eligible = normalizedTrades.filter(row => {
+    if (!row || typeof row !== "object" || !validTimestamp(row.tradeTs)
+      || !validTimestamp(row.publicationTs) || !Number.isFinite(row.price) || row.price <= 0
+      || typeof row.tradeId !== "string" || !row.tradeId) {
+      throw new TypeError("normalized trade row has invalid candidate fields");
+    }
+    const time = Date.parse(row.tradeTs);
+    return time >= start && time < end;
+  });
+  if (!eligible.length) {
+    return {
+      status: "BLOCKED_NO_TRADE_IN_WINDOW",
+      value: null,
+      observed_at: null,
+      source_published_at: null,
+      retrieved_at: retrievedAt ?? null,
+      window_start: windowStart,
+      window_end: windowEnd,
+      window_semantics: "[window_start, window_end), UTC; bounds supplied by caller",
+    };
+  }
+  const latest = eligible.reduce((best, row) => {
+    const currentTime = Date.parse(row.tradeTs);
+    const bestTime = Date.parse(best.tradeTs);
+    if (currentTime > bestTime) return row;
+    if (currentTime === bestTime && row.tradeId.localeCompare(best.tradeId) > 0) return row;
+    return best;
+  });
+  return {
+    status: "CANDIDATE",
+    value: latest.price,
+    unit: "USD/BTC",
+    observed_at: latest.tradeTs,
+    source_published_at: latest.publicationTs,
+    retrieved_at: retrievedAt ?? null,
+    raw_trade_id: latest.tradeId,
+    raw_trade_row: latest.rawTrade,
+    window_start: windowStart,
+    window_end: windowEnd,
+    window_semantics: "[window_start, window_end), UTC; selected latest trade by trade_ts inside supplied window",
+  };
+}
