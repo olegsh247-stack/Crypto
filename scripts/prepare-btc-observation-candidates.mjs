@@ -77,6 +77,8 @@ export function prepareBtcObservationCandidates(manifest) {
         methodology: source.methodology ?? "kraken-public-trades-latest-trade-v1",
         methodology_version: String(source.methodology_version ?? "1"),
         revision: 1,
+        revision_scope: "local_candidate_observation_record",
+        revision_identity_status: "not_a_provider_revision",
         raw_body_file: source.body_file ?? null,
         note: "Candidate only. Freshness, duplicate/revision policy and ingestion approval remain separate checks."
       });
