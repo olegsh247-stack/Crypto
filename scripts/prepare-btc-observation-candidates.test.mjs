@@ -60,6 +60,9 @@ test("does not accept USDT cross-checks as canonical USD/BTC observations", () =
   });
   const result = prepareBtcObservationCandidates(candidate);
   assert.equal(result.candidates.length, 0);
+  assert.ok(result.blocked.some(x => x.source_id === "market.okx"
+    && x.reasons.includes("source_not_approved_for_canonical_spot")
+    && x.reasons.includes("noncanonical_quote_unit")));
 });
 
 test("keeps ETF capture blocked until row-level values and reporting dates are normalized", () => {
