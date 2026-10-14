@@ -18,6 +18,7 @@ function validIso(value) {
 export function prepareBtcObservationCandidates(manifest) {
   const candidates = [];
   const blocked = [];
+  const etfReviewRows = [];
   const sources = Array.isArray(manifest?.sources) ? manifest.sources : [];
 
   for (const source of sources) {
@@ -79,11 +80,66 @@ export function prepareBtcObservationCandidates(manifest) {
         note: "Candidate only. Freshness, duplicate/revision policy and ingestion approval remain separate checks."
       });
     } else if (source?.metric_id === "institutional.etf_net_flow") {
-      blocked.push({
-        source_id: source.source_id ?? null,
-        metric_id: source.metric_id,
-        reasons: ["row_level_values_and_provider_reporting_dates_not_yet_normalized"]
-      });
+      if (source?.source_id === "institutional.primary"
+        && source?.url === "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+        && source?.status === "CAPTURED"
+        && Array.isArray(source.latest_rows)) {
+        const bodyHash = source.source_payload_sha256 ?? source.body_sha256 ?? null;
+        for (const row of source.latest_rows) {
+          const reported = row?.status === "REPORTED_CANDIDATE";
+          const reconciliationAcceptableForReview = row?.reconciliation_status === "MATCHES_DISPLAY_ROUNDING";
+          const date = typeof row?.period_start === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(row.period_start)
+            ? row.period_start : null;
+          const reasons = [];
+          if (!date) reasons.push("provider_reporting_date_missing_or_invalid");
+          if (!reported) reasons.push(row?.status === "UNREPORTED_PLACEHOLDER"
+            ? "unreported_placeholder_not_a_zero_observation"
+            : "row_not_reported");
+          if (reported && !reconciliationAcceptableForReview) reasons.push("aggregate_reconciliation_not_accepted");
+          // The parser's page-level digest identifies the captured response, not a provider row revision.
+          // Publication/observation timestamps and provider finalization/revision remain unknown.
+          etfReviewRows.push({
+            candidate_state: "REVIEW_ONLY_BLOCKED",
+            persistable: false,
+            asset_id: "btc",
+            metric_id: "institutional.etf_net_flow",
+            value_numeric: reported ? row.reported_total_usd_million : null,
+            value_integer: null,
+            unit: "USD million/day",
+            period_start: date,
+            period_end: date,
+            observed_at: null,
+            source_updated_at: null,
+            retrieved_at: source.retrieved_at ?? manifest?.retrieved_at ?? null,
+            http_date: source.http_date ?? null,
+            provider_last_modified: source.provider_last_modified ?? null,
+            etag: source.etag ?? null,
+            cache_control: source.cache_control ?? null,
+            expires: source.expires ?? null,
+            source_id: source.source_id,
+            source_url: source.url,
+            source_row_key: date ? `farside-btc-etf-flow:${date}` : null,
+            source_payload_sha256: typeof bodyHash === "string" && SHA256_RE.test(bodyHash) ? bodyHash.toLowerCase() : null,
+            source_payload_hash_scope: "full_http_response_body_not_individual_row",
+            provider_revision: null,
+            revision_identity_status: "provider_revision_unknown",
+            finalization_status: "unknown",
+            reported_total_usd_million: row.reported_total_usd_million ?? null,
+            calculated_fund_sum_usd_million: row.calculated_fund_sum_usd_million ?? null,
+            fund_sum_minus_reported_total_usd_million: row.fund_sum_minus_reported_total_usd_million ?? null,
+            reconciliation_status: row.reconciliation_status ?? "INCOMPLETE",
+            row_status: row.status ?? "UNRESOLVED_ROW",
+            reasons: [...reasons, "provider_observation_or_publication_timestamp_unverified", "provider_revision_and_finalization_unverified"],
+            raw_body_file: source.body_file ?? null
+          });
+        }
+      } else {
+        blocked.push({
+          source_id: source.source_id ?? null,
+          metric_id: source.metric_id,
+          reasons: ["ETF_source_not_canonical_or_capture_missing_parsed_reporting_rows"]
+        });
+      }
     }
   }
 
@@ -94,6 +150,7 @@ export function prepareBtcObservationCandidates(manifest) {
     production_database_accessed: false,
     production_writes_performed: false,
     candidates,
+    etf_review_rows: etfReviewRows,
     blocked,
     unresolved: Array.isArray(manifest?.unresolved) ? manifest.unresolved : []
   };
