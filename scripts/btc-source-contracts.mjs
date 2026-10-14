@@ -104,3 +104,60 @@ export function classifyFarsideEtfRow({ sessionDate, funds, total, retrievedAt =
     note: "A dash/blank is unreported data, never numeric zero; retrieval time is not source observation/publication time.",
   };
 }
+
+
+/**
+ * Apply an explicit session-lag policy to a complete Farside candidate.
+ * expectedSessionDates must come from a separately approved exchange calendar;
+ * this helper deliberately does not guess holidays or derive observed_at.
+ */
+export function evaluateFarsideSessionFreshness(row, {
+  retrievedAt,
+  expectedSessionDates,
+  maxSessionLag = 1,
+} = {}) {
+  if (!row || typeof row !== "object") throw new TypeError("row is required");
+  if (typeof retrievedAt !== "string" || !Number.isFinite(Date.parse(retrievedAt))) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
+  }
+  if (!Array.isArray(expectedSessionDates) || expectedSessionDates.length === 0) {
+    throw new TypeError("expectedSessionDates from an approved calendar are required");
+  }
+  if (!Number.isInteger(maxSessionLag) || maxSessionLag < 0) {
+    throw new TypeError("maxSessionLag must be a non-negative integer");
+  }
+  const validDate = value => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(value + "T00:00:00Z");
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  };
+  if (!expectedSessionDates.every(validDate)) throw new TypeError("calendar contains an invalid ISO date");
+  const sessions = [...new Set(expectedSessionDates)].sort();
+  if (sessions.length !== expectedSessionDates.length) throw new TypeError("calendar contains duplicate sessions");
+  if (!validDate(row.session_date)) throw new TypeError("row.session_date must be a valid ISO date");
+  if (!sessions.includes(row.session_date)) {
+    return {
+      status: "BLOCKED_SESSION_NOT_IN_CALENDAR",
+      session_lag: null,
+      fresh: false,
+      observed_at: null,
+      retrieved_at: retrievedAt,
+    };
+  }
+  const latestSession = sessions[sessions.length - 1];
+  const lag = sessions.indexOf(latestSession) - sessions.indexOf(row.session_date);
+  const candidateComplete = row.source_row_status === "COMPLETE_CANDIDATE" && Number.isFinite(row.value);
+  const fresh = candidateComplete && lag <= maxSessionLag;
+  return {
+    status: !candidateComplete ? "BLOCKED_ROW_INCOMPLETE"
+      : fresh ? "SESSION_LAG_WITHIN_POLICY" : "STALE_SESSION_LAG",
+    session_lag: lag,
+    fresh,
+    latest_expected_session_date: latestSession,
+    session_date: row.session_date,
+    max_session_lag: maxSessionLag,
+    observed_at: null,
+    retrieved_at: retrievedAt,
+    note: "Session freshness is a policy classification, not a source publication timestamp. Calendar must be approved and supplied by caller.",
+  };
+}
