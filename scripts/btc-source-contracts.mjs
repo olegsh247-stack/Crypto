@@ -62,9 +62,14 @@ export function normalizeKrakenLegacyTrades(payload, { retrievedAt, requestedPai
  * fundColumns must be the expected constituent column names from the table header.
  */
 export function classifyFarsideEtfRow({ sessionDate, funds, total, retrievedAt = null, fundColumns }) {
-  if (typeof sessionDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)
-    || !Number.isFinite(Date.parse(`${sessionDate}T00:00:00Z`))) {
+  const parsedSessionDate = typeof sessionDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sessionDate)
+    ? new Date(`${sessionDate}T00:00:00Z`) : null;
+  if (!parsedSessionDate || !Number.isFinite(parsedSessionDate.getTime())
+    || parsedSessionDate.toISOString().slice(0, 10) !== sessionDate) {
     throw new TypeError("sessionDate must be an ISO calendar date");
+  }
+  if (retrievedAt != null && (typeof retrievedAt !== "string" || !Number.isFinite(Date.parse(retrievedAt)))) {
+    throw new TypeError("retrievedAt must be a valid timestamp string");
   }
   if (!funds || typeof funds !== "object" || !Array.isArray(fundColumns) || fundColumns.length === 0) {
     throw new TypeError("funds and non-empty fundColumns are required");
@@ -114,7 +119,7 @@ export function classifyFarsideEtfRow({ sessionDate, funds, total, retrievedAt =
 export function evaluateFarsideSessionFreshness(row, {
   retrievedAt,
   expectedSessionDates,
-  maxSessionLag = 1,
+  maxSessionLag,
 } = {}) {
   if (!row || typeof row !== "object") throw new TypeError("row is required");
   if (typeof retrievedAt !== "string" || !Number.isFinite(Date.parse(retrievedAt))) {
