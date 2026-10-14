@@ -113,3 +113,10 @@ The readiness implementation on main was also inspected. It requires current, tr
 **What CI does not prove:** the PostgreSQL instance is disposable and created by the workflow. It does not establish current contents of the external target/legacy database, its live sources table, or production endpoint freshness. The last target database audit remains 2026-10-12 18:20 UTC; no fresh target read was available in this run.
 
 **Decision unchanged:** zero BTC candidates accepted for ingestion; scenario remains not_evaluable; no production or target DB access/writes. Next action remains source/metric acceptance and, when an approved read-only target path exists, a fresh target source-registry/adapter audit followed by a no-write staging diff.
+
+## 2026-10-14 — live page recheck
+
+- Farside now displays 2026-10-13 total **+109.8 USD million**, but the IBIT constituent cell is `-` while other constituent cells contain values.
+- Treat this as an incomplete/unconfirmed session row, not a complete daily flow observation. Do not accept the displayed total until source completeness/finalization is established.
+- The public page was retrievable on 2026-10-14, but this proves only retrieval date; it does not establish the source publication timestamp required by the 36-hour freshness gate.
+- Decision remains **candidate only / hold**. The 2026-10-12 −65.4m row still matches TFTC to displayed precision, but TFTC remains an unapproved mirror and is not a canonical fallback.
