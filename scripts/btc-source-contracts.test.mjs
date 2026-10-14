@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable } from "./btc-source-contracts.mjs";
+import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
@@ -243,4 +243,38 @@ test("Kraken Post-Trade rejects errors, wrong symbols and malformed timestamp fi
   assert.throws(() => normalizeKrakenPostTrade({ error: [], result: { trades: [{ ...row, symbol: "ETH/USD" }] } }), /symbol mismatch/);
   assert.throws(() => normalizeKrakenPostTrade({ error: [], result: { trades: [{ ...row, publication_ts: "not-a-time" }] } }), /publication_ts/);
   assert.throws(() => normalizeKrakenPostTrade({ error: [], result: {} }), /result.trades/);
+});
+
+
+test("Kraken Post-Trade window candidate selects the last trade in an explicit UTC bucket", () => {
+  const normalized = [
+    { price: 100, tradeTs: "2026-10-14T10:00:00Z", publicationTs: "2026-10-14T10:00:00.1Z", tradeId: "A", rawTrade: {} },
+    { price: 101, tradeTs: "2026-10-14T10:14:59Z", publicationTs: "2026-10-14T10:14:59.1Z", tradeId: "B", rawTrade: {} },
+    { price: 102, tradeTs: "2026-10-14T10:15:00Z", publicationTs: "2026-10-14T10:15:00.1Z", tradeId: "C", rawTrade: {} },
+  ];
+  const result = selectKrakenPostTradeWindowCandidate(normalized, {
+    windowStart: "2026-10-14T10:00:00Z",
+    windowEnd: "2026-10-14T10:15:00Z",
+    retrievedAt: "2026-10-14T10:15:02Z",
+  });
+  assert.equal(result.status, "CANDIDATE");
+  assert.equal(result.value, 101);
+  assert.equal(result.raw_trade_id, "B");
+  assert.equal(result.observed_at, "2026-10-14T10:14:59Z");
+  assert.equal(result.window_semantics.includes("[window_start, window_end)"), true);
+});
+
+test("Kraken Post-Trade window candidate blocks empty buckets and invalid bounds", () => {
+  const normalized = [{ price: 100, tradeTs: "2026-10-14T10:15:00Z", publicationTs: "2026-10-14T10:15:00.1Z", tradeId: "C", rawTrade: {} }];
+  const result = selectKrakenPostTradeWindowCandidate(normalized, {
+    windowStart: "2026-10-14T10:00:00Z",
+    windowEnd: "2026-10-14T10:15:00Z",
+  });
+  assert.equal(result.status, "BLOCKED_NO_TRADE_IN_WINDOW");
+  assert.equal(result.value, null);
+  assert.equal(result.observed_at, null);
+  assert.throws(() => selectKrakenPostTradeWindowCandidate(normalized, {
+    windowStart: "2026-10-14T10:15:00Z",
+    windowEnd: "2026-10-14T10:00:00Z",
+  }), /increasing timestamps/);
 });
