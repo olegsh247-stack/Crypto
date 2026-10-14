@@ -1465,3 +1465,10 @@ No production database access/write, source-priority promotion, scenario evaluat
 - These exchange rows remain review-only. Kraken is still the canonical USD/BTC candidate; Binance and OKX are USDT/BTC cross-checks. No observation was ingested, no source priority changed, and no scenario state or probability was changed.
 - Detailed record: [BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json).
 
+### BTC ETF reconciliation checkpoint — 2026-10-14
+
+- Farside parser v2 now calculates the sum of all 12 fund values only when all are reported, records the delta against the provider's displayed aggregate, and flags `MATCHES_DISPLAY_ROUNDING`, `MATERIAL_DIFFERENCE`, `INCOMPLETE`, or `UNREPORTED`. It never adjusts source values to force reconciliation.
+- The diagnostic rounding envelope is 0.65 USD million (12 fund values and one total each displayed to 0.1m). This is a screening threshold only, not an ingestion approval. Missing values stay null; all-dash rows remain placeholders.
+- Added tests for aggregate reconciliation, material discrepancy, missing/dash placeholder and the one-decimal rounding envelope. The test step passed in BTC Public Source Staging #72; the newest code/test capture #73 is running and must be checked before claiming the final revision passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38621215105.
+- Capture comments now correctly distinguish the read-only readiness URL allowlist from approval to ingest ETF observations. Farside remains the preferred candidate, but ETF observations are blocked until reporting/session date, publication/observation-time policy, revision/finalization and source reconciliation are agreed.
+- No production writes, observation ingestion, source-priority change, scenario-state change or probability update occurred.
