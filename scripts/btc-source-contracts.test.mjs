@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
+import { auditKrakenPostTradePageChain, classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades, normalizeKrakenPostTrade, parseFarsideHtmlTable, selectKrakenPostTradeWindowCandidate } from "./btc-source-contracts.mjs";
 import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
@@ -277,4 +277,63 @@ test("Kraken Post-Trade window candidate blocks empty buckets and invalid bounds
     windowStart: "2026-10-14T10:15:00Z",
     windowEnd: "2026-10-14T10:00:00Z",
   }), /increasing timestamps/);
+});
+
+
+const postTradePage = (rows, lastTs = rows[rows.length - 1]?.trade_ts) => ({
+  error: [],
+  result: { count: rows.length, trades: rows, last_ts: lastTs },
+});
+
+test("Kraken page-chain audit validates cursor structure but never claims completeness", () => {
+  const first = [
+    { trade_id: "P1", trade_ts: "2026-10-14T10:00:01Z" },
+    { trade_id: "P2", trade_ts: "2026-10-14T10:00:02Z" },
+  ];
+  const second = [
+    { trade_id: "P3", trade_ts: "2026-10-14T10:00:03Z" },
+  ];
+  const result = auditKrakenPostTradePageChain([
+    { requestFromTs: null, payload: postTradePage(first) },
+    { requestFromTs: "2026-10-14T10:00:02Z", payload: postTradePage(second) },
+  ]);
+  assert.equal(result.status, "STRUCTURE_VALID_COMPLETENESS_UNPROVEN");
+  assert.equal(result.structurally_valid, true);
+  assert.equal(result.completeness_proven, false);
+  assert.equal(result.unique_trade_ids_seen, 3);
+  assert.ok(result.blockers.includes("COMPLETENESS_UNPROVEN_TIMESTAMP_CURSOR_TIES"));
+});
+
+test("Kraken page-chain audit blocks cursor mismatch, non-advancement and duplicate IDs", () => {
+  const first = [{ trade_id: "P1", trade_ts: "2026-10-14T10:00:02Z" }];
+  const later = [{ trade_id: "P2", trade_ts: "2026-10-14T10:00:03Z" }];
+  const mismatch = auditKrakenPostTradePageChain([
+    { payload: postTradePage(first) },
+    { requestFromTs: "2026-10-14T10:00:01Z", payload: postTradePage(later) },
+  ]);
+  assert.equal(mismatch.status, "BLOCKED_INVALID_PAGE_CHAIN");
+  assert.equal(mismatch.pages[1].status, "BLOCKED_CURSOR_CHAIN_MISMATCH");
+
+  const duplicate = auditKrakenPostTradePageChain([
+    { payload: postTradePage(first) },
+    { requestFromTs: "2026-10-14T10:00:02Z", payload: postTradePage(first) },
+  ]);
+  assert.equal(duplicate.status, "BLOCKED_INVALID_PAGE_CHAIN");
+  assert.equal(duplicate.pages[1].status, "BLOCKED_ORDERING_OR_DUPLICATE_TRADE_ID");
+});
+
+test("Kraken page-chain audit blocks malformed counts, ordering and last_ts mismatch", () => {
+  const valid = [{ trade_id: "P1", trade_ts: "2026-10-14T10:00:02Z" }];
+  const badCount = postTradePage(valid);
+  badCount.result.count = 2;
+  assert.equal(auditKrakenPostTradePageChain([{ payload: badCount }]).status, "BLOCKED_INVALID_PAGE_CHAIN");
+
+  const unordered = postTradePage([
+    { trade_id: "P2", trade_ts: "2026-10-14T10:00:02Z" },
+    { trade_id: "P1", trade_ts: "2026-10-14T10:00:01Z" },
+  ]);
+  assert.equal(auditKrakenPostTradePageChain([{ payload: unordered }]).pages[0].status, "BLOCKED_ORDERING_OR_DUPLICATE_TRADE_ID");
+
+  const wrongLastTs = postTradePage(valid, "2026-10-14T10:00:03Z");
+  assert.equal(auditKrakenPostTradePageChain([{ payload: wrongLastTs }]).pages[0].status, "BLOCKED_LAST_TS_MISMATCH");
 });
