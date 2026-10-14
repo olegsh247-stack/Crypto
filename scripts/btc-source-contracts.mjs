@@ -352,3 +352,119 @@ export function selectKrakenPostTradeWindowCandidate(normalizedTrades, {
     window_semantics: "[window_start, window_end), UTC; selected latest trade by trade_ts inside supplied window",
   };
 }
+
+
+/**
+ * Fixture-only structural audit for a sequence of Kraken Post-Trade pages.
+ * It deliberately does not certify completeness: timestamp-only cursors can be
+ * ambiguous when multiple trades share a trade_ts at a page boundary.
+ *
+ * Each page is { requestFromTs?: string|null, payload: API response }.
+ */
+export function auditKrakenPostTradePageChain(pages, { maxPageSize = 1000 } = {}) {
+  const validTimestamp = value => typeof value === "string" && Number.isFinite(Date.parse(value));
+  if (!Array.isArray(pages) || pages.length === 0) {
+    throw new TypeError("pages must be a non-empty array");
+  }
+  if (!Number.isInteger(maxPageSize) || maxPageSize < 1 || maxPageSize > 1000) {
+    throw new TypeError("maxPageSize must be an integer from 1 to 1000");
+  }
+
+  const seenTradeIds = new Set();
+  const pageAudit = [];
+  let previousLastTs = null;
+  let structurallyValid = true;
+  const blockers = [
+    "COMPLETENESS_UNPROVEN_TIMESTAMP_CURSOR_TIES",
+    "PROVIDER_CONTRACT_DOES_NOT_SPECIFY_TIE_SAFE_RESUME",
+  ];
+
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index];
+    if (!page || typeof page !== "object" || !page.payload || typeof page.payload !== "object") {
+      throw new TypeError(`page ${index} must contain a payload object`);
+    }
+    const { requestFromTs = null, payload } = page;
+    if (requestFromTs != null && !validTimestamp(requestFromTs)) {
+      throw new TypeError(`page ${index} requestFromTs must be a valid timestamp`);
+    }
+    if (index > 0) {
+      if (requestFromTs == null || Date.parse(requestFromTs) !== Date.parse(previousLastTs)) {
+        structurallyValid = false;
+        pageAudit.push({ index, status: "BLOCKED_CURSOR_CHAIN_MISMATCH", request_from_ts: requestFromTs, expected_from_ts: previousLastTs });
+        break;
+      }
+    }
+
+    if (!Array.isArray(payload.error) || payload.error.length) {
+      structurallyValid = false;
+      pageAudit.push({ index, status: "BLOCKED_API_ERROR_OR_INVALID_ENVELOPE" });
+      break;
+    }
+    const result = payload.result;
+    if (!result || typeof result !== "object" || !Array.isArray(result.trades)
+      || !Number.isInteger(result.count) || result.count !== result.trades.length
+      || result.trades.length > maxPageSize || !validTimestamp(result.last_ts)) {
+      structurallyValid = false;
+      pageAudit.push({ index, status: "BLOCKED_PAGE_SHAPE_COUNT_OR_LIMIT" });
+      break;
+    }
+    if (result.trades.length === 0) {
+      structurallyValid = false;
+      pageAudit.push({ index, status: "BLOCKED_EMPTY_PAGE" });
+      break;
+    }
+
+    let priorTradeTs = null;
+    let latestTradeTs = null;
+    for (const row of result.trades) {
+      if (!row || typeof row.trade_id !== "string" || !row.trade_id
+        || !validTimestamp(row.trade_ts)) {
+        structurallyValid = false;
+        break;
+      }
+      const currentTs = Date.parse(row.trade_ts);
+      if (priorTradeTs != null && currentTs < priorTradeTs) structurallyValid = false;
+      if (seenTradeIds.has(row.trade_id)) structurallyValid = false;
+      seenTradeIds.add(row.trade_id);
+      priorTradeTs = currentTs;
+      latestTradeTs = row.trade_ts;
+    }
+    if (!structurallyValid) {
+      pageAudit.push({ index, status: "BLOCKED_ORDERING_OR_DUPLICATE_TRADE_ID" });
+      break;
+    }
+    if (Date.parse(result.last_ts) !== Date.parse(latestTradeTs)) {
+      structurallyValid = false;
+      pageAudit.push({ index, status: "BLOCKED_LAST_TS_MISMATCH" });
+      break;
+    }
+    if (previousLastTs != null && Date.parse(result.last_ts) <= Date.parse(previousLastTs)) {
+      structurallyValid = false;
+      pageAudit.push({ index, status: "BLOCKED_NON_ADVANCING_CURSOR" });
+      break;
+    }
+
+    pageAudit.push({
+      index,
+      status: "STRUCTURALLY_VALID_PAGE",
+      rows: result.trades.length,
+      first_trade_ts: result.trades[0].trade_ts,
+      last_trade_ts: latestTradeTs,
+      last_ts: result.last_ts,
+      full_page: result.trades.length === maxPageSize,
+    });
+    previousLastTs = result.last_ts;
+  }
+
+  return {
+    status: structurallyValid ? "STRUCTURE_VALID_COMPLETENESS_UNPROVEN" : "BLOCKED_INVALID_PAGE_CHAIN",
+    structurally_valid: structurallyValid,
+    completeness_proven: false,
+    pages_checked: pageAudit.length,
+    unique_trade_ids_seen: seenTradeIds.size,
+    pages: pageAudit,
+    blockers: structurallyValid ? blockers : ["PAGE_CHAIN_STRUCTURAL_VALIDATION_FAILED"],
+    note: "Fixture-only structural validation; never treats a cursor walk as proof of complete market-data coverage.",
+  };
+}
