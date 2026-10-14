@@ -76,3 +76,39 @@ Initial documented facts:
 
 Status: documentation-only screening, not integration approval. No live requests, credentials, writes or source activation performed. Before implementation, the chosen endpoint still requires a full contract review covering exact schema/timestamps, quotas and retry policy, terms/licensing/retention/redistribution, access from intended runtime, sanitized fixtures, and a separately reported live read-only test. Until then, all three remain candidates only; do not add them to source priority or use them as silent fallback.
 
+
+
+## 6. Exchange endpoint comparison — BTC spot-price candidates (2026-10-14)
+
+This is a documentation-level candidate review, not permission to activate any source.
+
+Official endpoint references reviewed:
+- Binance Spot REST overview and endpoint reference: https://developers.binance.com/en/docs/products/spot/rest-api ; https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
+- OKX API v5: https://app.okx.com/docs-v5/en
+- Bybit V5 Kline and Tickers: https://bybit-exchange.github.io/docs/v5/market/kline ; https://bybit-exchange.github.io/docs/v5/market/tickers
+- Kraken OHLC and Ticker: https://docs.kraken.com/api/docs/rest-api/get-ohlc-data ; https://docs.kraken.com/api/docs/rest-api/get-ticker-information
+
+### Endpoint distinctions
+
+- **Kraken OHLC, `XBTUSD`, interval 60:** candidate for a completed hourly close in USD. Treat the candle's timestamp as its interval start, exclude the still-open candle, and verify response boundaries and rate limits against the official reference.
+- **Kraken Ticker, `XBTUSD`:** exposes last-trade and bid/ask snapshot fields, but the reviewed response schema does not supply a per-trade/per-quote timestamp. Capture time is not a substitute for source event time.
+- **Binance Spot klines, `BTCUSDT`, interval 1h:** timestamped OHLC bars, with response time fields in milliseconds by default. Public market-data access is documented. The quote currency is USDT, not USD.
+- **OKX `GET /api/v5/market/candles?instId=BTC-USDT&bar=1Hutc`:** candle timestamp is the bar opening time and `confirm=1` indicates completion. Public market data does not require auth, but OKX warns independent caches may return older data on later requests; validate freshness/order.
+- **Bybit `GET /v5/market/kline?category=spot&symbol=BTCUSDT&interval=60`:** OHLC bars; explicitly select spot. The bar timestamp is not itself the close event time. The ticker endpoint's response-level `time` must not be mislabeled as the last trade timestamp.
+
+### Proposed choice for the first BTC scenario
+
+Prefer a completed hourly Kraken `XBTUSD` candle close as the canonical *candidate* for a reproducible USD-quoted observation. Binance, OKX and Bybit completed-hour candles can serve as independent divergence/staleness diagnostics, clearly labeled USDT-quoted. Do not silently convert USDT to USD, mix tickers with candle closes, or switch source automatically. Kraken Ticker remains a separate current-snapshot diagnostic unless its missing source-event timestamp can be addressed by an explicit, accepted freshness contract.
+
+This proposal does **not** change `market.spot_price`, source priority, the live collector, or scenario readiness. The current registry's 15-minute cadence is not a fixed user requirement; an hourly interval may be considered, but the registry is not to be changed until the metric contract is approved.
+
+### Remaining gates before implementation
+
+1. Confirm exact payload schema, interval boundaries, candle completion, endpoint-specific quotas and retry/backoff.
+2. Review terms and permitted storage/retention/redistribution for the intended use; endpoint documentation alone does not establish a data license.
+3. Verify access from the intended runtime (local/GitHub Actions/VPS) without bypassing controls.
+4. Add sanitized fixture tests for valid, missing, malformed, stale, incomplete-bar and provider-error cases.
+5. Run and report a separate read-only live access check; keep it distinct from fixture tests and runtime registration.
+6. Reconcile price divergence and freshness rules before considering any source as canonical or fallback.
+
+No live provider calls, credentials, production writes, source activation, registry change, or scenario state change were performed during this review.
