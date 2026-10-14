@@ -151,3 +151,22 @@ The numerator must exclude subsidy; the denominator must be the protocol subsidy
 No live API was queried for this review. The 2026-10-12 capture remains historical evidence only. No database was accessed or written, no observation was staged, no scenario was evaluated, and no source-priority or production setting was changed. ETF/Farside access and DXY provider selection remain independent blockers and must not be resolved by silent substitution.
 
 Reference: [Mempool REST API documentation](https://mempool.space/docs/api/rest) (reviewed 2026-10-14).
+
+
+## 4D. Upstream implementation review — 2026-10-14
+
+Reviewed Mempool's public API documentation and current upstream implementation (`backend/src/api/mining/mining.ts`, `backend/src/repositories/HashratesRepository.ts`, `backend/src/api/mining/mining-routes.ts`, `backend/src/repositories/BlocksRepository.ts`). Source-code review only: no endpoint was called and no live payload was refreshed.
+
+### Hashrate: timestamp semantics clarified, acceptance still blocked
+
+The upstream implementation builds each daily hashrate point for the interval `[UTC midnight - 24 hours, UTC midnight)`; it requests Bitcoin Core's network-hashrate estimate using the number of blocks in that interval and the last block height. It stores the timestamp at the **end boundary** (UTC midnight). The public response groups daily points by UTC-day timestamp and returns `timestamp` and `avgHashrate`; with one point per day, the label denotes the UTC midnight boundary ending the represented day. Therefore a label `2026-10-12T00:00:00Z` represents the preceding UTC day, 2026-10-11, rather than the day beginning at that timestamp. The response's separate `currentHashrate` is estimated over the most recent 1008 blocks and must not be substituted for the daily series.
+
+This resolves the source-code interpretation of the timestamp convention. It does **not** yet authorize ingestion: the public service's deployed version has not been pinned to the reviewed upstream implementation, and the captured value remains historical. Keep the metric blocked until endpoint/deployment parity is verified and the current observation passes freshness. Preserve both the source timestamp and the derived interval `period_start`/`period_end` in UTC; don't store the end-boundary timestamp as though it were the day start.
+
+### Fee endpoint: row semantics clarified
+
+The upstream implementation of `/api/v1/mining/blocks/fees/:timePeriod` computes `AVG(fees)`, `AVG(height)`, and `AVG(blockTimestamp)` grouped into fixed-duration time buckets. Each returned row is an **aggregate bucket**, not a block; `avgHeight` is an average height and cannot be treated as a precise endpoint for a block range. The historical 830 rows therefore do not mean 830 blocks, and the last 144 rows do not mean the last 144 blocks. The endpoint is unsuitable as a direct numerator for a block-count-based fee/subsidy ratio.
+
+A better candidate to inspect next is Mempool's `/api/v1/mining/reward-stats/144`: upstream code selects the most recent 144 non-stale block rows and returns their minimum/maximum heights plus summed `reward` and `fees`. Before adopting it, verify the public response schema and units, confirm `reward` means total coinbase reward including fees in the deployed version, check that the selected heights are consecutive/canonical and handle reorgs, and document the exact denominator. No ratio has been calculated and no method ID has been approved.
+
+**Disposition:** source semantics are better understood, but both inputs remain blocked for acceptance pending deployment parity/currentness (hashrate) and schema/unit/height validation (fee/subsidy). No live API request, DB read/write, ingestion, scenario evaluation, monitoring write, or probability change occurred.
