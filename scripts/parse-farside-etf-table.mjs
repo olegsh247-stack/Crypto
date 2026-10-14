@@ -36,7 +36,30 @@ export function parseFarsideEtfTable(html, { recentRows = 14 } = {}) {
     if (!period) continue;
     const fundFlows = Object.fromEntries(FUND_KEYS.map((key, i) => [key, parseNumber(cells[i + 1])]));
     const reportedTotal = parseNumber(cells[13]);
-    const allFundsMissing = Object.values(fundFlows).every(value => value === null);
+    const fundValues = Object.values(fundFlows);
+    const allFundsMissing = fundValues.every(value => value === null);
+    const allFundsReported = fundValues.every(value => value !== null);
+    const status = allFundsMissing && reportedTotal === 0
+      ? "UNREPORTED_PLACEHOLDER"
+      : fundValues.some(value => value !== null)
+        ? "REPORTED_CANDIDATE"
+        : "UNRESOLVED_ROW";
+    const calculatedFundSum = allFundsReported
+      ? Number(fundValues.reduce((sum, value) => sum + value, 0).toFixed(6))
+      : null;
+    const delta = calculatedFundSum !== null && reportedTotal !== null
+      ? Number((calculatedFundSum - reportedTotal).toFixed(6))
+      : null;
+    // Each of 12 fund values and the displayed total is rounded to one decimal.
+    // The theoretical sum-vs-total rounding envelope is 12*0.05 + 0.05 = 0.65m.
+    // This is diagnostic only; it does not approve the row for ingestion.
+    const reconciliationStatus = status === "UNREPORTED_PLACEHOLDER"
+      ? "UNREPORTED"
+      : calculatedFundSum === null || reportedTotal === null
+        ? "INCOMPLETE"
+        : Math.abs(delta) <= 0.650001
+          ? "MATCHES_DISPLAY_ROUNDING"
+          : "MATERIAL_DIFFERENCE";
     rows.push({
       period_start: period,
       period_end: period,
@@ -44,11 +67,10 @@ export function parseFarsideEtfTable(html, { recentRows = 14 } = {}) {
       unit: "USD million/day",
       fund_flows: fundFlows,
       reported_total_usd_million: reportedTotal,
-      status: allFundsMissing && reportedTotal === 0
-        ? "UNREPORTED_PLACEHOLDER"
-        : Object.values(fundFlows).some(value => value !== null)
-          ? "REPORTED_CANDIDATE"
-          : "UNRESOLVED_ROW",
+      calculated_fund_sum_usd_million: calculatedFundSum,
+      fund_sum_minus_reported_total_usd_million: delta,
+      reconciliation_status: reconciliationStatus,
+      status,
       observed_at: null
     });
   }
@@ -56,6 +78,6 @@ export function parseFarsideEtfTable(html, { recentRows = 14 } = {}) {
     parsed_reporting_row_count: rows.length,
     latest_rows: rows.slice(-Math.max(1, recentRows)),
     latest_reported_rows: rows.filter(row => row.status === "REPORTED_CANDIDATE").slice(-5),
-    parser_version: "farside-all-data-html-v1"
+    parser_version: "farside-all-data-html-v2"
   };
 }
