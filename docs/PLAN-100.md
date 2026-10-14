@@ -810,3 +810,12 @@ Reviewed the official [Mempool REST API documentation](https://mempool.space/doc
 Reviewed the official [Kraken Post-Trade API reference](https://docs.kraken.com/api/docs/rest-api/get-post-trade). It documents `/0/public/PostTrade`, with trade-match and publication timestamps, a latest-trade cursor, explicit symbol/time filters, and a 1000-row maximum. The current candidate parser instead uses legacy `/0/public/Trades?pair=XBTUSD`; the reviewed reference does not establish that legacy response's exact schema. The two endpoints must not be treated as interchangeable, and no silent endpoint migration is authorized.
 
 Detailed finding recorded in [Source Architecture Current State](SOURCE-ARCHITECTURE-CURRENT-STATE-2026-10-14.md). Next narrow spot-price gate: compare the legacy and documented response contracts and timestamp meanings against official documentation and safe fixtures; choose an endpoint only after that comparison. Keep spot-price candidates unaccepted and do not change source priority or runtime wiring in this step.
+
+
+### Next step — Kraken documented Post-Trade contract comparison (2026-10-14)
+
+- Rechecked the latest PR #82 head `3568e64d4c8c924f0ba27e5274a7a16e42ef5cb3`: BTC Scenario Readiness Gate, BTC Block Window Validation, and VPS API Build Rehearsal all passed.
+- Reviewed the official [Kraken Post-Trade API reference](https://docs.kraken.com/api/docs/rest-api/get-post-trade). Added a separate pure candidate normalizer and fixture tests for its documented object response; the existing legacy `Trades` adapter remains unchanged.
+- Contract distinction: legacy `Trades` has tuple/Unix-seconds trade time; documented `PostTrade` has named `price`, `quantity`, `symbol`, `trade_id`, `trade_ts`, and `publication_ts` fields plus `last_ts` cursor. Keep execution, publication, and retrieval times distinct.
+- Next verification is CI on the new HEAD. Then review whether the candidate contract has enough evidence for a source decision; do not silently switch endpoints. Live access, cursor/pagination behavior, limits/SLA, permitted data use, and target-runtime registration remain unverified.
+- No database, registry, source-priority, scenario, monitoring, score, probability, or published-snapshot changes. PR #82 stays open/unmerged.
