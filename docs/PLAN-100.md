@@ -1315,3 +1315,11 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - Added a regression test that removes `period_start` but leaves `observed_at` current; the row must fail readiness. Source-contract documentation now explains the distinction between reporting date, observation time and retrieval time.
 - Files changed: `vps/shared/src/btc-scenario-readiness.ts`, `scripts/btc-scenario-readiness.test.mjs`, `docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md`. Code commit: [`32d2bccb`](https://github.com/olegsh247-stack/Crypto/commit/32d2bccbc5828fe4610031f7fca68d0f639afd45); regression test commit: [`c37daddf`](https://github.com/olegsh247-stack/Crypto/commit/c37daddf9ab661b744267a70e0a72d67388b4193).
 - This change is contract hardening only. It does not backfill or rewrite stored observations, access a database, approve Farside/TFTC/SoSoValue, change source priority, evaluate the scenario, or write scenario state. BTC remains `not_evaluable` until the canonical ETF evidence, DXY feed and current spot observation pass their independent gates.
+
+
+### Persisted source-provenance metadata — 2026-10-14
+
+- Audit found a gap between the documented observation contract and the PostgreSQL schema: the schema distinguished `observed_at` and the measurement period, but had no dedicated storage for retrieval time, provider update/publication time, provider row identity, raw-payload hash, or methodology version.
+- Added nullable fields to `observations` in `infrastructure/postgres/schema-v1.sql` and forward migration `infrastructure/postgres/migrations/2026-10-14-observation-source-provenance.sql`: `source_updated_at`, `retrieved_at`, `source_row_key`, `source_payload_sha256`, and `methodology_version`. Payload hashes are constrained to 64 hexadecimal characters.
+- Nullable fields preserve existing rows without fabricating old timestamps. No backfill, observation write, source-priority change, scenario evaluation, deployment or production database migration was performed.
+- Remaining work: verify the migration on the disposable PostgreSQL rehearsal; then wire collector/adapter mapping and provenance acceptance to these fields before claiming runtime provenance is complete. The new columns alone do not mean data has started populating them.
