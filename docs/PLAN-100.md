@@ -1262,3 +1262,12 @@ The targeted API/Web contract gap has been ported to `main` in focused commits, 
 For the first BTC scenario, prioritize a verified price anchor, canonical completed-day ETF flow evidence, and a specifically sourced DXY observation because the existing thesis explicitly includes institutional and macro catalysts. Keep hashrate as supporting network-health evidence unless the scenario rules explicitly make it decisive. Defer fee/subsidy ratio and its aggregation implementation until a concrete research question requires it.
 
 This decision does **not** mean the scenario can be evaluated today: price data must be refreshed and validated through an approved capture process; ETF provenance/access and the DXY source contract remain blockers; and all input freshness, units, source lineage, reporting windows, duplicates and revision rules must pass. BTC remains not_evaluable. Do not alter published probabilities, persist scenario state, perform production ingestion, or change runtime required-input rules on the strength of this documentation decision alone. Before implementation, reconcile the metric registry, readiness gate and tests with this scope so they do not accidentally continue requiring a deferred indicator or silently drop evidence.
+
+
+### BTC indicator scope implementation — 2026-10-14
+
+- Implemented the scope decision in the shared read-only readiness gate: spot price and the existing ETF/DXY checks remain relevant; hashrate is no longer a mandatory directional input; fee/subsidy ratio is no longer a required readiness input.
+- Updated tests to assert that missing hashrate or fee/subsidy data does not block the first scenario, while source-provenance validation still applies to required inputs.
+- Updated the metric registry to mark fee/subsidy ratio as manual and on-demand, with no active freshness expectation while deferred. The metric definition and source research are retained for possible later miner-economics work.
+- This is not a declaration that the scenario is ready: DXY source approval and ETF evidence gates remain. No probabilities, persisted scenario state, production data, ingestion, deployment or database state were changed.
+- Validation is pending on the latest CI runs; treat the implementation as provisional until build, unit tests and the VPS rehearsal pass.
