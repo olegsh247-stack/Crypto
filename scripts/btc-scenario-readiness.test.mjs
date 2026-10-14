@@ -17,9 +17,16 @@ const canonicalSources = {
   "macro.dxy": "macro.primary",
   "institutional.etf_net_flow": "institutional.primary",
 };
+const canonicalUrls = {
+  "market.spot_price": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+  "security.hashrate": "https://mempool.space/api/v1/mining/hashrate/1w",
+  "security.fee_subsidy_ratio": "https://mempool.space/api/v1/mining/blocks/fees/1w",
+  "macro.dxy": "https://example.com/data",
+  "institutional.etf_net_flow": "https://farside.co.uk/btc/",
+};
 const row = (metric_id, observed_at, value_numeric = 1, sourceId = canonicalSources[metric_id]) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
-  source_id: sourceId, source_url: "https://example.com/data",
+  source_id: sourceId, source_url: canonicalUrls[metric_id],
   source_registered: true, unit: units[metric_id], expected_unit: units[metric_id],
 });
 
@@ -123,6 +130,15 @@ test("unregistered source cannot pass even with an HTTPS URL", () => {
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "security.hashrate" && x.reason === "source_not_registered"));
+});
+
+test("approved source ID with an unrelated HTTPS URL cannot pass provenance gate", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, source_url: "https://example.com/pretend-kraken" } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"
+    && x.reason === "source_url_not_approved_for_metric"));
 });
 
 test("registered but unapproved ETF mirror cannot pass canonical-source gate", () => {
