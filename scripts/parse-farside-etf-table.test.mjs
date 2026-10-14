@@ -14,6 +14,9 @@ test("parses reported daily fund values, negatives in parentheses, and USD-milli
   assert.equal(parsed.fund_flows.IBIT, -207.7);
   assert.equal(parsed.fund_flows.BRRR, 0);
   assert.equal(parsed.reported_total_usd_million, -484.9);
+  assert.equal(parsed.calculated_fund_sum_usd_million, -484.9);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0);
+  assert.equal(parsed.reconciliation_status, "MATCHES_DISPLAY_ROUNDING");
   assert.equal(parsed.status, "REPORTED_CANDIDATE");
   assert.equal(parsed.observed_at, null);
 });
@@ -24,6 +27,8 @@ test("preserves dash placeholders as null instead of converting them to zero", (
   assert.equal(parsed.status, "UNREPORTED_PLACEHOLDER");
   assert.equal(parsed.reported_total_usd_million, 0);
   assert.ok(Object.values(parsed.fund_flows).every(value => value === null));
+  assert.equal(parsed.calculated_fund_sum_usd_million, null);
+  assert.equal(parsed.reconciliation_status, "UNREPORTED");
   assert.equal(parsed.observed_at, null);
 });
 
@@ -32,4 +37,22 @@ test("does not treat malformed or undated rows as observations", () => {
   const result = parseFarsideEtfTable(html);
   assert.equal(result.parsed_reporting_row_count, 0);
   assert.deepEqual(result.latest_rows, []);
+});
+
+test("flags material aggregate-versus-fund discrepancies instead of normalizing them away", () => {
+  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "(2.1)", "0.0", "0.0", "0.0", "(39.3)", "0.0", "(484.9)"];
+  const parsed = parseFarsideEtfTable(row("07 Oct 2026", values)).latest_rows[0];
+  assert.equal(parsed.calculated_fund_sum_usd_million, -483.5);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 1.4);
+  assert.equal(parsed.reconciliation_status, "MATERIAL_DIFFERENCE");
+  assert.equal(parsed.status, "REPORTED_CANDIDATE");
+  assert.equal(parsed.observed_at, null);
+});
+
+test("allows only the one-decimal rounding envelope for aggregate reconciliation", () => {
+  const values = ["(207.7)", "(105.1)", "(27.6)", "(101.7)", "0.0", "0.0", "(1.8)", "0.0", "0.0", "0.0", "(39.3)", "0.0", "(484.9)"];
+  const parsed = parseFarsideEtfTable(row("07 Oct 2026", values)).latest_rows[0];
+  assert.equal(parsed.calculated_fund_sum_usd_million, -483.2);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 1.7);
+  assert.equal(parsed.reconciliation_status, "MATERIAL_DIFFERENCE");
 });
