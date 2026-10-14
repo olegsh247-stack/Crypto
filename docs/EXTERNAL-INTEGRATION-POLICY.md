@@ -60,3 +60,19 @@ The published all-data page describes the table as automatically generated in re
 GitHub Actions read-only capture on 2026-10-14 returned HTTP 403 for both the legacy page route and the all-data route. Search/index access to a rendered page does not establish that automated retrieval is authorized or available. Do not bypass the 403 or designate TFTC as canonical just because its endpoint is accessible. ETF flow remains blocked for scenario use until Farside's intended machine-access method and relevant usage terms are clarified, the source can be accessed through an authorized route, and parser/schema/freshness/runtime acceptance are verified. If necessary, use the provider's contact channel to ask for an approved data-access method.
 
 This review is not permission to activate ETF data or write to production.
+
+## 5. Exchange spot-price candidates — initial documentation review (2026-10-14)
+
+Reviewed official documentation:
+- Binance Spot REST and public market-data access: https://developers.binance.com/en/docs/products/spot/rest-api ; https://github.com/binance/binance-spot-api-docs/blob/master/faqs/market_data_only.md
+- OKX API v5: https://app.okx.com/docs-v5/en
+- Bybit V5 Get Tickers: https://bybit-exchange.github.io/docs/v5/market/tickers
+
+Initial documented facts:
+- Binance offers public market-data-only endpoints, including ticker, book ticker, trades and klines. Timestamp fields are generally milliseconds by default; each endpoint's exact event/aggregation semantics must be checked separately.
+- OKX public market-data endpoints do not require authentication. OKX documents independent market-data caches and warns that a later response can contain older data than a previous response; capture ordering and freshness must be validated.
+- Bybit V5 `GET /v5/market/tickers` returns last price and best bid/ask and a response-level `time`; the caller must explicitly select `category=spot` rather than derivatives.
+- `BTCUSDT` is quoted in USDT, not USD. Do not store it as `USD/BTC` without a documented conversion/peg policy. Do not mix last trade, midpoint, candle close, index and mark prices as one metric.
+
+Status: documentation-only screening, not integration approval. No live requests, credentials, writes or source activation performed. Before implementation, the chosen endpoint still requires a full contract review covering exact schema/timestamps, quotas and retry policy, terms/licensing/retention/redistribution, access from intended runtime, sanitized fixtures, and a separately reported live read-only test. Until then, all three remain candidates only; do not add them to source priority or use them as silent fallback.
+
