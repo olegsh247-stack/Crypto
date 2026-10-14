@@ -5,7 +5,7 @@
 **Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последний проверенный BTC source-gate code SHA:** `10c4f8b35ba5d70775baa6d992ce5541a768d9d1`. BTC Scenario Readiness Gate #189 and VPS Build Rehearsal #1139 both passed; this version includes explicit rejection tests for Binance/OKX/Bybit canonical-price substitution and unapproved ICE DXY/SoSoValue ETF candidates. The subsequent ETF reporting-date contract change is documented below and awaits its own current-head checks.  
+**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #200 passed on code SHA `be4bcad17c25c9b852f62c517bc09d6374e279e6` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38609739359)); VPS Build Rehearsal #1182 passed on documentation commit `14c3c5a3f6e1212a749374d9af53e95256bc60e3` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38611372091)). Readiness Gate #200 predates the latest documentation-only commits; do not present it as a fresh run on current HEAD. The source-gate implementation passed, and the ETF source discrepancy remains unresolved.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
