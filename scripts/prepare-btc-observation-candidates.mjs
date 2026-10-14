@@ -21,6 +21,18 @@ export function prepareBtcObservationCandidates(manifest) {
   const sources = Array.isArray(manifest?.sources) ? manifest.sources : [];
 
   for (const source of sources) {
+    if (source?.metric_id === "market.spot_price" && source?.source_id !== "market.kraken") {
+      const reasons = ["source_not_approved_for_canonical_spot"];
+      if (source.status !== "CAPTURED") reasons.push("cross_check_capture_not_successful");
+      if (source.quote_unit && source.quote_unit !== "USD/BTC") reasons.push("noncanonical_quote_unit");
+      blocked.push({
+        source_id: source.source_id ?? null,
+        metric_id: source.metric_id,
+        reasons
+      });
+      continue;
+    }
+
     if (source?.metric_id === "market.spot_price" && source?.source_id === "market.kraken") {
       const reasons = [];
       if (source.status !== "CAPTURED") reasons.push("source_capture_not_successful");
