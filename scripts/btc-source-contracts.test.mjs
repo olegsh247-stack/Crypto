@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { classifyFarsideEtfRow, evaluateFarsideSessionFreshness, normalizeKrakenLegacyTrades } from "./btc-source-contracts.mjs";
+import { getUsEquitySessionDates2026, US_EQUITY_CALENDAR_2026_METADATA } from "./us-equity-session-calendar.mjs";
 
 test("Kraken legacy Trades uses source trade epoch, not retrieval time", () => {
   const result = normalizeKrakenLegacyTrades({
@@ -142,4 +143,19 @@ test("Farside freshness requires an approved calendar input and rejects malforme
   assert.throws(() => evaluateFarsideSessionFreshness({ session_date: "2026-02-31", source_row_status: "COMPLETE_CANDIDATE", value: 1 }, {
     retrievedAt: "2026-10-14T10:00:00Z", expectedSessionDates: ["2026-10-12"], maxSessionLag: 1,
   }), /valid ISO date/);
+});
+
+
+test("official-source 2026 equity calendar excludes published holidays and retains early closes", () => {
+  const sessions = getUsEquitySessionDates2026({ from: "2026-07-02", through: "2026-07-06" });
+  assert.deepEqual(sessions, ["2026-07-02", "2026-07-06"]);
+  const thanksgivingWindow = getUsEquitySessionDates2026({ from: "2026-11-25", through: "2026-11-27" });
+  assert.deepEqual(thanksgivingWindow, ["2026-11-25", "2026-11-27"]);
+  assert.equal(US_EQUITY_CALENDAR_2026_METADATA.early_closes_are_sessions, true);
+});
+
+test("2026 equity calendar fails closed for unsupported years and invalid dates", () => {
+  assert.throws(() => getUsEquitySessionDates2026({ from: "2027-01-04" }), /valid 2026 ISO date/);
+  assert.throws(() => getUsEquitySessionDates2026({ from: "2026-02-31" }), /valid 2026 ISO date/);
+  assert.throws(() => getUsEquitySessionDates2026({ from: "2026-10-14", through: "2026-10-13" }), /must not be after/);
 });
