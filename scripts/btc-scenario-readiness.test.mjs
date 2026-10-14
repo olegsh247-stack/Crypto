@@ -181,3 +181,21 @@ test("metric registry unit drift blocks readiness", () => {
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price" && x.reason === "metric_unit_contract_mismatch"));
 });
+
+
+for (const [sourceId, sourceUrl] of [
+  ["market.binance", "https://api.binance.com/api/v3/trades?symbol=BTCUSDT&limit=1000"],
+  ["market.okx", "https://www.okx.com/api/v5/market/trades?instId=BTC-USDT&limit=500"],
+  ["market.bybit", "https://api.bybit.com/v5/market/recent-trade?category=spot&symbol=BTCUSDT&limit=1000"],
+]) {
+  test(`registered cross-check source ${sourceId} cannot replace canonical USD/BTC spot source`, () => {
+    const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+      ? { ...x, source_id: sourceId, source_url: sourceUrl, source_registered: true }
+      : x);
+    const result = assessBtcScenarioReadiness(inputs, now);
+    assert.equal(result.status, "not_evaluable");
+    assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"
+      && x.reason === "source_not_approved_for_metric"));
+    assert.equal(result.selected_inputs["market.spot_price"], undefined);
+  });
+}
