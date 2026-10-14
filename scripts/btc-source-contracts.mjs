@@ -583,6 +583,23 @@ export function normalizeKrakenHourlyOhlc(payload, {
     starts.add(row.epochSeconds);
   }
   const selected = closedRows.find(row => row.epochSeconds * 1000 === windowStartMs);
+  if (selected && retrievedAt != null && Date.parse(retrievedAt) < windowStartMs + 3_600_000) {
+    return {
+      source_id: "market.kraken",
+      metric_id: "market.spot_price",
+      requested_pair_key: requestedPairKey,
+      unit: "USD/BTC",
+      interval_minutes: 60,
+      value: null,
+      status: "BLOCKED_RETRIEVED_BEFORE_CANDLE_CLOSE",
+      window_start: new Date(windowStartMs).toISOString(),
+      window_end: new Date(windowStartMs + 3_600_000).toISOString(),
+      observed_at: null,
+      source_published_at: null,
+      retrieved_at: retrievedAt,
+      blockers: ["RETRIEVAL_PRECEDES_SCHEDULED_CANDLE_CLOSE"],
+    };
+  }
   if (!selected) {
     return {
       source_id: "market.kraken",
