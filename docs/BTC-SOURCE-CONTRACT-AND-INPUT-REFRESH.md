@@ -170,3 +170,17 @@ The BTC fee/subsidy candidate is now pinned by a regression test to the reposito
 - **Production / scenario acceptance:** not approved. Keep BTC scenario readiness `not_evaluable`; do not create scenario state or monitoring events, change probabilities, ingest candidates, or alter source priority.
 
 Next implementation step after CI: resolve the spot-price cadence mismatch as a documented contract decision, then continue the remaining BTC inputs under the same source/time/unit/freshness contract. No provider calls or production writes are part of that documentation/test change.
+
+### BTC spot cadence decision — 2026-10-14
+
+**Decision:** source-supported cadence is acceptable; 15 minutes is not a fixed requirement. For the first BTC research path, the canonical contract now specifies a completed hourly candle candidate:
+- `market.spot_price.frequency = 1h`;
+- `freshness_window = 1h` remains a separate limit measured from the completed observation window, not from retrieval time;
+- unit remains `USD/BTC`;
+- source priority remains `market.kraken`;
+- use only a completed `XBTUSD` candle, identified by its UTC start/end; never treat the current uncommitted row as final;
+- do not silently mix hourly closes with ticker snapshots, trades, USDT-quoted prices or other providers.
+
+This changes only the BTC repository metric contract and its regression test. It does **not** activate the collector, perform live requests, prove provider-use rights, verify runtime registration, write observations, or authorize scenario evaluation. Earlier notes saying the 15-minute registry cadence must be preserved are superseded by this explicit cadence decision; the remaining source terms/access/runtime gates still apply.
+
+If a later source offers a reliable 15-minute observation, it can be evaluated on its merits. Frequency should follow the selected source and accepted research method, while freshness remains independently defined.
