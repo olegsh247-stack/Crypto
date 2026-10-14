@@ -9,6 +9,15 @@
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
+
+**Исполнительная отметка — 14 октября 2026 года (ветка PR #82, не main):**
+- Проверка коммита `ba1d8fc25a368ad012412371768abf6a4e991f09` — VPS API Build Rehearsal passed: https://github.com/olegsh247-stack/Crypto/actions/runs/38577255973.
+- В последующих коммитах добавлена регрессионная проверка соответствия BTC fee/subsidy-кандидата каноническому реестру (`ratio`, `1d`, `48h`, источник `network.primary`) и зафиксированы входные блокеры в `docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md`.
+- BTC price contract remains unresolved: registry cadence is `15m`, while the Kraken OHLC helper is hourly and fixture-only. Не подключать его к runtime, пока частота не согласована явно.
+- BTC readiness remains `not_evaluable`. DXY source specificity, ETF authorized access/observation-time semantics, runtime source registration, and input freshness remain blockers. No production writes, source activation, scenario-state changes, probability changes, or merge were performed/authorized.
+- Current PR #82: https://github.com/olegsh247-stack/Crypto/pull/82. CI for the newest commits is still running at the time of this note; this checkpoint is not a claim that those newer commits have passed.
+
+
 ---
 
 ## 0. Короткое решение: что строим и в каком порядке
