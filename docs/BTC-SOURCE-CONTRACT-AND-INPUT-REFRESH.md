@@ -357,3 +357,10 @@ Capture evidence at this run:
 The latest VPS Build Rehearsal #1164 passed on the same code head `53c4b38d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38608092710. This validates the current schema/migration and application rehearsal; it is not a production migration or deployment.
 
 Next, review the actual normalized artifact and the ETF candidate schema/reporting-date contract. Do not persist this Kraken candidate or promote TFTC/Farside until duplicate/revision rules and source acceptance are explicit.
+
+
+## 16. Candidate artifact field-by-field verification — 2026-10-14
+
+Read-only capture run #64 produced artifact `11916637750`; the normalized candidate was compared against the archived Kraken raw response. The raw-response SHA-256 matched both the manifest and candidate; price and event timestamp matched the latest trade row; and the deterministic `source_row_key` matched the raw trade fields. BTC Scenario Readiness Gate #197 passed with the explicit cross-check-blocking tests: https://github.com/olegsh247-stack/Crypto/actions/runs/38608820923. Capture run #64 passed and reported one candidate plus five blocked entries: https://github.com/olegsh247-stack/Crypto/actions/runs/38608794818.
+
+The five blocked entries are deliberate: Binance and Bybit could not be retrieved from this runner (HTTP 451/403), OKX was retrieved but is a USDT quote, and both ETF sources lack accepted row-level reporting-time normalization. These outcomes are retained as evidence, not silently omitted or promoted. The source contract still does not permit ingestion.
