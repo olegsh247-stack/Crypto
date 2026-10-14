@@ -131,3 +131,12 @@ Required before activation:
 4. Until cleared, limit work to official-doc review and sanitized fixtures; do not make live source calls or persist provider data.
 
 This is a blocker record, not legal advice. No live calls, credentials, registry changes, source activation, or production writes were performed.
+
+
+## 8. Kraken hourly OHLC candidate — fixture-only contract (2026-10-14)
+
+Official documentation reviewed: https://docs.kraken.com/api-reference/market-data/get-ohlc-data. The documented public endpoint is `GET https://api.kraken.com/0/public/OHLC`; `pair` is required, `interval=60` is a 60-minute bar, and each row contains Unix-second start time, OHLC, VWAP, volume and trade count. The documentation explicitly says the final returned row is the current, uncommitted timeframe and that the endpoint returns at most 720 recent entries.
+
+The fixture-only normalizer `normalizeKrakenHourlyOhlc` selects a caller-specified UTC hour by exact start timestamp, excludes the last uncommitted row, validates the candle data, and returns the close as a USD/BTC candidate. It preserves separate fields for scheduled bar end and retrieval time, leaves provider publication time unknown, and blocks when the requested closed candle is not present. This avoids treating retrieval time or scheduled interval end as a provider publication timestamp.
+
+Readiness: fixture contract only. No live request, credentials, source registration, source-priority/metric registry change, collector wiring, production write or scenario state change. Before activation, resolve terms/permitted use, endpoint-specific quotas/retries, runtime access, historical-window limits and freshness semantics. The helper's tests and CI result must be checked independently.
