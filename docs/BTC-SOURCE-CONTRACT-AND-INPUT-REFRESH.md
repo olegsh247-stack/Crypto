@@ -386,3 +386,36 @@ The read-only HTML parser now reports both the provider's displayed aggregate an
 The parser uses a diagnostic maximum rounding envelope of **0.65 USD million**: twelve fund values displayed to one decimal can each contribute up to 0.05m of rounding, and the displayed aggregate can contribute another 0.05m. This is a transparent screening threshold, not an ingestion approval or a guarantee that source values are correct. Rows outside it stay visibly discrepant; the parser never adjusts a fund value or overwrites the provider total to force a match. Rows with missing fund values are not assigned a calculated sum, and all-dash placeholder rows remain unreported rather than zero observations.
 
 The parser still does not infer `observed_at`, publication time, finalization, or revision from the reporting date, HTTP Date, retrieval time, or response headers. Those remain separate blockers for accepting ETF observations.
+
+
+## 18. ETF reporting-time, retrieval, and revision contract — 2026-10-14
+
+ETF rows must not be normalized into accepted observations until the following timestamps and revision fields have distinct meanings. The Farside HTML parser currently provides the reporting date and flow values; it deliberately leaves `observed_at` null. This section defines the contract without inventing missing source facts.
+
+| Field | Required meaning for an ETF row | Current Farside capture status |
+|---|---|---|
+| `period_start` / `period_end` | Provider's displayed reporting/trading session date, normalized to the date only; same day for a daily flow row | Available from the dated table row |
+| `observed_at` | Timestamp that the source explicitly associates with the published observation, or a separately documented and approved observation-time convention | **Unresolved**; do not copy the reporting date into a timestamp |
+| `source_updated_at` | Provider-supplied publication/update timestamp only, with its source field/semantics recorded | **Unresolved**; HTTP `Date` is response metadata, not a provider publication timestamp |
+| `retrieved_at` | UTC timestamp when this collector retrieved the HTTP response | Available in the capture manifest |
+| `http_date` | HTTP response `Date` header, retained as transport metadata | Captured when present; never maps automatically to `observed_at` or `source_updated_at` |
+| `provider_last_modified`, `etag`, `cache_control`, `expires` | Exact response headers, nullable if absent | Captured when present; current Farside response had no `Last-Modified` or `ETag` |
+| `source_payload_sha256` | SHA-256 of the exact captured response body; retain raw body alongside the digest | Available in the read-only capture |
+| `source_row_key` | Deterministic identity for one provider reporting date and source table/row; must not depend on retrieval time | To be defined in the ETF row normalizer; do not reuse the whole-page hash as if it were a row identity |
+| `revision` | Monotonic provider revision only if the provider exposes one; otherwise a locally recorded capture/version identifier must be explicitly typed as such and must not masquerade as provider revision | No provider revision identifier verified |
+| `finalization_status` | `unknown`, `provisional`, or `final`, based only on explicit provider documentation/evidence | **unknown**; do not infer finalization from a date being in the past |
+| `reconciliation_status` | Parser's sum-vs-total result; independent of time/finality acceptance | Available from parser v2; diagnostic only |
+
+### Acceptance rules
+
+1. Keep the provider's session date, observation timestamp, provider update timestamp, retrieval timestamp, and HTTP response metadata in separate fields.
+2. Never derive a publication timestamp from HTTP `Date`, `Last-Modified`, ETag presence, crawler time, GitHub artifact creation time, or retrieval time.
+3. A page-level SHA-256 proves which response body was captured; it does not establish the publication time, the revision number of an individual row, or whether a row was final.
+4. A row may be represented as a review candidate with `observed_at: null`, `finalization_status: "unknown"`, and `persistable: false`. It must not qualify as a current scenario input until the accepted observation-time convention and revision/finality policy are supported by source evidence.
+5. For revision comparisons, preserve each capture's retrieval time, response metadata, full-body hash and raw body. Compare normalized row values across captures by reporting date; label the comparison as capture-to-capture only unless the provider documents revision identifiers or publication semantics.
+6. The parser's `MATCHES_DISPLAY_ROUNDING` status is not a substitute for timestamp, source-row identity, finality, or revision acceptance. `MATERIAL_DIFFERENCE`, `INCOMPLETE`, and `UNREPORTED` remain explicit review outcomes.
+7. Do not treat the latest visible date as proof of latest completed session. For the 14 Oct all-dash row, the correct interpretation remains `UNREPORTED_PLACEHOLDER`, not zero flow.
+
+### Current decision
+
+**ETF source remains blocked for ingestion and scenario readiness.** The official all-data endpoint is reachable and its table parser/reconciliation checks are working, but no defensible provider publication timestamp, provider revision ID, or finalization signal has been established. The next technical step is a review-only row normalizer that emits the contract above and carries the response-level provenance unchanged; it must leave unavailable fields null/unknown and set `persistable: false`. Do not change the source priority, run scenario evaluation, or write production observations as part of that step.
