@@ -23,7 +23,7 @@ const canonicalUrls = {
   "security.hashrate": "https://mempool.space/api/v1/mining/hashrate/1w",
   "security.fee_subsidy_ratio": "https://mempool.space/api/v1/mining/blocks/fees/1w",
   "macro.dxy": "https://example.com/data",
-  "institutional.etf_net_flow": "https://farside.co.uk/btc/",
+  "institutional.etf_net_flow": "https://farside.co.uk/bitcoin-etf-flow-all-data/",
 };
 const row = (metric_id, observed_at, value_numeric = 1, sourceId = canonicalSources[metric_id]) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
@@ -297,4 +297,13 @@ test("metric registry does not advertise a generic or unlicensed DXY source as c
   assert.ok(ice);
   assert.match(ice.notes, /not a public quote endpoint/i);
   assert.match(ice.notes, /not in macro\.dxy source_priority/i);
+});
+
+test("official Farside all-data endpoint is accepted as the same canonical source", () => {
+  const inputs = completeInputs();
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(!result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
+    && x.reason === "source_url_not_approved_for_metric"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });

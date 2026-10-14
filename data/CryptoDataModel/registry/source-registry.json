@@ -46,11 +46,11 @@
       "source_id": "institutional.primary",
       "name": "Farside Investors — Bitcoin ETF flows",
       "type": "institutional",
-      "url": "https://farside.co.uk/btc/",
+      "url": "https://farside.co.uk/bitcoin-etf-flow-all-data/",
       "priority": 2,
       "reliability": "high",
       "access_method": "web/table",
-      "notes": "US spot Bitcoin ETF flow and holdings data; requires parser/reconciliation."
+      "notes": "Official Farside Investors all-data page for US spot BTC ETF flows. Confirmed accessible from the GitHub capture runner (HTTP 200) and linked from the official BTC landing page. Canonical source identity remains institutional.primary; row publication timestamp, finalization/revision semantics and exact parser reconciliation still require review. The /btc/ landing URL remains accepted for existing historical provenance. Do not infer observed_at from retrieval time."
     },
     {
       "source_id": "institutional.tftc",

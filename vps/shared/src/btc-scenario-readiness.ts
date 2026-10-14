@@ -120,7 +120,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       || !Number.isFinite(latestEtfPeriodMs)
       || latestEtfPeriodMs > nowMs
       || nowMs - latestEtfPeriodMs > 14 * 24 * 3600000
-      || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/"])) {
+      || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"])) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
       reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
@@ -150,7 +150,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
       && row?.source_registered === true
       && row?.source_id === "institutional.primary"
-      && String(row?.source_url ?? "").startsWith("https://farside.co.uk/btc/")
+      && ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"].some(prefix => String(row?.source_url ?? "").startsWith(prefix))
       && row?.unit === "USD million/day"
       && row?.expected_unit === "USD million/day";
   });
