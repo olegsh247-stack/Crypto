@@ -5,7 +5,7 @@
 **Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последний проверенный BTC source-gate code SHA:** `4e6cf4856438437279fe45ac58b5a549a4f472ec`. BTC Scenario Readiness Gate #180 passed (23 tests); VPS Build Rehearsal and Crypto VPS Release Gate for this SHA were still running at the time of this update.  
+**Последний проверенный BTC source-gate code SHA:** `067368761af4104b378b1c7d8fb84fcd2463c478`. BTC Scenario Readiness Gate #186 passed after adding explicit rejection tests for Binance, OKX and Bybit as canonical USD/BTC sources. VPS Build Rehearsal #1131 and Readiness Gate #187 for the subsequent source-registry update were running at the time of this update.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -1288,3 +1288,12 @@ This decision does **not** mean the scenario can be evaluated today: price data 
 - Binance returned HTTP 451 and Bybit HTTP 403 from the GitHub runner; Farside returned HTTP 403. These are runner access results, not proof that the providers are universally unavailable. TFTC JSON returned HTTP 200 but remains an unapproved ETF mirror candidate.
 - Permanent capture summary: [docs/data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json](data-review/BTC-EXCHANGE-CROSSCHECK-2026-10-14.json). Source-contract interpretation and caveats are recorded in docs/BTC-SOURCE-CONTRACT-AND-INPUT-REFRESH.md.
 - Still blocked: canonical ETF input (source access, lineage and observation-time contract), DXY provider/time convention, and acceptance of the actual current price observation through the input gate. BTC stays not_evaluable. No database ingestion, production write, scenario state, monitoring event, probability update or deployment was performed.
+
+
+### DXY source boundary and exchange gate tests — 2026-10-14
+
+- ICE is confirmed as administrator of DXY, and its published methodology defines the official close as the last calculated index level disseminated for the index business day. This establishes candidate observation semantics, but not project access to a licensed feed. Registry entry `macro.ice_dxy_candidate` is documentation-only and unapproved; it is not in `macro.dxy` source priority. DXY remains blocked until an accessible endpoint, access terms, actual response and timestamp contract are verified.
+- FRED `DTWEXBGS` is the Nominal Broad U.S. Dollar Index, not DXY, so it must not be used as a silent substitute.
+- Added readiness tests that explicitly reject registered Binance, OKX and Bybit trade observations as the canonical spot-price input. BTC Scenario Readiness Gate #186 passed (see [run](https://github.com/olegsh247-stack/Crypto/actions/runs/38604259925)). These exchanges remain independent BTC/USDT cross-check candidates; Kraken XBT/USD remains the canonical candidate.
+- Updated source registry descriptions and source-contract documentation. No production source-priority change, ingestion, database write, scenario evaluation, probability change or deployment occurred.
+- Next in sequence: complete the current VPS rehearsal; then continue the canonical ETF source investigation (Farside access, TFTC lineage/reconciliation and a defensible source observation/publication timestamp). Keep DXY as a separate blocker. Only after both input contracts and the current spot observation pass their gates may the offline BTC rule be evaluated.
