@@ -186,7 +186,7 @@ test("flags material Farside versus TFTC ETF total deltas without approving eith
         status: "CAPTURED",
         source_payload_sha256: "c".repeat(64),
         updated_through: "2026-10-13",
-        recent_days: [{
+        recent_days_in_last_14_days: [{
           date: "2026-10-07",
           netFlowUsd: -487067411.5,
           perEtfUsd: { BRRR: -2114298 }
