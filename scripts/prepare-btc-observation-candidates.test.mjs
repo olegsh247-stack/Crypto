@@ -71,7 +71,7 @@ test("keeps ETF capture blocked until row-level values and reporting dates are n
     sources: [{ metric_id: "institutional.etf_net_flow", source_id: "institutional.primary", status: "CAPTURED" }]
   });
   assert.equal(result.candidates.length, 0);
-  assert.deepEqual(result.blocked[0].reasons, ["row_level_values_and_provider_reporting_dates_not_yet_normalized"]);
+  assert.deepEqual(result.blocked[0].reasons, ["ETF_source_not_canonical_or_capture_missing_parsed_reporting_rows"]);
 });
 
 test("blocks a source event timestamp later than the capture retrieval time", () => {
