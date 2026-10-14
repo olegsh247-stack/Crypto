@@ -153,9 +153,11 @@ export function prepareBtcObservationCandidates(manifest) {
     source?.source_id === "institutional.tftc"
     && source?.url === "https://www.tftc.io/bitcoin-etf-flows/data.json"
     && source?.status === "CAPTURED"
-    && Array.isArray(source.recent_days));
+    && (Array.isArray(source.recent_days_in_last_14_days) || Array.isArray(source.recent_days)));
   if (farside && tftc) {
-    const tftcByDate = new Map(tftc.recent_days
+    const tftcRecentDays = Array.isArray(tftc.recent_days_in_last_14_days)
+      ? tftc.recent_days_in_last_14_days : tftc.recent_days;
+    const tftcByDate = new Map(tftcRecentDays
       .filter(row => typeof row?.date === "string")
       .map(row => [row.date, row]));
     for (const row of farside.latest_rows) {
