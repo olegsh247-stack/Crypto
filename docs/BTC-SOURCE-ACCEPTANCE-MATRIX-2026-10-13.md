@@ -110,3 +110,8 @@ The aggregate endpoint is insufficient as the sole continuity proof: its upstrea
 ### DXY canonical-source review — 2026-10-16
 
 See [BTC DXY canonical-source review](BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md). Official ICE materials identify ICE as the DXY administrator and describe controlled delivery/licensing; this review did not establish an authorized stable endpoint and permission for automated retrieval/storage. FRED series `DTWEXBGS` is a distinct Nominal Broad U.S. Dollar Index, not ICE DXY. Therefore `macro.dxy` remains blocked and neither the metric registry nor source registry is changed. An explicit choice is required: obtain authorized ICE DXY access, or deliberately redefine the product metric as a different broad-dollar index and update its contract before registration.
+
+
+### ETF publication/revision/finality review — 2026-10-16
+
+See [BTC ETF publication, revision and finality review](BTC-ETF-PUBLICATION-REVISION-FINALITY-REVIEW-2026-10-16.md). Farside documents real-time updates but the reviewed public descriptions do not establish a per-row publication timestamp, provider revision ID, correction history or finality point. TFTC documents a twice-daily sync and automatic corrections to recent and older rows, and states CC BY 4.0 reuse with attribution; its lineage varies by period (current daily aggregates/per-fund flows from SoSoValue, historical per-fund records through mid-2026 compiled in part from Farside). This improves the documented evidence but does not make TFTC canonical or prove finality. Keep the production ETF input blocked; preserve capture artifacts/hashes and source values, and keep the two-source mean research-only. No registry or production data changed.
