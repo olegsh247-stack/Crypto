@@ -115,8 +115,9 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     candidates_sha256: candidateDigest,
     etf_sources: sourceHashes
   };
-  return {
+  const snapshot = {
     schema_version: 1,
+    mode: "offline-review-only-snapshot-manifest",
     snapshot_id: "btc-etf-snapshot-v1-" + sha256(canonicalJson(snapshotIdentity)),
     diff_algorithm_version: VERSION,
     captured_at: manifest?.retrieved_at ?? null,
@@ -124,8 +125,12 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     candidates_sha256: candidateDigest,
     source_payload_fingerprint: sourcePayloadFingerprint,
     source_coverage: sourceCoverage,
-    rows
+    rows,
+    production_database_accessed: false,
+    production_writes_performed: false
   };
+  snapshot.snapshot_content_sha256 = sha256(canonicalJson(snapshot));
+  return snapshot;
 }
 
 function isComplete(row) {
@@ -192,21 +197,28 @@ export function diffBtcEtfSnapshots(previous, current) {
   };
 }
 
-function isSnapshotManifest(value) {
-  return value?.schema_version === 1
+export function validateBtcEtfSnapshotManifest(value) {
+  const shapeValid = value?.schema_version === 1
+    && value.mode === "offline-review-only-snapshot-manifest"
     && typeof value.snapshot_id === "string"
     && value.snapshot_id.startsWith("btc-etf-snapshot-v1-")
     && Array.isArray(value.rows)
     && value.source_coverage !== null
     && typeof value.source_coverage === "object"
-    && typeof value.source_payload_fingerprint === "string";
+    && typeof value.source_payload_fingerprint === "string"
+    && value.production_database_accessed === false
+    && value.production_writes_performed === false
+    && HASH_RE.test(String(value.snapshot_content_sha256 ?? ""));
+  if (!shapeValid) return false;
+  const { snapshot_content_sha256, ...content } = value;
+  return sha256(canonicalJson(content)) === snapshot_content_sha256;
 }
 
 async function readSnapshot(inputPath) {
   const inputInfo = await stat(inputPath);
   if (inputInfo.isFile()) {
     const parsed = JSON.parse(await readFile(inputPath, "utf8"));
-    if (!isSnapshotManifest(parsed)) {
+    if (!validateBtcEtfSnapshotManifest(parsed)) {
       throw new Error(`Not a supported BTC ETF snapshot manifest: ${inputPath}`);
     }
     return parsed;
