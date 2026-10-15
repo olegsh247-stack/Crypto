@@ -1532,12 +1532,17 @@ No production database access/write, source-priority promotion, scenario evaluat
 ### BTC source freshness — 2026-10-15
 
 - The Kraken candidate now carries measured source age in seconds, derived from `retrieved_at - observed_at`, while retaining both source timestamps unchanged.
-- It explicitly emits `freshness_status: UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD` and no policy ID. API success alone is not treated as `CURRENT`.
-- Regression tests cover sub-second age calculation and a 24-hour-old event without silently classifying it as fresh/stale.
-- No fixed 15-minute/hourly limit was imposed. Freshness SLA must be defined from research use, not from whichever polling interval an endpoint happens to provide.
+- Audit found the metric registry already defines an event-driven spot input with a one-hour maximum age; this is an age limit, not a polling cadence.
+- Added explicit policy ID `btc.market.spot_price.max-age.v1` to the metric registry and aligned the normalizer: age `<= 3600` seconds is `CURRENT`, older is `STALE`.
+- Regression tests cover sub-second age calculation, the exact one-hour boundary, and a 24-hour-old event. All candidates remain review-only and non-persistable regardless of freshness label.
 - Candidate remains review-only; no production DB operation or scenario evaluation is authorized.
 
 
 ### Observation freshness storage guard — 2026-10-15
 
 Audit found that PostgreSQL defaulted omitted `observations.freshness` to `CURRENT`, while the BTC candidate correctly remained unclassified. Updated the clean-install schema and added forward migration `2026-10-15-observation-freshness-unclassified-default.sql`: new rows now default to `UNCLASSIFIED`; the allowed storage values include `CURRENT`, `STALE`, `EXPIRED`, and `UNCLASSIFIED`. Existing rows are not rewritten. `CURRENT` requires an explicit approved freshness decision. This is a repository change only; no production migration, ingestion, or scenario evaluation was performed. CI must validate compatibility before this item is considered verified.
+
+
+### Freshness policy reconciliation — 2026-10-15
+
+A follow-up audit corrected a documentation/implementation mismatch: `data/CryptoDataModel/registry/metric-registry.json` already declared `market.spot_price.freshness_window = 1h`, and the BTC readiness gate uses a one-hour maximum age. The candidate normalizer now applies that same policy and the registry names it `btc.market.spot_price.max-age.v1`. This does not require hourly polling. A source observation older than the limit is labelled `STALE`; the normalizer does not discard its age evidence. Candidate persistence and scenario evaluation remain blocked until the full source contract and remaining mandatory inputs pass.
