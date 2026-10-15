@@ -1585,3 +1585,15 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 
 
 Validation detail: the container-image rehearsal caught and fixed an existing package-layout issue before acceptance. The final image keeps the shared runtime in the expected location and includes `data/CryptoDataModel/registry/metric-registry.json`; no production deployment was performed. BTC Scenario Readiness Gate passed on `e3bd6d2008cd229ec8988f6d302a904a43756ba2`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716461506. VPS API Build Rehearsal passed on `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077.
+
+
+## 25. ETF source contract hardening — 2026-10-15
+
+- [x] Formalize ETF `period_start` vs `observed_at` vs `retrieved_at` semantics in [BTC ETF observation contract](./data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md).
+- [x] Mark date-derived ETF keys as logical session keys, not provider-assigned row IDs.
+- [x] Set ETF `provider_revision` and `revision` to `null` while provider revision semantics remain unknown; retain full-response hash scope explicitly.
+- [x] Add regression assertions protecting the provenance/revision fields in the review-only candidate mapper.
+- [ ] Obtain a defensible provider publication timestamp or approve a source-specific publication-time convention.
+- [ ] Establish revision/finality and correction policy; reconcile the material Farside/TFTC 7 October difference before any canonical source decision.
+
+**Decision:** ETF remains HOLD and non-persistable. A reporting date is not a timestamp; HTTP Date and retrieval time are not row publication timestamps; same-date changed snapshots must not be auto-overwritten or auto-promoted. BTC remains `not_evaluable`. No ingestion, database writes, scenario evaluation, or deployment occurred.
