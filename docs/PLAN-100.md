@@ -1799,17 +1799,17 @@ Commits: initial runtime change `d10950c6242cf9d2a63078dbdca09f56f9585289`; rege
 
 ## 39. Обязательный журнал работ — «Промт 100»
 
-**Обязательное требование Плана 100 с 2026-10-15:** весь фактически выполненный объём работ по проекту Crypto необходимо непрерывно фиксировать в отдельном документе **«Промт 100»** в Library проекта Crypto. Для каждой записи обязательны три поля: **Дата**, **Действие**, **Результат**. В результат включать проверяемый итог: что изменилось/подтверждено, ссылки на commit/PR/checks при наличии, и что осталось блокером. Не записывать запланированное как выполненное; незавершённые проверки помечать как выполняющиеся/ожидающие результата. Журнал не заменяет План 100 и не меняет порядок этапов — он сохраняет полный след исполнения.
+**Обязательное требование Плана 100 с 2026-10-15:** в отдельном документе **«Промт 100»** в Library проекта Crypto вести журнал только важных, содержательных результатов. Для каждой записи обязательны поля **Дата | Действие | Результат**. Фиксировать существенные решения, изменения архитектуры/контрактов, результаты проверок, значимые ошибки и блокеры, достигнутые этапы, важные commit/PR/CI. Не записывать каждое мелкое действие и повторную проверку без нового результата. Не записывать планы как выполненные; незавершённые проверки помечать как ожидающие результата. Журнал не заменяет План 100 и не меняет порядок этапов.
 
 ### Правила ведения журнала
 
-1. Добавлять запись после каждого содержательного действия: аудит, изменение кода/документа, тесты, CI, проверка источника, выявление блокера или принятие решения.
+1. Добавлять запись, когда есть важный новый результат, решение, изменение, блокер или завершённая значимая проверка; не дробить одну работу на множество мелких строк.
 2. Использовать формат таблицы: `Дата | Действие | Результат`; даты указывать в `Europe/Riga`.
-3. В результатах отделять подтверждённые факты от предположений и ожиданий; добавлять SHA и ссылки на GitHub, когда они есть.
-4. Если проверка ещё выполняется, фиксировать это явно и позднее дополнять/обновлять результат, не объявляя её успешной заранее.
-5. В начале каждой новой сессии читать актуальные План 100, Промт 100 и состояние GitHub. В конце каждого рабочего блока обновлять Промт 100 и синхронизировать его с Library проекта.
-6. Поддерживать актуальную копию в Library проекта Crypto; если репозиторный документ или основной план обновлены, синхронизировать связанные записи и ссылки.
-7. Сохранять не только успешные изменения, но и отрицательные результаты, причины блокировок и решения не менять контракт.
+3. Отделять подтверждённые факты от предположений; добавлять SHA и ссылки на GitHub, когда они действительно важны для проверки результата.
+4. Незавершённую проверку помечать как ожидающую результата; не объявлять её успешной заранее.
+5. В начале сессии сверять актуальные План 100, Промт 100 и GitHub. В конце рабочего блока обновлять журнал, если появился значимый результат.
+6. Сохранять актуальную копию Промта 100 в Library проекта Crypto; не создавать дополнительные файлы-дубликаты.
+7. Фиксировать существенные отрицательные результаты, блокеры и решения не менять контракт; пропускать повторения без новой информации.
 
 
 ## 40. Проверка source-registry / PostgreSQL seed consistency
@@ -1859,3 +1859,12 @@ The read-only audit indicates that Farside does not expose a stable row-level pu
 5. Only after the user explicitly approves this policy may the runtime readiness contract accept `reconciled_snapshot` as an alternative to provider-declared finality. Until then, `finalization_status=unknown` remains blocked and no ETF candidate becomes persistable.
 
 **Why this is proposed:** it provides reproducible lineage even if the website silently edits historical cells, while acknowledging that it cannot prove provider finality. It is not equivalent to an authoritative provider revision timestamp. No code, database, ingestion, scenario state or probabilities were changed by documenting this proposal.
+
+
+## 43. Dual-source ETF research mean implementation — 2026-10-16
+
+The offline BTC candidate mapper now emits a separate `etf_research_derived_rows` collection using `arithmetic_mean_2_sources` when both Farside and TFTC provide numeric aggregates for the same date and the Farside row is complete and reconciled. Each derived row preserves both raw source values, source IDs/URLs, capture timestamps and full-response SHA-256 values, plus method version. The derived row is explicitly `RESEARCH_DERIVED`, `OFFLINE_RESEARCH_ONLY`, `persistable: false`, with `observed_at: null` and `finalization_status: unknown`.
+
+Regression tests were added for the exact-precision mean and for refusing to derive a mean from incomplete Farside reporting. The 2026-10-07 example uses Farside `-484.9 USDm` and captured TFTC value `-487.0674115 USDm`, producing `-485.98370575 USDm` (displayed as `-486.0 USDm` to one decimal). Both source values remain unchanged.
+
+Commits: implementation `7408a9a2e08de7f5159462122f6d78183decf974`; tests `0b3db0832a4a49423d561c408eb597a00232335a`. CI runs for the test commit are pending at the time of this entry: [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38814920750) and [BTC Public Source Staging (Read Only)](https://github.com/olegsh247-stack/Crypto/actions/runs/38814920503). No production database access/writes, ingestion, scenario evaluation, state/probability/monitoring changes or deployment were performed. BTC remains `not_evaluable` until the separate ETF production acceptance requirements and approved DXY source are satisfied.
