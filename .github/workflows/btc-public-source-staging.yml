@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  capture:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -27,6 +27,17 @@ jobs:
         run: node --test scripts/parse-farside-etf-table.test.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
+
+  capture:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Capture public source responses for review only
         run: node scripts/capture-btc-public-sources.mjs
       - name: Prepare normalized observation candidates (review only)
