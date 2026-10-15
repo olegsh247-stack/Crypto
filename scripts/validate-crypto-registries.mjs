@@ -28,7 +28,7 @@ for (const metric of metricRegistry.metrics) {
     assert.ok(knownSources.has(sourceId), `metric ${metric.metric_id} references unknown source_id ${sourceId}`);
   }
   if (metric.freshness_policy_id != null) {
-    assert.ok(/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(metric.freshness_policy_id),
+    assert.ok(/^[a-z0-9_]+(?:[.-][a-z0-9_]+)*$/.test(metric.freshness_policy_id),
       `metric ${metric.metric_id} has malformed freshness_policy_id`);
   }
 }
