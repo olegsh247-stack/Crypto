@@ -24,6 +24,8 @@ const manifest = (overrides = {}) => ({
     latest_trade_observed_at: "2026-10-14T16:53:33.584Z",
     observed_at: "2026-10-14T16:53:33.584Z",
     source_row_key: "XBTUSD:1791996813.584:81826.7:0.001: b",
+    source_row_key_scope: "pair_timestamp_price_volume_side_order_type_misc",
+    source_row_identity_status: "derived_composite_key_not_provider_assigned",
     methodology: "kraken-public-trades-latest-trade-v1",
     methodology_version: "1",
     ...overrides
@@ -42,6 +44,8 @@ test("maps canonical Kraken capture into a review-only normalized observation", 
   assert.equal(candidate.observed_at, "2026-10-14T16:53:33.584Z");
   assert.equal(candidate.retrieved_at, "2026-10-14T16:53:33.900Z");
   assert.equal(candidate.source_payload_sha256, hash);
+  assert.equal(candidate.source_row_key_scope, "pair_timestamp_price_volume_side_order_type_misc");
+  assert.equal(candidate.source_row_identity_status, "derived_composite_key_not_provider_assigned");
   assert.equal(candidate.source_updated_at, null);
   assert.equal(candidate.revision, 1);
   assert.equal(candidate.revision_scope, "local_candidate_observation_record");
@@ -54,6 +58,15 @@ test("blocks capture without a stable row key or valid payload hash", () => {
   const result = prepareBtcObservationCandidates(manifest({ source_row_key: "", source_payload_sha256: "bad" }));
   assert.equal(result.candidates.length, 0);
   assert.deepEqual(result.blocked[0].reasons, ["source_row_key_missing", "source_payload_sha256_missing_or_invalid"]);
+});
+
+test("blocks a Kraken key without explicit derived-key semantics", () => {
+  const result = prepareBtcObservationCandidates(manifest({
+    source_row_key_scope: null,
+    source_row_identity_status: null
+  }));
+  assert.equal(result.candidates.length, 0);
+  assert.ok(result.blocked[0].reasons.includes("source_row_identity_semantics_missing_or_unverified"));
 });
 
 test("does not accept USDT cross-checks as canonical USD/BTC observations", () => {
