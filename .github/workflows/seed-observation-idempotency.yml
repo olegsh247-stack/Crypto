@@ -72,7 +72,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
         run: |
           set -euo pipefail
-          chmod +x scripts/test-btc-observation-idempotency.sh
+          chmod +x scripts/test-btc-observation-idempotency.sh scripts/reconcile-btc-exact-duplicates-target.sh
           ./scripts/test-btc-observation-idempotency.sh
 
       - name: Remove disposable PostgreSQL container
