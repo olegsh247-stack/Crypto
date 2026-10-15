@@ -1577,8 +1577,11 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 - [x] Registry declares the canonical candidate endpoint for BTC spot, the fail-closed DXY policy, and ETF source URL prefixes plus freshness/history/minimum-session rules.
 - [x] Registry validator checks the source-of-truth relationship and protects the explicit ETF/DXY safety gates.
 - [x] BTC Scenario Readiness Gate passed on PR head `4550817fc10624e48e41d14911ace0ed88ed6f9c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38715775250.
-- [ ] VPS API Build Rehearsal must complete successfully on the latest PR head before the change can be considered fully validated.
+- [x] VPS API Build Rehearsal passed on PR head `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077.
+- [x] VPS API and Worker Docker images built in CI; both successfully imported the shared runtime with the canonical registry bundled.
 - [ ] Review/acceptance of the PR remains separate; no merge was performed.
 
 **Effect on Plan 100:** this improves Stage 4's configuration integrity only. It does not accept source observations or close Stage 4. ETF timestamp/revision/finality semantics and approved DXY feed remain blockers; BTC remains `not_evaluable`. No production ingestion, database writes, scenario evaluation, scenario-state/probability/monitoring changes or deployment occurred.
 
+
+Validation detail: the container-image rehearsal caught and fixed an existing package-layout issue before acceptance. The final image keeps the shared runtime in the expected location and includes `data/CryptoDataModel/registry/metric-registry.json`; no production deployment was performed. BTC Scenario Readiness Gate passed on `e3bd6d2008cd229ec8988f6d302a904a43756ba2`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716461506. VPS API Build Rehearsal passed on `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077.
