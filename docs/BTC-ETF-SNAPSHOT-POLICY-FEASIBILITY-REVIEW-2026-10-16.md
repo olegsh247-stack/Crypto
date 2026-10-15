@@ -43,3 +43,9 @@ These are design requirements, not completed implementation. Storage destination
 - Current capture pipeline is suitable for temporary, manually initiated review evidence; it is not sufficient to claim durable immutable snapshots or historical revision reconciliation.
 - Keep ETF production acceptance blocked and BTC `not_evaluable`.
 - Do not implement a storage/archive target or change retention silently. First review the proposed policy and required operational boundaries; then implement the deterministic offline diff and tests without production writes.
+
+## Follow-up — offline diff and manifest implementation on PR branch (2026-10-16)
+
+Since this static review, the PR branch has added `scripts/diff-btc-etf-snapshots.mjs` and focused tests. It can classify row changes offline and export a portable versioned JSON snapshot manifest with source coverage and SHA-256 evidence; comparison can consume a prior exported manifest or an existing capture directory. This closes the code-level gap for deterministic row diff and explicit snapshot identity in the review workflow, subject to the latest CI result.
+
+**Still not solved:** the GitHub Actions artifact remains a temporary 7-day delivery mechanism unless the user explicitly chooses another storage/retention policy. No durable archive, restore guarantee, project revision/supersession policy, production eligibility/finality rule, or Farside reuse approval is implied. No live capture was dispatched. ETF production acceptance remains blocked; BTC remains `not_evaluable`.
