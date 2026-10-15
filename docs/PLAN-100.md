@@ -1754,3 +1754,18 @@ DXY остаётся заблокированным. Нельзя автомат
 
 **Границы изменений:** только документация Плана 100. Metric/source registry, required-input policy, runtime, база данных, ingestion, scenario state/probability/monitoring, merge и deployment не менялись.
 
+## 36. BTC readiness provenance hardening — raw payload hash required
+
+Во время read-only review readiness runtime найдено несоответствие контракту provenance: проверка для обязательных не-ETF входов допускала отсутствие `source_payload_sha256`, хотя текущий collector/candidate contract сохраняет SHA-256 сырого ответа и результат readiness должен быть пригоден для воспроизводимой проверки происхождения.
+
+**Исправление в PR #83:**
+- `validObservation` теперь требует строковый 64-символьный hex SHA-256 для обязательного входа; отсутствующий, неверного формата или невалидный hash блокирует вход.
+- Причина блокировки теперь явно отражается как `source_payload_hash_missing_or_invalid`.
+- Добавлен regression test: свежая, иначе корректная spot-price запись без hash не должна пройти readiness.
+
+**Commits:** runtime fix `da05df06c312f1f899084c0c8beb8772a4ab2515`; regression test `25a06f35d2deb17de513500eaa83073960558d11`.
+
+**Проверка на момент записи:** предыдущие BTC Readiness Gate #268, VPS Build Rehearsal #1361 и VPS Release Workflow validation #168 завершились успешно на предыдущем commit/состоянии; они не подтверждают новый regression test. Для текущих commit отдельный workflow run пока не найден. Локальный запуск CI также невозможен в текущей среде из-за отсутствия сетевого доступа к GitHub. Поэтому новый тест и runtime fix считаются **ожидающими подтверждения CI**, а не уже проверенными.
+
+**Безопасность:** только readiness validation и тест; не менялись source/metric registries, БД, ingestion, scenario state/probability/monitoring, merge или deployment. BTC остаётся `not_evaluable` до принятия ETF и DXY inputs и прохождения всех ворот.
+
