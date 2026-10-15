@@ -1,6 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 import { buildBtcEtfSnapshot, diffBtcEtfSnapshots, validateBtcEtfSnapshotManifest } from "./diff-btc-etf-snapshots.mjs";
+
+const execFileAsync = promisify(execFile);
+const SCRIPT_PATH = join(dirname(fileURLToPath(import.meta.url)), "diff-btc-etf-snapshots.mjs");
 
 const HASH_A = "a".repeat(64);
 const HASH_B = "b".repeat(64);
@@ -202,4 +211,59 @@ test("rejects an exported snapshot manifest whose normalized rows were modified"
   const tampered = structuredClone(snapshot);
   tampered.rows[0].normalized.total_usd_million = 999;
   assert.equal(validateBtcEtfSnapshotManifest(tampered), false);
+});
+
+test("CLI exports a snapshot manifest and compares saved manifests offline", async () => {
+  const root = await mkdtemp(join(tmpdir(), "btc-etf-snapshot-test-"));
+  const captureDir = join(root, "capture");
+  const snapshotPath = join(root, "snapshot.json");
+  const diffPath = join(root, "diff.json");
+  await mkdir(captureDir, { recursive: true });
+  const manifest = {
+    schema_version: 1,
+    asset_id: "btc",
+    retrieved_at: "2026-10-16T10:00:00.000Z",
+    sources: [
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.primary",
+        url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        status: "CAPTURED",
+        retrieved_at: "2026-10-16T10:00:00.000Z",
+        body_sha256: HASH_A,
+        latest_rows: [{
+          period_start: "2026-10-07",
+          status: "REPORTED_CANDIDATE",
+          reported_total_usd_million: -484.9,
+          calculated_fund_sum_usd_million: -484.9,
+          reconciliation_status: "MATCHES_DISPLAY_ROUNDING",
+          fund_completeness_status: "ALL_FUNDS_REPORTED",
+          fund_flows: { IBIT: -484.9 }
+        }]
+      },
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.tftc",
+        url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
+        status: "CAPTURED",
+        retrieved_at: "2026-10-16T10:00:00.000Z",
+        body_sha256: HASH_B,
+        recent_days_in_last_14_days: [{ date: "2026-10-07", netFlowUsd: -487067411.5, perEtfUsd: { IBIT: -487067411.5 } }]
+      }
+    ]
+  };
+  try {
+    await writeFile(join(captureDir, "manifest.json"), JSON.stringify(manifest), "utf8");
+    await writeFile(join(captureDir, "observation-candidates.json"), JSON.stringify({ mode: "review-only" }), "utf8");
+    await execFileAsync(process.execPath, [SCRIPT_PATH, "--build", captureDir, snapshotPath]);
+    const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    assert.equal(validateBtcEtfSnapshotManifest(snapshot), true);
+    await execFileAsync(process.execPath, [SCRIPT_PATH, snapshotPath, snapshotPath, diffPath]);
+    const diff = JSON.parse(await readFile(diffPath, "utf8"));
+    assert.equal(diff.same_payload_snapshot, true);
+    assert.ok(diff.row_results.length > 0);
+    assert.ok(diff.row_results.every(row => row.status === "UNCHANGED"));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
