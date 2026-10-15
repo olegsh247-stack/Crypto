@@ -42,6 +42,44 @@ for (const sourceId of sourceIds) {
   assert.ok(seeded.has(sourceId), `source registry entry ${sourceId} is not seeded into PostgreSQL sources`);
 }
 
+// Guard the runtime BTC readiness contract against silent drift from the metric registry.
+// The shared TypeScript implementation is canonical for runtime behavior; these checks make
+// its duplicated contract fields fail CI whenever the registry changes independently.
+const readinessSource = readFileSync(new URL("../vps/shared/src/btc-scenario-readiness.ts", import.meta.url), "utf8");
+const readinessBlock = readinessSource.split(/const REQUIRED:[^=]*= \\[/)[1]?.split(/\\n\\];/)[0];
+assert.ok(readinessBlock, "BTC readiness REQUIRED contract must be discoverable");
+const readinessRows = [...readinessBlock.matchAll(/\\{\\s*metricId:\\s*"([^"]+)"([^}]+)\\}/g)];
+assert.ok(readinessRows.length > 0, "BTC readiness REQUIRED contract must contain metric entries");
+const metricsById = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
+function ageHours(window, metricId) {
+  const match = /^(\\d+)(m|h|d)$/.exec(String(window ?? ""));
+  assert.ok(match, `metric ${metricId} has no parseable freshness_window for BTC readiness`);
+  const factor = { m: 1 / 60, h: 1, d: 24 }[match[2]];
+  return Number(match[1]) * factor;
+}
+for (const [, metricId, fields] of readinessRows) {
+  const metric = metricsById.get(metricId);
+  assert.ok(metric, `BTC readiness references unknown metric ${metricId}`);
+  const age = /maxAgeHours:\\s*(\\d+(?:\\.\\d+)?)/.exec(fields);
+  const unit = /unit:\\s*"([^"]+)"/.exec(fields);
+  const sourceIds = /sourceIds:\\s*(\\[[^\\]]*\\])/.exec(fields);
+  assert.ok(age && unit && sourceIds, `BTC readiness contract for ${metricId} must declare age, unit and source IDs`);
+  assert.equal(Number(age[1]), ageHours(metric.freshness_window, metricId), `freshness age drift for ${metricId}`);
+  assert.equal(unit[1], metric.unit, `unit drift for ${metricId}`);
+  assert.deepEqual(JSON.parse(sourceIds[1]), metric.source_priority, `approved source IDs drift for ${metricId}`);
+}
+// ETF daily history has a separate rule block (latest-row freshness + distinct reporting days).
+const etfMetric = metricsById.get("institutional.etf_net_flow");
+assert.ok(etfMetric, "ETF flow metric must exist in metric registry");
+const etfRule = /validObservation\\(latestEtf, nowMs, (\\d+(?:\\.\\d+)?), "([^"]+)", (\\[[^\\]]*\\]), (\\[[^\\]]*\\])\\)/.exec(readinessSource);
+assert.ok(etfRule, "ETF latest-row readiness rule must be discoverable");
+assert.equal(Number(etfRule[1]), ageHours(etfMetric.freshness_window, etfMetric.metric_id), "ETF latest-row freshness drift");
+assert.equal(etfRule[2], etfMetric.unit, "ETF flow unit drift");
+assert.deepEqual(JSON.parse(etfRule[3]), etfMetric.source_priority, "ETF approved source IDs drift");
+const distinctDaysRule = /uniqueByDay\\.size < (\\d+)/.exec(readinessSource);
+assert.ok(distinctDaysRule, "ETF minimum distinct-day rule must be discoverable");
+assert.ok(Number(distinctDaysRule[1]) >= 5, "ETF readiness must retain at least five distinct daily observations");
+
 console.log(JSON.stringify({
   status: "PASS",
   source_count: sourceIds.length,
