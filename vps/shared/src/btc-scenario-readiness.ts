@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 /**
  * Read-only BTC scenario input-quality gate.
@@ -7,7 +8,14 @@ import { readFileSync } from "node:fs";
  * This decides whether source observations are fit for a reviewed research
  * evaluation. It never selects a scenario or authorizes persistence.
  */
-const metricRegistry = JSON.parse(readFileSync(new URL("../../../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
+const registryRelativePath = "data/CryptoDataModel/registry/metric-registry.json";
+const registryPath = [
+  resolve(process.cwd(), registryRelativePath),
+  resolve(process.cwd(), "../../" + registryRelativePath),
+  resolve(process.cwd(), "../" + registryRelativePath),
+].find(path => existsSync(path));
+if (!registryPath) throw new Error("Canonical metric registry not found from the application working directory");
+const metricRegistry = JSON.parse(readFileSync(registryPath, "utf8"));
 const metricsById = new Map<string, any>(metricRegistry.metrics.map((metric: any) => [metric.metric_id, metric] as [string, any]));
 
 function freshnessHours(window: unknown, metricId: string): number {
