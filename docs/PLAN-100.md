@@ -1597,3 +1597,13 @@ Validation detail: the container-image rehearsal caught and fixed an existing pa
 - [ ] Establish revision/finality and correction policy; reconcile the material Farside/TFTC 7 October difference before any canonical source decision.
 
 **Decision:** ETF remains HOLD and non-persistable. A reporting date is not a timestamp; HTTP Date and retrieval time are not row publication timestamps; same-date changed snapshots must not be auto-overwritten or auto-promoted. BTC remains `not_evaluable`. No ingestion, database writes, scenario evaluation, or deployment occurred.
+
+## 26. 2026-10-15 — ETF public-source reconciliation evidence
+
+- Rechecked the four CI runs triggered by the previous PR #83 changes: BTC Scenario Readiness Gate #38722320242, VPS Build Rehearsal #38722320268, Validate VPS Release Workflow #38722320256, and latest-head VPS Build Rehearsal #38722327674 all completed successfully.
+- Added a read-only public-source spot check to `docs/data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md`.
+- Farside vs TFTC for 2026-10-07: -484.9 vs -487.1 USDm, delta -2.2 USDm; visible BRRR discrepancy (Farside 0.0, TFTC -2.1) is part of the difference, but exact root cause is not established. Do not auto-correct either source.
+- For 2026-10-13, displayed totals are +175.7 vs +175.6 USDm, a -0.1 USDm difference. This is consistent with displayed rounding/aggregation, but does not prove identical source lineage.
+- On 2026-10-14, Farside displays -261.4 USDm while TFTC's current page had not yet published that session. The Farside row contains only some reported fund values, so a non-null aggregate must not be treated as proof that every fund has reported.
+- Next contract work: add/verify an explicit per-fund completeness rule (numeric zero is distinct from missing/unreported), preserve immutable capture hashes, and keep changed historical rows review-only until source-specific correction/finality policy is approved. Keep TFTC diagnostic-only; do not change canonical source priority.
+- Safety unchanged: no ingestion, database writes, scenario evaluation, state/probability/monitoring changes, deployment, or PR merge. BTC remains `not_evaluable`; ETF acceptance remains blocked on publication/observation timestamp, finality/revision/correction semantics, and reconciliation policy.
