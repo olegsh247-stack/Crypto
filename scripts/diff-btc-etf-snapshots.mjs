@@ -41,7 +41,7 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
   for (const source of etfSources) {
     const sourceId = source.source_id ?? "unknown-source";
     const sourceKey = sourceId + "|" + String(source.url ?? "");
-    const sourceRows = sourceId === "institutional.primary"
+    const sourceRows = source.status !== "CAPTURED" ? [] : sourceId === "institutional.primary"
       ? (Array.isArray(source.latest_rows) ? source.latest_rows.map(row => ({
           date: row?.period_start,
           row_status: row?.status ?? "UNRESOLVED_ROW",
@@ -148,7 +148,7 @@ export function diffBtcEtfSnapshots(previous, current) {
     const before = previousByKey.get(key) ?? null;
     const after = currentByKey.get(key) ?? null;
     let status;
-    if (!before) status = "NEW";
+    if (!before) status = isComplete(after) ? "NEW" : "INCOMPLETE";
     else if (!after) {
       const coverage = current?.source_coverage?.[before.source_key];
       if (!coverage || coverage.status !== "CAPTURED") status = "NOT_COMPARABLE";
