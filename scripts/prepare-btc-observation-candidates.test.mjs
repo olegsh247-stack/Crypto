@@ -43,6 +43,9 @@ test("maps canonical Kraken capture into a review-only normalized observation", 
   assert.equal(candidate.unit, "USD/BTC");
   assert.equal(candidate.observed_at, "2026-10-14T16:53:33.584Z");
   assert.equal(candidate.retrieved_at, "2026-10-14T16:53:33.900Z");
+  assert.equal(candidate.source_age_seconds_at_retrieval, 0.316);
+  assert.equal(candidate.freshness_status, "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD");
+  assert.equal(candidate.freshness_policy_id, null);
   assert.equal(candidate.source_payload_sha256, hash);
   assert.equal(candidate.source_row_key_scope, "pair_timestamp_price_volume_side_order_type_misc");
   assert.equal(candidate.source_row_identity_status, "derived_composite_key_not_provider_assigned");
@@ -52,6 +55,17 @@ test("maps canonical Kraken capture into a review-only normalized observation", 
   assert.equal(candidate.revision_identity_status, "not_a_provider_revision");
   assert.equal(candidate.persistable, false);
   assert.equal(result.production_writes_performed, false);
+});
+
+test("measures age for an older event but does not call it current without an approved threshold", () => {
+  const result = prepareBtcObservationCandidates(manifest({
+    latest_trade_observed_at: "2026-10-13T16:53:33.900Z",
+    observed_at: "2026-10-13T16:53:33.900Z"
+  }));
+  assert.equal(result.candidates.length, 1);
+  assert.equal(result.candidates[0].source_age_seconds_at_retrieval, 86400);
+  assert.equal(result.candidates[0].freshness_status, "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD");
+  assert.equal(result.candidates[0].persistable, false);
 });
 
 test("blocks capture without a stable row key or valid payload hash", () => {
