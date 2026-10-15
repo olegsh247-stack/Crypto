@@ -1782,3 +1782,16 @@ Commit: `6105ac61323bbe6334818c739c9a2cc3742a4d7b`.
 
 **Границы:** только runtime validation/tests и документация. Нет изменений БД, источников/метрик, ingestion, scenario state, probabilities, monitoring, merge или deployment.
 
+## 38. BTC candidate timestamps — require explicit normalized UTC
+
+В read-only review `scripts/prepare-btc-observation-candidates.mjs` обнаружено, что `validIso` фактически принимал любые строки, которые понимает `Date.parse`, включая неоднозначные локальные даты и timestamp с часовым смещением. Это слабее контракта источника, где время наблюдения и retrieval должны быть представлены нормализованным UTC ISO-8601.
+
+**Изменение:**
+- валидатор теперь требует форму `YYYY-MM-DDTHH:mm:ss[.fraction]Z`;
+- добавлены тесты, которые блокируют неоднозначную локальную дату и timestamp с `+03:00`;
+- исходное UTC-время отдельной сделки Kraken по-прежнему используется как `observed_at`; время получения ответа остаётся `retrieved_at`.
+
+Commits: runtime `d10950c6242cf9d2a63078dbdca09f56f9585289`; tests `42e9aa9915a9f3b2937c674349080cb093b41ecc`.
+
+**CI status:** новый код и тесты ещё ожидают автоматического подтверждения; успешные старые runs не считаются доказательством этой правки. Ничего не записывалось в БД, сборщик не запускался против live endpoint, candidate не стал persistable. PR #83 остаётся Draft.
+
