@@ -1875,3 +1875,14 @@ Commits: implementation `7408a9a2e08de7f5159462122f6d78183decf974`; tests `0b3db
 The source-staging workflow was adjusted so every relevant code push runs parser/candidate unit tests, while public-source capture and artifact creation run only after explicit `workflow_dispatch`. This avoids recapturing changing public totals on every development commit while preserving a deliberate read-only capture path for review. The most recent one-off artifact is retained for validation only; it does not feed production data or scenario state.
 
 Workflow change commit: `4f0c931ec4eb3291352bef575b659c16a7d01f27`. CI for this workflow-trigger change is pending; verify it before considering the change complete. No production database access/writes, ingestion, scenario evaluation, state/probability/monitoring changes or deployment were performed.
+
+
+## Plan 100 checkpoint — BTC ETF source lifecycle contract (2026-10-16)
+
+**Completed:** documented the public evidence available for Farside and TFTC publication cadence, lineage, revisions and reuse terms in [BTC ETF publication/revision/finality review](BTC-ETF-PUBLICATION-REVISION-FINALITY-REVIEW-2026-10-16.md), and linked it from the [BTC source acceptance matrix](BTC-SOURCE-ACCEPTANCE-MATRIX-2026-10-13.md).
+
+**Evidence-based outcome:** Farside describes real-time updates, usually in the US evening/night, but the reviewed public material does not establish a per-row publication timestamp, provider revision identifier, correction-history mechanism or finality point. TFTC explicitly describes twice-daily synchronization, automatic revisions to recent and older dates, CC BY 4.0 reuse with attribution, and lineage that varies by period. This is enough to document provider behavior, not enough to assert finality or silently change canonical source priority.
+
+**Still blocked:** ETF production acceptance. Keep provider observation/publication time and finalization unknown unless supported by explicit evidence. Preserve raw source values, source IDs/URLs, retrieval times, HTTP metadata and response hashes. The arithmetic mean of Farside and TFTC remains an offline research-derived value, not a provider-reported value and not persistable. A production policy must explicitly select either provider-backed lifecycle guarantees or an approved immutable project-snapshot/revision policy; any source-priority change requires explicit approval.
+
+**Safety:** no registry change, production DB access/write, ingestion, deployment, scenario evaluation/state/probability change or monitoring write. BTC remains `not_evaluable`.
