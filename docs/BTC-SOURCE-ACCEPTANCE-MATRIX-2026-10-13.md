@@ -142,3 +142,7 @@ Exported snapshot manifests now carry a canonical-content SHA-256, and loading a
 ### Snapshot manifest export and integrity — staging CI passed (2026-10-16)
 
 [BTC Public Source Staging #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38821070436) passed all validation steps, including CLI export/compare, tamper rejection and source-provenance assertions; live capture was skipped. VPS API Build Rehearsal for the latest commit remains in progress. This does not change ETF acceptance or BTC readiness.
+
+### ETF revision and research eligibility proposal (2026-10-16)
+
+See [BTC ETF snapshot revision and research eligibility proposal](BTC-ETF-SNAPSHOT-REVISION-ELIGIBILITY-PROPOSAL-2026-10-16.md). It documents policy options and the decisions still required for archive/retention, snapshot stability, revision/supersession and offline research eligibility. It is a proposal only; ETF production acceptance remains blocked.
