@@ -12,6 +12,7 @@
       "update_mode": "AUTO",
       "frequency": "event-driven",
       "freshness_window": "1h",
+      "freshness_policy_id": "btc.market.spot_price.max-age.v1",
       "source_priority": [
         "market.kraken"
       ],
