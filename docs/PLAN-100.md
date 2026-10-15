@@ -1536,3 +1536,8 @@ No production database access/write, source-priority promotion, scenario evaluat
 - Regression tests cover sub-second age calculation and a 24-hour-old event without silently classifying it as fresh/stale.
 - No fixed 15-minute/hourly limit was imposed. Freshness SLA must be defined from research use, not from whichever polling interval an endpoint happens to provide.
 - Candidate remains review-only; no production DB operation or scenario evaluation is authorized.
+
+
+### Observation freshness storage guard — 2026-10-15
+
+Audit found that PostgreSQL defaulted omitted `observations.freshness` to `CURRENT`, while the BTC candidate correctly remained unclassified. Updated the clean-install schema and added forward migration `2026-10-15-observation-freshness-unclassified-default.sql`: new rows now default to `UNCLASSIFIED`; the allowed storage values include `CURRENT`, `STALE`, `EXPIRED`, and `UNCLASSIFIED`. Existing rows are not rewritten. `CURRENT` requires an explicit approved freshness decision. This is a repository change only; no production migration, ingestion, or scenario evaluation was performed. CI must validate compatibility before this item is considered verified.
