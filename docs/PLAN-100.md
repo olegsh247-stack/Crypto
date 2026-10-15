@@ -1791,7 +1791,7 @@ Commit: `6105ac61323bbe6334818c739c9a2cc3742a4d7b`.
 - добавлены тесты, которые блокируют неоднозначную локальную дату и timestamp с `+03:00`;
 - исходное UTC-время отдельной сделки Kraken по-прежнему используется как `observed_at`; время получения ответа остаётся `retrieved_at`.
 
-Commits: runtime `d10950c6242cf9d2a63078dbdca09f56f9585289`; tests `42e9aa9915a9f3b2937c674349080cb093b41ecc`.
+Commits: initial runtime change `d10950c6242cf9d2a63078dbdca09f56f9585289`; regex escaping correction `fa8a65b19f6bc15c0a521a14d2b3f0f08027fc1b`; tests `42e9aa9915a9f3b2937c674349080cb093b41ecc`. The regex line was re-read from GitHub after the first update and its escaping corrected before closing this review.
 
 **CI status:** новый код и тесты ещё ожидают автоматического подтверждения; успешные старые runs не считаются доказательством этой правки. Ничего не записывалось в БД, сборщик не запускался против live endpoint, candidate не стал persistable. PR #83 остаётся Draft.
 
