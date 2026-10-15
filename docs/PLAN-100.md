@@ -1679,3 +1679,17 @@ No registry source was added, no metric semantics were changed, and no scenario 
 The Federal Reserve/FRED documentation clarifies an important operational distinction: DTWEXBGS has daily-dated observations, but the Federal Reserve says these daily data are updated in FRED once each week to capture the previous week. Therefore “daily frequency” does not mean a same-day live/current observation feed. Any future use as a separately named broad-dollar metric must register the publication/retrieval cadence, release lag, vintage/revision handling, and holiday calendar; it cannot satisfy the existing macro.dxy contract by substitution. Source: https://alfred.stlouisfed.org/category?cid=94&ob=pv&od=desc&t=broad
 
 ICE index platform terms also state that, absent a relevant agreement, access/use and redistribution of ICE index information are restricted. This reinforces that a public page/catalog is not enough to authorize scraping or unattended self-hosted ingestion. Source: https://indices.ice.com/termsAndDisclaimers
+
+
+## 32. BTC readiness CI acceptance — 2026-10-15
+
+The E2E assertion for the canonical ETF blocker was updated to recognize all three valid fail-closed outcomes: missing latest ETF observation, stale/untraceable observation, or unverified fund completeness/revision/finality metadata. This fixes the test contract; it does not relax the runtime readiness policy or accept the current Farside candidate.
+
+**Verified on commit `40e1c6e4771490b435f8045c8e2da13112b83b73`:**
+- [VPS API Build Rehearsal #1355](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299165) — **success**, including build, container/runtime registry import, disposable PostgreSQL migrations, API/Worker E2E, and BTC research evidence/snapshot lineage checks.
+- [VPS Release Workflow validation #165](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299177) — **success**.
+- [BTC Scenario Readiness Gate #265](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299197) — **success**.
+
+**What this proves:** the readiness implementation and CI contract are internally consistent, and the VPS rehearsal is green. It does not prove that live candidate data satisfy the source contract.
+
+**Next Plan 100 step — read-only BTC acceptance review:** verify the gate's output for the current required inputs and preserve the exact blocker reasons. Spot has a canonical Kraken candidate contract but must be fresh at evaluation time; ETF remains blocked because provider observation time and revision/finality are not established; DXY remains blocked because no approved feed is registered. Do not manufacture or persist observations to make the gate green. Keep BTC `not_evaluable` until all required inputs pass. No production DB writes, live ingestion, scenario/probability/monitoring changes, merge, or deployment were performed.
