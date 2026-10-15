@@ -3,6 +3,7 @@
  * Map a read-only BTC source-capture manifest into review-only normalized candidates.
  * This script never connects to PostgreSQL or marks candidates ready for ingestion.
  */
+import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, resolve, join } from "node:path";
@@ -10,7 +11,8 @@ import { fileURLToPath } from "node:url";
 
 const KRAKEN_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
 const SHA256_RE = /^[0-9a-f]{64}$/i;
-const metricRegistry = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
+const metricRegistryBytes = readFileSync(new URL("../data/CryptoDataModel/registry/metric-registry.json", import.meta.url));
+const metricRegistry = JSON.parse(metricRegistryBytes.toString("utf8"));
 const btcSpotMetric = metricRegistry.metrics?.find(metric => metric.metric_id === "market.spot_price");
 const freshnessWindow = /^(\d+)(s|m|h|d)$/.exec(String(btcSpotMetric?.freshness_window ?? ""));
 if (!btcSpotMetric?.freshness_policy_id || !freshnessWindow) {
@@ -280,10 +282,19 @@ export function prepareBtcObservationCandidates(manifest) {
     }
   }
 
+  const processingProvenance = {
+    contract_version: "1",
+    normalizer_script_sha256: createHash("sha256").update(readFileSync(fileURLToPath(import.meta.url))).digest("hex"),
+    farside_parser_sha256: createHash("sha256").update(readFileSync(fileURLToPath(new URL("./parse-farside-etf-table.mjs", import.meta.url)))).digest("hex"),
+    metric_registry_sha256: createHash("sha256").update(metricRegistryBytes).digest("hex"),
+    capture_provenance: manifest?.capture_provenance ?? null
+  };
+
   return {
     schema_version: 1,
     asset_id: "btc",
     mode: "review-only-normalized-candidates",
+    processing_provenance: processingProvenance,
     production_database_accessed: false,
     production_writes_performed: false,
     candidates,

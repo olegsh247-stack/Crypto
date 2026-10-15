@@ -1942,3 +1942,12 @@ This is a decision proposal, not an adopted policy. Archive location/retention, 
 **Confirmed:** [VPS API Build Rehearsal #1474](https://github.com/olegsh247-stack/Crypto/actions/runs/38821243278) completed successfully for commit `6ba7e09877d50109aba13220cb224755547830ba`. All job steps passed, including VPS-only guard, runtime/API/Worker builds, contract tests, PostgreSQL migrations/bootstrap, canonical BTC input registry, read-only provenance audit, idempotency/duplicate reconciliation, backup/restore, API/Worker E2E, offline contract invariants and BTC research evidence/snapshot lineage E2E. Combined with [BTC Public Source Staging #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38821070436), the latest branch has successful staging and VPS-rehearsal evidence.
 
 **Scope limit:** these are CI/test-environment results, not production cutover or provider finality. PR #83 remains Draft/open/unmerged; BTC remains `not_evaluable`. No live capture, production DB operation, ingestion, deployment, scenario-state/probability change or monitoring write was performed.
+
+
+## Plan 100 checkpoint — processing-artifact provenance bound into ETF snapshot identity (2026-10-16)
+
+**Finding:** review of the exported manifest found a reproducibility gap: hashes covered the raw capture manifest/candidates, but those artifacts did not identify the exact capture/parser/normalizer/metric-registry code that produced them.
+
+**Implemented on PR #83 branch:** capture manifest records SHA-256 of the capture script and Farside parser; normalized candidate output records SHA-256 of the candidate normalizer, Farside parser and metric registry, and carries capture provenance forward. Snapshot manifest schema/algorithm moved to version 2 and binds both provenance records into its ID and content integrity hash. Tests cover the new identity and provenance fields.
+
+**Limits:** these hashes identify exact file bytes; they are not a signature, archive, workflow-run attestation or provider-finality proof. Durable retention and eligibility/revision policy remain unresolved. No live capture, production DB operation, ingestion, deployment, scenario evaluation or scenario-state/probability change was performed.

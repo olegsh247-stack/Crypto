@@ -7,7 +7,7 @@
 
 Farside and TFTC do not provide sufficient evidence in the reviewed public material to establish a provider-declared finality point for each reporting date. TFTC also documents that recent and older rows can be corrected. A raw-response hash proves which bytes were captured; it does not prove that a provider will never revise them.
 
-The PR branch now provides an offline snapshot builder/diff, a versioned JSON manifest, source hashes/coverage, canonical content integrity validation, and tests. It does not choose durable storage, a project revision policy, or the point at which a row becomes eligible for an offline research scenario.
+The PR branch now provides an offline snapshot builder/diff, a versioned JSON manifest, source hashes/coverage, canonical content integrity validation, and tests. Review found that earlier snapshots did not bind the exact capture/parser/normalizer/metric-registry artifacts; version 2 now records these file hashes in the snapshot identity. It does not choose durable storage, a project revision policy, or the point at which a row becomes eligible for an offline research scenario.
 
 ## Proposed immutable evidence model
 
@@ -15,7 +15,7 @@ The PR branch now provides an offline snapshot builder/diff, a versioned JSON ma
 2. Never overwrite an earlier capture or normalized snapshot. A changed provider response creates a new snapshot.
 3. Compare rows by exact source identity (source ID + URL) and reporting date. Keep the prior and current values and classify `UNCHANGED`, `NEW`, `VALUE_CHANGED`, `ROW_MISSING`, `INCOMPLETE`, or `NOT_COMPARABLE`.
 4. Treat a changed row as a **revision candidate requiring review**, not an automatic supersession. A missing row or failed source is not a zero and must not delete earlier evidence.
-5. Preserve per-source ID, URL, retrieval time, response SHA-256, status, parser/normalizer artifact hashes, reporting date, units, and the exact normalized row.
+5. Preserve per-source ID, URL, retrieval time, response SHA-256, status, parser/normalizer/metric-registry artifact hashes, reporting date, units, and the exact normalized row. The version-2 snapshot manifest binds capture-script, Farside-parser, candidate-normalizer, and metric-registry hashes into the snapshot identity.
 6. The snapshot content hash detects unintentional or unaccompanied edits; it is not a digital signature and does not prove provider authenticity or finality.
 
 ## Research eligibility options

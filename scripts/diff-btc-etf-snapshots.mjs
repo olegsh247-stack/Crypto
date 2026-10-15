@@ -9,7 +9,7 @@ import { readFile, stat, writeFile } from "node:fs/promises";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const VERSION = "1";
+const VERSION = "2";
 const HASH_RE = /^[a-f0-9]{64}$/i;
 
 function sha256(value) {
@@ -107,23 +107,29 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     source_id: source.source_id, url: source.url, status: source.status,
     payload_sha256: source.payload_sha256
   }))));
+  const processingProvenance = {
+    capture: manifest?.capture_provenance ?? null,
+    normalization: candidates?.processing_provenance ?? null
+  };
   const snapshotIdentity = {
-    schema_version: 1,
+    schema_version: 2,
     diff_algorithm_version: VERSION,
+    processing_provenance: processingProvenance,
     captured_at: manifest?.retrieved_at ?? null,
     manifest_sha256: manifestDigest,
     candidates_sha256: candidateDigest,
     etf_sources: sourceHashes
   };
   const snapshot = {
-    schema_version: 1,
+    schema_version: 2,
     mode: "offline-review-only-snapshot-manifest",
-    snapshot_id: "btc-etf-snapshot-v1-" + sha256(canonicalJson(snapshotIdentity)),
+    snapshot_id: "btc-etf-snapshot-v2-" + sha256(canonicalJson(snapshotIdentity)),
     diff_algorithm_version: VERSION,
     captured_at: manifest?.retrieved_at ?? null,
     manifest_sha256: manifestDigest,
     candidates_sha256: candidateDigest,
     source_payload_fingerprint: sourcePayloadFingerprint,
+    processing_provenance: processingProvenance,
     source_artifacts: sourceHashes,
     source_coverage: sourceCoverage,
     rows,
@@ -199,10 +205,12 @@ export function diffBtcEtfSnapshots(previous, current) {
 }
 
 export function validateBtcEtfSnapshotManifest(value) {
-  const shapeValid = value?.schema_version === 1
+  const shapeValid = value?.schema_version === 2
     && value.mode === "offline-review-only-snapshot-manifest"
     && typeof value.snapshot_id === "string"
-    && value.snapshot_id.startsWith("btc-etf-snapshot-v1-")
+    && value.snapshot_id.startsWith("btc-etf-snapshot-v2-")
+    && value.processing_provenance !== null
+    && typeof value.processing_provenance === "object"
     && Array.isArray(value.rows)
     && value.source_coverage !== null
     && typeof value.source_coverage === "object"
@@ -215,8 +223,9 @@ export function validateBtcEtfSnapshotManifest(value) {
     && HASH_RE.test(String(value.snapshot_content_sha256 ?? ""));
   if (!shapeValid) return false;
   const identity = {
-    schema_version: 1,
+    schema_version: 2,
     diff_algorithm_version: value.diff_algorithm_version,
+    processing_provenance: value.processing_provenance,
     captured_at: value.captured_at,
     manifest_sha256: value.manifest_sha256,
     candidates_sha256: value.candidates_sha256,

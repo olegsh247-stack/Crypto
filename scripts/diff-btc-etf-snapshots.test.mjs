@@ -24,10 +24,13 @@ function makeSnapshot({
   farsideHash = HASH_A,
   tftcHash = HASH_B
 } = {}) {
+  const captureProvenance = { contract_version: "1", capture_script_sha256: HASH_A, farside_parser_sha256: HASH_B };
+  const processingProvenance = { contract_version: "1", normalizer_script_sha256: HASH_C, farside_parser_sha256: HASH_B, metric_registry_sha256: HASH_A, capture_provenance: captureProvenance };
   const manifest = {
     schema_version: 1,
     asset_id: "btc",
     retrieved_at: retrievedAt,
+    capture_provenance: captureProvenance,
     sources: [
       {
         source_id: "institutional.primary",
@@ -63,7 +66,7 @@ function makeSnapshot({
   };
   return buildBtcEtfSnapshot({
     manifest,
-    candidates: { mode: "review-only-normalized-candidates" },
+    candidates: { mode: "review-only-normalized-candidates", processing_provenance: processingProvenance },
     manifestBytes: JSON.stringify(manifest),
     candidatesBytes: JSON.stringify({ mode: "review-only-normalized-candidates" })
   });
@@ -193,8 +196,10 @@ test("rejects impossible calendar dates instead of treating them as reporting da
 
 test("builds a versioned, self-contained snapshot manifest with input hashes and source coverage", () => {
   const snapshot = makeSnapshot();
-  assert.equal(snapshot.schema_version, 1);
-  assert.match(snapshot.snapshot_id, /^btc-etf-snapshot-v1-[a-f0-9]{64}$/);
+  assert.equal(snapshot.schema_version, 2);
+  assert.match(snapshot.snapshot_id, /^btc-etf-snapshot-v2-[a-f0-9]{64}$/);
+  assert.equal(snapshot.processing_provenance.capture.capture_script_sha256, HASH_A);
+  assert.equal(snapshot.processing_provenance.normalization.metric_registry_sha256, HASH_A);
   assert.match(snapshot.manifest_sha256, /^[a-f0-9]{64}$/);
   assert.match(snapshot.candidates_sha256, /^[a-f0-9]{64}$/);
   assert.match(snapshot.source_payload_fingerprint, /^[a-f0-9]{64}$/);
@@ -228,6 +233,7 @@ test("CLI exports a snapshot manifest and compares saved manifests offline", asy
     schema_version: 1,
     asset_id: "btc",
     retrieved_at: "2026-10-16T10:00:00.000Z",
+    capture_provenance: { contract_version: "1", capture_script_sha256: HASH_A, farside_parser_sha256: HASH_B },
     sources: [
       {
         metric_id: "institutional.etf_net_flow",
@@ -259,7 +265,7 @@ test("CLI exports a snapshot manifest and compares saved manifests offline", asy
   };
   try {
     await writeFile(join(captureDir, "manifest.json"), JSON.stringify(manifest), "utf8");
-    await writeFile(join(captureDir, "observation-candidates.json"), JSON.stringify({ mode: "review-only" }), "utf8");
+    await writeFile(join(captureDir, "observation-candidates.json"), JSON.stringify({ mode: "review-only", processing_provenance: { contract_version: "1", normalizer_script_sha256: HASH_C, farside_parser_sha256: HASH_B, metric_registry_sha256: HASH_A, capture_provenance: manifest.capture_provenance } }), "utf8");
     await execFileAsync(process.execPath, [SCRIPT_PATH, "--build", captureDir, snapshotPath]);
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     assert.equal(validateBtcEtfSnapshotManifest(snapshot), true);

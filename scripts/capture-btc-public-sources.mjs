@@ -5,19 +5,27 @@
  * Writes raw responses and a provenance manifest to tmp/btc-source-review.
  * Does not connect to PostgreSQL, ingest observations, or mutate scenario state.
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseFarsideEtfTable } from "./parse-farside-etf-table.mjs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
 await mkdir(outDir, { recursive: true });
 
 const retrievedAt = new Date().toISOString();
+const captureProvenance = {
+  contract_version: "1",
+  capture_script_sha256: createHash("sha256").update(await readFile(fileURLToPath(import.meta.url))).digest("hex"),
+  farside_parser_sha256: createHash("sha256").update(await readFile(fileURLToPath(new URL("./parse-farside-etf-table.mjs", import.meta.url)))).digest("hex")
+};
 const manifest = {
   schema_version: 1,
   asset_id: "btc",
   retrieved_at: retrievedAt,
   mode: "read-only-staging-only",
+  capture_provenance: captureProvenance,
   production_database_accessed: false,
   production_writes_performed: false,
   sources: [],

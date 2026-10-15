@@ -16,12 +16,12 @@
 
 | Requirement | Current evidence | Gap |
 |---|---|---|
-| Stable snapshot identity | Full-response SHA-256 and workflow artifact exist | No explicit snapshot ID tying source responses, parser version, candidate output and workflow run together as a versioned research input set |
+| Stable snapshot identity | Version-2 manifest ID binds exact capture manifest/candidate bytes, source payloads and processing-provenance metadata | Workflow-run ID and durable archive identity are still not bound to a long-term stored evidence set |
 | Immutable raw evidence | Raw response files and hashes are emitted in one artifact | Artifact is retained for 7 days only; durable long-term retention is not established |
 | Deterministic row-level revision diff | Cross-source comparisons compare Farside and TFTC for matching dates in one capture | No persisted comparison of a new capture against the prior snapshot to classify unchanged rows, changed values, new rows, missing rows and unresolved rows |
 | Project revision semantics | ETF candidate uses a date logical key; provider revision is unknown | No project-owned revision number / supersession link for changed representations of the same reporting date |
 | Eligibility/finality rule | Candidate remains blocked and finalization unknown | No approved rule defining when a reporting date may be used in offline scenario evaluation and how a later correction invalidates/replaces that research input set |
-| Long-term provenance | Current run artifact can be inspected while retained | No verified archive/retention and retrieval procedure for old source payloads |
+| Long-term provenance | Version-2 manifest includes exact SHA-256 for capture script, Farside parser, candidate normalizer and metric registry | No verified archive/retention and retrieval procedure for old source payloads |
 | Source licensing/attribution | TFTC page states CC BY 4.0; Farside reuse permission remains unverified in the current review | Must preserve attribution and resolve Farside terms before relying on an automated archived series |
 
 ## Required design before implementation
