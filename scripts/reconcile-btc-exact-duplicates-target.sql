@@ -16,15 +16,17 @@ DECLARE conflicting_groups integer;
 BEGIN
   SELECT count(*) INTO conflicting_groups
   FROM (
-    SELECT metric_id, source_id, observed_at,
-           coalesce(period_start, '-infinity'::timestamptz) AS period_start_key,
-           coalesce(period_end, '-infinity'::timestamptz) AS period_end_key,
+    SELECT metric_id, source_id, source_row_key,
+           CASE WHEN source_row_key IS NULL THEN observed_at END AS legacy_observed_at,
+           CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END AS legacy_period_start,
+           CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END AS legacy_period_end,
            revision
     FROM observations
     WHERE asset_id = 'btc'
-    GROUP BY metric_id, source_id, observed_at,
-             coalesce(period_start, '-infinity'::timestamptz),
-             coalesce(period_end, '-infinity'::timestamptz),
+    GROUP BY metric_id, source_id, source_row_key,
+             CASE WHEN source_row_key IS NULL THEN observed_at END,
+             CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END,
+             CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END,
              revision
     HAVING count(*) > 1
        AND count(DISTINCT jsonb_build_object(
@@ -51,9 +53,10 @@ END $$;
 WITH ranked AS (
   SELECT observation_id,
          row_number() OVER (
-           PARTITION BY metric_id, source_id, observed_at,
-                        coalesce(period_start, '-infinity'::timestamptz),
-                        coalesce(period_end, '-infinity'::timestamptz),
+           PARTITION BY metric_id, source_id, source_row_key,
+                        CASE WHEN source_row_key IS NULL THEN observed_at END,
+                        CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END,
+                        CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END,
                         revision
            ORDER BY created_at ASC, observation_id ASC
          ) AS row_rank
