@@ -12,9 +12,9 @@ RUN cd worker && npm run build
 FROM node:22-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/worker/package.json ./package.json
-COPY --from=build /app/worker/node_modules ./node_modules
+COPY --from=build /app/worker/package.json ./worker/package.json
+COPY --from=build /app/worker/node_modules ./worker/node_modules
 COPY --from=build /app/shared ./shared
-COPY --from=build /app/worker/dist ./dist
+COPY --from=build /app/worker/dist ./worker/dist
 COPY --from=build /app/data/CryptoDataModel/registry/metric-registry.json ./data/CryptoDataModel/registry/metric-registry.json
-CMD ["node","--enable-source-maps","dist/index.js"]
+CMD ["node","--enable-source-maps","worker/dist/index.js"]
