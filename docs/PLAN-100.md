@@ -1546,3 +1546,25 @@ Audit found that PostgreSQL defaulted omitted `observations.freshness` to `CURRE
 ### Freshness policy reconciliation — 2026-10-15
 
 A follow-up audit corrected a documentation/implementation mismatch: `data/CryptoDataModel/registry/metric-registry.json` already declared `market.spot_price.freshness_window = 1h`, and the BTC readiness gate uses a one-hour maximum age. The candidate normalizer now applies that same policy and the registry names it `btc.market.spot_price.max-age.v1`. This does not require hourly polling. A source observation older than the limit is labelled `STALE`; the normalizer does not discard its age evidence. Candidate persistence and scenario evaluation remain blocked until the full source contract and remaining mandatory inputs pass.
+
+## 23. BTC scenario readiness — current exit criteria (2026-10-15)
+
+The first BTC research scenario remains **not evaluable** until all of these gates pass:
+
+1. **Canonical spot input:** one BTC/USD observation from the approved Kraken XBT/USD path, with positive numeric value, `USD/BTC` unit, event timestamp, retrieval timestamp, registered source, accepted URL, stable source-row key, payload hash when available, and freshness no older than the registry's one-hour maximum. A review-only candidate is not by itself permission to persist it.
+2. **ETF flow series:** approved source and row-level normalization; explicit provider reporting date; defensible observation-time convention; retrieval timestamp; deterministic row identity; source-body provenance; and clear revision/finality semantics. The latest daily row must meet the 36-hour freshness limit, and at least five distinct recent reporting days within the 14-day series window must pass validation. Reconciliation of displayed totals versus fund sums is diagnostic only.
+3. **DXY input:** an actually accessible and authorized canonical feed, with a documented daily observation convention, timestamps, units, source identity and accepted endpoint. The runtime source allowlist is intentionally empty until this evidence exists; registering ICE product documentation as a candidate does not unblock DXY.
+4. **Registry/runtime consistency:** source and metric registries validate, every source is seeded, and CI detects drift in readiness age limits, units and approved source IDs. BTC Scenario Readiness Gate #228 passed with this drift guard. This is currently a consistency check; it does not claim the runtime values are already loaded from a single registry source.
+5. **Read-only readiness pass:** the readiness gate reports `ready_for_rule_evaluation` with no blockers and a fully traceable selected-input set. Missing, stale, future-dated, unregistered, unapproved or unit-inconsistent data must fail closed.
+6. **Fixed offline rule evaluation:** evaluate the documented BTC research rule against a frozen input set and versioned methodology; record inputs, evidence, versions and result so the same inputs reproduce the same result.
+7. **Separate acceptance:** review the result and evidence before any scenario state, probability, monitoring record, ingestion schedule or production deployment is changed. These are not implied by `evaluable`.
+
+### Current blockers
+
+- **ETF:** publication/observation-time convention and provider revision/finality semantics are unresolved; accepted canonical row observations are not ready.
+- **DXY:** no approved canonical quote feed/endpoint; intentionally blocked.
+- **Spot persistence:** the Kraken mapper emits review-only, non-persistable candidates. A controlled acceptance/ingestion path remains a separate task.
+- **Scenario evaluation:** not run. No probability or scenario state is changed automatically.
+
+Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238ce0dca2198226c2bcd39e1` (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564389). VPS API Build Rehearsal #1266 was pending at the time of this entry (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564475). CI success proves the contract/tests build, not that live BTC inputs are accepted or the scenario is evaluable.
+
