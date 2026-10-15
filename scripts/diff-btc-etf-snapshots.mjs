@@ -5,7 +5,7 @@
  * Never accesses the network or database; never mutates either input snapshot.
  */
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -192,9 +192,28 @@ export function diffBtcEtfSnapshots(previous, current) {
   };
 }
 
-async function readSnapshot(directory) {
-  const manifestPath = join(directory, "manifest.json");
-  const candidatesPath = join(directory, "observation-candidates.json");
+function isSnapshotManifest(value) {
+  return value?.schema_version === 1
+    && typeof value.snapshot_id === "string"
+    && value.snapshot_id.startsWith("btc-etf-snapshot-v1-")
+    && Array.isArray(value.rows)
+    && value.source_coverage !== null
+    && typeof value.source_coverage === "object"
+    && typeof value.source_payload_fingerprint === "string";
+}
+
+async function readSnapshot(inputPath) {
+  const inputInfo = await stat(inputPath);
+  if (inputInfo.isFile()) {
+    const parsed = JSON.parse(await readFile(inputPath, "utf8"));
+    if (!isSnapshotManifest(parsed)) {
+      throw new Error(`Not a supported BTC ETF snapshot manifest: ${inputPath}`);
+    }
+    return parsed;
+  }
+
+  const manifestPath = join(inputPath, "manifest.json");
+  const candidatesPath = join(inputPath, "observation-candidates.json");
   const [manifestBytes, candidatesBytes] = await Promise.all([
     readFile(manifestPath, "utf8"), readFile(candidatesPath, "utf8")
   ]);
@@ -207,14 +226,36 @@ async function readSnapshot(directory) {
 }
 
 async function main() {
-  const [previousDirArg, currentDirArg, outputArg] = process.argv.slice(2);
-  if (!previousDirArg || !currentDirArg || !outputArg) {
-    throw new Error("Usage: node scripts/diff-btc-etf-snapshots.mjs <previous-snapshot-dir> <current-snapshot-dir> <output.json>");
+  const args = process.argv.slice(2);
+  if (args[0] === "--build") {
+    const [inputDirArg, outputArg] = args.slice(1);
+    if (!inputDirArg || !outputArg) {
+      throw new Error("Usage: node scripts/diff-btc-etf-snapshots.mjs --build <capture-dir> <snapshot.json>");
+    }
+    const outputPath = resolve(outputArg);
+    const snapshot = await readSnapshot(resolve(inputDirArg));
+    await writeFile(outputPath, JSON.stringify(snapshot, null, 2) + "\n", "utf8");
+    process.stdout.write(JSON.stringify({
+      status: "ok",
+      mode: "offline-review-only-snapshot-manifest",
+      snapshot_id: snapshot.snapshot_id,
+      source_payload_fingerprint: snapshot.source_payload_fingerprint,
+      row_count: snapshot.rows.length,
+      output: outputPath,
+      production_database_accessed: false,
+      production_writes_performed: false
+    }) + "\n");
+    return;
   }
-  const previousDir = resolve(previousDirArg);
-  const currentDir = resolve(currentDirArg);
+
+  const [previousArg, currentArg, outputArg] = args;
+  if (!previousArg || !currentArg || !outputArg) {
+    throw new Error("Usage: node scripts/diff-btc-etf-snapshots.mjs <previous-snapshot.json|capture-dir> <current-snapshot.json|capture-dir> <diff.json>");
+  }
   const outputPath = resolve(outputArg);
-  const [previous, current] = await Promise.all([readSnapshot(previousDir), readSnapshot(currentDir)]);
+  const [previous, current] = await Promise.all([
+    readSnapshot(resolve(previousArg)), readSnapshot(resolve(currentArg))
+  ]);
   const result = diffBtcEtfSnapshots(previous, current);
   await writeFile(outputPath, JSON.stringify(result, null, 2) + "\n", "utf8");
   process.stdout.write(JSON.stringify({
