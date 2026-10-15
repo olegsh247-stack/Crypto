@@ -57,9 +57,9 @@ Read-only review of the public pages on 2026-10-15 found concrete examples of wh
 |---|---:|---:|---:|---|
 | 2026-10-07 | -484.9 USDm | -487.1 USDm | -2.2 USDm | Material discrepancy; not reconciled |
 | 2026-10-13 | +175.7 USDm | +175.6 USDm | -0.1 USDm | Small difference consistent with displayed rounding/aggregation, but not proof of identical lineage |
-| 2026-10-14 | -261.4 USDm | TFTC page had not yet published this session | n/a | Farside's displayed row includes only some reported fund values; do not assume missing cells are zero or that the session is complete |
+| 2026-10-14 | -261.4 USDm | -261.4622 USDm (TFTC raw value, displayed total about -261.5) | about -0.0622 USDm | The captured Farside row has numeric values for all 12 funds, including explicit 0.0 cells; this is complete at the visible-table level, but publication/finality remains unverified |
 
-For 2026-10-07, the visible fund-level difference includes BRRR: Farside displays 0.0 while TFTC displays -2.1 USDm; the remaining displayed-total delta is affected by the sources' aggregation/rounding. The exact root cause is not established by the public pages alone. Do not “fix” one source to match the other.
+For 2026-10-07, the visible fund-level difference includes BRRR: Farside displays 0.0 while TFTC displays about -2.1 USDm; the remaining displayed-total delta is affected by the sources' aggregation/rounding. The exact root cause is not established by the public pages alone. Do not “fix” one source to match the other. The read-only staging artifact captured on 2026-10-15 also contains TFTC data through 2026-10-14, so the earlier statement that TFTC had not yet published that session is superseded by this capture.
 
 TFTC's methodology note says current daily aggregates and ongoing per-fund flows are sourced from SoSoValue, while its earlier per-fund history through mid-2026 is compiled from issuer disclosures as tabulated by Farside. TFTC also explicitly warns that the latest day may revise and that older days are corrected automatically. This is useful independent diagnostic evidence, but does not make it an independent authoritative truth for every date or remove the need to preserve capture-level provenance.
 
