@@ -130,3 +130,7 @@ The PR branch now contains `scripts/diff-btc-etf-snapshots.mjs` plus focused tes
 ### Offline ETF snapshot diff — CI verified (2026-10-16)
 
 The date validator was hardened to reject impossible calendar dates and a regression test was added. [BTC Public Source Staging #116](https://github.com/olegsh247-stack/Crypto/actions/runs/38820520636) passed all three validation test steps; the capture job was skipped. [VPS API Build Rehearsal #1449](https://github.com/olegsh247-stack/Crypto/actions/runs/38820520738) also passed. This verifies the current CI run only; provider finality, durable retention and ETF production acceptance remain unresolved. BTC remains `not_evaluable`.
+
+### Versioned ETF snapshot manifest — implemented, CI pending (2026-10-16)
+
+The offline tool now supports exporting a portable versioned snapshot JSON from an existing capture directory and comparing either directories or exported manifests. The manifest carries artifact hashes, source-payload fingerprint, source coverage and normalized ETF rows. Tests cover its identity/hash/coverage fields. This does not select durable storage/retention or establish provider finality; CI for this follow-up is pending. BTC remains `not_evaluable`.
