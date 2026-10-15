@@ -457,9 +457,7 @@ A disposable PostgreSQL regression test now checks that different source row key
 
 For a Kraken trade candidate, the normalizer computes `source_age_seconds_at_retrieval` as the difference between the source trade event timestamp and the collector retrieval timestamp. It retains both original timestamps unchanged. A future event timestamp is blocked.
 
-The project has not yet approved a maximum age for a research input. Therefore the candidate carries `freshness_status: "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD"` and `freshness_policy_id: null`; it must not be labeled `CURRENT` merely because the API call succeeded. This deliberately avoids imposing a 15-minute or hourly cadence without an agreed source-specific policy. The age calculation is per capture evidence, not a daily aggregation or a recurring recalculation of historical totals.
-
-Next, define the source-specific freshness policy only after the intended research use and acceptable age are documented. Until then the spot record remains review-only and non-persistable.
+The metric registry already defines `market.spot_price` as event-driven with a maximum age of `1h` and policy ID `btc.market.spot_price.max-age.v1`. The normalizer now applies that existing policy to the measured age: `CURRENT` at or below 3,600 seconds, `STALE` above 3,600 seconds. This is an age limit, **not** a requirement to poll every hour or to synthesize a new trade. The candidate remains review-only and `persistable: false` regardless of its freshness label. The age calculation is per capture evidence, not a daily aggregation or a recurring recalculation of historical totals.
 
 
 ## 22. Storage default for unclassified freshness — 2026-10-15
@@ -470,4 +468,4 @@ The PostgreSQL schema previously defaulted `observations.freshness` to `CURRENT`
 - `CURRENT` must be assigned only by a writer that has applied an approved freshness policy. API success or an omitted field is not a freshness decision.
 - Existing historical rows retain their recorded classifications; this change does not retroactively validate them.
 - BTC source candidates remain review-only and non-persistable. No migration has been applied to a production database, and no ingestion or scenario evaluation was run.
-- The candidate field `UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD` is a richer review-contract label; persistence maps it to database freshness `UNCLASSIFIED` until a source-specific policy is approved.
+- A writer that has not evaluated an applicable policy must leave freshness as `UNCLASSIFIED`; the database default protects against accidentally treating omitted freshness as `CURRENT`. The BTC spot candidate itself applies the existing one-hour policy and emits `CURRENT` or `STALE`, but is still not persistable.
