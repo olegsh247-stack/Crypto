@@ -201,6 +201,11 @@ test("builds a versioned, self-contained snapshot manifest with input hashes and
   assert.match(snapshot.snapshot_content_sha256, /^[a-f0-9]{64}$/);
   assert.equal(snapshot.mode, "offline-review-only-snapshot-manifest");
   assert.equal(validateBtcEtfSnapshotManifest(snapshot), true);
+  assert.ok(snapshot.source_artifacts.some(source =>
+    source.source_id === "institutional.primary"
+      && source.url === "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+      && source.retrieved_at === "2026-10-16T10:00:00.000Z"
+      && source.payload_sha256 === HASH_A));
   assert.ok(Object.values(snapshot.source_coverage).some(coverage =>
     coverage.status === "CAPTURED" && coverage.min_date === "2026-10-07" && coverage.max_date === "2026-10-07"));
   assert.ok(snapshot.rows.length > 0);
