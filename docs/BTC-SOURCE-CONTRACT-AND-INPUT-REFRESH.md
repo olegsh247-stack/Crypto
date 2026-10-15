@@ -434,3 +434,17 @@ The review-only spot candidate now labels this explicitly:
 - `observed_at` comes from the exchange trade event timestamp; `retrieved_at` remains the collector's response retrieval time.
 
 When ingestion is eventually reviewed, the persistence layer must define whether its `revision` means a local version of the logical observation or a source/provider revision. Do not imply provider revision support where the provider does not expose it. The candidate remains `persistable: false`; no database operation is authorized by this contract.
+
+
+## 20. Observation idempotency: provider row identity — 2026-10-15
+
+The former BTC unique index used metric_id + source_id + observed_at + period + revision for every observation. That is too coarse for event feeds: two separate trades can legitimately share a timestamp at the precision supplied by the provider.
+
+The new migration 2026-10-15-btc-source-row-key-idempotency.sql separates two cases:
+
+- **Rows with source_row_key:** identity is metric_id + source_id + source_row_key + revision. The provider event key, not the timestamp alone, distinguishes individual trades.
+- **Legacy rows without source_row_key:** preserve the previous timestamp/period natural key, so older data is not silently reinterpreted.
+
+The migration checks for duplicate key groups in both classes and fails closed rather than deleting or rewriting rows. The separately guarded reconciliation script now uses the same two identity rules. Its explicit restored-copy guard remains in place.
+
+A disposable PostgreSQL regression test now checks that different source row keys can share the same event timestamp and that replaying the same row key is idempotent. Until the workflow passes, this remains an implemented repository contract awaiting automated verification. It does not authorize any production database operation or BTC source ingestion.
