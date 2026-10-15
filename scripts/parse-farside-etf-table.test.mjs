@@ -41,7 +41,7 @@ test("distinguishes explicit zero from missing fund values in a partial session"
   assert.equal(parsed.status, "REPORTED_CANDIDATE");
   assert.equal(parsed.fund_completeness_status, "PARTIAL_FUND_REPORTING");
   assert.equal(parsed.funds_reported_count, 3);
-  assert.deepEqual(parsed.missing_funds, ["BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"]);
+  assert.deepEqual(parsed.missing_funds, ["ARKB", "BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"]);
   assert.equal(parsed.fund_flows.BITB, 2.2);
   assert.equal(parsed.fund_flows.BRRR, null);
   assert.equal(parsed.reconciliation_status, "INCOMPLETE");
