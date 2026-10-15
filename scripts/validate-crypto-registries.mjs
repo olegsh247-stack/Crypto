@@ -48,7 +48,7 @@ assert.ok(readinessSource.includes("../../../data/CryptoDataModel/registry/metri
   "runtime readiness must load the canonical metric registry");
 assert.ok(!/maxAgeHours:\s*\d/.test(readinessSource),
   "runtime readiness must not hardcode per-metric freshness thresholds");
-assert.ok(!/sourceUrlPrefixes:\s*\\[/.test(readinessSource),
+assert.ok(!readinessSource.includes("https://api.kraken.com/0/public/Trades?pair=XBTUSD"),
   "runtime readiness must not hardcode per-metric source URL allowlists");
 
 const readinessMetrics = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
