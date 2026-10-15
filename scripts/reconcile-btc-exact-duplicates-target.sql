@@ -20,14 +20,14 @@ BEGIN
            CASE WHEN source_row_key IS NULL THEN observed_at END AS legacy_observed_at,
            CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END AS legacy_period_start,
            CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END AS legacy_period_end,
-           revision
+           CASE WHEN source_row_key IS NULL THEN revision END AS legacy_revision
     FROM observations
     WHERE asset_id = 'btc'
     GROUP BY metric_id, source_id, source_row_key,
              CASE WHEN source_row_key IS NULL THEN observed_at END,
              CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END,
              CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END,
-             revision
+             CASE WHEN source_row_key IS NULL THEN revision END
     HAVING count(*) > 1
        AND count(DISTINCT jsonb_build_object(
          'value_numeric', value_numeric,
@@ -39,7 +39,11 @@ BEGIN
          'source_url', source_url,
          'methodology', methodology,
          'status', status,
-         'freshness', freshness
+         'freshness', freshness,
+         'observed_at', observed_at,
+         'period_start', period_start,
+         'period_end', period_end,
+         'revision', revision
        )::text) > 1
   ) conflicts;
 
@@ -57,7 +61,7 @@ WITH ranked AS (
                         CASE WHEN source_row_key IS NULL THEN observed_at END,
                         CASE WHEN source_row_key IS NULL THEN coalesce(period_start, '-infinity'::timestamptz) END,
                         CASE WHEN source_row_key IS NULL THEN coalesce(period_end, '-infinity'::timestamptz) END,
-                        revision
+                        CASE WHEN source_row_key IS NULL THEN revision END
            ORDER BY created_at ASC, observation_id ASC
          ) AS row_rank
   FROM observations
