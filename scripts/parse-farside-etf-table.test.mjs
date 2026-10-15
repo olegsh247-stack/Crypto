@@ -18,6 +18,9 @@ test("parses reported daily fund values, negatives in parentheses, and USD-milli
   assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0);
   assert.equal(parsed.reconciliation_status, "MATCHES_DISPLAY_ROUNDING");
   assert.equal(parsed.status, "REPORTED_CANDIDATE");
+  assert.equal(parsed.fund_completeness_status, "ALL_FUNDS_REPORTED");
+  assert.equal(parsed.funds_reported_count, 12);
+  assert.deepEqual(parsed.missing_funds, []);
   assert.equal(parsed.observed_at, null);
 });
 
@@ -29,6 +32,19 @@ test("preserves dash placeholders as null instead of converting them to zero", (
   assert.ok(Object.values(parsed.fund_flows).every(value => value === null));
   assert.equal(parsed.calculated_fund_sum_usd_million, null);
   assert.equal(parsed.reconciliation_status, "UNREPORTED");
+  assert.equal(parsed.observed_at, null);
+});
+
+test("distinguishes explicit zero from missing fund values in a partial session", () => {
+  const values = ["(110.9)", "(152.7)", "2.2", "-", "-", "-", "-", "-", "-", "-", "-", "-", "(261.4)"];
+  const parsed = parseFarsideEtfTable(row("14 Oct 2026", values)).latest_rows[0];
+  assert.equal(parsed.status, "REPORTED_CANDIDATE");
+  assert.equal(parsed.fund_completeness_status, "PARTIAL_FUND_REPORTING");
+  assert.equal(parsed.funds_reported_count, 3);
+  assert.deepEqual(parsed.missing_funds, ["BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"]);
+  assert.equal(parsed.fund_flows.BITB, 2.2);
+  assert.equal(parsed.fund_flows.BRRR, null);
+  assert.equal(parsed.reconciliation_status, "INCOMPLETE");
   assert.equal(parsed.observed_at, null);
 });
 
