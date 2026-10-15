@@ -52,7 +52,7 @@ remaining="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "
 test "$remaining" = "0"
 
 # Verify conflicting payloads are not automatically reconciled.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq; DROP INDEX IF EXISTS observations_btc_legacy_natural_key_revision_uq'
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
