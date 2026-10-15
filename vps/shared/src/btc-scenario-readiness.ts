@@ -41,6 +41,28 @@ function dateMs(value: unknown): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
+/**
+ * ETF aggregates are not accepted from a reporting date and total alone.
+ * Until the provider's revision/finality semantics or an approved immutable
+ * snapshot reconciliation policy is present, observations remain blocked.
+ */
+function validEtfAcceptance(row: any): boolean {
+  const fundCount = Number(row?.funds_reported_count);
+  const expectedFundCount = Number(row?.funds_expected_count);
+  return row?.fund_completeness_status === "ALL_FUNDS_REPORTED"
+    && Number.isInteger(fundCount)
+    && Number.isInteger(expectedFundCount)
+    && expectedFundCount > 0
+    && fundCount === expectedFundCount
+    && Array.isArray(row?.missing_funds)
+    && row.missing_funds.length === 0
+    && typeof row?.source_payload_sha256 === "string"
+    && /^[0-9a-f]{64}$/i.test(row.source_payload_sha256)
+    && ((typeof row?.provider_revision === "string" && row.provider_revision.trim().length > 0)
+      || row?.revision_policy_status === "approved_immutable_snapshot_reconciliation")
+    && ["final", "reconciled_snapshot"].includes(String(row?.finalization_status ?? "").toLowerCase());
+}
+
 function validObservation(row: any, nowMs: number, maxAgeHours: number, expectedUnit?: string, allowedSourceIds?: string[], allowedSourceUrlPrefixes?: string[], approvedMethodologyIds?: string[]): boolean {
   const observedMs = dateMs(row?.observed_at);
   const retrievedMs = dateMs(row?.retrieved_at);
@@ -144,13 +166,18 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   const etfSourceUrlPrefixes: string[] = etfReadiness?.allowed_source_url_prefixes ?? [];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
   if (!latestEtf
+      || !validEtfAcceptance(latestEtf)
       || !Number.isFinite(latestEtfPeriodMs)
       || latestEtfPeriodMs > nowMs
       || nowMs - latestEtfPeriodMs > etfHistoryMaxAgeDays * 24 * 3600000
       || !validObservation(latestEtf, nowMs, etfLatestMaxAgeHours, etfMetric?.unit, etfSourceIds, etfSourceUrlPrefixes)) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
-      reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
+      reason: !latestEtf
+        ? "latest_observation_missing"
+        : !validEtfAcceptance(latestEtf)
+          ? "etf_fund_completeness_revision_or_finality_unverified"
+          : "latest_observation_must_be_current_traceable_and_within_36_hours",
     });
   }
 
@@ -171,7 +198,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && Number.isFinite(dateMs(row?.retrieved_at))
       && dateMs(row.retrieved_at) <= nowMs
       && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
-      && (row?.source_payload_sha256 == null || /^[0-9a-f]{64}$/i.test(String(row.source_payload_sha256)))
+      && validEtfAcceptance(row)
       && value !== null && value !== undefined && Number.isFinite(Number(value))
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
