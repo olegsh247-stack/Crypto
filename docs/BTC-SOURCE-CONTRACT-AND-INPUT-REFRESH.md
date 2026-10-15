@@ -508,3 +508,7 @@ No production DB writes, ingestion, scenario evaluation, persisted scenario stat
 
 
 Container packaging correction during validation: the API/Worker image test exposed a runtime package-resolution issue caused by flattening the `node_modules` directory when copying into the final image. The final images now preserve the `/app/api` and `/app/worker` package layouts, include the shared runtime and registry JSON, and are tested by building and importing the shared module from each image. This was caught in CI before merge/deployment.
+
+## 25. BTC ETF observation contract — 2026-10-15
+
+Formalized the field semantics and revision guard in [the BTC ETF observation contract](./data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md). ETF candidate rows now explicitly distinguish a date-derived logical key from provider-assigned identity, and set both `provider_revision` and `revision` to `null` while provider revision/finality remains unknown. The full-response SHA-256 is explicitly scoped to the captured body, not an individual row. Tests protect these semantics. This does not unblock ETF: `observed_at` remains null, HTTP Date/retrieval time are not substitutes, and all ETF rows remain review-only/non-persistable.
