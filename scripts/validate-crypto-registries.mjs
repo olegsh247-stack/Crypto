@@ -44,8 +44,9 @@ for (const sourceId of sourceIds) {
 
 // Runtime readiness policy is loaded from the metric registry, not duplicated as literals.
 const readinessSource = readFileSync(new URL("../vps/shared/src/btc-scenario-readiness.ts", import.meta.url), "utf8");
-assert.ok(readinessSource.includes("../../../data/CryptoDataModel/registry/metric-registry.json"),
-  "runtime readiness must load the canonical metric registry");
+assert.ok(readinessSource.includes("data/CryptoDataModel/registry/metric-registry.json")
+    && readinessSource.includes("resolve(process.cwd(), registryRelativePath"),
+  "runtime readiness must load the canonical metric registry from the application workspace");
 assert.ok(!/maxAgeHours:\s*\d/.test(readinessSource),
   "runtime readiness must not hardcode per-metric freshness thresholds");
 assert.ok(!readinessSource.includes("https://api.kraken.com/0/public/Trades?pair=XBTUSD"),
