@@ -115,3 +115,8 @@ See [BTC DXY canonical-source review](BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16
 ### ETF publication/revision/finality review — 2026-10-16
 
 See [BTC ETF publication, revision and finality review](BTC-ETF-PUBLICATION-REVISION-FINALITY-REVIEW-2026-10-16.md). Farside documents real-time updates but the reviewed public descriptions do not establish a per-row publication timestamp, provider revision ID, correction history or finality point. TFTC documents a twice-daily sync and automatic corrections to recent and older rows, and states CC BY 4.0 reuse with attribution; its lineage varies by period (current daily aggregates/per-fund flows from SoSoValue, historical per-fund records through mid-2026 compiled in part from Farside). This improves the documented evidence but does not make TFTC canonical or prove finality. Keep the production ETF input blocked; preserve capture artifacts/hashes and source values, and keep the two-source mean research-only. No registry or production data changed.
+
+
+### ETF snapshot-policy feasibility — 2026-10-16
+
+Static inspection of the manual-only staging workflow found that raw responses, manifest and review-only candidates are uploaded as a GitHub Actions artifact with a 7-day retention period. Full-response hashes exist, but there is no durable archive guarantee, snapshot identity spanning all inputs/parser versions, or deterministic row-level diff against the previous capture. See [ETF immutable snapshot policy feasibility review](BTC-ETF-SNAPSHOT-POLICY-FEASIBILITY-REVIEW-2026-10-16.md). This path is not yet implemented or approved; no storage/retention change was made.
