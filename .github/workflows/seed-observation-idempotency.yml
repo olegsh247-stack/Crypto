@@ -1,6 +1,16 @@
 name: Seed observation idempotency rehearsal
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "infrastructure/postgres/seed-v1.sql"
+      - "infrastructure/postgres/schema-v1.sql"
+      - "infrastructure/postgres/migrations/**"
+      - "scripts/migrate-postgres.sh"
+      - "scripts/test-btc-observation-idempotency.sh"
+      - "scripts/test-seed-observation-idempotency.sh"
+      - ".github/workflows/seed-observation-idempotency.yml"
   pull_request:
     paths:
       - "infrastructure/postgres/seed-v1.sql"
@@ -56,6 +66,14 @@ jobs:
           set -euo pipefail
           chmod +x scripts/test-seed-observation-idempotency.sh
           ./scripts/test-seed-observation-idempotency.sh
+
+      - name: Verify BTC observation source-row idempotency
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/crypto_test
+        run: |
+          set -euo pipefail
+          chmod +x scripts/test-btc-observation-idempotency.sh
+          ./scripts/test-btc-observation-idempotency.sh
 
       - name: Remove disposable PostgreSQL container
         if: always()
