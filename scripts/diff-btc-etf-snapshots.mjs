@@ -124,6 +124,7 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     manifest_sha256: manifestDigest,
     candidates_sha256: candidateDigest,
     source_payload_fingerprint: sourcePayloadFingerprint,
+    source_artifacts: sourceHashes,
     source_coverage: sourceCoverage,
     rows,
     production_database_accessed: false,
@@ -206,12 +207,24 @@ export function validateBtcEtfSnapshotManifest(value) {
     && value.source_coverage !== null
     && typeof value.source_coverage === "object"
     && typeof value.source_payload_fingerprint === "string"
+    && Array.isArray(value.source_artifacts)
     && value.production_database_accessed === false
     && value.production_writes_performed === false
+    && HASH_RE.test(String(value.manifest_sha256 ?? ""))
+    && HASH_RE.test(String(value.candidates_sha256 ?? ""))
     && HASH_RE.test(String(value.snapshot_content_sha256 ?? ""));
   if (!shapeValid) return false;
-  const { snapshot_content_sha256, ...content } = value;
-  return sha256(canonicalJson(content)) === snapshot_content_sha256;
+  const identity = {
+    schema_version: 1,
+    diff_algorithm_version: value.diff_algorithm_version,
+    captured_at: value.captured_at,
+    manifest_sha256: value.manifest_sha256,
+    candidates_sha256: value.candidates_sha256,
+    etf_sources: value.source_artifacts
+  };
+  if (value.snapshot_id !== "btc-etf-snapshot-v1-" + sha256(canonicalJson(identity))) return false;
+  const { snapshot_content_sha256, ...snapshotContent } = value;
+  return sha256(canonicalJson(snapshotContent)) === snapshot_content_sha256;
 }
 
 async function readSnapshot(inputPath) {
