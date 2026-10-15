@@ -174,3 +174,10 @@ test("emits only review-mode results and never marks them persistable", () => {
   assert.equal(result.production_writes_performed, false);
   assert.equal(result.scenario_state_changed, false);
 });
+
+test("rejects impossible calendar dates instead of treating them as reporting dates", () => {
+  const snapshot = makeSnapshot({
+    dateRows: [{ date: "2026-02-31", total: -10 }]
+  });
+  assert.equal(snapshot.rows.filter(row => row.normalized.source_id === "institutional.primary").length, 0);
+});
