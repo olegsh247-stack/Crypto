@@ -30,6 +30,7 @@ export function prepareBtcObservationCandidates(manifest) {
   const blocked = [];
   const etfReviewRows = [];
   const etfCrossSourceComparisons = [];
+  const etfResearchDerivedRows = [];
   const sources = Array.isArray(manifest?.sources) ? manifest.sources : [];
 
   for (const source of sources) {
@@ -215,6 +216,46 @@ export function prepareBtcObservationCandidates(manifest) {
           if (Math.abs(difference) > 0.000000001) fundDeltas[fund] = Number(difference.toFixed(9));
         }
       }
+      if (date
+        && row?.status === "REPORTED_CANDIDATE"
+        && row?.fund_completeness_status === "ALL_FUNDS_REPORTED"
+        && row?.reconciliation_status === "MATCHES_DISPLAY_ROUNDING"
+        && farsideTotal !== null
+        && tftcTotal !== null) {
+        etfResearchDerivedRows.push({
+          candidate_state: "RESEARCH_DERIVED",
+          persistable: false,
+          asset_id: "btc",
+          metric_id: "institutional.etf_net_flow",
+          unit: "USD million/day",
+          period_start: date,
+          period_end: date,
+          value_numeric: (farsideTotal + tftcTotal) / 2,
+          method: "arithmetic_mean_2_sources",
+          method_version: "1",
+          source_values: [
+            {
+              source_id: "institutional.primary",
+              source_url: farside.url,
+              source_payload_sha256: farside.source_payload_sha256 ?? farside.body_sha256 ?? null,
+              retrieved_at: farside.retrieved_at ?? manifest?.retrieved_at ?? null,
+              value_numeric: farsideTotal
+            },
+            {
+              source_id: "institutional.tftc",
+              source_url: tftc.url,
+              source_payload_sha256: tftc.source_payload_sha256 ?? tftc.body_sha256 ?? null,
+              retrieved_at: tftc.retrieved_at ?? manifest?.retrieved_at ?? null,
+              value_numeric: tftcTotal
+            }
+          ],
+          derivation_status: "OFFLINE_RESEARCH_ONLY",
+          observed_at: null,
+          finalization_status: "unknown",
+          note: "Derived arithmetic mean from two numeric source aggregates. Raw source values and capture provenance are preserved; this is not a provider-reported value and is not approved for production persistence."
+        });
+      }
+
       etfCrossSourceComparisons.push({
         period_start: date,
         source_a: "institutional.primary",
@@ -248,6 +289,7 @@ export function prepareBtcObservationCandidates(manifest) {
     candidates,
     etf_review_rows: etfReviewRows,
     etf_cross_source_comparisons: etfCrossSourceComparisons,
+    etf_research_derived_rows: etfResearchDerivedRows,
     blocked,
     unresolved: Array.isArray(manifest?.unresolved) ? manifest.unresolved : []
   };
