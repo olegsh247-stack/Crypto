@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const KRAKEN_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
 const SHA256_RE = /^[0-9a-f]{64}$/i;
+const BTC_SPOT_MAX_AGE_SECONDS = 60 * 60;
+const BTC_SPOT_FRESHNESS_POLICY_ID = "btc.market.spot_price.max-age.v1";
 
 function validIso(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value))
@@ -73,8 +75,8 @@ export function prepareBtcObservationCandidates(manifest) {
         unit: "USD/BTC",
         observed_at: source.latest_trade_observed_at,
         source_age_seconds_at_retrieval: sourceAgeSeconds,
-        freshness_status: "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD",
-        freshness_policy_id: null,
+        freshness_status: sourceAgeSeconds <= BTC_SPOT_MAX_AGE_SECONDS ? "CURRENT" : "STALE",
+        freshness_policy_id: BTC_SPOT_FRESHNESS_POLICY_ID,
         period_start: null,
         period_end: null,
         source_id: source.source_id,
