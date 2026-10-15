@@ -61,6 +61,8 @@ export function prepareBtcObservationCandidates(manifest) {
         continue;
       }
 
+      const sourceAgeSeconds = Number(((Date.parse(source.retrieved_at) - Date.parse(source.latest_trade_observed_at)) / 1000).toFixed(3));
+
       candidates.push({
         candidate_state: "REVIEW_ONLY",
         persistable: false,
@@ -70,6 +72,9 @@ export function prepareBtcObservationCandidates(manifest) {
         value_integer: null,
         unit: "USD/BTC",
         observed_at: source.latest_trade_observed_at,
+        source_age_seconds_at_retrieval: sourceAgeSeconds,
+        freshness_status: "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD",
+        freshness_policy_id: null,
         period_start: null,
         period_end: null,
         source_id: source.source_id,
