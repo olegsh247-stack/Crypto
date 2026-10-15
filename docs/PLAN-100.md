@@ -1515,3 +1515,12 @@ No production database access/write, source-priority promotion, scenario evaluat
 - VPS Build Rehearsal #1219 завершилась успешно для предшествующего документационного коммита `2f0a052`: https://github.com/olegsh247-stack/Crypto/actions/runs/38622673801. Новый коммит с уточнением контракта требует собственной проверки.
 - Свежий staging #83 подтвердил 10 межисточниковых ETF-сравнений; 7 Oct остаётся материалным расхождением `−2.1674115m USD`, преимущественно BRRR `−2.114298m USD`. Все response-body hashes совпали с манифестом, production-флаги — `false`. См. [TFTC ETF audit](data-review/BTC-TFTC-ETF-JSON-AUDIT-2026-10-14.md).
 - Следующий этап: дождаться сборки текущего HEAD; затем отдельно проверить freshness, регистрацию источника, дедупликацию и логический ключ Kraken-кандидата в контексте существующей модели наблюдений. ETF и DXY не обходить и не подменять: BTC остаётся `not_evaluable`, пока обязательные входы не пройдут контракт.
+
+
+### BTC logical observation key: source-row identity — 2026-10-15
+
+- Audit found that the existing BTC unique index used only metric/source/event timestamp/period/revision. It did not include source_row_key, so two different provider events with the same timestamp could collide.
+- Added migration infrastructure/postgres/migrations/2026-10-15-btc-source-row-key-idempotency.sql: rows with a provider row key are unique by metric + source + source-row key + local revision; legacy rows without a row key retain the old natural-key rule. The migration refuses to proceed if either identity class already contains duplicate key groups, and performs no row rewrite.
+- Updated the guarded exact-duplicate reconciliation to partition keyed events by source_row_key; distinct keyed events are no longer grouped merely because timestamps match. Legacy rows continue to use the old natural key.
+- Expanded the disposable-database test to verify two distinct source row keys at the same timestamp coexist and replaying one source key does not add a duplicate.
+- This is a repository migration/test change only. Do not apply it manually to any live database. Verify the disposable PostgreSQL workflow before treating the contract as validated; scenario remains not_evaluable while ETF publication/revision and DXY source contracts remain blocked.
