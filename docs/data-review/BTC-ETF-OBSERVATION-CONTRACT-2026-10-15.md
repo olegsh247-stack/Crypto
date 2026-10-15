@@ -63,7 +63,9 @@ For 2026-10-07, the visible fund-level difference includes BRRR: Farside display
 
 TFTC's methodology note says current daily aggregates and ongoing per-fund flows are sourced from SoSoValue, while its earlier per-fund history through mid-2026 is compiled from issuer disclosures as tabulated by Farside. TFTC also explicitly warns that the latest day may revise and that older days are corrected automatically. This is useful independent diagnostic evidence, but does not make it an independent authoritative truth for every date or remove the need to preserve capture-level provenance.
 
-**Operational consequence:** require a per-fund completeness check that distinguishes explicit numeric zero from missing/unreported values. A row's aggregate total alone is not enough to mark a session complete. For the 2026-10-07 mismatch, retain DELTA_EXCEEDS_SCREENING_BAND and the differing fund values in the review artifact; acceptance remains blocked pending a documented reconciliation decision.
+**Implementation added in this review branch:** the Farside parser now emits `fund_completeness_status`, `funds_reported_count`, `funds_expected_count`, and `missing_funds`. Explicit `0.0` is a reported numeric value; a dash remains `null`. The candidate mapper adds `fund_reporting_incomplete` (or `fund_completeness_status_missing_or_unverified`) when a reported aggregate lacks a verified complete set of fund values. Tests cover a partial 2026-10-14-like row and ensure its displayed aggregate is retained for review but cannot pass reconciliation or persistence.
+
+**Operational consequence:** a row's aggregate total alone is not enough to mark a session complete. For the 2026-10-07 mismatch, retain `DELTA_EXCEEDS_SCREENING_BAND` and the differing fund values in the review artifact; acceptance remains blocked pending a documented reconciliation decision.
 
 Public references reviewed:
 - Farside Bitcoin ETF table: https://farside.co.uk/btc/
