@@ -1929,3 +1929,9 @@ Next technical work after policy review: design and test an offline deterministi
 **Confirmed:** [BTC Public Source Staging #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38821070436) passed all validation steps on commit `31cc3188ff8b9a928f90cbcb93eb1ca04a3e2745`; the live-capture job was skipped. This includes the CLI end-to-end test that exports a snapshot manifest and compares saved manifests offline, plus content-tampering rejection and source-provenance assertions. [Run #118](https://github.com/olegsh247-stack/Crypto/actions/runs/38821054244) also passed the manifest integrity implementation tests.
 
 **Current status:** the separate VPS API Build Rehearsal for the latest commit is still running; do not claim it passed until completed. The offline staging tests do not approve ETF production inputs, establish durable retention/finality, or make BTC evaluable. PR #83 remains Draft/open/unmerged; no live capture was dispatched.
+
+## Plan 100 checkpoint — ETF revision/eligibility decision prepared (2026-10-16)
+
+Created [BTC ETF snapshot revision and research eligibility proposal](BTC-ETF-SNAPSHOT-REVISION-ELIGIBILITY-PROPOSAL-2026-10-16.md). It separates immutable evidence capture from project revision links and from eligibility to use a row in an offline research scenario. It compares provider-declared finality, project-stabilized research snapshots, and leaving ETF blocked. Recommended direction is to keep production blocked and consider a separate research-only stability rule only after explicit approval.
+
+This is a decision proposal, not an adopted policy. Archive location/retention, stability window, revision behavior, and research-scenario eligibility remain open. No source priority or production behavior changed.
