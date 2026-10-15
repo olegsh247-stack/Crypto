@@ -55,6 +55,14 @@ jobs:
           assert services['worker']['environment']['WORKER_SCHEDULE_UTC']=='00:30'
           print('VPS_PRODUCTION_COMPOSE_OK public_ports=80,443 postgres_private=1 api_private=1 worker_private=1')
           PY
+      - name: Build VPS API and Worker images with canonical metric registry
+        run: |
+          set -euo pipefail
+          docker build -f vps/api/Dockerfile -t crypto-api-registry-rehearsal .
+          docker build -f vps/worker/Dockerfile -t crypto-worker-registry-rehearsal .
+          docker run --rm crypto-api-registry-rehearsal node --input-type=module -e 'import("@crypto/vps-runtime")'
+          docker run --rm crypto-worker-registry-rehearsal node --input-type=module -e 'import("@crypto/vps-runtime")'
+          echo "VPS_CONTAINER_REGISTRY_OK api=1 worker=1 canonical_metric_registry_loaded=1"
       - name: Start PostgreSQL rehearsal
         id: postgres
         run: |
