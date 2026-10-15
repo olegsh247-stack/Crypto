@@ -162,6 +162,10 @@ test("normalizes Farside reporting rows while keeping publication time, provider
           period_start: "2026-10-13",
           period_end: "2026-10-13",
           status: "REPORTED_CANDIDATE",
+          fund_completeness_status: "ALL_FUNDS_REPORTED",
+          funds_reported_count: 12,
+          funds_expected_count: 12,
+          missing_funds: [],
           reported_total_usd_million: 175.7,
           calculated_fund_sum_usd_million: 175.7,
           fund_sum_minus_reported_total_usd_million: 0,
@@ -207,6 +211,39 @@ test("normalizes Farside reporting rows while keeping publication time, provider
   assert.equal(placeholder.persistable, false);
 });
 
+
+test("explicitly blocks a reported ETF total when fund-level reporting is partial", () => {
+  const result = prepareBtcObservationCandidates({
+    retrieved_at: "2026-10-15T10:00:00.000Z",
+    sources: [{
+      metric_id: "institutional.etf_net_flow",
+      source_id: "institutional.primary",
+      url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+      status: "CAPTURED",
+      retrieved_at: "2026-10-15T10:00:00.000Z",
+      source_payload_sha256: hash,
+      latest_rows: [{
+        period_start: "2026-10-14",
+        period_end: "2026-10-14",
+        status: "REPORTED_CANDIDATE",
+        fund_completeness_status: "PARTIAL_FUND_REPORTING",
+        funds_reported_count: 3,
+        funds_expected_count: 12,
+        missing_funds: ["BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"],
+        reported_total_usd_million: -261.4,
+        calculated_fund_sum_usd_million: null,
+        fund_sum_minus_reported_total_usd_million: null,
+        reconciliation_status: "INCOMPLETE"
+      }]
+    }]
+  });
+  assert.equal(result.etf_review_rows.length, 1);
+  const row = result.etf_review_rows[0];
+  assert.equal(row.value_numeric, -261.4);
+  assert.ok(row.reasons.includes("fund_reporting_incomplete"));
+  assert.ok(row.reasons.includes("aggregate_reconciliation_not_accepted"));
+  assert.equal(row.persistable, false);
+});
 
 test("flags material Farside versus TFTC ETF total deltas without approving either source", () => {
   const result = prepareBtcObservationCandidates({
