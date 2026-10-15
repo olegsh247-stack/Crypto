@@ -1588,3 +1588,12 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 - [Release Workflow Validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994976) — **success**; job `Static validation (no production access)` завершён успешно.
 - Повторная проверка завершена: [Seed observation idempotency rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994751) и [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994763) также завершились **success**. Все четыре проверенных run этого набора изменений завершены успешно; CI не снимает ETF/DXY-блокеры и не делает BTC evaluable.
 - ETF source contract остаётся блокером BTC-сценария: требуется завершить проверку надёжной конвенции observation/publication time и семантики revisions/finality. BTC остаётся `not_evaluable`; DXY также остаётся заблокированным до утверждения канонического источника.
+
+## 42. ETF dual-source mean rule — 2026-10-16
+
+- Approved research-only reconciliation for a session where both Farside and TFTC provide valid numeric daily aggregates: `arithmetic_mean_2_sources`.
+- For 2026-10-07: Farside `-484.9 USDm`, TFTC `-487.1 USDm`, research mean `-486.0 USDm`.
+- Preserve both raw source values, source identities and capture provenance. Do not alter source values to force agreement. The derived mean is not a claim that either source is wrong or that the result is a provider-reported value.
+- The ETF observation contract in PR #83 was updated at commit `551cbd20043e9d719351aca394c1aa12cad76632`: [contract document](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md).
+- This rule is for the offline research dataset only. Production persistence remains blocked until timestamp and revision/finality policy requirements are satisfied. No database writes, ingestion, scenario evaluation, scenario-state/probability/monitoring changes, or deployment were performed.
+- CI for this latest contract commit has not yet been confirmed. Do not mark it green until a run for the commit completes.
