@@ -48,3 +48,25 @@ Before accepting ETF observations, a later reviewed change must establish all of
 The present code emits ETF rows as `REVIEW_ONLY_BLOCKED`, with `observed_at: null`, `provider_revision: null`, `revision: null`, `finalization_status: "unknown"`, and `persistable: false`. HTTP Date and retrieval time are retained separately but never promoted to observation time.
 
 **Safety:** no live ingestion, database writes, historical-row edits, scenario evaluation, scenario-state/probability/monitoring changes, or deployment were performed for this contract.
+
+## Public-source spot check — 2026-10-15
+
+Read-only review of the public pages on 2026-10-15 found concrete examples of why the secondary source must remain diagnostic-only:
+
+| Session date | Farside displayed total | TFTC displayed total | Difference (TFTC − Farside) | Review result |
+|---|---:|---:|---:|---|
+| 2026-10-07 | -484.9 USDm | -487.1 USDm | -2.2 USDm | Material discrepancy; not reconciled |
+| 2026-10-13 | +175.7 USDm | +175.6 USDm | -0.1 USDm | Small difference consistent with displayed rounding/aggregation, but not proof of identical lineage |
+| 2026-10-14 | -261.4 USDm | TFTC page had not yet published this session | n/a | Farside's displayed row includes only some reported fund values; do not assume missing cells are zero or that the session is complete |
+
+For 2026-10-07, the visible fund-level difference includes BRRR: Farside displays 0.0 while TFTC displays -2.1 USDm; the remaining displayed-total delta is affected by the sources' aggregation/rounding. The exact root cause is not established by the public pages alone. Do not “fix” one source to match the other.
+
+TFTC's methodology note says current daily aggregates and ongoing per-fund flows are sourced from SoSoValue, while its earlier per-fund history through mid-2026 is compiled from issuer disclosures as tabulated by Farside. TFTC also explicitly warns that the latest day may revise and that older days are corrected automatically. This is useful independent diagnostic evidence, but does not make it an independent authoritative truth for every date or remove the need to preserve capture-level provenance.
+
+**Operational consequence:** require a per-fund completeness check that distinguishes explicit numeric zero from missing/unreported values. A row's aggregate total alone is not enough to mark a session complete. For the 2026-10-07 mismatch, retain DELTA_EXCEEDS_SCREENING_BAND and the differing fund values in the review artifact; acceptance remains blocked pending a documented reconciliation decision.
+
+Public references reviewed:
+- Farside Bitcoin ETF table: https://farside.co.uk/btc/
+- TFTC Bitcoin ETF flows and methodology: https://www.tftc.io/bitcoin-etf-flows
+
+This spot check does not change source priority, approve ingestion, or establish publication time, provider revision, or finalization semantics.
