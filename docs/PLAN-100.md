@@ -1935,3 +1935,10 @@ Next technical work after policy review: design and test an offline deterministi
 Created [BTC ETF snapshot revision and research eligibility proposal](BTC-ETF-SNAPSHOT-REVISION-ELIGIBILITY-PROPOSAL-2026-10-16.md). It separates immutable evidence capture from project revision links and from eligibility to use a row in an offline research scenario. It compares provider-declared finality, project-stabilized research snapshots, and leaving ETF blocked. Recommended direction is to keep production blocked and consider a separate research-only stability rule only after explicit approval.
 
 This is a decision proposal, not an adopted policy. Archive location/retention, stability window, revision behavior, and research-scenario eligibility remain open. No source priority or production behavior changed.
+
+
+## Plan 100 checkpoint — VPS snapshot-lineage rehearsal passed (2026-10-16)
+
+**Confirmed:** [VPS API Build Rehearsal #1474](https://github.com/olegsh247-stack/Crypto/actions/runs/38821243278) completed successfully for commit `6ba7e09877d50109aba13220cb224755547830ba`. All job steps passed, including VPS-only guard, runtime/API/Worker builds, contract tests, PostgreSQL migrations/bootstrap, canonical BTC input registry, read-only provenance audit, idempotency/duplicate reconciliation, backup/restore, API/Worker E2E, offline contract invariants and BTC research evidence/snapshot lineage E2E. Combined with [BTC Public Source Staging #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38821070436), the latest branch has successful staging and VPS-rehearsal evidence.
+
+**Scope limit:** these are CI/test-environment results, not production cutover or provider finality. PR #83 remains Draft/open/unmerged; BTC remains `not_evaluable`. No live capture, production DB operation, ingestion, deployment, scenario-state/probability change or monitoring write was performed.
