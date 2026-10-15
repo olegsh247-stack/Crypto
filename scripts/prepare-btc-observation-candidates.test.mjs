@@ -306,3 +306,86 @@ test("flags material Farside versus TFTC ETF total deltas without approving eith
   assert.equal(comparison.decision, "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE");
   assert.equal(result.candidates.length, 0);
 });
+
+
+test("derives a review-only ETF arithmetic mean from two complete numeric source aggregates", () => {
+  const farsideHash = "d".repeat(64);
+  const tftcHash = "e".repeat(64);
+  const result = prepareBtcObservationCandidates({
+    retrieved_at: "2026-10-15T12:00:00.000Z",
+    sources: [
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.primary",
+        url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        status: "CAPTURED",
+        retrieved_at: "2026-10-15T11:59:00.000Z",
+        source_payload_sha256: farsideHash,
+        latest_rows: [{
+          period_start: "2026-10-07",
+          status: "REPORTED_CANDIDATE",
+          fund_completeness_status: "ALL_FUNDS_REPORTED",
+          reported_total_usd_million: -484.9,
+          reconciliation_status: "MATCHES_DISPLAY_ROUNDING"
+        }]
+      },
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.tftc",
+        url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
+        status: "CAPTURED",
+        retrieved_at: "2026-10-15T11:59:30.000Z",
+        source_payload_sha256: tftcHash,
+        recent_days_in_last_14_days: [{
+          date: "2026-10-07",
+          netFlowUsd: -487067411.5
+        }]
+      }
+    ]
+  });
+
+  assert.equal(result.etf_research_derived_rows.length, 1);
+  const derived = result.etf_research_derived_rows[0];
+  assert.equal(derived.period_start, "2026-10-07");
+  assert.equal(derived.value_numeric, -485.98370575);
+  assert.equal(derived.method, "arithmetic_mean_2_sources");
+  assert.equal(derived.method_version, "1");
+  assert.equal(derived.derivation_status, "OFFLINE_RESEARCH_ONLY");
+  assert.equal(derived.persistable, false);
+  assert.equal(derived.observed_at, null);
+  assert.equal(derived.source_values[0].value_numeric, -484.9);
+  assert.equal(derived.source_values[0].source_payload_sha256, farsideHash);
+  assert.equal(derived.source_values[1].value_numeric, -487.0674115);
+  assert.equal(derived.source_values[1].source_payload_sha256, tftcHash);
+  assert.equal(result.production_writes_performed, false);
+});
+
+test("does not derive an ETF mean from incomplete Farside reporting", () => {
+  const result = prepareBtcObservationCandidates({
+    sources: [
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.primary",
+        url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        status: "CAPTURED",
+        source_payload_sha256: hash,
+        latest_rows: [{
+          period_start: "2026-10-07",
+          status: "REPORTED_CANDIDATE",
+          fund_completeness_status: "PARTIAL_FUND_REPORTING",
+          reported_total_usd_million: -484.9,
+          reconciliation_status: "INCOMPLETE"
+        }]
+      },
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.tftc",
+        url: "https://www.tftc.io/bitcoin-etf-flows/data.json",
+        status: "CAPTURED",
+        source_payload_sha256: "f".repeat(64),
+        recent_days: [{ date: "2026-10-07", netFlowUsd: -487100000 }]
+      }
+    ]
+  });
+  assert.equal(result.etf_research_derived_rows.length, 0);
+});
