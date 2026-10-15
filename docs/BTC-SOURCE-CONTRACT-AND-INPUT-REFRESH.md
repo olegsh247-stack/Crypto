@@ -469,3 +469,25 @@ The PostgreSQL schema previously defaulted `observations.freshness` to `CURRENT`
 - Existing historical rows retain their recorded classifications; this change does not retroactively validate them.
 - BTC source candidates remain review-only and non-persistable. No migration has been applied to a production database, and no ingestion or scenario evaluation was run.
 - A writer that has not evaluated an applicable policy must leave freshness as `UNCLASSIFIED`; the database default protects against accidentally treating omitted freshness as `CURRENT`. The BTC spot candidate itself applies the existing one-hour policy and emits `CURRENT` or `STALE`, but is still not persistable.
+
+## 23. BTC readiness contract drift guard — 2026-10-15
+
+The BTC Scenario Readiness Gate now validates the runtime readiness contract against `metric-registry.json` so changes to the declared metric freshness window, unit, or approved source IDs cannot silently diverge from the runtime gate.
+
+The guard covers:
+- Required spot-price and DXY requirements: maximum age, unit, and allowed source IDs.
+- ETF latest-row freshness, unit, and allowed source IDs.
+- The ETF minimum of five distinct recent reporting days.
+
+This is a CI consistency guard, not yet a single-source runtime configuration: the readiness implementation still contains explicit contract values, and the validator checks those values against the registry. A future refactor may generate or load runtime contract values from the registry, but must preserve the existing fail-closed behavior and must not accidentally approve DXY or ETF inputs.
+
+BTC Scenario Readiness Gate #228 passed on commit `296848097481126238ce0dca2198226c2bcd39e1`: https://github.com/olegsh247-stack/Crypto/actions/runs/38713564389. VPS API Build Rehearsal #1266 was still running at the time of this note: https://github.com/olegsh247-stack/Crypto/actions/runs/38713564475.
+
+Current product blockers remain unchanged:
+1. **Spot price:** Kraken XBT/USD is the canonical source candidate and the review-only normalizer exists, but candidate data is not approved for persistence; any input used by readiness must have valid event/retrieval timestamps, row identity, provenance and current freshness.
+2. **ETF net flow:** source rows must have a defensible observation-time convention, reporting date, retrieval metadata, stable row identity and explicit revision/finality semantics. Farside reconciliation alone does not satisfy these requirements; five distinct recent daily sessions are required.
+3. **DXY:** no canonical feed/endpoint is approved; the runtime allowlist intentionally remains empty. ICE documentation is not a verified quote feed.
+4. **Rule evaluation:** only after the required inputs pass the read-only readiness gate may the fixed BTC research rule be evaluated offline. This does not authorize scenario-state persistence, probability changes, monitoring writes, or trading actions.
+
+No database migration was applied, no observations were ingested, no scenario was evaluated, and no production deployment was performed by this change.
+
