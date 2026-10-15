@@ -304,7 +304,7 @@ jobs:
           assert not any(x.get('metric_id') == 'security.fee_subsidy_ratio' for x in blockers), 'deferred fee/subsidy metric must not block first-scenario readiness'
           assert not any(x.get('metric_id') == 'security.hashrate' for x in blockers), 'supporting hashrate must not block first-scenario readiness'
           assert any(x.get('metric_id') == 'macro.dxy' and x.get('reason') == 'missing' for x in blockers), 'missing DXY metric must block readiness'
-          assert any(x.get('metric_id') == 'institutional.etf_net_flow' and x.get('reason') in {'latest_observation_must_be_current_traceable_and_within_36_hours', 'etf_fund_completeness_revision_or_finality_unverified'} for x in blockers), 'latest ETF flow must block readiness when stale or source acceptance metadata is unverified'
+          assert any(x.get('metric_id') == 'institutional.etf_net_flow' and x.get('reason') in {'latest_observation_missing', 'latest_observation_must_be_current_traceable_and_within_36_hours', 'etf_fund_completeness_revision_or_finality_unverified'} for x in blockers), 'latest ETF flow must block readiness when missing, stale, or source acceptance metadata is unverified'
           assert len(d.get('critical_factors',[])) == 6, 'BTC current snapshot factors'
           assert all(f.get('snapshot_id') == sid for f in d.get('critical_factors',[])), 'cross-snapshot factor'
           assert len(d.get('scores',[])) == 5, 'BTC current snapshot scores'
