@@ -1769,3 +1769,16 @@ DXY остаётся заблокированным. Нельзя автомат
 
 **Безопасность:** только readiness validation и тест; не менялись source/metric registries, БД, ingestion, scenario state/probability/monitoring, merge или deployment. BTC остаётся `not_evaluable` до принятия ETF и DXY inputs и прохождения всех ворот.
 
+## 37. Payload-hash regression coverage — missing and malformed hashes
+
+В продолжение §36 добавлены два regression test в `scripts/btc-scenario-readiness.test.mjs`:
+
+- обязательный spot input с некорректной строкой вместо SHA-256 должен блокироваться с `source_payload_hash_missing_or_invalid`;
+- ETF-история с некорректным hash хотя бы у одной сессии не должна считаться принятой пятёркой сессий.
+
+Commit: `6105ac61323bbe6334818c739c9a2cc3742a4d7b`.
+
+**Проверка:** код runtime и тесты присутствуют в PR #83, но для новых коммитов отдельный CI run пока не появился. Предыдущие зелёные проверки относятся к более раннему коду; результат новых regression test не объявляется подтверждённым. Изменения остаются в Draft PR и не развёртываются.
+
+**Границы:** только runtime validation/tests и документация. Нет изменений БД, источников/метрик, ingestion, scenario state, probabilities, monitoring, merge или deployment.
+
