@@ -491,3 +491,18 @@ Current product blockers remain unchanged:
 
 No database migration was applied, no observations were ingested, no scenario was evaluated, and no production deployment was performed by this change.
 
+## 24. BTC readiness runtime registry as the single configuration source — 2026-10-15
+
+Draft implementation is tracked in [PR #83](https://github.com/olegsh247-stack/Crypto/pull/83).
+
+The readiness runtime now reads required metric IDs, freshness windows, units, source IDs and approved source URL prefixes from `data/CryptoDataModel/registry/metric-registry.json`. The same registry entry controls ETF latest-row freshness, the 14-day reporting-history window and the minimum of five distinct reporting days. The validator checks that the runtime loads the registry and that the safety-critical policy remains explicit there.
+
+The policy deliberately remains fail-closed:
+- BTC spot uses the registered Kraken XBT/USD trade endpoint as the only canonical candidate.
+- ETF remains restricted to the registered Farside URLs; timestamp convention and revision/finality semantics remain unresolved, so source acceptance is not implied.
+- DXY has an empty source priority and empty approved URL list; no source is silently approved.
+
+BTC Scenario Readiness Gate passed on PR head `4550817fc10624e48e41d14911ace0ed88ed6f9c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38715775250. This confirms the registry validator, TypeScript build and BTC readiness/directional/candidate tests passed for that head. VPS Build Rehearsal was still running when this note was prepared; it is not recorded as passed.
+
+No production DB writes, ingestion, scenario evaluation, persisted scenario state, probability changes, monitoring writes or deployment were performed. BTC remains `not_evaluable` until ETF contract blockers and approved DXY source are resolved.
+
