@@ -14,6 +14,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/api/package.json ./package.json
 COPY --from=build /app/api/node_modules ./node_modules
+COPY --from=build /app/shared ./shared
 COPY --from=build /app/api/dist ./dist
 COPY --from=build /app/data/CryptoDataModel/registry/metric-registry.json ./data/CryptoDataModel/registry/metric-registry.json
 EXPOSE 8080
