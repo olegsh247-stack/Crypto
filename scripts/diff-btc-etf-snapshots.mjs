@@ -102,6 +102,10 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     retrieved_at: source.retrieved_at ?? null,
     payload_sha256: source.source_payload_sha256 ?? source.body_sha256 ?? null
   })).sort((a,b) => canonicalJson(a).localeCompare(canonicalJson(b)));
+  const sourcePayloadFingerprint = sha256(canonicalJson(sourceHashes.map(source => ({
+    source_id: source.source_id, url: source.url, status: source.status,
+    payload_sha256: source.payload_sha256
+  }))));
   const snapshotIdentity = {
     schema_version: 1,
     diff_algorithm_version: VERSION,
@@ -117,6 +121,7 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
     captured_at: manifest?.retrieved_at ?? null,
     manifest_sha256: manifestDigest,
     candidates_sha256: candidateDigest,
+    source_payload_fingerprint: sourcePayloadFingerprint,
     source_coverage: sourceCoverage,
     rows
   };
@@ -173,8 +178,7 @@ export function diffBtcEtfSnapshots(previous, current) {
     algorithm_version: VERSION,
     previous_snapshot_id: previous?.snapshot_id ?? null,
     current_snapshot_id: current.snapshot_id,
-    same_payload_snapshot: previous?.manifest_sha256 === current.manifest_sha256
-      && previous?.candidates_sha256 === current.candidates_sha256,
+    same_payload_snapshot: previous?.source_payload_fingerprint === current.source_payload_fingerprint,
     changes,
     summary: changes.reduce((result, item) => {
       result[item.status] = (result[item.status] ?? 0) + 1;
