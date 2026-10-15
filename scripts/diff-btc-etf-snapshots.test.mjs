@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildBtcEtfSnapshot, diffBtcEtfSnapshots } from "./diff-btc-etf-snapshots.mjs";
+import { buildBtcEtfSnapshot, diffBtcEtfSnapshots, validateBtcEtfSnapshotManifest } from "./diff-btc-etf-snapshots.mjs";
 
 const HASH_A = "a".repeat(64);
 const HASH_B = "b".repeat(64);
@@ -189,7 +189,17 @@ test("builds a versioned, self-contained snapshot manifest with input hashes and
   assert.match(snapshot.manifest_sha256, /^[a-f0-9]{64}$/);
   assert.match(snapshot.candidates_sha256, /^[a-f0-9]{64}$/);
   assert.match(snapshot.source_payload_fingerprint, /^[a-f0-9]{64}$/);
+  assert.match(snapshot.snapshot_content_sha256, /^[a-f0-9]{64}$/);
+  assert.equal(snapshot.mode, "offline-review-only-snapshot-manifest");
+  assert.equal(validateBtcEtfSnapshotManifest(snapshot), true);
   assert.ok(Object.values(snapshot.source_coverage).some(coverage =>
     coverage.status === "CAPTURED" && coverage.min_date === "2026-10-07" && coverage.max_date === "2026-10-07"));
   assert.ok(snapshot.rows.length > 0);
+});
+
+test("rejects an exported snapshot manifest whose normalized rows were modified", () => {
+  const snapshot = makeSnapshot();
+  const tampered = structuredClone(snapshot);
+  tampered.rows[0].normalized.total_usd_million = 999;
+  assert.equal(validateBtcEtfSnapshotManifest(tampered), false);
 });
