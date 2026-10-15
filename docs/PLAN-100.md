@@ -2,10 +2,10 @@
 
 > **СТАТУС ДОКУМЕНТА: ГЛАВНЫЙ ПРИОРИТЕТ ПРОЕКТА.** Этот документ задаёт обязательную последовательность работ. При конфликте с отдельными старыми задачами, комментариями, ветками или PR приоритет имеет актуальная версия «План 100», кроме случаев, когда пользователь явно изменил план.
 
-**Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
+**Актуальность снимка:** 15 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
+**Последние проверенные CI-свидетельства (базовый снимок 14 октября 2026; дополнение 15 октября см. ниже):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -1567,4 +1567,18 @@ The first BTC research scenario remains **not evaluable** until all of these gat
 - **Scenario evaluation:** not run. No probability or scenario state is changed automatically.
 
 Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238ce0dca2198226c2bcd39e1` (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564389). VPS API Build Rehearsal #1266 was pending at the time of this entry (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564475). CI success proves the contract/tests build, not that live BTC inputs are accepted or the scenario is evaluable.
+
+
+## 24. BTC readiness runtime registry source-of-truth — 2026-10-15
+
+**Current work:** [Draft PR #83](https://github.com/olegsh247-stack/Crypto/pull/83), branch `fix/btc-readiness-registry-runtime-source`.
+
+- [x] Readiness runtime loads per-metric requirements from `data/CryptoDataModel/registry/metric-registry.json` instead of maintaining duplicated freshness/unit/source/URL values.
+- [x] Registry declares the canonical candidate endpoint for BTC spot, the fail-closed DXY policy, and ETF source URL prefixes plus freshness/history/minimum-session rules.
+- [x] Registry validator checks the source-of-truth relationship and protects the explicit ETF/DXY safety gates.
+- [x] BTC Scenario Readiness Gate passed on PR head `4550817fc10624e48e41d14911ace0ed88ed6f9c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38715775250.
+- [ ] VPS API Build Rehearsal must complete successfully on the latest PR head before the change can be considered fully validated.
+- [ ] Review/acceptance of the PR remains separate; no merge was performed.
+
+**Effect on Plan 100:** this improves Stage 4's configuration integrity only. It does not accept source observations or close Stage 4. ETF timestamp/revision/finality semantics and approved DXY feed remain blockers; BTC remains `not_evaluable`. No production ingestion, database writes, scenario evaluation, scenario-state/probability/monitoring changes or deployment occurred.
 
