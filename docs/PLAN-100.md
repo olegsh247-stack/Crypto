@@ -1615,3 +1615,13 @@ Validation detail: the container-image rehearsal caught and fixed an existing pa
 - Added tests for a partially reported session (three of twelve funds present) and candidate-level blocking. The total remains available as review evidence; it is not accepted as a complete session.
 - This closes the parser/mapper implementation gap identified by the public-source spot check, but does not resolve the separate -2.2 USDm Farside/TFTC discrepancy for 2026-10-07 or establish ETF publication time, provider revision, or finality.
 - Next: verify CI on the latest branch head; then continue the source-time/revision policy review and DXY approved-source gate. BTC remains `not_evaluable`; no ingestion, DB writes, scenario evaluation, deployment, or PR merge.
+
+## 28. 2026-10-15 — Reconcile ETF contract against captured read-only staging artifact
+
+- Checked the actual artifact from [BTC Public Source Staging run #38729627587](https://github.com/olegsh247-stack/Crypto/actions/runs/38729627587), captured at approximately 11:45:48 UTC. The artifact includes the immutable raw Farside HTML, TFTC JSON, manifest and normalized review candidates.
+- Correction to section 26: TFTC data **was** present through 2026-10-14 in this capture. The prior statement that TFTC had not yet published that session is superseded.
+- For 2026-10-14, the captured Farside table contains numeric values for all 12 funds (explicit 0.0 cells count as reported), with total -261.4 USDm. TFTC total is approximately -261.4622 USDm; difference approximately -0.0622 USDm. This is within the screening band, but is not proof of source identity or finality.
+- The 2026-10-07 delta remains approximately -2.1674 USDm in the raw TFTC data versus Farside -484.9 USDm. BRRR is a visible contributor; exact root cause remains unresolved.
+- The staging artifact confirms that ETF candidate rows correctly retain `observed_at: null`, full-response SHA-256, reporting-date logical keys, unknown provider revision/finality, and `persistable: false`. The response receipt time and HTTP Date are not promoted to the ETF observation time.
+- VPS Build Rehearsal #38729630921 and the prior rehearsal #38729627372 both completed successfully; BTC readiness gate and VPS release workflow validation on the same latest head also passed.
+- Next: keep source-time/revision/finality as an explicit unresolved source limitation, then proceed with the approved-input acceptance matrix for BTC (spot, ETF, DXY and the required source provenance/freshness checks). No ingestion, database writes, scenario evaluation, deployment or PR merge. BTC remains `not_evaluable`.
