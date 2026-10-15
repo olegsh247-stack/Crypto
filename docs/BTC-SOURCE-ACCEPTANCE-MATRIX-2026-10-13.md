@@ -125,3 +125,8 @@ Static inspection of the manual-only staging workflow found that raw responses, 
 ### Offline ETF snapshot diff — implemented, CI pending
 
 The PR branch now contains `scripts/diff-btc-etf-snapshots.mjs` plus focused tests and runs them in the push validation job. It compares two existing capture artifact directories offline and explicitly classifies every compared row as `UNCHANGED`, `NEW`, `VALUE_CHANGED`, `ROW_MISSING`, `INCOMPLETE`, or `NOT_COMPARABLE`. The `row_results` collection contains all classifications; `changes` contains only non-unchanged rows. Prior/current row payloads are retained in the diff. Identical ETF source payload hashes across captures are reported as a same-payload no-op even when capture times differ. This does not provide durable retention or declare a provider row final. CI for the latest commit is still pending verification; no live capture was launched.
+
+
+### Offline ETF snapshot diff — CI verified (2026-10-16)
+
+The date validator was hardened to reject impossible calendar dates and a regression test was added. [BTC Public Source Staging #116](https://github.com/olegsh247-stack/Crypto/actions/runs/38820520636) passed all three validation test steps; the capture job was skipped. [VPS API Build Rehearsal #1449](https://github.com/olegsh247-stack/Crypto/actions/runs/38820520738) also passed. This verifies the current CI run only; provider finality, durable retention and ETF production acceptance remain unresolved. BTC remains `not_evaluable`.
