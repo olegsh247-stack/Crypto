@@ -8,10 +8,10 @@ DECLARE duplicate_groups integer;
 BEGIN
   SELECT count(*) INTO duplicate_groups
   FROM (
-    SELECT metric_id, source_id, source_row_key, revision
+    SELECT metric_id, source_id, source_row_key
     FROM observations
     WHERE asset_id = 'btc' AND source_row_key IS NOT NULL
-    GROUP BY metric_id, source_id, source_row_key, revision
+    GROUP BY metric_id, source_id, source_row_key
     HAVING count(*) > 1
   ) duplicates;
   IF duplicate_groups > 0 THEN
@@ -44,7 +44,7 @@ END $$;
 DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq;
 
 CREATE UNIQUE INDEX observations_btc_source_row_revision_uq
-ON observations (metric_id, source_id, source_row_key, revision)
+ON observations (metric_id, source_id, source_row_key)
 WHERE asset_id = 'btc' AND source_row_key IS NOT NULL;
 
 CREATE UNIQUE INDEX observations_btc_legacy_natural_key_revision_uq
