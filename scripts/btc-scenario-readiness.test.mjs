@@ -270,6 +270,15 @@ test("missing retrieval timestamp blocks an otherwise fresh canonical observatio
     && x.reason === "retrieval_timestamp_missing_or_invalid"));
 });
 
+test("missing raw source payload hash blocks an otherwise fresh canonical observation", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, source_payload_sha256: null } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"
+    && x.reason === "source_payload_hash_missing_or_invalid"));
+});
+
 test("missing stable source-row key blocks an otherwise traceable observation", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, source_row_key: null } : x);
