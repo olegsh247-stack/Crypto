@@ -1923,3 +1923,9 @@ Next technical work after policy review: design and test an offline deterministi
 **Implemented; CI pending:** exported manifests now include a SHA-256 over the canonical serialized manifest content, explicit review-only mode, and no-production-access/write flags. When a saved manifest is loaded for comparison, its schema and content hash are validated; edits to normalized rows are rejected instead of being silently compared under the original snapshot ID. A tampering regression test was added.
 
 **Next gate:** verify BTC Public Source Staging and VPS API Build Rehearsal results for the latest code/test commits. The portable manifest is still only a review artifact: this does not establish durable retention, provider finality, an approved revision/supersession policy, ETF production acceptance or BTC evaluability. No live capture was dispatched.
+
+## Plan 100 checkpoint — snapshot manifest export and integrity tests passed (2026-10-16)
+
+**Confirmed:** [BTC Public Source Staging #121](https://github.com/olegsh247-stack/Crypto/actions/runs/38821070436) passed all validation steps on commit `31cc3188ff8b9a928f90cbcb93eb1ca04a3e2745`; the live-capture job was skipped. This includes the CLI end-to-end test that exports a snapshot manifest and compares saved manifests offline, plus content-tampering rejection and source-provenance assertions. [Run #118](https://github.com/olegsh247-stack/Crypto/actions/runs/38821054244) also passed the manifest integrity implementation tests.
+
+**Current status:** the separate VPS API Build Rehearsal for the latest commit is still running; do not claim it passed until completed. The offline staging tests do not approve ETF production inputs, establish durable retention/finality, or make BTC evaluable. PR #83 remains Draft/open/unmerged; no live capture was dispatched.
