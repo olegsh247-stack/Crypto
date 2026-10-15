@@ -1707,3 +1707,33 @@ A fresh review of the public source descriptions found two useful clarifications
 Sources: Farside says its table is updated in real time, generally evenings/nights U.S. time; SoSoValue documents the ETF API domain and requires an API key for access. Neither statement by itself establishes an accepted immutable/final observation contract.
 
 No source registry, metric registry, runtime policy, database, ingestion schedule, or scenario state was changed as part of this research.
+
+## 34. SoSoValue ETF API — проверка фактической структуры данных
+
+Проверены публичные страницы официальной документации SoSoValue Market Data API (15 октября 2026).
+
+### Что подтверждает документация
+
+- `GET /etfs/summary-history` возвращает дневную агрегированную запись по BTC/US с полями `date`, `total_net_inflow`, `total_value_traded`, `total_net_assets`, `cum_net_inflow`. Поток выражен в USD; отрицательное значение означает net outflow. Документация ограничивает диапазон последним месяцем и исключает неторговые дни. Это полезный независимый контроль общего итога, но не доказательство полноты отдельных фондов.  
+  Источник: https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history
+- `GET /etfs/{ticker}/history` описан как история по отдельному тикеру с полями `date`, `ticker`, `net_inflow`, `cum_inflow`, `net_assets` и другими. Диапазон также ограничен последним месяцем. Это потенциальный путь к независимой проверке per-fund данных, но необходимо отдельно подтвердить актуальный список нужных тикеров и полноту набора.  
+  Источник: https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/history
+- API требует одобренный ключ в заголовке `x-soso-api-key`; ключ следует хранить только в секретном хранилище/переменной окружения, не в Git и не в переписке. Документация указывает квоты 100 000 запросов в месяц и 20 запросов в минуту на ключ.  
+  Источники: https://sodex.com/documentation/for-developers/developers/data-api/getting-started и https://sodex.com/documentation/for-developers/developers/data-api/authentication-and-limits
+
+### Что пока НЕ доказано
+
+1. Можно ли получить полный и стабильный список всех BTC ETF, требуемых нашим контрактом, и достаточно ли отдельных ticker-history ответов для подтверждения полноты на каждый торговый день.
+2. Как API определяет исправления прошлых значений, финальность торгового дня и повторную публикацию: в просмотренных схемах не документированы row-level revision ID, finality marker или отдельное время публикации/наблюдения.
+3. Семантика поля `date` в endpoint по тикеру требует проверки: описание на странице называет его timestamp/Long, а пример показывает календарную строку `YYYY-MM-DD`. До ответа провайдера или проверки реального payload нельзя выводить из этого точное время наблюдения.
+4. Условия разрешённого использования и хранения данных для данного проекта не установлены одним лишь описанием endpoint.
+5. Ответы API ещё не получены: доступ к ключу не предполагался и не имитировался.
+
+### Решение и следующий шаг
+
+SoSoValue **не принимается пока как канонический источник**. Его aggregate-history можно рассматривать как контроль общего дневного итога; per-ticker history — как кандидата для проверки полноты. Следующая безопасная проверка, если будет доступ к одобренному ключу, — read-only запрос короткого периода, сохранение сырого ответа с SHA-256 и временем получения, сверка общего итога с суммой per-ticker значений, списка фондов, единиц, торговых дат и поведения при повторном чтении. Никаких записей в БД и автоматического обновления канонических наблюдений.
+
+Если ключа нет, работу не блокируем: фиксируем SoSoValue как документированный, но непроверенный кандидат и продолжаем офлайн-приёмку остальных BTC-контрактов. ETF остаётся блокером до доказанного контракта observation time и revision/finality; DXY остаётся блокером до утверждения источника. BTC остаётся `not_evaluable`.
+
+**Границы изменений:** только документация Плана 100; metric/source registries, runtime, БД, ingestion, scenario state, probabilities, monitoring, merge и deployment не менялись.
+
