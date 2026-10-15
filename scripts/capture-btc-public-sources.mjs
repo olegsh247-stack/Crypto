@@ -103,6 +103,8 @@ await capture({
       latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
       observed_at: new Date(epochSeconds * 1000).toISOString(),
       source_row_key: `XBTUSD:${epochSeconds}:${String(latest[0])}:${String(latest[1])}:${String(latest[3] ?? "")}:${String(latest[4] ?? "")}:${String(latest[5] ?? "")}`,
+      source_row_key_scope: "pair_timestamp_price_volume_side_order_type_misc",
+      source_row_identity_status: "derived_composite_key_not_provider_assigned",
       methodology: "kraken-public-trades-latest-trade-v1",
       methodology_version: "1",
       trade_rows_in_response: trades.length,
