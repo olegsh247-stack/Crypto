@@ -4,13 +4,20 @@
  * This script never connects to PostgreSQL or marks candidates ready for ingestion.
  */
 import { readFile, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const KRAKEN_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
 const SHA256_RE = /^[0-9a-f]{64}$/i;
-const BTC_SPOT_MAX_AGE_SECONDS = 60 * 60;
-const BTC_SPOT_FRESHNESS_POLICY_ID = "btc.market.spot_price.max-age.v1";
+const metricRegistry = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
+const btcSpotMetric = metricRegistry.metrics?.find(metric => metric.metric_id === "market.spot_price");
+const freshnessWindow = /^(\\d+)(s|m|h|d)$/.exec(String(btcSpotMetric?.freshness_window ?? ""));
+if (!btcSpotMetric?.freshness_policy_id || !freshnessWindow) {
+  throw new Error("BTC spot freshness policy is missing or invalid in metric-registry.json");
+}
+const BTC_SPOT_MAX_AGE_SECONDS = Number(freshnessWindow[1]) * ({ s: 1, m: 60, h: 3600, d: 86400 }[freshnessWindow[2]]);
+const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
 
 function validIso(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value))
