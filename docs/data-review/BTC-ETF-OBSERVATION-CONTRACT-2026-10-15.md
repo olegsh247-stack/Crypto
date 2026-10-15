@@ -72,3 +72,10 @@ Public references reviewed:
 - TFTC Bitcoin ETF flows and methodology: https://www.tftc.io/bitcoin-etf-flows
 
 This spot check does not change source priority, approve ingestion, or establish publication time, provider revision, or finalization semantics.
+
+
+## Runtime gate alignment — 2026-10-15
+
+The shared BTC readiness gate now enforces this contract instead of treating the aggregate row and five-date count as sufficient. For both the latest row and historical rows counted toward the five-session minimum, it requires complete reporting across all 12 fund columns, an empty missing-fund list, a full-response SHA-256, a defensible observation timestamp, and explicit revision/finality acceptance. A provider revision identifier is accepted only when present; alternatively, the project must explicitly approve an immutable-snapshot reconciliation policy. Finality must be `final` or `reconciled_snapshot`. `retrieved_at`, HTTP Date, ETag, and the date-derived row key do not satisfy these requirements.
+
+The current public-source capture does not meet the gate because `observed_at` is unresolved and provider revision/finality are unknown. This is intentional fail-closed behavior, not a claim that Farside publishes metadata it does not expose. Readiness tests now cover missing observation time, incomplete fund reporting, and unknown revision/finality. BTC remains `not_evaluable` until the source contract is resolved; no live ingestion or production change was made.
