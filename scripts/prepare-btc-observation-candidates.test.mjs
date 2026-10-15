@@ -135,6 +135,7 @@ test("blocks timezone-offset timestamps when the contract requires normalized UT
 });
 
 test("blocks a source event timestamp later than the capture retrieval time", () => {
+test("rejects a provider observation timestamp later than retrieval time", () => {
   const result = prepareBtcObservationCandidates(manifest({
     latest_trade_observed_at: "2026-10-14T16:54:00.000Z",
     observed_at: "2026-10-14T16:54:00.000Z",
