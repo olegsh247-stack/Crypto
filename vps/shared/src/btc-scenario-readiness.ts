@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 /**
  * Read-only BTC scenario input-quality gate.
  *
@@ -5,16 +7,26 @@
  * This decides whether source observations are fit for a reviewed research
  * evaluation. It never selects a scenario or authorizes persistence.
  */
-const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sourceIds: string[]; sourceUrlPrefixes: string[]; approvedMethodologyIds?: string[]; label: string }> = [
-  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
-  // Hashrate is supporting network-health context, not a mandatory directional input
-  // for the first institutional/macro BTC scenario. Validate it if/when a scenario rule uses it.
-  // Fee/subsidy ratio is deferred: it is not required or calculated for this scenario.
-  // Keep its source/method contract in the metric registry for future research, but do not
-  // block current scenario readiness on a metric that has no approved method or current use.
-  // No specific DXY feed has been approved. Empty identity/URL allowlists fail closed.
-  { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", sourceIds: [], sourceUrlPrefixes: [], label: "macro liquidity proxy (DXY)" },
-];
+const metricRegistry = JSON.parse(readFileSync(new URL("../../../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
+const metricsById = new Map<string, any>(metricRegistry.metrics.map((metric: any) => [metric.metric_id, metric]));
+
+function freshnessHours(window: unknown, metricId: string): number {
+  const match = /^(\d+)(m|h|d)$/.exec(String(window ?? ""));
+  if (!match) throw new Error("Metric " + metricId + " has no supported freshness_window for BTC readiness");
+  return Number(match[1]) * ({ m: 1 / 60, h: 1, d: 24 } as Record<string, number>)[match[2]];
+}
+
+const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sourceIds: string[]; sourceUrlPrefixes: string[]; approvedMethodologyIds?: string[]; label: string }> =
+  metricRegistry.metrics
+    .filter((metric: any) => metric.scenario_readiness?.required === true && metric.metric_id !== "institutional.etf_net_flow")
+    .map((metric: any) => ({
+      metricId: metric.metric_id,
+      maxAgeHours: freshnessHours(metric.freshness_window, metric.metric_id),
+      unit: metric.unit,
+      sourceIds: metric.source_priority,
+      sourceUrlPrefixes: metric.scenario_readiness.allowed_source_url_prefixes,
+      label: metric.name,
+    }));
 
 function dateMs(value: unknown): number {
   const n = Date.parse(value == null ? "" : String(value));
@@ -115,12 +127,19 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
+  const etfMetric = metricsById.get("institutional.etf_net_flow");
+  const etfReadiness = etfMetric?.scenario_readiness;
+  const etfLatestMaxAgeHours = Number(etfReadiness?.latest_max_age_hours ?? freshnessHours(etfMetric?.freshness_window, "institutional.etf_net_flow"));
+  const etfHistoryMaxAgeDays = Number(etfReadiness?.history_max_age_days ?? 14);
+  const etfMinimumDistinctDays = Number(etfReadiness?.minimum_distinct_days ?? 5);
+  const etfSourceIds: string[] = etfMetric?.source_priority ?? [];
+  const etfSourceUrlPrefixes: string[] = etfReadiness?.allowed_source_url_prefixes ?? [];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
   if (!latestEtf
       || !Number.isFinite(latestEtfPeriodMs)
       || latestEtfPeriodMs > nowMs
-      || nowMs - latestEtfPeriodMs > 14 * 24 * 3600000
-      || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"])) {
+      || nowMs - latestEtfPeriodMs > etfHistoryMaxAgeDays * 24 * 3600000
+      || !validObservation(latestEtf, nowMs, etfLatestMaxAgeHours, etfMetric?.unit, etfSourceIds, etfSourceUrlPrefixes)) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
       reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
@@ -138,7 +157,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     const value = row?.value_numeric ?? row?.value_integer;
     return Number.isFinite(periodMs)
       && periodMs <= nowMs
-      && nowMs - periodMs <= 14 * 24 * 3600000
+      && nowMs - periodMs <= etfHistoryMaxAgeDays * 24 * 3600000
       && Number.isFinite(observedMs)
       && observedMs <= nowMs
       && Number.isFinite(dateMs(row?.retrieved_at))
@@ -149,17 +168,17 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
       && row?.source_registered === true
-      && row?.source_id === "institutional.primary"
-      && ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"].some(prefix => String(row?.source_url ?? "").startsWith(prefix))
-      && row?.unit === "USD million/day"
-      && row?.expected_unit === "USD million/day";
+      && etfSourceIds.includes(String(row?.source_id ?? ""))
+      && etfSourceUrlPrefixes.some(prefix => String(row?.source_url ?? "").startsWith(prefix))
+      && row?.unit === etfMetric?.unit
+      && row?.expected_unit === etfMetric?.unit;
   });
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.period_start)).toISOString().slice(0, 10);
     if (!uniqueByDay.has(day)) uniqueByDay.set(day, row);
   }
-  if (uniqueByDay.size < 5) {
+  if (uniqueByDay.size < etfMinimumDistinctDays) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
       reason: "requires_at_least_5_distinct_recent_daily_observations",
