@@ -442,9 +442,9 @@ The former BTC unique index used metric_id + source_id + observed_at + period + 
 
 The new migration 2026-10-15-btc-source-row-key-idempotency.sql separates two cases:
 
-- **Rows with source_row_key:** identity is metric_id + source_id + source_row_key + revision. The provider event key, not the timestamp alone, distinguishes individual trades.
+- **Rows with source_row_key:** identity is metric_id + source_id + source_row_key. The provider event key, not the timestamp alone, distinguishes individual trades; the local revision placeholder cannot create a second event. A same-key record with inconsistent timestamp, payload, or revision is held for manual review.
 - **Legacy rows without source_row_key:** preserve the previous timestamp/period natural key, so older data is not silently reinterpreted.
 
-The migration checks for duplicate key groups in both classes and fails closed rather than deleting or rewriting rows. The separately guarded reconciliation script now uses the same two identity rules. Its explicit restored-copy guard remains in place.
+The migration checks for duplicate key groups in both classes and fails closed rather than deleting or rewriting rows. Source-row identity does not include the local revision placeholder: the same provider event cannot be inserted twice merely by incrementing that field. The separately guarded reconciliation script now uses the same two identity rules. Its explicit restored-copy guard remains in place.
 
 A disposable PostgreSQL regression test now checks that different source row keys can share the same event timestamp and that replaying the same row key is idempotent. Until the workflow passes, this remains an implemented repository contract awaiting automated verification. It does not authorize any production database operation or BTC source ingestion.
