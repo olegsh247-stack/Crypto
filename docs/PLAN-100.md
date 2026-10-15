@@ -1886,3 +1886,10 @@ Workflow change commit: `4f0c931ec4eb3291352bef575b659c16a7d01f27`. CI for this 
 **Still blocked:** ETF production acceptance. Keep provider observation/publication time and finalization unknown unless supported by explicit evidence. Preserve raw source values, source IDs/URLs, retrieval times, HTTP metadata and response hashes. The arithmetic mean of Farside and TFTC remains an offline research-derived value, not a provider-reported value and not persistable. A production policy must explicitly select either provider-backed lifecycle guarantees or an approved immutable project-snapshot/revision policy; any source-priority change requires explicit approval.
 
 **Safety:** no registry change, production DB access/write, ingestion, deployment, scenario evaluation/state/probability change or monitoring write. BTC remains `not_evaluable`.
+
+
+## Plan 100 checkpoint — ETF snapshot-policy feasibility (2026-10-16)
+
+Static code review confirmed that the current manual-only capture workflow emits raw responses, manifest, normalized review-only candidates and response hashes, but uploads them as a GitHub Actions artifact retained for **7 days**. No common versioned snapshot identity, durable archive/retrieval guarantee, deterministic row-level diff against the prior capture, or project-owned revision/supersession relation is implemented. Therefore the immutable snapshot path remains a **design option, not a completed or approved policy**. Details: [ETF immutable snapshot policy feasibility review](BTC-ETF-SNAPSHOT-POLICY-FEASIBILITY-REVIEW-2026-10-16.md).
+
+Next technical work after policy review: design and test an offline deterministic row-level diff and versioned snapshot manifest. Do not choose a permanent storage destination, change retention, or define production eligibility/finality silently. The source lifecycle review and this static audit do not authorize ingestion or production changes. BTC remains `not_evaluable`.
