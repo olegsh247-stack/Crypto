@@ -48,6 +48,10 @@ export function prepareBtcObservationCandidates(manifest) {
         reasons.push("source_observation_timestamp_after_retrieval");
       }
       if (typeof source.source_row_key !== "string" || !source.source_row_key.trim()) reasons.push("source_row_key_missing");
+      if (source.source_row_key_scope !== "pair_timestamp_price_volume_side_order_type_misc"
+        || source.source_row_identity_status !== "derived_composite_key_not_provider_assigned") {
+        reasons.push("source_row_identity_semantics_missing_or_unverified");
+      }
       const hash = source.source_payload_sha256 ?? source.body_sha256;
       if (typeof hash !== "string" || !SHA256_RE.test(hash)) reasons.push("source_payload_sha256_missing_or_invalid");
       if (source.quote_unit !== "USD/BTC") reasons.push("canonical_unit_mismatch");
@@ -73,6 +77,8 @@ export function prepareBtcObservationCandidates(manifest) {
         source_updated_at: null,
         retrieved_at: source.retrieved_at,
         source_row_key: source.source_row_key,
+        source_row_key_scope: source.source_row_key_scope,
+        source_row_identity_status: source.source_row_identity_status,
         source_payload_sha256: hash.toLowerCase(),
         methodology: source.methodology ?? "kraken-public-trades-latest-trade-v1",
         methodology_version: String(source.methodology_version ?? "1"),
