@@ -229,7 +229,7 @@ test("explicitly blocks a reported ETF total when fund-level reporting is partia
         fund_completeness_status: "PARTIAL_FUND_REPORTING",
         funds_reported_count: 3,
         funds_expected_count: 12,
-        missing_funds: ["BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"],
+        missing_funds: ["ARKB", "BTCO", "EZBC", "BRRR", "HODL", "BTCW", "MSBT", "GBTC", "BTC"],
         reported_total_usd_million: -261.4,
         calculated_fund_sum_usd_million: null,
         fund_sum_minus_reported_total_usd_million: null,
