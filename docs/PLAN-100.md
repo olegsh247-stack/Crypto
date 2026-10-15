@@ -1607,3 +1607,11 @@ Validation detail: the container-image rehearsal caught and fixed an existing pa
 - On 2026-10-14, Farside displays -261.4 USDm while TFTC's current page had not yet published that session. The Farside row contains only some reported fund values, so a non-null aggregate must not be treated as proof that every fund has reported.
 - Next contract work: add/verify an explicit per-fund completeness rule (numeric zero is distinct from missing/unreported), preserve immutable capture hashes, and keep changed historical rows review-only until source-specific correction/finality policy is approved. Keep TFTC diagnostic-only; do not change canonical source priority.
 - Safety unchanged: no ingestion, database writes, scenario evaluation, state/probability/monitoring changes, deployment, or PR merge. BTC remains `not_evaluable`; ETF acceptance remains blocked on publication/observation timestamp, finality/revision/correction semantics, and reconciliation policy.
+
+## 27. 2026-10-15 — ETF per-fund completeness guard
+
+- The Farside parser now emits explicit completeness metadata: `fund_completeness_status`, reported/expected fund counts, and `missing_funds`.
+- A numeric `0.0` remains a reported zero; a dash remains `null`. The candidate mapper now flags a reported aggregate with partial or unverified fund coverage and keeps it non-persistable.
+- Added tests for a partially reported session (three of twelve funds present) and candidate-level blocking. The total remains available as review evidence; it is not accepted as a complete session.
+- This closes the parser/mapper implementation gap identified by the public-source spot check, but does not resolve the separate -2.2 USDm Farside/TFTC discrepancy for 2026-10-07 or establish ETF publication time, provider revision, or finality.
+- Next: verify CI on the latest branch head; then continue the source-time/revision policy review and DXY approved-source gate. BTC remains `not_evaluable`; no ingestion, DB writes, scenario evaluation, deployment, or PR merge.
