@@ -60,8 +60,8 @@ jobs:
           set -euo pipefail
           docker build -f vps/api/Dockerfile -t crypto-api-registry-rehearsal .
           docker build -f vps/worker/Dockerfile -t crypto-worker-registry-rehearsal .
-          docker run --rm crypto-api-registry-rehearsal node --input-type=module -e 'import("@crypto/vps-runtime")'
-          docker run --rm crypto-worker-registry-rehearsal node --input-type=module -e 'import("@crypto/vps-runtime")'
+          docker run --rm crypto-api-registry-rehearsal node --input-type=module -e 'import("./api/node_modules/@crypto/vps-runtime/dist/index.js")'
+          docker run --rm crypto-worker-registry-rehearsal node --input-type=module -e 'import("./worker/node_modules/@crypto/vps-runtime/dist/index.js")'
           echo "VPS_CONTAINER_REGISTRY_OK api=1 worker=1 canonical_metric_registry_loaded=1"
       - name: Start PostgreSQL rehearsal
         id: postgres
