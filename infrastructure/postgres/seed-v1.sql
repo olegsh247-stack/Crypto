@@ -70,7 +70,9 @@ values
   ('market.binance','Binance Spot Market API','primary','https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints','high','Primary spot market adapter.'),
   ('market.bybit','Bybit V5 Market API','primary','https://bybit-exchange.github.io/docs/v5/market/tickers','high','Fallback spot market adapter.'),
   ('market.okx','OKX V5 Market API','primary','https://www.okx.com/docs-v5/en/','high','Fallback spot market adapter.'),
-  ('market.mexc','MEXC Spot Market API','primary','https://mexcdevelop.github.io/apidocs/spot_v3_en/','to_validate','Fallback spot market adapter.')
+  ('market.mexc','MEXC Spot Market API','primary','https://mexcdevelop.github.io/apidocs/spot_v3_en/','to_validate','Fallback spot market adapter.'),
+  ('macro.ice_dxy_candidate','ICE U.S. Dollar Index (DXY) — source candidate','official_index_administrator','https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices','to_validate','Candidate only; product documentation is not a public quote endpoint. Feed access, license, response schema and timestamps remain unverified; not approved for macro.dxy.'),
+  ('institutional.sosovalue','SoSoValue ETF Summary History — public API candidate','institutional','https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history','to_validate','Candidate only; API key, response schema, timestamp semantics, revision policy and reconciliation remain unverified; not approved for institutional ETF flow.')
 on conflict (source_id) do update set
   name=excluded.name,source_type=excluded.source_type,base_url=excluded.base_url,
   trust_level=excluded.trust_level,description=excluded.description,updated_at=now();
