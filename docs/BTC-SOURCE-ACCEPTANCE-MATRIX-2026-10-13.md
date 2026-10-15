@@ -134,3 +134,7 @@ The date validator was hardened to reject impossible calendar dates and a regres
 ### Versioned ETF snapshot manifest — implemented, CI pending (2026-10-16)
 
 The offline tool now supports exporting a portable versioned snapshot JSON from an existing capture directory and comparing either directories or exported manifests. The manifest carries artifact hashes, source-payload fingerprint, source coverage and normalized ETF rows. Tests cover its identity/hash/coverage fields. This does not select durable storage/retention or establish provider finality; CI for this follow-up is pending. BTC remains `not_evaluable`.
+
+### Snapshot manifest integrity — implemented, CI pending (2026-10-16)
+
+Exported snapshot manifests now carry a canonical-content SHA-256, and loading a saved manifest validates the schema and content hash. A regression test confirms that modifying a normalized row invalidates the manifest. CI for the latest code/test commits is pending; durable retention, provider finality and ETF production acceptance remain unresolved.
