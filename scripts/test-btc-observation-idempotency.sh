@@ -128,7 +128,7 @@ INSERT INTO observations (
 )
 SELECT metric_id, asset_id, value_numeric + 10, unit, observed_at, 'market_kraken',
        'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
-       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-a'
+       'Disposable source-row identity fixture', status, freshness, revision + 1, 'test-trade-a'
 FROM observations WHERE observation_id = :'base_id'::uuid
 ON CONFLICT DO NOTHING;
 SQL
