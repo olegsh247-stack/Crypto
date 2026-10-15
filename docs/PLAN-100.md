@@ -1810,3 +1810,12 @@ Commits: initial runtime change `d10950c6242cf9d2a63078dbdca09f56f9585289`; rege
 5. В начале каждой новой сессии читать актуальные План 100, Промт 100 и состояние GitHub. В конце каждого рабочего блока обновлять Промт 100 и синхронизировать его с Library проекта.
 6. Поддерживать актуальную копию в Library проекта Crypto; если репозиторный документ или основной план обновлены, синхронизировать связанные записи и ссылки.
 7. Сохранять не только успешные изменения, но и отрицательные результаты, причины блокировок и решения не менять контракт.
+
+
+## 40. Проверка source-registry / PostgreSQL seed consistency
+
+**Дата:** 2026-10-15.
+
+После добавления `macro.fred_broad_usd_candidate` в source registry первый readiness gate упал не из-за сценарной логики, а потому что общий validator требует соответствующую запись в `infrastructure/postgres/seed-v1.sql`. Seed был исправлен коммитом `69045bc`, после чего все пять связанных CI runs завершились успешно. Затем notes кандидата уточнили weekly H.10 distribution cadence и revision/vintage handling: commits `a1a607a` и `777e53b`. На обоих SHA readiness gate, release validation, seed idempotency и VPS API build rehearsal завершились успешно; конкретные ссылки записаны в Library «Промт 100».
+
+**Вывод:** registry/seed согласованы, тесты и сборки проходят. Но это не делает BTC `evaluable`: `macro.dxy` по-прежнему fail-closed; ICE feed access/licensing не подтверждены, а `DTWEXBGS` — отдельная недельно публикуемая broad-dollar series с возможными ревизиями, не эквивалент DXY и не тихая замена в существующем сценарии. Следующий шаг — продолжать контракт ETF source provenance/finality либо получить подтверждённый лицензированный ICE DXY feed. Никаких production/DB/ingestion changes не выполнялось.
