@@ -27,7 +27,15 @@ const canonicalUrls = {
 };
 const row = (metric_id, observed_at, value_numeric = 1, sourceId = canonicalSources[metric_id]) => ({
   metric_id, observed_at, value_numeric, freshness: "CURRENT",
-  ...(metric_id === "institutional.etf_net_flow" ? { period_start: String(observed_at).slice(0, 10) } : {}),
+  ...(metric_id === "institutional.etf_net_flow" ? {
+    period_start: String(observed_at).slice(0, 10),
+    funds_reported_count: 12,
+    funds_expected_count: 12,
+    missing_funds: [],
+    fund_completeness_status: "ALL_FUNDS_REPORTED",
+    provider_revision: "fixture-r1",
+    finalization_status: "final",
+  } : {}),
   retrieved_at: String(observed_at),
   source_row_key: metric_id === "institutional.etf_net_flow" ? String(observed_at).slice(0, 10) : `${metric_id}:${observed_at}`,
   source_payload_sha256: "a".repeat(64),
@@ -306,4 +314,37 @@ test("official Farside all-data endpoint is accepted as the same canonical sourc
   assert.ok(!result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
     && x.reason === "source_url_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
+});
+
+
+test("ETF latest row is blocked when provider observation timestamp is unknown", () => {
+  const inputs = completeInputs().map(x => {
+    if (x.metric_id !== "institutional.etf_net_flow") return x;
+    return { ...x, observed_at: null };
+  });
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
+});
+
+test("ETF rows with partial or unverified fund reporting cannot count toward accepted history", () => {
+  const inputs = completeInputs().map((x, i) => x.metric_id === "institutional.etf_net_flow" && i % 2 === 0
+    ? { ...x, fund_completeness_status: "PARTIAL_FUND_REPORTING", funds_reported_count: 11, missing_funds: ["ARKB"] }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
+});
+
+test("ETF rows cannot pass while provider revision or finalization semantics remain unknown", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
+    ? { ...x, provider_revision: null, finalization_status: "unknown" }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
+    && x.reason === "etf_fund_completeness_revision_or_finality_unverified"));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
 });
