@@ -291,6 +291,7 @@ test("ETF history with malformed payload hash cannot count toward accepted sessi
 });
 
 test("missing raw source payload hash blocks an otherwise fresh canonical observation", () => {
+test("missing source payload hash blocks an otherwise traceable observation", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, source_payload_sha256: null } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
