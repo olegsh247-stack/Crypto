@@ -460,3 +460,14 @@ For a Kraken trade candidate, the normalizer computes `source_age_seconds_at_ret
 The project has not yet approved a maximum age for a research input. Therefore the candidate carries `freshness_status: "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD"` and `freshness_policy_id: null`; it must not be labeled `CURRENT` merely because the API call succeeded. This deliberately avoids imposing a 15-minute or hourly cadence without an agreed source-specific policy. The age calculation is per capture evidence, not a daily aggregation or a recurring recalculation of historical totals.
 
 Next, define the source-specific freshness policy only after the intended research use and acceptable age are documented. Until then the spot record remains review-only and non-persistable.
+
+
+## 22. Storage default for unclassified freshness — 2026-10-15
+
+The PostgreSQL schema previously defaulted `observations.freshness` to `CURRENT`. That default could mislabel a newly inserted row as current when the writer omitted a freshness decision. The schema and forward migration now allow `UNCLASSIFIED` and use it as the default for new observations.
+
+- The migration changes the column default and its check constraint only; it does not rewrite existing observations.
+- `CURRENT` must be assigned only by a writer that has applied an approved freshness policy. API success or an omitted field is not a freshness decision.
+- Existing historical rows retain their recorded classifications; this change does not retroactively validate them.
+- BTC source candidates remain review-only and non-persistable. No migration has been applied to a production database, and no ingestion or scenario evaluation was run.
+- The candidate field `UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD` is a richer review-contract label; persistence maps it to database freshness `UNCLASSIFIED` until a source-specific policy is approved.
