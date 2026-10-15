@@ -139,4 +139,13 @@ source_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELEC
 legacy_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_legacy_natural_key_revision_uq') IS NOT NULL")"
 test "$source_index_exists" = "t"
 test "$legacy_index_exists" = "t"
+
+# Remove disposable fixtures so later rehearsal steps see a clean database.
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
+DELETE FROM observations
+WHERE observation_id = :'base_id'::uuid
+   OR (asset_id = 'btc' AND source_id = 'market_kraken'
+       AND source_row_key IN ('test-trade-a', 'test-trade-b'));
+SQL
+
 echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_legacy_duplicates_removed=1 conflicting_legacy_payloads_rejected=1 distinct_source_rows_at_same_timestamp=2 source_row_replay_idempotent=1"
