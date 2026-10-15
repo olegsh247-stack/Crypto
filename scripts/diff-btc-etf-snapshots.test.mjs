@@ -71,7 +71,7 @@ test("same provider payload hashes are a no-op even when capture time changes", 
   assert.equal(result.summary.UNCHANGED, result.row_results.length);
 });
 
-test("row order does not affect the deterministic snapshot identity or row diff", () => {
+test("row order does not affect the normalized row diff", () => {
   const previous = makeSnapshot({ dateRows: [
     { date: "2026-10-07", total: -484.9 },
     { date: "2026-10-08", total: 12.5 }
@@ -180,4 +180,16 @@ test("rejects impossible calendar dates instead of treating them as reporting da
     dateRows: [{ date: "2026-02-31", total: -10 }]
   });
   assert.equal(snapshot.rows.filter(row => row.normalized.source_id === "institutional.primary").length, 0);
+});
+
+test("builds a versioned, self-contained snapshot manifest with input hashes and source coverage", () => {
+  const snapshot = makeSnapshot();
+  assert.equal(snapshot.schema_version, 1);
+  assert.match(snapshot.snapshot_id, /^btc-etf-snapshot-v1-[a-f0-9]{64}$/);
+  assert.match(snapshot.manifest_sha256, /^[a-f0-9]{64}$/);
+  assert.match(snapshot.candidates_sha256, /^[a-f0-9]{64}$/);
+  assert.match(snapshot.source_payload_fingerprint, /^[a-f0-9]{64}$/);
+  assert.ok(Object.values(snapshot.source_coverage).some(coverage =>
+    coverage.status === "CAPTURED" && coverage.min_date === "2026-10-07" && coverage.max_date === "2026-10-07"));
+  assert.ok(snapshot.rows.length > 0);
 });
