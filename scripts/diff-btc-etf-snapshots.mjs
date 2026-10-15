@@ -231,7 +231,7 @@ export function validateBtcEtfSnapshotManifest(value) {
     candidates_sha256: value.candidates_sha256,
     etf_sources: value.source_artifacts
   };
-  if (value.snapshot_id !== "btc-etf-snapshot-v1-" + sha256(canonicalJson(identity))) return false;
+  if (value.snapshot_id !== "btc-etf-snapshot-v2-" + sha256(canonicalJson(identity))) return false;
   const { snapshot_content_sha256, ...snapshotContent } = value;
   return sha256(canonicalJson(snapshotContent)) === snapshot_content_sha256;
 }
