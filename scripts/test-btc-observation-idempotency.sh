@@ -8,7 +8,7 @@ if [[ "$actual_database" != "crypto_test" ]]; then
   exit 2
 fi
 
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq; DROP INDEX IF EXISTS observations_btc_legacy_natural_key_revision_uq'
 # Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
 base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
 INSERT INTO observations (
@@ -99,6 +99,44 @@ WHERE o.observation_id=r.observation_id AND r.row_rank>1;
 SQL
 
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-13-btc-observation-natural-key.sql
-index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_natural_key_revision_uq') IS NOT NULL")"
-test "$index_exists" = "t"
-echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-15-btc-source-row-key-idempotency.sql
+
+# Distinct provider rows at the exact same timestamp must remain distinct.
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
+INSERT INTO observations (
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  methodology, status, freshness, revision, source_row_key
+)
+SELECT metric_id, asset_id, value_numeric + 10, unit, observed_at, 'market_kraken',
+       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
+       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-a'
+FROM observations WHERE observation_id = :'base_id'::uuid;
+
+INSERT INTO observations (
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  methodology, status, freshness, revision, source_row_key
+)
+SELECT metric_id, asset_id, value_numeric + 20, unit, observed_at, 'market_kraken',
+       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
+       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-b'
+FROM observations WHERE observation_id = :'base_id'::uuid;
+
+-- Replaying the same provider row identity must not create another row.
+INSERT INTO observations (
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  methodology, status, freshness, revision, source_row_key
+)
+SELECT metric_id, asset_id, value_numeric + 10, unit, observed_at, 'market_kraken',
+       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
+       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-a'
+FROM observations WHERE observation_id = :'base_id'::uuid
+ON CONFLICT DO NOTHING;
+SQL
+
+row_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT count(*) FROM observations WHERE asset_id='btc' AND source_id='market_kraken' AND source_row_key IN ('test-trade-a','test-trade-b')")"
+test "$row_count" = "2"
+source_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_source_row_revision_uq') IS NOT NULL")"
+legacy_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_legacy_natural_key_revision_uq') IS NOT NULL")"
+test "$source_index_exists" = "t"
+test "$legacy_index_exists" = "t"
+echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_legacy_duplicates_removed=1 conflicting_legacy_payloads_rejected=1 distinct_source_rows_at_same_timestamp=2 source_row_replay_idempotent=1"
