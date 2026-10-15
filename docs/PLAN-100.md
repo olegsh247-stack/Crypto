@@ -1830,3 +1830,32 @@ Read-only review of `scripts/capture-btc-public-sources.mjs`, `scripts/parse-far
 The public Farside page says the table is generated automatically in real time, but it does not provide a stable row-level publication timestamp or provider revision/finality identifier in the parsed contract. The unresolved choice is therefore a contract/policy decision, not a parser bug: either obtain a documented provider publication/revision/finality contract, or explicitly approve an immutable-snapshot reconciliation policy that records capture time, payload hash, parser/version, reporting date, all-funds completeness, total reconciliation, and any later snapshot differences. Until one policy is approved and tested, ETF rows remain non-persistable and BTC remains `not_evaluable`. No source data were ingested, no DB writes occurred, and no scenario state/probabilities were changed.
 
 CI on commit `9dc132849d75d4b6b84ffff4d04f49e22b7355d5`: BTC Scenario Readiness Gate, VPS release validation, seed idempotency rehearsal and both VPS API Build Rehearsal runs passed. See [readiness](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450296), [release validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450260), [seed rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450265), [API rehearsal 1](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450342), [API rehearsal 2](https://github.com/olegsh247-stack/Crypto/actions/runs/38801441022).
+
+
+## 42. Proposed ETF immutable-snapshot policy — pending approval
+
+**Status: proposal only; not approved for readiness acceptance or ingestion.**
+
+The read-only audit indicates that Farside does not expose a stable row-level publication timestamp, provider revision ID or explicit finality flag in the captured table contract. A practical candidate is therefore to treat each captured full-page response as an immutable source snapshot, rather than infer an event timestamp or repeatedly recalculate the historical daily totals during development.
+
+### Proposed snapshot record
+
+- canonical source identity and exact source URL;
+- retrieval timestamp in normalized UTC;
+- SHA-256 of the exact raw response bytes and retained raw response;
+- parser name/version and contract version;
+- provider reporting date for each row, kept distinct from retrieval timestamp;
+- all expected funds enumerated, reported-fund count, missing funds and displayed aggregate total;
+- calculated sum only as a reconciliation check, with explicit display-rounding tolerance and result;
+- snapshot identity and supersession link when a later capture changes a previously captured row;
+- no inferred provider revision, no inferred publication timestamp, and no conversion of missing/placeholder cells to zero.
+
+### Acceptance conditions
+
+1. A snapshot is eligible for review only when the source URL is canonical, the raw body hash verifies, and parser/version are recorded.
+2. A daily row is eligible only when all expected funds are present and the displayed aggregate reconciles within the explicitly documented rounding envelope.
+3. Later captures that differ for the same reporting date must create a new snapshot/reconciliation record, not overwrite history silently; the diff and reviewer decision must be retained.
+4. Freshness must be based on an explicitly chosen contract and source publication cadence; retrieval time must not be relabelled as observation time. Rows outside the freshness window remain blocked.
+5. Only after the user explicitly approves this policy may the runtime readiness contract accept `reconciled_snapshot` as an alternative to provider-declared finality. Until then, `finalization_status=unknown` remains blocked and no ETF candidate becomes persistable.
+
+**Why this is proposed:** it provides reproducible lineage even if the website silently edits historical cells, while acknowledging that it cannot prove provider finality. It is not equivalent to an authoritative provider revision timestamp. No code, database, ingestion, scenario state or probabilities were changed by documenting this proposal.
