@@ -1737,3 +1737,20 @@ SoSoValue **не принимается пока как канонический
 
 **Границы изменений:** только документация Плана 100; metric/source registries, runtime, БД, ingestion, scenario state, probabilities, monitoring, merge и deployment не менялись.
 
+## 35. DXY source review — official identity and permitted use
+
+Проверены официальные страницы ICE Data Indices и ICE Futures U.S. (15 октября 2026).
+
+- ICE определяет DXY как **ICE U.S. Dollar Index**, рассчитываемый по spot-ценам компонентов валютной корзины; для данных указаны intraday/daily частоты и варианты real-time, delayed, end-of-day и historical доставки через коммерческие продукты ICE. Это подтверждает, что метрика должна быть привязана к конкретному виду DXY-данных и режиму времени, а не к общему названию «USD index».  
+  Источник: https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices
+- Страница спецификации DX futures описывает отдельный торгуемый фьючерсный контракт с квартальными экспирациями и settlement-методикой. Его значение нельзя автоматически подставлять вместо spot-index DXY: контракт и underlying index — связанные, но разные временные ряды.  
+  Источник: https://www.ice.com/products/194/US-Dollar-Index-Futures/
+- Официальная спецификация ICE заявляет исключительные proprietary rights на DXY, его значения, состав, веса и метод расчёта и ограничивает любое использование без письменного согласия ICE. Поэтому наличие общедоступной веб-страницы или стороннего символа не доказывает право на автоматический сбор, хранение и перераспространение данных в проекте.  
+  Источник: https://www.ice.com/products/194/US-Dollar-Index-USDX-Futures?cat=204
+
+### Решение
+
+DXY остаётся заблокированным. Нельзя автоматически выбрать DX futures, сторонний публичный тикер или широкий индекс ФРС в качестве замены. Для принятия нужны конкретный endpoint/provider, подтверждённое право использования для self-hosted аналитики и хранения, тип ряда (spot DXY / delayed / EOD / futures), timezone/время наблюдения, календарь публикации и стабильная provenance-схема. Если ICE не предоставляет подходящий доступ на приемлемых условиях, следует отдельно решить, оставлять ли DXY обязательным для сценария или официально пересмотреть сам сценарный контракт — не менять его молча.
+
+**Границы изменений:** только документация Плана 100. Metric/source registry, required-input policy, runtime, база данных, ingestion, scenario state/probability/monitoring, merge и deployment не менялись.
+
