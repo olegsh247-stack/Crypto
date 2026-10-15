@@ -64,7 +64,7 @@ create table if not exists observations (
   methodology text,
   methodology_version text,
   status text not null default 'NORMAL' check (status in ('NORMAL','WATCH','REVIEW')),
-  freshness text not null default 'CURRENT' check (freshness in ('CURRENT','STALE','EXPIRED')),
+  freshness text not null default 'UNCLASSIFIED' check (freshness in ('CURRENT','STALE','EXPIRED','UNCLASSIFIED')),
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
   check (
