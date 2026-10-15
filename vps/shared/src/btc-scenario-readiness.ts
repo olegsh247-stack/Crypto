@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const metricRegistry = JSON.parse(readFileSync(new URL("../../../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
-const metricsById = new Map<string, any>(metricRegistry.metrics.map((metric: any) => [metric.metric_id, metric]));
+const metricsById = new Map<string, any>(metricRegistry.metrics.map((metric: any) => [metric.metric_id, metric] as [string, any]));
 
 function freshnessHours(window: unknown, metricId: string): number {
   const match = /^(\d+)(m|h|d)$/.exec(String(window ?? ""));
