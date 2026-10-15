@@ -451,3 +451,12 @@ The new migration 2026-10-15-btc-source-row-key-idempotency.sql separates two ca
 The migration checks for duplicate key groups in both classes and fails closed rather than deleting or rewriting rows. Source-row identity does not include the local revision placeholder: the same provider event cannot be inserted twice merely by incrementing that field. The separately guarded reconciliation script now uses the same two identity rules. Its explicit restored-copy guard remains in place.
 
 A disposable PostgreSQL regression test now checks that different source row keys can share the same event timestamp and that replaying the same row key is idempotent. Until the workflow passes, this remains an implemented repository contract awaiting automated verification. It does not authorize any production database operation or BTC source ingestion.
+
+
+## 21. Spot observation age and freshness classification — 2026-10-15
+
+For a Kraken trade candidate, the normalizer computes `source_age_seconds_at_retrieval` as the difference between the source trade event timestamp and the collector retrieval timestamp. It retains both original timestamps unchanged. A future event timestamp is blocked.
+
+The project has not yet approved a maximum age for a research input. Therefore the candidate carries `freshness_status: "UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD"` and `freshness_policy_id: null`; it must not be labeled `CURRENT` merely because the API call succeeded. This deliberately avoids imposing a 15-minute or hourly cadence without an agreed source-specific policy. The age calculation is per capture evidence, not a daily aggregation or a recurring recalculation of historical totals.
+
+Next, define the source-specific freshness policy only after the intended research use and acceptable age are documented. Until then the spot record remains review-only and non-persistable.
