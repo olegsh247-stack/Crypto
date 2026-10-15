@@ -429,7 +429,10 @@ The review-only spot candidate now labels this explicitly:
 
 - `revision_scope: "local_candidate_observation_record"`
 - `revision_identity_status: "not_a_provider_revision"`
-- `source_row_key` remains the stable event identity derived from the individual Kraken trade record.
+- `source_row_key` is a derived composite from pair, source timestamp, price, volume, side, order type and misc fields; the response does not provide a dedicated trade ID.
+- `source_row_key_scope: "pair_timestamp_price_volume_side_order_type_misc"`
+- `source_row_identity_status: "derived_composite_key_not_provider_assigned"`
+- This key is repeatable across captures of the same trade but is not a provider-assigned ID and cannot mathematically rule out collisions between identical-looking trade rows. The candidate normalizer blocks it if the scope/status contract is absent.
 - `source_payload_sha256` identifies the exact captured response body, not an exchange revision.
 - `observed_at` comes from the exchange trade event timestamp; `retrieved_at` remains the collector's response retrieval time.
 
