@@ -1917,3 +1917,9 @@ Next technical work after policy review: design and test an offline deterministi
 **Tests added:** assert the versioned ID/hash fields and captured source coverage; clarified that row-order invariance applies to the normalized row diff, while the snapshot identity remains tied to exact captured artifact bytes.
 
 **Safety and remaining gates:** the new code/test CI result must be verified before this step is considered validated. No source capture was dispatched; no permanent storage, retention, provider finality, eligibility or supersession policy was selected. ETF production acceptance remains blocked and BTC remains `not_evaluable`.
+
+## Plan 100 checkpoint — snapshot-manifest integrity verification (2026-10-16)
+
+**Implemented; CI pending:** exported manifests now include a SHA-256 over the canonical serialized manifest content, explicit review-only mode, and no-production-access/write flags. When a saved manifest is loaded for comparison, its schema and content hash are validated; edits to normalized rows are rejected instead of being silently compared under the original snapshot ID. A tampering regression test was added.
+
+**Next gate:** verify BTC Public Source Staging and VPS API Build Rehearsal results for the latest code/test commits. The portable manifest is still only a review artifact: this does not establish durable retention, provider finality, an approved revision/supersession policy, ETF production acceptance or BTC evaluability. No live capture was dispatched.
