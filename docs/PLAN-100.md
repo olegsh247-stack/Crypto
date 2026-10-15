@@ -1586,5 +1586,5 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 
 - [Readiness Gate](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994803) — **success**; job `unit-tests` завершён успешно.
 - [Release Workflow Validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994976) — **success**; job `Static validation (no production access)` завершён успешно.
-- Два API Build Rehearsal, упомянутые в рабочем статусе на момент проверки, не объявляются успешными без отдельного подтверждения их итогового статуса.
+- Повторная проверка завершена: [Seed observation idempotency rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994751) и [VPS API Build Rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801994763) также завершились **success**. Все четыре проверенных run этого набора изменений завершены успешно; CI не снимает ETF/DXY-блокеры и не делает BTC evaluable.
 - ETF source contract остаётся блокером BTC-сценария: требуется завершить проверку надёжной конвенции observation/publication time и семантики revisions/finality. BTC остаётся `not_evaluable`; DXY также остаётся заблокированным до утверждения канонического источника.
