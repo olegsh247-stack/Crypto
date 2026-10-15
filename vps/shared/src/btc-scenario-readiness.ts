@@ -72,7 +72,8 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number, expected
     && Number.isFinite(retrievedMs)
     && retrievedMs <= nowMs
     && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
-    && (row?.source_payload_sha256 == null || /^[0-9a-f]{64}$/i.test(String(row.source_payload_sha256)))
+    && typeof row?.source_payload_sha256 === "string"
+    && /^[0-9a-f]{64}$/i.test(row.source_payload_sha256)
     && nowMs - observedMs <= maxAgeHours * 3600000
     && String(row?.freshness ?? "").toUpperCase() === "CURRENT"
     && value !== null && value !== undefined && Number.isFinite(Number(value))
@@ -124,8 +125,8 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
               ? "retrieval_timestamp_missing_or_invalid"
               : typeof latest.source_row_key !== "string" || !latest.source_row_key.trim()
               ? "source_row_key_missing"
-              : latest.source_payload_sha256 != null && !/^[0-9a-f]{64}$/i.test(String(latest.source_payload_sha256))
-              ? "source_payload_hash_invalid"
+              : typeof latest.source_payload_sha256 !== "string" || !/^[0-9a-f]{64}$/i.test(latest.source_payload_sha256)
+              ? "source_payload_hash_missing_or_invalid"
               : typeof latest.unit !== "string" || !latest.unit.trim()
               ? "unit_missing"
               : requirement.unit && latest.expected_unit !== requirement.unit
