@@ -46,9 +46,9 @@ for (const sourceId of sourceIds) {
 const readinessSource = readFileSync(new URL("../vps/shared/src/btc-scenario-readiness.ts", import.meta.url), "utf8");
 assert.ok(readinessSource.includes("../../../data/CryptoDataModel/registry/metric-registry.json"),
   "runtime readiness must load the canonical metric registry");
-assert.ok(!/maxAgeHours:\\s*\\d/.test(readinessSource),
+assert.ok(!/maxAgeHours:\s*\d/.test(readinessSource),
   "runtime readiness must not hardcode per-metric freshness thresholds");
-assert.ok(!/sourceUrlPrefixes:\\s*\\[/.test(readinessSource),
+assert.ok(!/sourceUrlPrefixes:\s*\\[/.test(readinessSource),
   "runtime readiness must not hardcode per-metric source URL allowlists");
 
 const readinessMetrics = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
