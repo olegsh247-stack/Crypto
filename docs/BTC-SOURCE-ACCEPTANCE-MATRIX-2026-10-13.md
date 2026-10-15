@@ -105,3 +105,8 @@ The REST example shows startBlock, endBlock and string-valued totalReward, total
 ### Reward-stats continuity gate — 2026-10-14
 
 The aggregate endpoint is insufficient as the sole continuity proof: its upstream query returns min/max heights and sums for up to N non-stale rows, but not the selected-row count or full height list. Keep it as a possible cross-check, not the canonical evidence for a fee/subsidy calculation. Prefer a reviewed block-level window with an explicit expected height set and per-height canonical hash, timestamp, reward and fees; validate gaps, duplicates, stale/canonical conflicts, units and reorg revisions. Match protocol subsidy to those exact heights. This remains a proposed capture contract, not approval of a methodology ID; no live API or database was accessed.
+
+
+### DXY canonical-source review — 2026-10-16
+
+See [BTC DXY canonical-source review](BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md). Official ICE materials identify ICE as the DXY administrator and describe controlled delivery/licensing; this review did not establish an authorized stable endpoint and permission for automated retrieval/storage. FRED series `DTWEXBGS` is a distinct Nominal Broad U.S. Dollar Index, not ICE DXY. Therefore `macro.dxy` remains blocked and neither the metric registry nor source registry is changed. An explicit choice is required: obtain authorized ICE DXY access, or deliberately redefine the product metric as a different broad-dollar index and update its contract before registration.
