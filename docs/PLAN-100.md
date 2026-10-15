@@ -1693,3 +1693,17 @@ The E2E assertion for the canonical ETF blocker was updated to recognize all thr
 **What this proves:** the readiness implementation and CI contract are internally consistent, and the VPS rehearsal is green. It does not prove that live candidate data satisfy the source contract.
 
 **Next Plan 100 step — read-only BTC acceptance review:** verify the gate's output for the current required inputs and preserve the exact blocker reasons. Spot has a canonical Kraken candidate contract but must be fresh at evaluation time; ETF remains blocked because provider observation time and revision/finality are not established; DXY remains blocked because no approved feed is registered. Do not manufacture or persist observations to make the gate green. Keep BTC `not_evaluable` until all required inputs pass. No production DB writes, live ingestion, scenario/probability/monitoring changes, merge, or deployment were performed.
+
+
+## 33. ETF source follow-up — publication cadence vs observation contract
+
+A fresh review of the public source descriptions found two useful clarifications:
+
+- Farside's own homepage describes its Bitcoin ETF figures as daily USD-million data updated in real time, typically during the evening/night in U.S. time. This supports treating the table as a changing publication, not as a provider-supplied immutable daily final record. It does **not** provide a per-row publication timestamp, revision ID, or explicit finality marker. Reference: https://farside.co.uk/
+- SoSoValue's official Market Data API documentation lists ETF summary/history endpoints at `https://openapi.sosovalue.com/openapi/v1`. Access requires an API key. This is a concrete alternative-source lead, but the public API overview alone does not establish the endpoint response's observation-time meaning, revision/finality behavior, data licensing for this project, or whether it exposes the complete per-fund breakdown required by our acceptance contract. References: https://sodex.com/documentation/for-developers/api-reference/market-data-api and https://sodex.com/documentation/for-developers/developers/data-api/getting-started
+
+**Decision:** do not switch the canonical ETF source or loosen the gate on this evidence alone. Next source-review task is to obtain an authorized SoSoValue API key through the user's own account (never commit it), inspect the exact summary-history response fields and documented terms, then make a read-only capture with response hash/retrieval time and compare reporting dates, per-fund completeness, units, and revision behavior against Farside. If no authorized key is available, keep the alternative marked unverified and proceed with the remaining offline acceptance work. Farside remains blocked until a defensible observation-time and revision/finality contract is established.
+
+Sources: Farside says its table is updated in real time, generally evenings/nights U.S. time; SoSoValue documents the ETF API domain and requires an API key for access. Neither statement by itself establishes an accepted immutable/final observation contract.
+
+No source registry, metric registry, runtime policy, database, ingestion schedule, or scenario state was changed as part of this research.
