@@ -12,7 +12,7 @@ const KRAKEN_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
 const SHA256_RE = /^[0-9a-f]{64}$/i;
 const metricRegistry = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/registry/metric-registry.json", import.meta.url), "utf8"));
 const btcSpotMetric = metricRegistry.metrics?.find(metric => metric.metric_id === "market.spot_price");
-const freshnessWindow = /^(\\d+)(s|m|h|d)$/.exec(String(btcSpotMetric?.freshness_window ?? ""));
+const freshnessWindow = /^(\d+)(s|m|h|d)$/.exec(String(btcSpotMetric?.freshness_window ?? ""));
 if (!btcSpotMetric?.freshness_policy_id || !freshnessWindow) {
   throw new Error("BTC spot freshness policy is missing or invalid in metric-registry.json");
 }
