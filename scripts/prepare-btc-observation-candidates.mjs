@@ -118,6 +118,11 @@ export function prepareBtcObservationCandidates(manifest) {
           if (!reported) reasons.push(row?.status === "UNREPORTED_PLACEHOLDER"
             ? "unreported_placeholder_not_a_zero_observation"
             : "row_not_reported");
+          if (reported && row?.fund_completeness_status !== "ALL_FUNDS_REPORTED") {
+            reasons.push(row?.fund_completeness_status === "PARTIAL_FUND_REPORTING"
+              ? "fund_reporting_incomplete"
+              : "fund_completeness_status_missing_or_unverified");
+          }
           if (reported && !reconciliationAcceptableForReview) reasons.push("aggregate_reconciliation_not_accepted");
           // The parser's page-level digest identifies the captured response, not a provider row revision.
           // Publication/observation timestamps and provider finalization/revision remain unknown.
