@@ -25,6 +25,7 @@ on:
       - "scripts/btc-scenario-direction.test.mjs"
       - "scripts/prepare-btc-observation-candidates.mjs"
       - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/validate-crypto-registries.mjs"
       - "vps/shared/src/btc-scenario-readiness.ts"
       - "data/CryptoDataModel/registry/metric-registry.json"
       - "data/CryptoDataModel/registry/source-registry.json"

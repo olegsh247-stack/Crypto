@@ -491,3 +491,24 @@ Current product blockers remain unchanged:
 
 No database migration was applied, no observations were ingested, no scenario was evaluated, and no production deployment was performed by this change.
 
+## 24. BTC readiness runtime registry as the single configuration source — 2026-10-15
+
+Draft implementation is tracked in [PR #83](https://github.com/olegsh247-stack/Crypto/pull/83).
+
+The readiness runtime now reads required metric IDs, freshness windows, units, source IDs and approved source URL prefixes from `data/CryptoDataModel/registry/metric-registry.json`. The same registry entry controls ETF latest-row freshness, the 14-day reporting-history window and the minimum of five distinct reporting days. The validator checks that the runtime loads the registry and that the safety-critical policy remains explicit there.
+
+The policy deliberately remains fail-closed:
+- BTC spot uses the registered Kraken XBT/USD trade endpoint as the only canonical candidate.
+- ETF remains restricted to the registered Farside URLs; timestamp convention and revision/finality semantics remain unresolved, so source acceptance is not implied.
+- DXY has an empty source priority and empty approved URL list; no source is silently approved.
+
+BTC Scenario Readiness Gate passed on PR head `4550817fc10624e48e41d14911ace0ed88ed6f9c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38715775250. This confirms the registry validator, TypeScript build and BTC readiness/directional/candidate tests passed for that head. The subsequent VPS API Build Rehearsal passed on PR head `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077. Its new container step built both API and Worker images and successfully imported the shared runtime from each image, confirming that the canonical metric registry is present and loadable in the packaged runtime.
+
+No production DB writes, ingestion, scenario evaluation, persisted scenario state, probability changes, monitoring writes or deployment were performed. BTC remains `not_evaluable` until ETF contract blockers and approved DXY source are resolved.
+
+
+Container packaging correction during validation: the API/Worker image test exposed a runtime package-resolution issue caused by flattening the `node_modules` directory when copying into the final image. The final images now preserve the `/app/api` and `/app/worker` package layouts, include the shared runtime and registry JSON, and are tested by building and importing the shared module from each image. This was caught in CI before merge/deployment.
+
+## 25. BTC ETF observation contract — 2026-10-15
+
+Formalized the field semantics and revision guard in [the BTC ETF observation contract](./data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md). ETF candidate rows now explicitly distinguish a date-derived logical key from provider-assigned identity, and set both `provider_revision` and `revision` to `null` while provider revision/finality remains unknown. The full-response SHA-256 is explicitly scoped to the captured body, not an individual row. Tests protect these semantics. This does not unblock ETF: `observed_at` remains null, HTTP Date/retrieval time are not substitutes, and all ETF rows remain review-only/non-persistable.

@@ -17,8 +17,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: api/Dockerfile
+      context: ..
+      dockerfile: vps/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
       ADMIN_TOKEN: local-development-only
@@ -33,8 +33,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: worker/Dockerfile
+      context: ..
+      dockerfile: vps/worker/Dockerfile
     environment:
       DATABASE_URL: postgresql://crypto:crypto_local_only@postgres:5432/crypto
       WORKER_SCHEDULE_UTC: "00:30"

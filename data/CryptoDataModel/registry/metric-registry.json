@@ -20,7 +20,13 @@
       "research_blocks": [
         "08",
         "15"
-      ]
+      ],
+      "scenario_readiness": {
+        "required": true,
+        "allowed_source_url_prefixes": [
+          "https://api.kraken.com/0/public/Trades?pair=XBTUSD"
+        ]
+      }
     },
     {
       "metric_id": "security.hashrate",
@@ -239,7 +245,17 @@
         "08",
         "12",
         "15"
-      ]
+      ],
+      "scenario_readiness": {
+        "required": true,
+        "allowed_source_url_prefixes": [
+          "https://farside.co.uk/btc/",
+          "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+        ],
+        "latest_max_age_hours": 36,
+        "history_max_age_days": 14,
+        "minimum_distinct_days": 5
+      }
     },
     {
       "metric_id": "institutional.etf_btc_holdings",
@@ -343,7 +359,11 @@
       "research_blocks": [
         "09",
         "15"
-      ]
+      ],
+      "scenario_readiness": {
+        "required": true,
+        "allowed_source_url_prefixes": []
+      }
     },
     {
       "metric_id": "macro.us_10y_yield",

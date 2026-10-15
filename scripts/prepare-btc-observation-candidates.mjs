@@ -20,8 +20,9 @@ const BTC_SPOT_MAX_AGE_SECONDS = Number(freshnessWindow[1]) * ({ s: 1, m: 60, h:
 const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
 
 function validIso(value) {
-  return typeof value === "string" && Number.isFinite(Date.parse(value))
-    && !Number.isNaN(Date.parse(value));
+  return typeof value === "string"
+    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(value)
+    && Number.isFinite(Date.parse(value));
 }
 
 export function prepareBtcObservationCandidates(manifest) {
@@ -118,6 +119,11 @@ export function prepareBtcObservationCandidates(manifest) {
           if (!reported) reasons.push(row?.status === "UNREPORTED_PLACEHOLDER"
             ? "unreported_placeholder_not_a_zero_observation"
             : "row_not_reported");
+          if (reported && row?.fund_completeness_status !== "ALL_FUNDS_REPORTED") {
+            reasons.push(row?.fund_completeness_status === "PARTIAL_FUND_REPORTING"
+              ? "fund_reporting_incomplete"
+              : "fund_completeness_status_missing_or_unverified");
+          }
           if (reported && !reconciliationAcceptableForReview) reasons.push("aggregate_reconciliation_not_accepted");
           // The parser's page-level digest identifies the captured response, not a provider row revision.
           // Publication/observation timestamps and provider finalization/revision remain unknown.
@@ -142,9 +148,13 @@ export function prepareBtcObservationCandidates(manifest) {
             source_id: source.source_id,
             source_url: source.url,
             source_row_key: date ? `farside-btc-etf-flow:${date}` : null,
+            source_row_key_scope: "provider_reporting_date",
+            source_row_identity_status: "logical_date_key_not_provider_assigned",
             source_payload_sha256: typeof bodyHash === "string" && SHA256_RE.test(bodyHash) ? bodyHash.toLowerCase() : null,
             source_payload_hash_scope: "full_http_response_body_not_individual_row",
             provider_revision: null,
+            revision: null,
+            revision_scope: "provider_revision_not_exposed",
             revision_identity_status: "provider_revision_unknown",
             finalization_status: "unknown",
             reported_total_usd_million: row.reported_total_usd_million ?? null,

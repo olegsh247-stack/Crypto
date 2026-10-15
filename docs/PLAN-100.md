@@ -2,10 +2,10 @@
 
 > **СТАТУС ДОКУМЕНТА: ГЛАВНЫЙ ПРИОРИТЕТ ПРОЕКТА.** Этот документ задаёт обязательную последовательность работ. При конфликте с отдельными старыми задачами, комментариями, ветками или PR приоритет имеет актуальная версия «План 100», кроме случаев, когда пользователь явно изменил план.
 
-**Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
+**Актуальность снимка:** 15 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
+**Последние проверенные CI-свидетельства (базовый снимок 14 октября 2026; дополнение 15 октября см. ниже):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -1568,3 +1568,294 @@ The first BTC research scenario remains **not evaluable** until all of these gat
 
 Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238ce0dca2198226c2bcd39e1` (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564389). VPS API Build Rehearsal #1266 was pending at the time of this entry (https://github.com/olegsh247-stack/Crypto/actions/runs/38713564475). CI success proves the contract/tests build, not that live BTC inputs are accepted or the scenario is evaluable.
 
+
+## 24. BTC readiness runtime registry source-of-truth — 2026-10-15
+
+**Current work:** [Draft PR #83](https://github.com/olegsh247-stack/Crypto/pull/83), branch `fix/btc-readiness-registry-runtime-source`.
+
+- [x] Readiness runtime loads per-metric requirements from `data/CryptoDataModel/registry/metric-registry.json` instead of maintaining duplicated freshness/unit/source/URL values.
+- [x] Registry declares the canonical candidate endpoint for BTC spot, the fail-closed DXY policy, and ETF source URL prefixes plus freshness/history/minimum-session rules.
+- [x] Registry validator checks the source-of-truth relationship and protects the explicit ETF/DXY safety gates.
+- [x] BTC Scenario Readiness Gate passed on PR head `4550817fc10624e48e41d14911ace0ed88ed6f9c`: https://github.com/olegsh247-stack/Crypto/actions/runs/38715775250.
+- [x] VPS API Build Rehearsal passed on PR head `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077.
+- [x] VPS API and Worker Docker images built in CI; both successfully imported the shared runtime with the canonical registry bundled.
+- [ ] Review/acceptance of the PR remains separate; no merge was performed.
+
+**Effect on Plan 100:** this improves Stage 4's configuration integrity only. It does not accept source observations or close Stage 4. ETF timestamp/revision/finality semantics and approved DXY feed remain blockers; BTC remains `not_evaluable`. No production ingestion, database writes, scenario evaluation, scenario-state/probability/monitoring changes or deployment occurred.
+
+
+Validation detail: the container-image rehearsal caught and fixed an existing package-layout issue before acceptance. The final image keeps the shared runtime in the expected location and includes `data/CryptoDataModel/registry/metric-registry.json`; no production deployment was performed. BTC Scenario Readiness Gate passed on `e3bd6d2008cd229ec8988f6d302a904a43756ba2`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716461506. VPS API Build Rehearsal passed on `ae4247dc65978986244262370ede51a1791ae01d`: https://github.com/olegsh247-stack/Crypto/actions/runs/38716465077.
+
+
+## 25. ETF source contract hardening — 2026-10-15
+
+- [x] Formalize ETF `period_start` vs `observed_at` vs `retrieved_at` semantics in [BTC ETF observation contract](./data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md).
+- [x] Mark date-derived ETF keys as logical session keys, not provider-assigned row IDs.
+- [x] Set ETF `provider_revision` and `revision` to `null` while provider revision semantics remain unknown; retain full-response hash scope explicitly.
+- [x] Add regression assertions protecting the provenance/revision fields in the review-only candidate mapper.
+- [ ] Obtain a defensible provider publication timestamp or approve a source-specific publication-time convention.
+- [ ] Establish revision/finality and correction policy; reconcile the material Farside/TFTC 7 October difference before any canonical source decision.
+
+**Decision:** ETF remains HOLD and non-persistable. A reporting date is not a timestamp; HTTP Date and retrieval time are not row publication timestamps; same-date changed snapshots must not be auto-overwritten or auto-promoted. BTC remains `not_evaluable`. No ingestion, database writes, scenario evaluation, or deployment occurred.
+
+## 26. 2026-10-15 — ETF public-source reconciliation evidence
+
+- Rechecked the four CI runs triggered by the previous PR #83 changes: BTC Scenario Readiness Gate #38722320242, VPS Build Rehearsal #38722320268, Validate VPS Release Workflow #38722320256, and latest-head VPS Build Rehearsal #38722327674 all completed successfully.
+- Added a read-only public-source spot check to `docs/data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md`.
+- Farside vs TFTC for 2026-10-07: -484.9 vs -487.1 USDm, delta -2.2 USDm; visible BRRR discrepancy (Farside 0.0, TFTC -2.1) is part of the difference, but exact root cause is not established. Do not auto-correct either source.
+- For 2026-10-13, displayed totals are +175.7 vs +175.6 USDm, a -0.1 USDm difference. This is consistent with displayed rounding/aggregation, but does not prove identical source lineage.
+- On 2026-10-14, Farside displays -261.4 USDm while TFTC's current page had not yet published that session. The Farside row contains only some reported fund values, so a non-null aggregate must not be treated as proof that every fund has reported.
+- Next contract work: add/verify an explicit per-fund completeness rule (numeric zero is distinct from missing/unreported), preserve immutable capture hashes, and keep changed historical rows review-only until source-specific correction/finality policy is approved. Keep TFTC diagnostic-only; do not change canonical source priority.
+- Safety unchanged: no ingestion, database writes, scenario evaluation, state/probability/monitoring changes, deployment, or PR merge. BTC remains `not_evaluable`; ETF acceptance remains blocked on publication/observation timestamp, finality/revision/correction semantics, and reconciliation policy.
+
+## 27. 2026-10-15 — ETF per-fund completeness guard
+
+- The Farside parser now emits explicit completeness metadata: `fund_completeness_status`, reported/expected fund counts, and `missing_funds`.
+- A numeric `0.0` remains a reported zero; a dash remains `null`. The candidate mapper now flags a reported aggregate with partial or unverified fund coverage and keeps it non-persistable.
+- Added tests for a partially reported session (three of twelve funds present) and candidate-level blocking. The total remains available as review evidence; it is not accepted as a complete session.
+- This closes the parser/mapper implementation gap identified by the public-source spot check, but does not resolve the separate -2.2 USDm Farside/TFTC discrepancy for 2026-10-07 or establish ETF publication time, provider revision, or finality.
+- Next: verify CI on the latest branch head; then continue the source-time/revision policy review and DXY approved-source gate. BTC remains `not_evaluable`; no ingestion, DB writes, scenario evaluation, deployment, or PR merge.
+
+## 28. 2026-10-15 — Reconcile ETF contract against captured read-only staging artifact
+
+- Checked the actual artifact from [BTC Public Source Staging run #38729627587](https://github.com/olegsh247-stack/Crypto/actions/runs/38729627587), captured at approximately 11:45:48 UTC. The artifact includes the immutable raw Farside HTML, TFTC JSON, manifest and normalized review candidates.
+- Correction to section 26: TFTC data **was** present through 2026-10-14 in this capture. The prior statement that TFTC had not yet published that session is superseded.
+- For 2026-10-14, the captured Farside table contains numeric values for all 12 funds (explicit 0.0 cells count as reported), with total -261.4 USDm. TFTC total is approximately -261.4622 USDm; difference approximately -0.0622 USDm. This is within the screening band, but is not proof of source identity or finality.
+- The 2026-10-07 delta remains approximately -2.1674 USDm in the raw TFTC data versus Farside -484.9 USDm. BRRR is a visible contributor; exact root cause remains unresolved.
+- The staging artifact confirms that ETF candidate rows correctly retain `observed_at: null`, full-response SHA-256, reporting-date logical keys, unknown provider revision/finality, and `persistable: false`. The response receipt time and HTTP Date are not promoted to the ETF observation time.
+- VPS Build Rehearsal #38729630921 and the prior rehearsal #38729627372 both completed successfully; BTC readiness gate and VPS release workflow validation on the same latest head also passed.
+- Next: keep source-time/revision/finality as an explicit unresolved source limitation, then proceed with the approved-input acceptance matrix for BTC (spot, ETF, DXY and the required source provenance/freshness checks). No ingestion, database writes, scenario evaluation, deployment or PR merge. BTC remains `not_evaluable`.
+
+## 29. 2026-10-15 — BTC scenario input acceptance matrix from captured artifact
+
+Evidence source: immutable artifact `btc-public-source-review` from [read-only staging run #38729627587](https://github.com/olegsh247-stack/Crypto/actions/runs/38729627587). All values below describe that capture only; they are not claimed to be current at a later evaluation time.
+
+| Required input | Captured evidence | Gate result | Remaining work |
+|---|---|---|---|
+| `market.spot_price` | Kraken XBT/USD trade: 80,989.8 USD/BTC at 2026-10-15T11:45:46.894Z; retrieved at 11:45:47.008Z; composite row key and full response SHA-256 present | Valid traceable review candidate in that capture; still `persistable: false` | Re-evaluate freshness at the actual evaluation time; complete duplicate/idempotency review; no persistence approved |
+| `institutional.etf_net_flow` | Farside rows for five recent distinct reporting dates (8, 9, 12, 13, 14 Oct) parsed; latest displayed total -261.4 USDm; per-fund values and full-response hash present | Blocked: `observed_at` intentionally null; provider publication time, revision/correction identity and finality remain unknown | Source-time and correction/finality policy must be resolved or an alternative source with a valid contract must be approved. Retrieval time/HTTP Date cannot substitute |
+| `macro.dxy` | No approved, accessible canonical DXY feed or sample payload in the staging manifest | Blocked | Obtain authorized feed access, exact endpoint, current methodology/calendar and source timestamp convention. Do not substitute a broad USD index or DX futures settlement |
+
+Cross-check-only exchange captures:
+- Kraken is the only currently approved canonical spot source in the registry.
+- Binance/OKX/Bybit captures are diagnostic only. The available cross-checks use USDT-denominated pairs, not the canonical USD/BTC quote, and some endpoint captures failed. They must not be averaged with Kraken or used as a silent fallback. If useful later, add a separately defined FX/USDT basis normalization study; do not mix quote units into the canonical spot observation.
+- Hashrate and fee-source captures in this artifact are diagnostic inputs for their own research blocks; they do not replace the three current mandatory runtime readiness requirements.
+
+**Conclusion:** source ingestion readiness is not equivalent to scenario readiness. The Kraken candidate is a successful example of traceable provenance, but ETF timestamp/finality and DXY source approval still block the required input set. The scenario must remain `not_evaluable` until the readiness gate passes with approved, current observations for every required metric. No production database writes, scenario-state/probability/monitoring changes, deployment or PR merge.
+
+
+## 30. BTC ETF runtime acceptance gate — 2026-10-15
+
+**Change on PR #83:** the shared runtime readiness gate now fails closed on ETF rows unless all acceptance metadata is present:
+
+- a defensible `observed_at` and a valid reporting/session date;
+- all 12 fund values explicitly reported, `fund_completeness_status = ALL_FUNDS_REPORTED`, reported count equal to expected count, and an empty `missing_funds` list;
+- a valid SHA-256 of the captured source response;
+- either a provider revision identifier or a separately approved immutable-snapshot reconciliation policy;
+- finality explicitly established as `final` or `reconciled_snapshot`.
+
+These conditions are required both for the latest ETF observation and for rows counted toward the minimum five-session history. A displayed aggregate or retrieval timestamp alone cannot make an ETF row acceptable. Unknown provider revision/finality remains a blocker; this does not assume Farside currently exposes those fields.
+
+**Validation:** BTC Scenario Readiness Gate passed on code SHA `64fd8a3ceffa69b206a15e139d6e715709ee32c6` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38731006123)). VPS API image/runtime rehearsal and VPS release-workflow validation were still running at the time of this update; do not mark them passed until their runs complete.
+
+**Outcome:** this is a guardrail/test improvement, not a source acceptance decision. The currently captured Farside ETF rows still lack defensible observation/publication timestamps and provider revision/finality semantics, so BTC remains `not_evaluable`. DXY also remains blocked pending an approved source and documented daily observation convention. No database writes, ingestion, scenario evaluation, state/probability/monitoring changes, merge, or deployment were performed.
+
+
+## 31. DXY source investigation — 2026-10-15
+
+**Decision: keep `macro.dxy` blocked; do not silently replace it.** A public-source check confirms:
+
+- ICE identifies the ICE U.S. Dollar Index as the DXY benchmark and lists intraday/daily frequency and delivery mechanisms including ICE Data API and ICE Data Files. This is a genuine source lead, but the public catalog is a product description, not a confirmed no-cost public quote endpoint. References: https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices and https://www.ice.com/fixed-income-data-services/data-and-analytics/proprietary-data
+- ICE says use/redistribution of its market data may require the appropriate agreement; derived-data permission is reviewed case by case. Therefore no endpoint, terms, publication-time convention, or self-hosted collection permission has yet been accepted for this project.
+- FRED/Federal Reserve publishes a daily **Nominal Broad U.S. Dollar Index** (`DTWEXBGS`), but that is a different basket and methodology from ICE DXY. It may be a candidate for a separately named metric in a future decision, not a drop-in replacement for `macro.dxy`. Reference: https://fred.stlouisfed.org/series/DTWEXBGS
+
+**Next required evidence for the existing DXY metric:** identify a source and endpoint available under acceptable terms; establish whether the value is spot index, delayed quote, end-of-day close, or futures settlement; define the observation date/time and holiday/session calendar; capture a sample with source hash and retrieval metadata; then review and register the source. Until those steps are complete, no DXY observation can pass the readiness gate.
+
+No registry source was added, no metric semantics were changed, and no scenario or production data was touched during this investigation.
+
+
+### DXY research follow-up — publication cadence clarified
+
+The Federal Reserve/FRED documentation clarifies an important operational distinction: DTWEXBGS has daily-dated observations, but the Federal Reserve says these daily data are updated in FRED once each week to capture the previous week. Therefore “daily frequency” does not mean a same-day live/current observation feed. Any future use as a separately named broad-dollar metric must register the publication/retrieval cadence, release lag, vintage/revision handling, and holiday calendar; it cannot satisfy the existing macro.dxy contract by substitution. Source: https://alfred.stlouisfed.org/category?cid=94&ob=pv&od=desc&t=broad
+
+ICE index platform terms also state that, absent a relevant agreement, access/use and redistribution of ICE index information are restricted. This reinforces that a public page/catalog is not enough to authorize scraping or unattended self-hosted ingestion. Source: https://indices.ice.com/termsAndDisclaimers
+
+
+## 32. BTC readiness CI acceptance — 2026-10-15
+
+The E2E assertion for the canonical ETF blocker was updated to recognize all three valid fail-closed outcomes: missing latest ETF observation, stale/untraceable observation, or unverified fund completeness/revision/finality metadata. This fixes the test contract; it does not relax the runtime readiness policy or accept the current Farside candidate.
+
+**Verified on commit `40e1c6e4771490b435f8045c8e2da13112b83b73`:**
+- [VPS API Build Rehearsal #1355](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299165) — **success**, including build, container/runtime registry import, disposable PostgreSQL migrations, API/Worker E2E, and BTC research evidence/snapshot lineage checks.
+- [VPS Release Workflow validation #165](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299177) — **success**.
+- [BTC Scenario Readiness Gate #265](https://github.com/olegsh247-stack/Crypto/actions/runs/38750299197) — **success**.
+
+**What this proves:** the readiness implementation and CI contract are internally consistent, and the VPS rehearsal is green. It does not prove that live candidate data satisfy the source contract.
+
+**Next Plan 100 step — read-only BTC acceptance review:** verify the gate's output for the current required inputs and preserve the exact blocker reasons. Spot has a canonical Kraken candidate contract but must be fresh at evaluation time; ETF remains blocked because provider observation time and revision/finality are not established; DXY remains blocked because no approved feed is registered. Do not manufacture or persist observations to make the gate green. Keep BTC `not_evaluable` until all required inputs pass. No production DB writes, live ingestion, scenario/probability/monitoring changes, merge, or deployment were performed.
+
+
+## 33. ETF source follow-up — publication cadence vs observation contract
+
+A fresh review of the public source descriptions found two useful clarifications:
+
+- Farside's own homepage describes its Bitcoin ETF figures as daily USD-million data updated in real time, typically during the evening/night in U.S. time. This supports treating the table as a changing publication, not as a provider-supplied immutable daily final record. It does **not** provide a per-row publication timestamp, revision ID, or explicit finality marker. Reference: https://farside.co.uk/
+- SoSoValue's official Market Data API documentation lists ETF summary/history endpoints at `https://openapi.sosovalue.com/openapi/v1`. Access requires an API key. This is a concrete alternative-source lead, but the public API overview alone does not establish the endpoint response's observation-time meaning, revision/finality behavior, data licensing for this project, or whether it exposes the complete per-fund breakdown required by our acceptance contract. References: https://sodex.com/documentation/for-developers/api-reference/market-data-api and https://sodex.com/documentation/for-developers/developers/data-api/getting-started
+
+**Decision:** do not switch the canonical ETF source or loosen the gate on this evidence alone. Next source-review task is to obtain an authorized SoSoValue API key through the user's own account (never commit it), inspect the exact summary-history response fields and documented terms, then make a read-only capture with response hash/retrieval time and compare reporting dates, per-fund completeness, units, and revision behavior against Farside. If no authorized key is available, keep the alternative marked unverified and proceed with the remaining offline acceptance work. Farside remains blocked until a defensible observation-time and revision/finality contract is established.
+
+Sources: Farside says its table is updated in real time, generally evenings/nights U.S. time; SoSoValue documents the ETF API domain and requires an API key for access. Neither statement by itself establishes an accepted immutable/final observation contract.
+
+No source registry, metric registry, runtime policy, database, ingestion schedule, or scenario state was changed as part of this research.
+
+## 34. SoSoValue ETF API — проверка фактической структуры данных
+
+Проверены публичные страницы официальной документации SoSoValue Market Data API (15 октября 2026).
+
+### Что подтверждает документация
+
+- `GET /etfs/summary-history` возвращает дневную агрегированную запись по BTC/US с полями `date`, `total_net_inflow`, `total_value_traded`, `total_net_assets`, `cum_net_inflow`. Поток выражен в USD; отрицательное значение означает net outflow. Документация ограничивает диапазон последним месяцем и исключает неторговые дни. Это полезный независимый контроль общего итога, но не доказательство полноты отдельных фондов.  
+  Источник: https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history
+- `GET /etfs` принимает `symbol` и `country_code` и документирован как список ETF с `ticker`, `name` и `exchange`; `GET /etfs/{ticker}/history` отдаёт историю по отдельному тикеру с `date`, `ticker`, `net_inflow`, `cum_inflow`, `net_assets` и другими полями. История ограничена последним месяцем. Это потенциальный путь к независимой проверке per-fund данных, но документация сама по себе не гарантирует, что список включает все фонды, требуемые нашим контрактом, или что каждый день полностью заполнен.  
+  Источники: https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/list и https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/history
+- API требует одобренный ключ в заголовке `x-soso-api-key`; ключ следует хранить только в секретном хранилище/переменной окружения, не в Git и не в переписке. Документация указывает квоты 100 000 запросов в месяц и 20 запросов в минуту на ключ.  
+  Источники: https://sodex.com/documentation/for-developers/developers/data-api/getting-started и https://sodex.com/documentation/for-developers/developers/data-api/authentication-and-limits
+
+### Что пока НЕ доказано
+
+1. Можно ли получить полный и стабильный список всех BTC ETF, требуемых нашим контрактом, и достаточно ли отдельных ticker-history ответов для подтверждения полноты на каждый торговый день.
+2. Как API определяет исправления прошлых значений, финальность торгового дня и повторную публикацию: в просмотренных схемах не документированы row-level revision ID, finality marker или отдельное время публикации/наблюдения.
+3. Семантика поля `date` в endpoint по тикеру требует проверки: описание на странице называет его timestamp/Long, а пример показывает календарную строку `YYYY-MM-DD`. До ответа провайдера или проверки реального payload нельзя выводить из этого точное время наблюдения.
+4. Условия разрешённого использования и хранения данных для данного проекта не установлены одним лишь описанием endpoint.
+5. Ответы API ещё не получены: доступ к ключу не предполагался и не имитировался.
+
+### Решение и следующий шаг
+
+SoSoValue **не принимается пока как канонический источник**. Его aggregate-history можно рассматривать как контроль общего дневного итога; per-ticker history — как кандидата для проверки полноты. Следующая безопасная проверка, если будет доступ к одобренному ключу, — read-only запрос короткого периода, сохранение сырого ответа с SHA-256 и временем получения, сверка общего итога с суммой per-ticker значений, списка фондов, единиц, торговых дат и поведения при повторном чтении. Никаких записей в БД и автоматического обновления канонических наблюдений.
+
+Если ключа нет, работу не блокируем: фиксируем SoSoValue как документированный, но непроверенный кандидат и продолжаем офлайн-приёмку остальных BTC-контрактов. ETF остаётся блокером до доказанного контракта observation time и revision/finality; DXY остаётся блокером до утверждения источника. BTC остаётся `not_evaluable`.
+
+**Границы изменений:** только документация Плана 100; metric/source registries, runtime, БД, ingestion, scenario state, probabilities, monitoring, merge и deployment не менялись.
+
+## 35. DXY source review — official identity and permitted use
+
+Проверены официальные страницы ICE Data Indices и ICE Futures U.S. (15 октября 2026).
+
+- ICE определяет DXY как **ICE U.S. Dollar Index**, рассчитываемый по spot-ценам компонентов валютной корзины; для данных указаны intraday/daily частоты и варианты real-time, delayed, end-of-day и historical доставки через коммерческие продукты ICE. Это подтверждает, что метрика должна быть привязана к конкретному виду DXY-данных и режиму времени, а не к общему названию «USD index».  
+  Источник: https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices
+- Страница спецификации DX futures описывает отдельный торгуемый фьючерсный контракт с квартальными экспирациями и settlement-методикой. Его значение нельзя автоматически подставлять вместо spot-index DXY: контракт и underlying index — связанные, но разные временные ряды.  
+  Источник: https://www.ice.com/products/194/US-Dollar-Index-Futures/
+- Официальная спецификация ICE заявляет исключительные proprietary rights на DXY, его значения, состав, веса и метод расчёта и ограничивает любое использование без письменного согласия ICE. Поэтому наличие общедоступной веб-страницы или стороннего символа не доказывает право на автоматический сбор, хранение и перераспространение данных в проекте.  
+  Источник: https://www.ice.com/products/194/US-Dollar-Index-USDX-Futures?cat=204
+
+### Решение
+
+DXY остаётся заблокированным. Нельзя автоматически выбрать DX futures, сторонний публичный тикер или широкий индекс ФРС в качестве замены. Для принятия нужны конкретный endpoint/provider, подтверждённое право использования для self-hosted аналитики и хранения, тип ряда (spot DXY / delayed / EOD / futures), timezone/время наблюдения, календарь публикации и стабильная provenance-схема. Если ICE не предоставляет подходящий доступ на приемлемых условиях, следует отдельно решить, оставлять ли DXY обязательным для сценария или официально пересмотреть сам сценарный контракт — не менять его молча.
+
+**Границы изменений:** только документация Плана 100. Metric/source registry, required-input policy, runtime, база данных, ingestion, scenario state/probability/monitoring, merge и deployment не менялись.
+
+## 36. BTC readiness provenance hardening — raw payload hash required
+
+Во время read-only review readiness runtime найдено несоответствие контракту provenance: проверка для обязательных не-ETF входов допускала отсутствие `source_payload_sha256`, хотя текущий collector/candidate contract сохраняет SHA-256 сырого ответа и результат readiness должен быть пригоден для воспроизводимой проверки происхождения.
+
+**Исправление в PR #83:**
+- `validObservation` теперь требует строковый 64-символьный hex SHA-256 для обязательного входа; отсутствующий, неверного формата или невалидный hash блокирует вход.
+- Причина блокировки теперь явно отражается как `source_payload_hash_missing_or_invalid`.
+- Добавлен regression test: свежая, иначе корректная spot-price запись без hash не должна пройти readiness.
+
+**Commits:** runtime fix `da05df06c312f1f899084c0c8beb8772a4ab2515`; regression test `25a06f35d2deb17de513500eaa83073960558d11`.
+
+**Проверка на момент записи:** предыдущие BTC Readiness Gate #268, VPS Build Rehearsal #1361 и VPS Release Workflow validation #168 завершились успешно на предыдущем commit/состоянии; они не подтверждают новый regression test. Для текущих commit отдельный workflow run пока не найден. Локальный запуск CI также невозможен в текущей среде из-за отсутствия сетевого доступа к GitHub. Поэтому новый тест и runtime fix считаются **ожидающими подтверждения CI**, а не уже проверенными.
+
+**Безопасность:** только readiness validation и тест; не менялись source/metric registries, БД, ingestion, scenario state/probability/monitoring, merge или deployment. BTC остаётся `not_evaluable` до принятия ETF и DXY inputs и прохождения всех ворот.
+
+## 37. Payload-hash regression coverage — missing and malformed hashes
+
+В продолжение §36 добавлены два regression test в `scripts/btc-scenario-readiness.test.mjs`:
+
+- обязательный spot input с некорректной строкой вместо SHA-256 должен блокироваться с `source_payload_hash_missing_or_invalid`;
+- ETF-история с некорректным hash хотя бы у одной сессии не должна считаться принятой пятёркой сессий.
+
+Commit: `6105ac61323bbe6334818c739c9a2cc3742a4d7b`.
+
+**Проверка:** код runtime и тесты присутствуют в PR #83, но для новых коммитов отдельный CI run пока не появился. Предыдущие зелёные проверки относятся к более раннему коду; результат новых regression test не объявляется подтверждённым. Изменения остаются в Draft PR и не развёртываются.
+
+**Границы:** только runtime validation/tests и документация. Нет изменений БД, источников/метрик, ingestion, scenario state, probabilities, monitoring, merge или deployment.
+
+## 38. BTC candidate timestamps — require explicit normalized UTC
+
+В read-only review `scripts/prepare-btc-observation-candidates.mjs` обнаружено, что `validIso` фактически принимал любые строки, которые понимает `Date.parse`, включая неоднозначные локальные даты и timestamp с часовым смещением. Это слабее контракта источника, где время наблюдения и retrieval должны быть представлены нормализованным UTC ISO-8601.
+
+**Изменение:**
+- валидатор теперь требует форму `YYYY-MM-DDTHH:mm:ss[.fraction]Z`;
+- добавлены тесты, которые блокируют неоднозначную локальную дату и timestamp с `+03:00`;
+- исходное UTC-время отдельной сделки Kraken по-прежнему используется как `observed_at`; время получения ответа остаётся `retrieved_at`.
+
+Commits: initial runtime change `d10950c6242cf9d2a63078dbdca09f56f9585289`; regex escaping correction `fa8a65b19f6bc15c0a521a14d2b3f0f08027fc1b`; tests `42e9aa9915a9f3b2937c674349080cb093b41ecc`. The regex line was re-read from GitHub after the first update and its escaping corrected before closing this review.
+
+**CI status:** новый код и тесты ещё ожидают автоматического подтверждения; успешные старые runs не считаются доказательством этой правки. Ничего не записывалось в БД, сборщик не запускался против live endpoint, candidate не стал persistable. PR #83 остаётся Draft.
+
+
+
+## 39. Обязательный журнал работ — «Промт 100»
+
+**Обязательное требование Плана 100 с 2026-10-15:** весь фактически выполненный объём работ по проекту Crypto необходимо непрерывно фиксировать в отдельном документе **«Промт 100»** в Library проекта Crypto. Для каждой записи обязательны три поля: **Дата**, **Действие**, **Результат**. В результат включать проверяемый итог: что изменилось/подтверждено, ссылки на commit/PR/checks при наличии, и что осталось блокером. Не записывать запланированное как выполненное; незавершённые проверки помечать как выполняющиеся/ожидающие результата. Журнал не заменяет План 100 и не меняет порядок этапов — он сохраняет полный след исполнения.
+
+### Правила ведения журнала
+
+1. Добавлять запись после каждого содержательного действия: аудит, изменение кода/документа, тесты, CI, проверка источника, выявление блокера или принятие решения.
+2. Использовать формат таблицы: `Дата | Действие | Результат`; даты указывать в `Europe/Riga`.
+3. В результатах отделять подтверждённые факты от предположений и ожиданий; добавлять SHA и ссылки на GitHub, когда они есть.
+4. Если проверка ещё выполняется, фиксировать это явно и позднее дополнять/обновлять результат, не объявляя её успешной заранее.
+5. В начале каждой новой сессии читать актуальные План 100, Промт 100 и состояние GitHub. В конце каждого рабочего блока обновлять Промт 100 и синхронизировать его с Library проекта.
+6. Поддерживать актуальную копию в Library проекта Crypto; если репозиторный документ или основной план обновлены, синхронизировать связанные записи и ссылки.
+7. Сохранять не только успешные изменения, но и отрицательные результаты, причины блокировок и решения не менять контракт.
+
+
+## 40. Проверка source-registry / PostgreSQL seed consistency
+
+**Дата:** 2026-10-15.
+
+После добавления `macro.fred_broad_usd_candidate` в source registry первый readiness gate упал не из-за сценарной логики, а потому что общий validator требует соответствующую запись в `infrastructure/postgres/seed-v1.sql`. Seed был исправлен коммитом `69045bc`, после чего все пять связанных CI runs завершились успешно. Затем notes кандидата уточнили weekly H.10 distribution cadence и revision/vintage handling: commits `a1a607a` и `777e53b`. На обоих SHA readiness gate, release validation, seed idempotency и VPS API build rehearsal завершились успешно; конкретные ссылки записаны в Library «Промт 100».
+
+**Вывод:** registry/seed согласованы, тесты и сборки проходят. Но это не делает BTC `evaluable`: `macro.dxy` по-прежнему fail-closed; ICE feed access/licensing не подтверждены, а `DTWEXBGS` — отдельная недельно публикуемая broad-dollar series с возможными ревизиями, не эквивалент DXY и не тихая замена в существующем сценарии. Следующий шаг — продолжать контракт ETF source provenance/finality либо получить подтверждённый лицензированный ICE DXY feed. Никаких production/DB/ingestion changes не выполнялось.
+
+
+## 41. ETF candidate contract — read-only review
+
+**Дата:** 2026-10-15.
+
+Read-only review of `scripts/capture-btc-public-sources.mjs`, `scripts/parse-farside-etf-table.mjs`, `scripts/prepare-btc-observation-candidates.mjs` and their tests confirms the intended safety boundary: raw HTTP response is hashed and retained; `Date`, `Last-Modified`, `ETag`, `Cache-Control` and `Expires` are preserved as transport metadata only; none is relabelled as the metric `observed_at`; Farside rows remain `REVIEW_ONLY_BLOCKED` with `provider_revision=null`, `finalization_status=unknown`, and a page-body hash explicitly scoped to the full response, not an individual row. Missing dashes remain null; all-dash placeholder rows are not zero observations; partial fund reporting and totals outside the display-rounding envelope are blocked.
+
+The public Farside page says the table is generated automatically in real time, but it does not provide a stable row-level publication timestamp or provider revision/finality identifier in the parsed contract. The unresolved choice is therefore a contract/policy decision, not a parser bug: either obtain a documented provider publication/revision/finality contract, or explicitly approve an immutable-snapshot reconciliation policy that records capture time, payload hash, parser/version, reporting date, all-funds completeness, total reconciliation, and any later snapshot differences. Until one policy is approved and tested, ETF rows remain non-persistable and BTC remains `not_evaluable`. No source data were ingested, no DB writes occurred, and no scenario state/probabilities were changed.
+
+CI on commit `9dc132849d75d4b6b84ffff4d04f49e22b7355d5`: BTC Scenario Readiness Gate, VPS release validation, seed idempotency rehearsal and both VPS API Build Rehearsal runs passed. See [readiness](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450296), [release validation](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450260), [seed rehearsal](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450265), [API rehearsal 1](https://github.com/olegsh247-stack/Crypto/actions/runs/38801450342), [API rehearsal 2](https://github.com/olegsh247-stack/Crypto/actions/runs/38801441022).
+
+
+## 42. Proposed ETF immutable-snapshot policy — pending approval
+
+**Status: proposal only; not approved for readiness acceptance or ingestion.**
+
+The read-only audit indicates that Farside does not expose a stable row-level publication timestamp, provider revision ID or explicit finality flag in the captured table contract. A practical candidate is therefore to treat each captured full-page response as an immutable source snapshot, rather than infer an event timestamp or repeatedly recalculate the historical daily totals during development.
+
+### Proposed snapshot record
+
+- canonical source identity and exact source URL;
+- retrieval timestamp in normalized UTC;
+- SHA-256 of the exact raw response bytes and retained raw response;
+- parser name/version and contract version;
+- provider reporting date for each row, kept distinct from retrieval timestamp;
+- all expected funds enumerated, reported-fund count, missing funds and displayed aggregate total;
+- calculated sum only as a reconciliation check, with explicit display-rounding tolerance and result;
+- snapshot identity and supersession link when a later capture changes a previously captured row;
+- no inferred provider revision, no inferred publication timestamp, and no conversion of missing/placeholder cells to zero.
+
+### Acceptance conditions
+
+1. A snapshot is eligible for review only when the source URL is canonical, the raw body hash verifies, and parser/version are recorded.
+2. A daily row is eligible only when all expected funds are present and the displayed aggregate reconciles within the explicitly documented rounding envelope.
+3. Later captures that differ for the same reporting date must create a new snapshot/reconciliation record, not overwrite history silently; the diff and reviewer decision must be retained.
+4. Freshness must be based on an explicitly chosen contract and source publication cadence; retrieval time must not be relabelled as observation time. Rows outside the freshness window remain blocked.
+5. Only after the user explicitly approves this policy may the runtime readiness contract accept `reconciled_snapshot` as an alternative to provider-declared finality. Until then, `finalization_status=unknown` remains blocked and no ETF candidate becomes persistable.
+
+**Why this is proposed:** it provides reproducible lineage even if the website silently edits historical cells, while acknowledging that it cannot prove provider finality. It is not equivalent to an authoritative provider revision timestamp. No code, database, ingestion, scenario state or probabilities were changed by documenting this proposal.

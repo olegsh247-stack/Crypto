@@ -54,8 +54,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: api/Dockerfile
+      context: ..
+      dockerfile: vps/api/Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
@@ -74,8 +74,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: worker/Dockerfile
+      context: ..
+      dockerfile: vps/worker/Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://crypto:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/crypto
