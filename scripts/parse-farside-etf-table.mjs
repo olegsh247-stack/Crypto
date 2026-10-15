@@ -39,6 +39,11 @@ export function parseFarsideEtfTable(html, { recentRows = 14 } = {}) {
     const fundValues = Object.values(fundFlows);
     const allFundsMissing = fundValues.every(value => value === null);
     const allFundsReported = fundValues.every(value => value !== null);
+    const fundsReportedCount = fundValues.filter(value => value !== null).length;
+    const missingFunds = Object.entries(fundFlows).filter(([, value]) => value === null).map(([fund]) => fund);
+    const fundCompletenessStatus = allFundsMissing ? "NO_FUND_VALUES_REPORTED"
+      : allFundsReported ? "ALL_FUNDS_REPORTED"
+      : "PARTIAL_FUND_REPORTING";
     const status = allFundsMissing && reportedTotal === 0
       ? "UNREPORTED_PLACEHOLDER"
       : fundValues.some(value => value !== null)
@@ -66,6 +71,10 @@ export function parseFarsideEtfTable(html, { recentRows = 14 } = {}) {
       source_reporting_date: cells[0],
       unit: "USD million/day",
       fund_flows: fundFlows,
+      funds_reported_count: fundsReportedCount,
+      funds_expected_count: FUND_KEYS.length,
+      missing_funds: missingFunds,
+      fund_completeness_status: fundCompletenessStatus,
       reported_total_usd_million: reportedTotal,
       calculated_fund_sum_usd_million: calculatedFundSum,
       fund_sum_minus_reported_total_usd_million: delta,
