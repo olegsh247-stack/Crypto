@@ -120,3 +120,8 @@ See [BTC ETF publication, revision and finality review](BTC-ETF-PUBLICATION-REVI
 ### ETF snapshot-policy feasibility — 2026-10-16
 
 Static inspection of the manual-only staging workflow found that raw responses, manifest and review-only candidates are uploaded as a GitHub Actions artifact with a 7-day retention period. Full-response hashes exist, but there is no durable archive guarantee, snapshot identity spanning all inputs/parser versions, or deterministic row-level diff against the previous capture. See [ETF immutable snapshot policy feasibility review](BTC-ETF-SNAPSHOT-POLICY-FEASIBILITY-REVIEW-2026-10-16.md). This path is not yet implemented or approved; no storage/retention change was made.
+
+
+### Offline ETF snapshot diff — implemented, CI pending
+
+The PR branch now contains `scripts/diff-btc-etf-snapshots.mjs` plus focused tests and runs them in the push validation job. It compares two existing capture artifact directories offline and reports `UNCHANGED` implicitly (omitted from change list), `NEW`, `VALUE_CHANGED`, `ROW_MISSING`, `INCOMPLETE`, or `NOT_COMPARABLE`; prior/current row payloads are retained in the diff. Identical ETF source payload hashes across captures are reported as a same-payload no-op even when capture times differ. This does not provide durable retention or declare a provider row final. CI for the latest commit is still pending verification; no live capture was launched.
