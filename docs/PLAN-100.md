@@ -1672,3 +1672,10 @@ These conditions are required both for the latest ETF observation and for rows c
 **Next required evidence for the existing DXY metric:** identify a source and endpoint available under acceptable terms; establish whether the value is spot index, delayed quote, end-of-day close, or futures settlement; define the observation date/time and holiday/session calendar; capture a sample with source hash and retrieval metadata; then review and register the source. Until those steps are complete, no DXY observation can pass the readiness gate.
 
 No registry source was added, no metric semantics were changed, and no scenario or production data was touched during this investigation.
+
+
+### DXY research follow-up — publication cadence clarified
+
+The Federal Reserve/FRED documentation clarifies an important operational distinction: DTWEXBGS has daily-dated observations, but the Federal Reserve says these daily data are updated in FRED once each week to capture the previous week. Therefore “daily frequency” does not mean a same-day live/current observation feed. Any future use as a separately named broad-dollar metric must register the publication/retrieval cadence, release lag, vintage/revision handling, and holiday calendar; it cannot satisfy the existing macro.dxy contract by substitution. Source: https://alfred.stlouisfed.org/category?cid=94&ob=pv&od=desc&t=broad
+
+ICE index platform terms also state that, absent a relevant agreement, access/use and redistribution of ICE index information are restricted. This reinforces that a public page/catalog is not enough to authorize scraping or unattended self-hosted ingestion. Source: https://indices.ice.com/termsAndDisclaimers
