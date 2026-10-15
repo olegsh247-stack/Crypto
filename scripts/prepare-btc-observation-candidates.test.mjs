@@ -190,9 +190,13 @@ test("normalizes Farside reporting rows while keeping publication time, provider
   assert.equal(reported.retrieved_at, "2026-10-14T19:30:00.000Z");
   assert.equal(reported.http_date, "Wed, 14 Oct 2026 10:01:30 GMT");
   assert.equal(reported.source_row_key, "farside-btc-etf-flow:2026-10-13");
+  assert.equal(reported.source_row_key_scope, "provider_reporting_date");
+  assert.equal(reported.source_row_identity_status, "logical_date_key_not_provider_assigned");
   assert.equal(reported.source_payload_sha256, hash);
   assert.equal(reported.source_payload_hash_scope, "full_http_response_body_not_individual_row");
   assert.equal(reported.provider_revision, null);
+  assert.equal(reported.revision, null);
+  assert.equal(reported.revision_scope, "provider_revision_not_exposed");
   assert.equal(reported.revision_identity_status, "provider_revision_unknown");
   assert.equal(reported.finalization_status, "unknown");
   assert.equal(reported.persistable, false);
