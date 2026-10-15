@@ -66,6 +66,9 @@ test("same provider payload hashes are a no-op even when capture time changes", 
   const result = diffBtcEtfSnapshots(previous, current);
   assert.equal(result.same_payload_snapshot, true);
   assert.deepEqual(result.changes, []);
+  assert.ok(result.row_results.length > 0);
+  assert.ok(result.row_results.every(row => row.status === "UNCHANGED"));
+  assert.equal(result.summary.UNCHANGED, result.row_results.length);
 });
 
 test("row order does not affect the deterministic snapshot identity or row diff", () => {
@@ -79,6 +82,7 @@ test("row order does not affect the deterministic snapshot identity or row diff"
   ] });
   const result = diffBtcEtfSnapshots(previous, current);
   assert.deepEqual(result.changes, []);
+  assert.ok(result.row_results.every(row => row.status === "UNCHANGED"));
 });
 
 test("reports a numeric source-row change without replacing the earlier evidence", () => {
