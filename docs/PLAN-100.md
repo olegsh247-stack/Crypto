@@ -1659,3 +1659,16 @@ These conditions are required both for the latest ETF observation and for rows c
 **Validation:** BTC Scenario Readiness Gate passed on code SHA `64fd8a3ceffa69b206a15e139d6e715709ee32c6` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38731006123)). VPS API image/runtime rehearsal and VPS release-workflow validation were still running at the time of this update; do not mark them passed until their runs complete.
 
 **Outcome:** this is a guardrail/test improvement, not a source acceptance decision. The currently captured Farside ETF rows still lack defensible observation/publication timestamps and provider revision/finality semantics, so BTC remains `not_evaluable`. DXY also remains blocked pending an approved source and documented daily observation convention. No database writes, ingestion, scenario evaluation, state/probability/monitoring changes, merge, or deployment were performed.
+
+
+## 31. DXY source investigation — 2026-10-15
+
+**Decision: keep `macro.dxy` blocked; do not silently replace it.** A public-source check confirms:
+
+- ICE identifies the ICE U.S. Dollar Index as the DXY benchmark and lists intraday/daily frequency and delivery mechanisms including ICE Data API and ICE Data Files. This is a genuine source lead, but the public catalog is a product description, not a confirmed no-cost public quote endpoint. References: https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices and https://www.ice.com/fixed-income-data-services/data-and-analytics/proprietary-data
+- ICE says use/redistribution of its market data may require the appropriate agreement; derived-data permission is reviewed case by case. Therefore no endpoint, terms, publication-time convention, or self-hosted collection permission has yet been accepted for this project.
+- FRED/Federal Reserve publishes a daily **Nominal Broad U.S. Dollar Index** (`DTWEXBGS`), but that is a different basket and methodology from ICE DXY. It may be a candidate for a separately named metric in a future decision, not a drop-in replacement for `macro.dxy`. Reference: https://fred.stlouisfed.org/series/DTWEXBGS
+
+**Next required evidence for the existing DXY metric:** identify a source and endpoint available under acceptable terms; establish whether the value is spot index, delayed quote, end-of-day close, or futures settlement; define the observation date/time and holiday/session calendar; capture a sample with source hash and retrieval metadata; then review and register the source. Until those steps are complete, no DXY observation can pass the readiness gate.
+
+No registry source was added, no metric semantics were changed, and no scenario or production data was touched during this investigation.
