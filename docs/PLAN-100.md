@@ -1642,3 +1642,20 @@ Cross-check-only exchange captures:
 - Hashrate and fee-source captures in this artifact are diagnostic inputs for their own research blocks; they do not replace the three current mandatory runtime readiness requirements.
 
 **Conclusion:** source ingestion readiness is not equivalent to scenario readiness. The Kraken candidate is a successful example of traceable provenance, but ETF timestamp/finality and DXY source approval still block the required input set. The scenario must remain `not_evaluable` until the readiness gate passes with approved, current observations for every required metric. No production database writes, scenario-state/probability/monitoring changes, deployment or PR merge.
+
+
+## 30. BTC ETF runtime acceptance gate — 2026-10-15
+
+**Change on PR #83:** the shared runtime readiness gate now fails closed on ETF rows unless all acceptance metadata is present:
+
+- a defensible `observed_at` and a valid reporting/session date;
+- all 12 fund values explicitly reported, `fund_completeness_status = ALL_FUNDS_REPORTED`, reported count equal to expected count, and an empty `missing_funds` list;
+- a valid SHA-256 of the captured source response;
+- either a provider revision identifier or a separately approved immutable-snapshot reconciliation policy;
+- finality explicitly established as `final` or `reconciled_snapshot`.
+
+These conditions are required both for the latest ETF observation and for rows counted toward the minimum five-session history. A displayed aggregate or retrieval timestamp alone cannot make an ETF row acceptable. Unknown provider revision/finality remains a blocker; this does not assume Farside currently exposes those fields.
+
+**Validation:** BTC Scenario Readiness Gate passed on code SHA `64fd8a3ceffa69b206a15e139d6e715709ee32c6` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38731006123)). VPS API image/runtime rehearsal and VPS release-workflow validation were still running at the time of this update; do not mark them passed until their runs complete.
+
+**Outcome:** this is a guardrail/test improvement, not a source acceptance decision. The currently captured Farside ETF rows still lack defensible observation/publication timestamps and provider revision/finality semantics, so BTC remains `not_evaluable`. DXY also remains blocked pending an approved source and documented daily observation convention. No database writes, ingestion, scenario evaluation, state/probability/monitoring changes, merge, or deployment were performed.
