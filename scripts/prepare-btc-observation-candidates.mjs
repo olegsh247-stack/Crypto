@@ -21,7 +21,7 @@ const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
 
 function validIso(value) {
   return typeof value === "string"
-    && /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?Z$/.test(value)
+    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(value)
     && Number.isFinite(Date.parse(value));
 }
 
