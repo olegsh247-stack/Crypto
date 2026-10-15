@@ -1527,3 +1527,12 @@ No production database access/write, source-priority promotion, scenario evaluat
 
 
 - Follow-up identity audit: Kraken does not provide a dedicated trade ID in this response shape. The candidate key is therefore a derived composite of pair, source timestamp, price, volume, side, order type and misc fields, explicitly marked `derived_composite_key_not_provider_assigned`. The normalizer now blocks Kraken candidates if these identity semantics are absent. This is best-effort source-row identity, not a provider-issued ID; the capture remains review-only.
+
+
+### BTC source freshness — 2026-10-15
+
+- The Kraken candidate now carries measured source age in seconds, derived from `retrieved_at - observed_at`, while retaining both source timestamps unchanged.
+- It explicitly emits `freshness_status: UNCLASSIFIED_NO_APPROVED_AGE_THRESHOLD` and no policy ID. API success alone is not treated as `CURRENT`.
+- Regression tests cover sub-second age calculation and a 24-hour-old event without silently classifying it as fresh/stale.
+- No fixed 15-minute/hourly limit was imposed. Freshness SLA must be defined from research use, not from whichever polling interval an endpoint happens to provide.
+- Candidate remains review-only; no production DB operation or scenario evaluation is authorized.
