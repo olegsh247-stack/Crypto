@@ -1625,3 +1625,20 @@ Validation detail: the container-image rehearsal caught and fixed an existing pa
 - The staging artifact confirms that ETF candidate rows correctly retain `observed_at: null`, full-response SHA-256, reporting-date logical keys, unknown provider revision/finality, and `persistable: false`. The response receipt time and HTTP Date are not promoted to the ETF observation time.
 - VPS Build Rehearsal #38729630921 and the prior rehearsal #38729627372 both completed successfully; BTC readiness gate and VPS release workflow validation on the same latest head also passed.
 - Next: keep source-time/revision/finality as an explicit unresolved source limitation, then proceed with the approved-input acceptance matrix for BTC (spot, ETF, DXY and the required source provenance/freshness checks). No ingestion, database writes, scenario evaluation, deployment or PR merge. BTC remains `not_evaluable`.
+
+## 29. 2026-10-15 — BTC scenario input acceptance matrix from captured artifact
+
+Evidence source: immutable artifact `btc-public-source-review` from [read-only staging run #38729627587](https://github.com/olegsh247-stack/Crypto/actions/runs/38729627587). All values below describe that capture only; they are not claimed to be current at a later evaluation time.
+
+| Required input | Captured evidence | Gate result | Remaining work |
+|---|---|---|---|
+| `market.spot_price` | Kraken XBT/USD trade: 80,989.8 USD/BTC at 2026-10-15T11:45:46.894Z; retrieved at 11:45:47.008Z; composite row key and full response SHA-256 present | Valid traceable review candidate in that capture; still `persistable: false` | Re-evaluate freshness at the actual evaluation time; complete duplicate/idempotency review; no persistence approved |
+| `institutional.etf_net_flow` | Farside rows for five recent distinct reporting dates (8, 9, 12, 13, 14 Oct) parsed; latest displayed total -261.4 USDm; per-fund values and full-response hash present | Blocked: `observed_at` intentionally null; provider publication time, revision/correction identity and finality remain unknown | Source-time and correction/finality policy must be resolved or an alternative source with a valid contract must be approved. Retrieval time/HTTP Date cannot substitute |
+| `macro.dxy` | No approved, accessible canonical DXY feed or sample payload in the staging manifest | Blocked | Obtain authorized feed access, exact endpoint, current methodology/calendar and source timestamp convention. Do not substitute a broad USD index or DX futures settlement |
+
+Cross-check-only exchange captures:
+- Kraken is the only currently approved canonical spot source in the registry.
+- Binance/OKX/Bybit captures are diagnostic only. The available cross-checks use USDT-denominated pairs, not the canonical USD/BTC quote, and some endpoint captures failed. They must not be averaged with Kraken or used as a silent fallback. If useful later, add a separately defined FX/USDT basis normalization study; do not mix quote units into the canonical spot observation.
+- Hashrate and fee-source captures in this artifact are diagnostic inputs for their own research blocks; they do not replace the three current mandatory runtime readiness requirements.
+
+**Conclusion:** source ingestion readiness is not equivalent to scenario readiness. The Kraken candidate is a successful example of traceable provenance, but ETF timestamp/finality and DXY source approval still block the required input set. The scenario must remain `not_evaluable` until the readiness gate passes with approved, current observations for every required metric. No production database writes, scenario-state/probability/monitoring changes, deployment or PR merge.
