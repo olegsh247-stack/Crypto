@@ -20,8 +20,9 @@ const BTC_SPOT_MAX_AGE_SECONDS = Number(freshnessWindow[1]) * ({ s: 1, m: 60, h:
 const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
 
 function validIso(value) {
-  return typeof value === "string" && Number.isFinite(Date.parse(value))
-    && !Number.isNaN(Date.parse(value));
+  return typeof value === "string"
+    && /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?Z$/.test(value)
+    && Number.isFinite(Date.parse(value));
 }
 
 export function prepareBtcObservationCandidates(manifest) {
