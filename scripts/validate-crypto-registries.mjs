@@ -42,43 +42,37 @@ for (const sourceId of sourceIds) {
   assert.ok(seeded.has(sourceId), `source registry entry ${sourceId} is not seeded into PostgreSQL sources`);
 }
 
-// Guard the runtime BTC readiness contract against silent drift from the metric registry.
-// The shared TypeScript implementation is canonical for runtime behavior; these checks make
-// its duplicated contract fields fail CI whenever the registry changes independently.
+// Runtime readiness policy is loaded from the metric registry, not duplicated as literals.
 const readinessSource = readFileSync(new URL("../vps/shared/src/btc-scenario-readiness.ts", import.meta.url), "utf8");
-const readinessBlock = readinessSource.split(/const REQUIRED:[^=]*= \[/)[1]?.split(/\n\];/)[0];
-assert.ok(readinessBlock, "BTC readiness REQUIRED contract must be discoverable");
-const readinessRows = [...readinessBlock.matchAll(/\{\s*metricId:\s*"([^"]+)"([^}]+)\}/g)];
-assert.ok(readinessRows.length > 0, "BTC readiness REQUIRED contract must contain metric entries");
-const metricsById = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
-function ageHours(window, metricId) {
-  const match = /^(\d+)(m|h|d)$/.exec(String(window ?? ""));
-  assert.ok(match, "metric " + metricId + " has no parseable freshness_window for BTC readiness");
-  const factor = { m: 1 / 60, h: 1, d: 24 }[match[2]];
-  return Number(match[1]) * factor;
+assert.ok(readinessSource.includes("../../../data/CryptoDataModel/registry/metric-registry.json"),
+  "runtime readiness must load the canonical metric registry");
+assert.ok(!/maxAgeHours:\\s*\\d/.test(readinessSource),
+  "runtime readiness must not hardcode per-metric freshness thresholds");
+assert.ok(!/sourceUrlPrefixes:\\s*\\[/.test(readinessSource),
+  "runtime readiness must not hardcode per-metric source URL allowlists");
+
+const readinessMetrics = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
+for (const metricId of ["market.spot_price", "macro.dxy", "institutional.etf_net_flow"]) {
+  const metric = readinessMetrics.get(metricId);
+  assert.ok(metric, "missing BTC readiness metric " + metricId);
+  assert.equal(metric.scenario_readiness?.required, true, metricId + " must declare whether it is required for BTC readiness");
+  assert.ok(Array.isArray(metric.scenario_readiness?.allowed_source_url_prefixes),
+    metricId + " must declare source URL prefixes in the metric registry");
 }
-for (const [, metricId, fields] of readinessRows) {
-  const metric = metricsById.get(metricId);
-  assert.ok(metric, "BTC readiness references unknown metric " + metricId);
-  const age = /maxAgeHours:\s*(\d+(?:\.\d+)?)/.exec(fields);
-  const unit = /unit:\s*"([^"]+)"/.exec(fields);
-  const sourceIds = /sourceIds:\s*(\[[^\]]*\])/.exec(fields);
-  assert.ok(age && unit && sourceIds, "BTC readiness contract for " + metricId + " must declare age, unit and source IDs");
-  assert.equal(Number(age[1]), ageHours(metric.freshness_window, metricId), "freshness age drift for " + metricId);
-  assert.equal(unit[1], metric.unit, "unit drift for " + metricId);
-  assert.deepEqual(JSON.parse(sourceIds[1]), metric.source_priority, "approved source IDs drift for " + metricId);
-}
-// ETF daily history has a separate rule block (latest-row freshness + distinct reporting days).
-const etfMetric = metricsById.get("institutional.etf_net_flow");
-assert.ok(etfMetric, "ETF flow metric must exist in metric registry");
-const etfRule = /validObservation\(latestEtf, nowMs, (\d+(?:\.\d+)?), "([^"]+)", (\[[^\]]*\]), (\[[^\]]*\])\)/.exec(readinessSource);
-assert.ok(etfRule, "ETF latest-row readiness rule must be discoverable");
-assert.equal(Number(etfRule[1]), ageHours(etfMetric.freshness_window, etfMetric.metric_id), "ETF latest-row freshness drift");
-assert.equal(etfRule[2], etfMetric.unit, "ETF flow unit drift");
-assert.deepEqual(JSON.parse(etfRule[3]), etfMetric.source_priority, "ETF approved source IDs drift");
-const distinctDaysRule = /uniqueByDay\.size < (\d+)/.exec(readinessSource);
-assert.ok(distinctDaysRule, "ETF minimum distinct-day rule must be discoverable");
-assert.ok(Number(distinctDaysRule[1]) >= 5, "ETF readiness must retain at least five distinct daily observations");
+assert.deepEqual(readinessMetrics.get("market.spot_price").scenario_readiness.allowed_source_url_prefixes,
+  ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"],
+  "BTC spot source endpoint allowlist must remain explicit");
+assert.deepEqual(readinessMetrics.get("macro.dxy").source_priority, [],
+  "DXY must remain blocked until an approved source is selected");
+assert.deepEqual(readinessMetrics.get("macro.dxy").scenario_readiness.allowed_source_url_prefixes, [],
+  "DXY must remain fail-closed until an approved quote endpoint is registered");
+const etfReadiness = readinessMetrics.get("institutional.etf_net_flow").scenario_readiness;
+assert.equal(etfReadiness.latest_max_age_hours, 36, "ETF latest-row freshness contract changed");
+assert.equal(etfReadiness.history_max_age_days, 14, "ETF reporting-date history window changed");
+assert.ok(etfReadiness.minimum_distinct_days >= 5, "ETF readiness must require at least five distinct daily sessions");
+assert.deepEqual(etfReadiness.allowed_source_url_prefixes,
+  ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"],
+  "ETF source URL allowlist must remain explicit");
 
 console.log(JSON.stringify({
   status: "PASS",
