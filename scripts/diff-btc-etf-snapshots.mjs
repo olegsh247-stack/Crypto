@@ -143,7 +143,7 @@ export function diffBtcEtfSnapshots(previous, current) {
   const previousByKey = new Map((previous?.rows ?? []).map(row => [row.key, row]));
   const currentByKey = new Map((current?.rows ?? []).map(row => [row.key, row]));
   const allKeys = [...new Set([...previousByKey.keys(), ...currentByKey.keys()])].sort();
-  const changes = [];
+  const rowResults = [];
   for (const key of allKeys) {
     const before = previousByKey.get(key) ?? null;
     const after = currentByKey.get(key) ?? null;
@@ -159,19 +159,18 @@ export function diffBtcEtfSnapshots(previous, current) {
       status = "INCOMPLETE";
     } else if (before.fingerprint === after.fingerprint) status = "UNCHANGED";
     else status = "VALUE_CHANGED";
-    if (status !== "UNCHANGED") {
-      changes.push({
-        source_id: (after ?? before).normalized.source_id,
-        source_url: (after ?? before).normalized.source_url,
-        reporting_date: (after ?? before).reporting_date,
-        status,
-        previous_fingerprint: before?.fingerprint ?? null,
-        current_fingerprint: after?.fingerprint ?? null,
-        previous_row: before?.normalized ?? null,
-        current_row: after?.normalized ?? null
-      });
-    }
+    rowResults.push({
+      source_id: (after ?? before).normalized.source_id,
+      source_url: (after ?? before).normalized.source_url,
+      reporting_date: (after ?? before).reporting_date,
+      status,
+      previous_fingerprint: before?.fingerprint ?? null,
+      current_fingerprint: after?.fingerprint ?? null,
+      previous_row: before?.normalized ?? null,
+      current_row: after?.normalized ?? null
+    });
   }
+  const changes = rowResults.filter(item => item.status !== "UNCHANGED");
   return {
     schema_version: 1,
     mode: "offline-review-only",
@@ -179,8 +178,9 @@ export function diffBtcEtfSnapshots(previous, current) {
     previous_snapshot_id: previous?.snapshot_id ?? null,
     current_snapshot_id: current.snapshot_id,
     same_payload_snapshot: previous?.source_payload_fingerprint === current.source_payload_fingerprint,
+    row_results: rowResults,
     changes,
-    summary: changes.reduce((result, item) => {
+    summary: rowResults.reduce((result, item) => {
       result[item.status] = (result[item.status] ?? 0) + 1;
       return result;
     }, {}),
