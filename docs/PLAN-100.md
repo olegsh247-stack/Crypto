@@ -2289,3 +2289,13 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - Документ только подготовлен: вопросы не отправлены, API не вызывались, ключи не запрашивались/не сохранялись, данные не захватывались. Молчание или общая формулировка «для исследований» не считаются разрешением на автоматический сбор и долговременный архив.
 - VPS API Build Rehearsal [#38904095808](https://github.com/olegsh247-stack/Crypto/actions/runs/38904095808) успешно завершился для commit `4e3ea1964018b77f3443c99c4aaef360ce4f77a1`; новые документальные изменения требуют собственной проверки CI. Успех rehearsal не подтверждает фактический VPS или независимый durable archive.
 - Gate остаётся закрытым: не менять registry, source priority, formula/evaluator, production observations или scenario state. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## Дополнение 2026-10-16 — SEC cross-check HODL / BRRR / BTCW внесён в матрицу
+
+- Отдельный cross-check из `docs/PLAN-100-ETF-SEC-CROSSCHECK-HODL-BRRR-BTCW-2026-10-16.md` сверен с матрицей покрытия и добавлен в неё как отдельный датированный evidence section.
+- HODL: SEC Q2 2026 показывает 57,425,000 shares, NAV/share $16.70, net assets $958,827,545, holdings 16,241 BTC на 2026-06-30; за квартал создано 3,200,000 и погашено 5,900,000 shares.
+- BRRR: на 2026-06-30 — 20,795,000 shares, NAV/share $16.46, net assets $342,354,115, 5,864 BTC; cover page отдельно указывает 20,895,000 shares на 2026-07-30 — даты не смешиваются.
+- BTCW: на 2026-06-30 — 2,185,000 shares, NAV/share $62.46, net assets $136,476,680; 2,310 BTC округлено в investment schedule, тогда как отдельная reference-rate методология даёт 2,309.689 BTC. Методологии сохранены раздельно.
+- Это квартальные/точечные первичные сверки, не полный daily flow series и не разрешение на систематическое архивирование. AUM delta не используется для вывода flow; registry, formula/evaluator, production observations и scenario state не менялись; live capture не выполнялся.
+- Следующий безопасный шаг — сверить оставшиеся фонды в матрице и явно отделить подтверждённые исторические snapshots от доступности ежедневной истории, прежде чем менять source contract.
