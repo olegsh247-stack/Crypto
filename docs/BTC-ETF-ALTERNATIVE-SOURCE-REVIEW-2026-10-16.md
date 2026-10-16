@@ -240,3 +240,14 @@ Reference: https://api.bitcoin-data.com/swagger-ui/index.html
 **Decision:** potentially useful for later manual research comparison because the stated coverage is broad and in BTC units, but blocked from source promotion, automated ingestion and durable archiving until terms, lineage, methodology, timestamps/revisions and conversion policy are established.
 
 **BTC readiness remains unchanged:** not_evaluable. No registry, source-priority, formula, evaluator, production data or scenario-state change.
+
+## Rights clarification follow-up — BGeometrics / Bitcoin-data.com (2026-10-16)
+
+Official terms reviewed: https://charts.bgeometrics.com/terms.html ; API documentation: https://api.bitcoin-data.com/swagger-ui/index.html
+
+- The ETF endpoint description advertises per-fund daily net flow in BTC for 12 funds from 2024-01-11, but this is only a documented coverage claim; it does not establish the source lineage, calculation method, row-level publication time, finality, or revision history.
+- BGeometrics terms updated 2026-10-14 describe the free API as intended for personal projects, research and evaluation. Bulk scraping/harvesting without written permission is prohibited. Commercial publication and redistribution have separate plan/add-on gates; the Professional tier is described as covering commercial redistribution. The terms do not explicitly grant permission for systematic historical extraction, private durable raw-response archiving, or independent backup/restore under a research-only use case.
+- Therefore, do not use the advertised endpoint as an automated archive source until BGeometrics confirms in writing the allowed query/capture frequency, historical retention, private backup/restore, internal use, derived values and any downstream publication rights. Do not request/store a key or call the API as part of this review.
+- A BTC-denominated flow series cannot be compared to USD flows as if units match. Any future conversion needs a separate accepted contract specifying the reference price source, timestamp/valuation convention, timezone, rounding, and handling of corrected holdings/flows.
+
+**Updated decision:** Bitcoin-data.com/BGeometrics remains blocked from automated capture and durable archiving pending written rights clarification and technical provenance/methodology details. The terms are a real constraint, not a conclusion that all research use is forbidden.
