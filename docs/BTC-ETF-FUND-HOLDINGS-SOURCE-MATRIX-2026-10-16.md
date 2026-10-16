@@ -71,12 +71,33 @@ This was a public-documentation review only. No files were downloaded and no API
 3. A terms page for a different product/fund, a privacy policy, a prospectus, or a disclaimer is not a substitute for explicit data-retention terms. Where no clear permission is found, mark rights **unverified**, not “prohibited” and not “permitted.”
 4. This review does not change source acceptance, registry state, scenario state, scores, probabilities, or readiness. BTC remains **not_evaluable**.
 
+## Resolution of the historical-series source question (2026-10-16)
+
+This section resolves source selection at the documentation/policy level. It does not claim that any historical payload was downloaded, sampled, or independently reconciled.
+
+### Provider capability and license decision
+
+| Candidate | Documented technical capability | Documented use constraints | Matrix decision |
+|---|---|---|---|
+| Bitbo API — `etf-holdings` | Date-range daily BTC holdings endpoint documents all 12 current-universe tickers plus historical-only DEFI. Fields include date, BTC holdings, YoY change, monthly change. | Bitbo's API page says the API is for internal/private use only and not for public websites or reproducing its charts. Subscription required. The reviewed pages do not grant an explicit right to publish raw snapshots or build a public dataset. | **Do not use as a source for public-repository snapshots or public product output under the currently documented terms.** Could be reconsidered only for private internal research within the stated scope, after account terms are reviewed; not approved for durable/public archive. |
+| CoinGlass API — ETF history | Historical ETF endpoint documents `btc_holdings`, net assets, NAV, market price and other fields by ticker. | API terms prohibit bulk collection/storage to create independent databases and redistribution of API data or derived data without prior written consent. Attribution is required. | **Not approved for bulk historical archive or public redistribution without written permission.** Possible licensed service candidate only if written terms expressly cover the intended use. |
+| Bitcoin ETF Data | Public current-data JSON documents issuer as-of date, holdings, change, update timestamp and stale/error fallback. | Reviewed documentation confirms current values, not a full historical date-range export or explicit archive/redistribution license. | **Secondary current-value cross-check only; not the historical archive solution.** Do not treat a zero change or an old as-of date as a new observation. |
+| Issuer pages and SEC EDGAR | Issuer pages provide current/date-stamped holdings for some funds; SEC filings provide auditable periodic quantity controls. | Exact retention/backup/redistribution terms vary and were not established uniformly for every issuer file. SEC access rules must be respected; public availability is not a blanket license for all embedded third-party content. | **Preferred provenance trail without raw bulk archiving:** issuer/SEC URLs, filing identifiers, observation dates and individually reviewed facts. This does not, by itself, provide a complete daily history for all funds. |
+
+### Final operating decision
+
+1. The matrix is resolved as **no-go for bulk historical ingestion/archive using the reviewed third-party APIs under the currently documented terms**. Do not add Bitbo or CoinGlass payloads to the public GitHub repository, a public API, or a public dataset without appropriate written permission.
+2. The permitted baseline for current work is issuer-first provenance: retain source URLs, ticker, source-reported as-of date, retrieval timestamp for future approved retrievals, units/field definition, and SEC filing identifiers; cite and compare only facts whose use is permitted. This is a source register/research trail, not a substitute for raw historical snapshots.
+3. To unlock a complete daily history, choose one of two explicit paths: (A) obtain written terms from a vendor that permit the intended internal storage, independent backup, derived research, and any public display/distribution; or (B) review the exact terms for each issuer-provided file and build an issuer-first archive only where retention and backup rights are sufficiently clear. If neither path is cleared, keep the daily-history gate blocked rather than fabricating coverage.
+4. Before any provider is accepted, an approved data-access run must separately test date coverage and same-date numeric reconciliation for all active tickers, plus quarterly SEC controls where available. Documentation of an endpoint alone is not evidence that its full history is complete or numerically correct.
+5. This decision is independent of scenario scoring: no DB writes, registry changes, scenario changes, probabilities, production ingestion, deployment, or PR merge. BTC remains `not_evaluable`.
+
 ## Final status
 
 - Issuer routes/current holdings views: confirmed for some funds, incomplete across the full universe.
-- Full daily historical holdings for all 12 active funds: **not confirmed**.
+- Full daily historical holdings for all 12 active funds: a third-party endpoint is documented, but complete date coverage and numerical correctness were not independently verified; no approved bulk archive source is cleared under current reviewed terms.
 - Same-date numeric reconciliation across all funds and all candidate providers: **not completed**; no data capture was performed.
-- Permanent raw-data archive permission: **not established as a complete set**.
+- Permanent raw-data archive permission: **not established as a complete set**; Bitbo is restricted to internal/private use under its published API guidance, and CoinGlass requires written consent for bulk database/redistribution use.
 - Production ingestion and registry acceptance: **not approved**.
 - BTC readiness remains **not_evaluable**.
 
