@@ -42,3 +42,10 @@ Add and run dedicated readiness-gate regression tests in the existing project te
 Added `vps/shared/test/btc-scenario-readiness.test.mjs` and a package test command (`npm test`) that builds the TypeScript runtime and runs Node's test runner. The new suite covers a valid complete input set, stale spot price, unapproved source, future-dated spot observation, incomplete ETF fund coverage, duplicate reporting dates, and missing ETF revision/finality evidence.
 
 **Execution status:** tests have been added but have not yet been executed in this environment. Do not interpret test existence as a passing result. The next low-cost verification is to run `npm test` in `vps/shared` / confirm the existing non-production CI runs it. No live capture, DB write, deployment, or merge was performed.
+
+
+## Update 2026-10-17 — CI evidence and evaluator status fail-closed regression
+
+The dedicated readiness tests are now confirmed by GitHub Actions run [#298](https://github.com/olegsh247-stack/Crypto/actions/runs/38965974798), which succeeded on `bb5ad42002f7826505bf311f02e5b9444e0f0af3`. Coverage includes fresh/traced inputs, stale spot, unapproved source, future timestamp, incomplete ETF coverage, duplicate reporting dates, and missing revision/finality evidence.
+
+A further offline regression test was added in commit `9d50d4d5caedca54f3003e0eec85435ddfc50309` to ensure missing or unknown `readiness_status` fails closed without scenario output or persistence permission. This additional test is pending CI; no PASS is claimed yet. BTC remains `not_evaluable` on audited real candidates. No live capture, database writes, ingestion, deployment, probability/state change, or PR merge occurred; PR #83 remains Draft.
