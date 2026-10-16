@@ -2,7 +2,7 @@ name: BTC Scenario Readiness Gate
 
 on:
   push:
-    branches: [main]
+    branches: [main, "fix/**"]
     paths:
       - "scripts/btc-scenario-readiness.mjs"
       - "scripts/btc-scenario-readiness.test.mjs"

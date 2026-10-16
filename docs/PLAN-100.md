@@ -1993,3 +1993,10 @@ Reviewed the user-supplied candidates against current public instrument and term
 ## Plan 100 correction — DXY is optional through readiness and rule evaluation (2026-10-16)
 
 The DXY source hunt is closed for the first BTC scenario. The readiness gate no longer requires DXY, and deterministic offline rule v2 no longer throws when DXY, supporting hashrate, or deferred fee/subsidy context is absent. Required rule inputs are price return and the five-session ETF-flow aggregate; missing optional signals are omitted, never treated as zero. The existing ±3 score threshold remains unchanged, so with only two required signals the outcome is Base. This changes neither published 30/50/20 probabilities nor any stored scenario state. Yahoo `DX-Y.NYB` remains a manual reference only; FRED `DTWEXBGS` is a distinct optional proxy, not DXY. ETF publication/revision/finality is the remaining source-acceptance blocker.
+
+
+## Plan 100 checkpoint — optional-input rule and VPS rehearsal verified (2026-10-16)
+
+**Confirmed:** [VPS API Build Rehearsal #38853001917](https://github.com/olegsh247-stack/Crypto/actions/runs/38853001917) passed for commit `d3df1e81f21e8af1ba0af2f511fb92abaca84e59`. The run completed the VPS-only guard, shared runtime/API/Worker builds, PostgreSQL migration/bootstrap, read-only BTC provenance audit, idempotency/duplicate rehearsal, backup/restore, and API/Worker E2E checks. The E2E assertion now confirms that missing DXY does not block readiness while ETF source acceptance can still block the live input gate.
+
+**Scope:** this validates the read-only readiness contract and VPS test environment, not a production scenario evaluation. Rule v2 unit tests are configured to run on feature/fix-branch pushes so optional-input behavior can be checked independently. No production database, ingestion, scenario state, published probabilities, deployment, or PR merge was changed.
