@@ -63,7 +63,7 @@ An integration test exercises the CLI with fixture manifests, confirms fail-clos
 
 ### Gate 2 — offline evidence and archive contract
 
-**Result: code/contract stage complete; operations remain blocked.** The TFTC-specific contract defines required attribution/license metadata, exact response bytes/hash, retrieval time, reporting dates/units, schema/normalizer version where available, source lineage, and revision preservation. The existing offline archive writer and verifier have passed fixture-based staging tests, including same-runner copy/restore verification in BTC Public Source Staging #38876362752 and #38876362752/#38876362752. These checks do not constitute durable storage or independent failure-domain recovery. Raw payloads must not be committed to this public repository.
+**Result: code/contract stage complete; operations remain blocked.** The TFTC-specific contract defines required attribution/license metadata, exact response bytes/hash, retrieval time, reporting dates/units, schema/normalizer version where available, source lineage, and revision preservation. The existing offline archive writer and verifier have passed fixture-based staging tests, including same-runner copy/restore verification in BTC Public Source Staging #38876268169 and #38876362752. These checks do not constitute durable storage or independent failure-domain recovery. Raw payloads must not be committed to this public repository.
 
 ### Gate 3 — publication/revision/stability check
 
