@@ -1,8 +1,8 @@
-# BTC macro input: DXY source-contract review (2026-10-16)
+# BTC macro context: DXY source-contract clarification (2026-10-16)
 
-## Decision
+## Current project decision
 
-The project must not silently substitute the Federal Reserve's broad trade-weighted dollar index for ICE U.S. Dollar Index (DXY). They are different indices with different baskets, weighting schemes, and intended interpretations. The correct source depends on the canonical metric contract already used by the BTC input registry. This document records research only; it does not change that contract or any runtime source.
+**DXY is optional context, not a BTC readiness gate.** The canonical decision is recorded in [BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md](BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md). This note supplements that decision and must not be read as reopening the DXY blocker. ICE DXY and the Fed broad index are different metrics; do not silently substitute one for the other.
 
 ## ICE U.S. Dollar Index (DXY)
 
@@ -21,15 +21,15 @@ Sources:
 - [Federal Reserve index methodology](https://www.federalreserve.gov/econres/notes/feds-notes/revisions-to-the-federal-reserve-dollar-indexes-20190115.html)
 - [Federal Reserve current H.10 release](https://www.federalreserve.gov/releases/h10/current/)
 
-## Source-contract questions still open
+## Allowed use in the first BTC scenario
 
-1. Confirm the exact canonical metric identifier and intended index in the BTC registry (ICE DXY versus Fed broad dollar index).
-2. If the intended metric is ICE DXY, establish an authorized data route, license/retention rights, daily close timestamp/time zone, holidays/missing-value rules, revision semantics, and reproducible historical coverage.
-3. If the intended metric is the Fed broad index instead, treat that as an explicit metric/source-contract decision requiring review—not a silent fallback. Preserve series ID `DTWEXBGS`, base (Jan 2006=100), daily frequency, source attribution, release/observation timestamps and revision awareness.
-4. Only after the contract is resolved should an offline fixture/source adapter be proposed. No live capture or source-registry change is authorized by this research.
+- Yahoo Finance `DX-Y.NYB` may be used as a manual display/research reference only; do not automate collection or redistribute its data without required permission.
+- FRED `DTWEXBGS` may be used only under its own explicit name and date/freshness rules; never write it into `macro.dxy` or splice it into a DXY series.
+- If neither contextual series is available, omit DXY context and continue. Do not block readiness solely on DXY.
+- No further DXY source investigation is required for the first BTC scenario. ETF publication/revision/finality remains a separate gate.
 
 ## Guardrails
 
-No API calls or live data captures, no credentials, no database writes, ingestion, source promotion, metric/formula change, scenario evaluation/state/probability changes, deployment, or PR merge were performed. BTC remains `not_evaluable`.
+No API calls or live data captures, no credentials, no database writes, ingestion, source promotion, metric/formula change, scenario evaluation/state/probability changes, deployment, or PR merge were performed. DXY remains optional/non-blocking; BTC may still be `not_evaluable` because of other gates, especially ETF evidence stability and rights.
 
 Related: [Plan 100](PLAN-100.md), [ETF issuer-source coverage matrix](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md), [Prompt 100 journal](PROMPT-100-JOURNAL.md).
