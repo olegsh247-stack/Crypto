@@ -140,3 +140,27 @@ The current dataset page describes daily aggregate and per-fund US spot ETF flow
 **Rights review:** the current Terms of Service (last updated 2026-10-15) license site datasets/API responses for personal and research use with attribution, but explicitly prohibit using the API/MCP/x402 catalog to copy the archive systematically into a substitute database, archive or service. The terms also state that third-party provider records remain subject to their own terms and that the service grants no rights in those records. The public page does not fully resolve the upstream lineage for each aggregate ETF-flow row. Therefore this is **not cleared for our proposed repeated, durable raw-response archive** without written clarification; research-use permission alone does not override the systematic-archive restriction or third-party rights.
 
 **Disposition:** keep as an unapproved comparison/methodology candidate, not as a replacement for Farside/TFTC and not as evidence of independent lineage. No API key was requested, no endpoint was called, and no data was captured. References: https://bykaranteli.com/data ; https://bykaranteli.com/terms (terms last updated 2026-10-15).
+
+
+## Follow-up: ByKaranteli licence scope and issuer-primary route (2026-10-16)
+
+### ByKaranteli terms interpreted for this project's retention model
+
+The current Terms of Service distinguish ByKaranteli's own computations from public-source and third-party records. The live dataset/API licence allows personal and research use with visible attribution, but the same terms prohibit using the API/MCP/x402 catalogue to copy the archive systematically into a substitute database, archive or service. Third-party provider records are supplied for the user's own use only and remain subject to their originating provider's terms; the site's licence does not grant rights in those records. The historical GitHub/Kaggle/Hugging Face/Zenodo CC0 dedication applies to ByKaranteli's own computations in qualifying pre-2026-09-10 mirror files, not to third-party records; those mirrors are frozen and the ETF files were among the records withdrawn on 2026-10-11.
+
+**Project decision:** a repeated capture pair intended to become part of our durable evidence archive falls too close to the expressly restricted systematic archive-copying use. Do not use the live ByKaranteli API as the retained two-snapshot evidence source without written permission clarifying this exact use and upstream rights. It may remain a manually consulted research/display cross-check within the terms; do not treat it as a cleared durable-source path.
+
+### Direct issuer-primary data — promising for checks, not yet a complete aggregate source
+
+The reviewed BlackRock iShares IBIT official product page publishes dated NAV, net assets, and shares outstanding and exposes a holdings download. The official Fidelity quote page publishes FBTC NAV and shares outstanding; SEC reports provide point-in-time outstanding-share figures and financial statements. This supports an issuer/filing-based cross-check for specific funds without copying a third-party ETF-flow aggregator.
+
+However, the sources reviewed do **not yet demonstrate** a complete, consistent, daily historical feed for every US spot BTC ETF in the project universe, with stable dates, row-level correction history and a reproducible aggregate. Periodic SEC reports alone are not a daily flow series. Do not extrapolate one issuer's data availability to the entire fund universe, and do not assume that the change in fund net assets is equivalent to net flow (it includes BTC price movements). A candidate formula based on share creation/redemption and the applicable NAV would need a documented date convention, per-fund coverage, split/fee/share-class handling, and reconciliation against an established series before acceptance.
+
+**Next offline research step:** build a fund-by-fund coverage matrix of official issuer/SEC sources for the exact current US spot BTC ETF universe, recording the available fields, cadence, history depth, terms, and any machine-readable endpoint. This is a source discovery task only; no live capture, source promotion, or metric-rule change is authorised by this review.
+
+References:
+- ByKaranteli Terms (updated 2026-10-15): https://bykaranteli.com/terms
+- ByKaranteli API documentation: https://bykaranteli.com/developers
+- BlackRock IBIT official product page: https://www.blackrock.com/us/individual/products/333011/fund
+- Fidelity FBTC quote page: https://digital.fidelity.com/prgw/digital/research/quote/dashboard/summary?symbol=FBTC
+- SEC Fidelity Wise Origin Bitcoin Fund quarterly report: https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm
