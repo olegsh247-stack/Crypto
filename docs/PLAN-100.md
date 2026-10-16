@@ -17,6 +17,14 @@
 - Матрица: [BTC ETF issuer source coverage](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md). Изменение записано commit `630f3dc58eec170e2cb33c6143d309682db24ed6`; запись в «Промт 100» — commit `c0edbf61f1738b0924f523064e95483a4e4e01c6`.
 - Решение не меняется: ни один новый источник не продвинут в runtime registry, формула не менялась, live capture и production writes не запускались. PR #83 остаётся Draft; BTC остаётся `not_evaluable`. Следующий шаг — продолжать документальную проверку ежедневной исторической доступности, методологии и прав для оставшихся активных фондов, прежде чем предлагать замену источника или изменение evaluator.
 
+## Дополнение 2026-10-16 — подтверждены последние квартальные данные SEC для ARKB и BTCO
+
+- ARKB SEC 10-Q за 2026-Q2: на 2026-06-30 — 97,015,000 акций, NAV/share $19.47, net assets $1.889 млрд.
+- BTCO SEC 10-Q за 2026-Q2: на 2026-06-30 — 5,370,000 акций, NAV/share $58.81, net assets $315.789 млн, 5,345 BTC. В отчёте раскрыты квартальные покупки 140,000 акций и погашения 1,510,000 акций (чистое изменение -1,370,000). Это квартальная сверка, а не ежедневный поток.
+- Матрица уточнена: [BTC ETF issuer source coverage](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md), commit `899ea29554f2502ce783f31ae64a8f4c3052d287`; «Промт 100» — commit `0830a9a17a7afcdb1284f0d68d3f67f091f6a6c9`.
+- Результаты VPS Build Rehearsal для предыдущих изменений матрицы подтверждены как успешные: runs [#38885834201](https://github.com/olegsh247-stack/Crypto/actions/runs/38885834201), [#38885861743](https://github.com/olegsh247-stack/Crypto/actions/runs/38885861743), [#38885892752](https://github.com/olegsh247-stack/Crypto/actions/runs/38885892752), [#38885971999](https://github.com/olegsh247-stack/Crypto/actions/runs/38885971999).
+- Дальнейший барьер прежний: не утверждать квартальные данные как ежедневный ряд; не менять registry, приоритет источников или формулу без полного контракта, reconciliation и подтверждения прав на хранение.
+
 ## Дополнение 2026-10-16 — покрытие первичных ETF источников ARKB и BTCO
 
 - ARKB: официальный обзор 21shares показывает датированные NAV/market price/AUM; SEC Q1 2026 сообщает shares outstanding на дату. Полный ежедневный исторический ряд акций/созданий/погашений не подтверждён.
