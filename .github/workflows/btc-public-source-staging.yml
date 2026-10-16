@@ -17,7 +17,9 @@ on:
       - "scripts/archive-btc-etf-evidence.mjs"
       - "scripts/archive-btc-etf-evidence.test.mjs"
       - "scripts/verify-btc-etf-evidence-archive.mjs"
-      - "scripts/verify-btc-etf-evidence-archive.test.mjs"\n      - "scripts/inspect-tftc-etf-json.mjs"\n      - "scripts/inspect-tftc-etf-json.test.mjs"
+      - "scripts/verify-btc-etf-evidence-archive.test.mjs"
+      - "scripts/inspect-tftc-etf-json.mjs"
+      - "scripts/inspect-tftc-etf-json.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
     inputs:
