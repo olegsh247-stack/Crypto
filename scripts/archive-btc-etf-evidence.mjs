@@ -90,18 +90,25 @@ export async function archiveBtcEtfEvidence({
   const copied = [{ path: "manifest.json", sha256: sha256(manifestBytes), bytes: manifestBytes.length }];
   const sourceEntries = [];
   const seenSourceBodies = new Set();
+  const seenSourceIds = new Set();
   for (const source of manifest.sources) {
     if (!source || typeof source.source_id !== "string" || !source.source_id.trim()) {
       throw new Error("Every manifest source must have a source_id");
     }
+    if (seenSourceIds.has(source.source_id)) throw new Error("Duplicate source_id in manifest: " + source.source_id);
+    seenSourceIds.add(source.source_id);
     if (source.url) validateSourceUrl(source.url, source.source_id);
     if (source.status === "CAPTURED" && typeof source.body_file !== "string") {
       throw new Error("Captured source is missing body_file: " + source.source_id);
     }
     if (source.body_file == null) continue;
     if (typeof source.body_file !== "string" || basename(source.body_file) !== source.body_file
+        || source.body_file.includes("/") || source.body_file.includes("\\\\")
         || source.body_file === "." || source.body_file === "..") {
       throw new Error("Unsafe body_file path for " + source.source_id);
+    }
+    if (typeof source.url !== "string" || !source.url.trim()) {
+      throw new Error("Source URL is required for every archived raw body: " + source.source_id);
     }
     if (seenSourceBodies.has(source.body_file)) throw new Error("Duplicate body_file in manifest: " + source.body_file);
     seenSourceBodies.add(source.body_file);
