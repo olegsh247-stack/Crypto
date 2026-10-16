@@ -131,3 +131,28 @@ This section resolves source selection at the documentation/policy level. It doe
 - BTC readiness remains **not_evaluable**.
 
 This document records public documentation review only. No live capture, API request, bulk download, database write, source registry update, scenario change, or deployment was performed.
+
+
+## Recheck: alternatives for completing the full daily panel — 2026-10-16
+
+This recheck was triggered because the earlier source-coverage matrix had been described too broadly as a completed stage. It is not complete until a daily historical holdings panel exists for all 13 active trusts.
+
+### Additional alternatives checked
+
+| Candidate | What the public documentation/data establishes | Why it does not close the 13-fund daily holdings panel |
+|---|---|---|
+| [CoinLaw ETF Holdings & Fees Tracker](https://coinlaw.io/crypto-etf-holdings-tracker/) | Reuses compiled issuer-reported data under CC BY 4.0 with attribution. Its stated cadence is a verified weekly snapshot, re-checked every 30 days; latest snapshot covers 12 BTC funds. | Reuse rights are clearer, but the published tracker is not an inception-to-date daily holdings archive. |
+| [Newhedge Spot Bitcoin ETF API](https://docs.newhedge.io/api) | Historical API; every data endpoint requires an API token. API terms restrict use to personal, non-commercial research and prohibit public presentation/mirroring without authorization. The reviewed holdings/flows chart families are separate; flow history is not equivalent to issuer-reported holdings. | Requires paid/account access and exact metric coverage/terms review; no token or payload was available. It is not approved as a 13-fund holdings source on documentation alone. |
+| [Glassnode US Spot ETF Balances](https://docs.glassnode.com/basic-api/endpoints/institutions) | Daily historical API supports date-range queries and CSV/JSON, but requires an API key and T1 metric access. The documented fund list does not establish complete coverage of the current 13-fund universe; public chart labels alone are not a downloadable verified payload. | No API credential/payload; coverage of OBTC and complete per-fund daily history has not been demonstrated. |
+| [Bitcoin ETF Data](https://www.btcetfdata.com/) | Current JSON exposes issuer as-of date, BTC holdings, daily change, update timestamp and error/stale fallback fields. | Current-state endpoint is not a historical export. |
+| [BitcoinETFdb](https://bitcoinetfdb.com/) | Public tracker displays daily flow columns and holdings for 11 tickers in the page snapshot. | It is not a verified complete 13-fund raw holdings archive; daily flow estimates cannot be relabelled as actual holdings, and redistribution/retention rights for a historical payload were not established. |
+| [Newhedge Onchain Holdings chart](https://newhedge.io/bitcoin/spot-bitcoin-etf-holdings) | Public chart advertises daily historical on-chain holdings and CSV/XLS/JSON controls; API documentation requires a token and describes an on-chain-observed series. | On-chain-labelled holdings are not automatically identical to issuer-reported holdings; exact ticker-level coverage, downloadable payload, methodology and permitted retention/reuse were not established for all 13. |
+
+### Corrected stage decision
+
+- **The historical holdings data stage is NOT DONE.** The source-research/documentation subtask is complete, but no full daily panel has been assembled.
+- No open, verified, rights-cleared dataset located in this review provides daily issuer-reported BTC holdings from inception through the latest available date for all 13 current tickers.
+- The only inspected CC BY 4.0 compiled source is quarter-end, not daily. The available daily file remains 162 recent observations across five tickers. SEC/XBRL rows remain quarterly controls, not a daily substitute.
+- Do not fabricate daily holdings by forward-filling quarterly points, treating absent values as zero, or cumulatively converting USD flows into exact holdings.
+- To finish the data deliverable, a provider must supply actual per-fund historical daily holdings for all 13 tickers, with dates/units/revision semantics and permission for the intended storage and research use. If data are to be committed to this public repository or shown publicly, redistribution/public-display rights must explicitly cover that use. Otherwise the raw panel must remain in approved private storage and only non-sensitive provenance/quality summaries can be committed here.
+- No database write, registry acceptance, scenario change, production ingestion, deployment, or PR merge was performed during this recheck.
