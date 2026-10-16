@@ -79,3 +79,12 @@ A fresh documentation check confirms the public CryptoETF API requires an API ke
 Reference: https://docs.cryptoetf.today/
 
 **Disposition:** keep as an unapproved candidate. Before any use, verify API-specific storage/reuse terms, the full fund universe and metric semantics, reporting-date coverage, revision behavior and exact reconciliation. Do not alter canonical source priority or `arithmetic_mean_2_sources` based on this review.
+
+
+## Rights review refresh — official terms checked (2026-10-16)
+
+- **TFTC ETF-flow dataset:** the live publisher page explicitly says the data may be quoted, charted and republished under CC BY 4.0 with attribution and a link. This remains the clearest route for a durable, attributed research artifact. The page also identifies upstream lineage: SoSoValue daily aggregates/ongoing per-fund flows and issuer disclosures tabulated by Farside for historical per-fund data. It is therefore not an independent confirmation of those providers.
+- **SoSoValue website terms:** the official Terms of Use page says automated monitoring/copying and manual monitoring/copying are prohibited absent express authorization, and restricts reproduction/redistribution of website data/content. The separately documented API contract is still not established by these website terms alone. Decision: do not retain raw SoSoValue website/API responses until API-specific permission/terms or written permission are obtained.
+- **Farside:** the reviewed official ETF-flow page describes the data but does not state a clear license for durable raw-response storage or redistribution. Decision remains unresolved; public accessibility is not treated as permission.
+
+This is a project risk-control review, not legal advice. No API calls, credentials, or live source captures were used. References: https://www.tftc.io/bitcoin-etf-flows ; https://sosovalue.gitbook.io/helpdocument/resources/terms-of-use ; https://farside.co.uk/.
