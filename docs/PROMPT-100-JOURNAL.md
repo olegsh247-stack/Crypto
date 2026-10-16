@@ -777,3 +777,12 @@
 **Результат:** BTCU — daily 2x exposure к reference Bitcoin ETPs с ежедневной ребалансировкой; 7RCC — mixed Bitcoin + carbon-credit futures; BITA — premium-income/options strategy с BTC и IBIT. По текущему определению ни один из этих продуктов не включается в core plain spot-BTC cohort. В этом pass других plain direct-holding US spot-BTC products сверх provisional 13-product cohort не найдено. Sources: https://www.sec.gov/Archives/edgar/data/1424958/000119312526239876/d110971d497k.htm ; https://www.sec.gov/Archives/edgar/data/1471824/000143774926027963/R65.htm ; https://www.sec.gov/Archives/edgar/data/2089969/000143774926027004/bitp20260630_10q.htm.
 
 **Решение:** сохранить явную границу cohort; не смешивать leveraged/reference-ETP exposure, mixed carbon-credit strategy и premium-income/options strategy с plain spot ETF flows без отдельного aggregate contract and double-counting controls. Перед любым будущим capture перепроверить official listings/status. BTC remains not_evaluable; no source/registry/formula/evaluator/production/scenario-state changes.
+
+
+## 2026-10-16 — official filing check: Franklin EZBC and Hedgeye HBIT
+
+**Действие:** проверены SEC filings и официальный сайт Franklin после обнаружения дополнительных Bitcoin-названий в документах.
+
+**Результат:** Franklin Bitcoin ETF — это уже учтённый фонд EZBC с inception 2024-01-11, а не отдельный новый продукт. Hedgeye Hedged Bitcoin ETF (HBIT) в prospectus от 2026-08-24 прямо указывает, что не инвестирует непосредственно в Bitcoin; экспозиция строится через другие BTC ETF/ETP и опционы. HBIT не включается в core direct-holding spot-BTC cohort, чтобы не смешивать продукт-обёртку с базовыми фондами и не допускать double-counting.
+
+**Решение:** count core cohort не меняется в этом pass. Перед любым будущим capture нужен повторный dated official listing-status check. Источники: https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS/franklin-bitcoin-etf/EZBC ; https://www.sec.gov/Archives/edgar/data/1992870/000199287026000002/posam.htm ; https://www.sec.gov/Archives/edgar/data/1771146/000177114626001708/ck0001771146-20260824.htm.
