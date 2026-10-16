@@ -16,6 +16,12 @@ on:
       - "scripts/prepare-btc-sosovalue-etf-candidates.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
+    inputs:
+      capture_sources:
+        description: "Fetch live public sources and upload a temporary review artifact (default: validation only)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -41,7 +47,7 @@ jobs:
         run: node --test scripts/prepare-btc-sosovalue-etf-candidates.test.mjs
 
   capture:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.capture_sources == true
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 3
