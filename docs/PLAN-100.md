@@ -2100,3 +2100,8 @@ The completed [BTC Public Source Staging run #38874163877](https://github.com/ol
 Добавлены `scripts/verify-btc-etf-evidence-archive.mjs` и тесты. Верификатор сверяет SHA-256, длины файлов, archive record и checksum manifest; отклоняет path traversal, symlinks и неучтённые файлы. Staging workflow подключён к тестам верификатора. Коммиты: `b886ca97f4ded7473131a4944a52c1e7100f2d97`, `8b8bed9ff56643cc2435641d833032e476b6f80c`, `cd2bfd3ab5e8cfb08838f0bb3ee93dc06c5aee89`, `934b74505dd9c4067e9988a26e9ac1b632514884`.
 
 На момент записи BTC Public Source Staging для HEAD `934b74505dd9c4067e9988a26e9ac1b632514884` находился в очереди; новый тестовый набор ещё не подтверждён CI. Верификация одного снимка не заменяет независимый backup/restore. Никаких live captures, реальных архивов, production writes или сценарных изменений; BTC остаётся `not_evaluable`.
+
+
+### Verifier CI correction (2026-10-16)
+
+The first staging run [#38876064841](https://github.com/olegsh247-stack/Crypto/actions/runs/38876064841) failed because recursive tree verification mistakenly treated the required `checksums.sha256` file as unmanifested. The other archive-writer tests and three of four verifier tests passed. Fixed the tree walker to allow the checksum manifest itself while continuing to reject other unmanifested files. Fix commit: `a51ae5b700c572fe076d8641b860f7022cee8d5a`. Repeat staging run [#38876188724](https://github.com/olegsh247-stack/Crypto/actions/runs/38876188724) was in progress when recorded; do not mark verifier tests green until the run completes.
