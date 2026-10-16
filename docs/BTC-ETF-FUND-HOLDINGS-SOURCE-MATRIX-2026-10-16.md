@@ -1,6 +1,6 @@
 # BTC ETF fund holdings source matrix — 2026-10-16
 
-**Scope:** public-source research for daily BTC holdings across the 12 potentially active US spot Bitcoin ETF products in the working universe. DEFI is retained as historical-only because the fund was liquidated in August 2026.
+**Scope:** historical holdings coverage for the 13 current US-listed direct-BTC spot trust products in the expanded research universe: IBIT, FBTC, GBTC, BTC, ARKB, BITB, HODL, BTCO, EZBC, BRRR, BTCW, MSBT, and OBTC. The prior 12-ticker working list omitted OBTC, whose SEC-listed trust status is documented from December 2025; include it in this research matrix. DEFI is historical-only (delisting Form 25-NSE filed 2026-08-24). BITA is excluded from this pure-spot-trust set because it also holds IBIT shares and writes options; BTCK is excluded because its mandate combines spot bitcoin with carbon-credit futures.
 **Status:** research-only. No live capture, API call, raw-data download, database write, registry change, scenario evaluation, or production acceptance was performed.
 **Decision:** no provider is approved by this review for production ingestion or permanent raw-payload archiving.
 
@@ -34,6 +34,35 @@
 | Ticker | Evidence | Decision |
 |---|---|---|
 | DEFI | Hashdex Bitcoin ETF was liquidated in August 2026; historical SEC filings remain useful for backtesting/control points. | Exclude from current active-fund coverage, retain in historical universe with an effective end date. |
+
+## Historical coverage inventory — checked 2026-10-16
+
+The following counts are from a public daily issuer-disclosure dataset and a separately maintained SEC-quarterly reconciliation dataset. They describe what is actually present in those datasets; they do not imply uninterrupted daily coverage from inception.
+
+Daily source inspected: [akpasz/btc-data — etf_holdings.json](https://github.com/akpasz/btc-data/blob/main/data/etf_holdings.json). Its README says values are parsed from issuer disclosures, and the source repository explicitly warns that data files remain subject to upstream terms. Current file has only a short recent observation window, not inception-to-date history.
+
+Quarterly source inspected: [akpasz/btc-data — etf_quarterly.json](https://github.com/akpasz/btc-data/blob/main/data/etf_quarterly.json), fetched at 2026-10-16T11:21:47Z. This is an SEC XBRL extraction/reconciliation layer and the README warns that each extracted concept must be checked against filings before quotation. Independently, [Satoshi Gazette Data Desk's quarterly ETF-trust dataset](https://satoshigazette.org/data/downloads/sg-etf-trusts.json) provides filing-linked quarter-end quantities under CC BY 4.0 for its compilation/annotations; it says rows are available for 14 of 16 trusts, through 2026-06-30, with missing quarters/trusts left absent rather than treated as zero.
+
+| Ticker | Daily observations in inspected issuer-derived file | Daily date span in that file | SEC/XBRL quarterly extraction | Verified historical interpretation |
+|---|---:|---|---|---|
+| IBIT | 31 | 2026-08-31–2026-10-14 | 6 rows, 2024-12-31–2026-06-30 | Daily source exists but only recent partial window; quarterly controls available |
+| FBTC | 0 | — | 2 rows, 2024-12-31–2025-12-31 | Daily history absent from inspected file; SEC filings exist beyond extractor's current coverage, so extraction is incomplete |
+| GBTC | 0 | — | 22 rows, 2017-12-31–2026-06-30 | Long quarterly history available; no daily series in inspected file |
+| BTC (Grayscale Mini) | 0 | — | 8 rows, 2024-09-30–2026-06-30 | Quarterly history available; no daily series in inspected file |
+| ARKB | 33 | 2026-09-01–2026-10-16 | 10 rows, 2024-03-31–2026-06-30 | Recent partial daily window plus quarterly controls |
+| BITB | 34 | 2026-09-01–2026-10-16 | Extractor error: no recognised BTC-quantity XBRL concept | Recent partial daily window; quarterly quantity needs manual filing-level extraction |
+| HODL | 33 | 2026-08-31–2026-10-15 | Extractor error: no recognised BTC-quantity XBRL concept | Recent partial daily window; quarterly quantity needs manual filing-level extraction |
+| BTCO | 0 | — | Extractor error: no recognised BTC-quantity XBRL concept | No daily series in inspected file; SEC quarter-end control values have been manually identified in prior review, but the automated extractor is incomplete |
+| BRRR | 0 | — | Extractor error: no recognised BTC-quantity XBRL concept | No daily series in inspected file; issuer has dated holdings display, but a daily history is not present here |
+| EZBC | 0 | — | 2 rows, 2026-03-31–2026-06-30 | Quarterly controls available; issuer XLS route exists, but daily historical snapshots are not present here |
+| BTCW | 0 | — | Extractor error: no recognised BTC-quantity XBRL concept | No daily series in inspected file; manual SEC quarter-end control identified in prior review |
+| MSBT | 0 | — | Extractor error: no recognised BTC-quantity XBRL concept | No daily series in inspected file; manual SEC quarter-end control identified in prior review |
+| OBTC | 31 | 2026-09-01–2026-10-14 | 2 rows, 2025-12-31–2026-06-30 | Active listed trust omitted from prior 12-ticker scope; only recent daily window plus two quarterly points in inspected files |
+| DEFI (historical-only) | 0 | — | Not read: report quantity units are ambiguous in the extractor | Delisting filed 2026-08-24; keep historical identity and delisting date, do not count as current coverage |
+
+**What this establishes:** the available issuer-derived daily file has 162 observations across five tickers, but covers only late August/September through 16 October 2026; it is not a complete historical panel. The automated SEC XBRL extractor returns usable quarterly rows for seven tickers (IBIT, FBTC, GBTC, BTC, ARKB, EZBC, OBTC) and fails to recognise BTC quantity concepts for five (BITB, HODL, BTCO, BRRR, BTCW, MSBT — six tickers; FBTC's extracted series is also incomplete relative to available filings). Therefore it cannot be the only quarterly control mechanism. The Satoshi Gazette dataset is the more auditable ready-to-reference quarterly table because each row carries the filing accession, document URL and locator; cite/attribute it under CC BY 4.0 when reusing its compilation.
+
+**Daily source decision:** no reviewed, reusable, permitted source presently supplies a complete daily history for all 13 products from each fund's inception to the current date. The matrix now distinguishes (a) actual recent daily rows, (b) SEC quarter-end controls, (c) issuer current snapshots, and (d) missing coverage. No missing value is imputed as zero. Glassnode's public chart advertises a daily US Spot ETF Balances series and CSV/JSON/API export controls ([chart](https://studio.glassnode.com/charts/institutions.UsSpotEtfBalancesAll?a=BTC&zoom=all)), sourced from issuer disclosures, but an accessible export file, full per-ticker date coverage, and reuse/retention terms were not established by this review; it remains a candidate, not a loaded dataset.
 
 ## Cross-source comparison rules
 
@@ -95,8 +124,8 @@ This section resolves source selection at the documentation/policy level. It doe
 ## Final status
 
 - Issuer routes/current holdings views: confirmed for some funds, incomplete across the full universe.
-- Full daily historical holdings for all 12 active funds: a third-party endpoint is documented, but complete date coverage and numerical correctness were not independently verified; no approved bulk archive source is cleared under current reviewed terms.
-- Same-date numeric reconciliation across all funds and all candidate providers: **not completed**; no data capture was performed.
+- Full daily historical holdings for all 13 current direct-BTC trust products: **not available as one complete verified panel**. The inspected issuer-derived daily file contains only a recent partial window for five tickers (including OBTC), while SEC quarterly controls cover a subset and have extraction gaps.
+- Same-date numeric reconciliation across all 13 funds and all candidate providers: **not completed**; the inspected daily and quarterly datasets have no overlapping same-date rows for the daily window, and source-level values still require controlled reconciliation.
 - Permanent raw-data archive permission: **not established as a complete set**; Bitbo is restricted to internal/private use under its published API guidance, and CoinGlass requires written consent for bulk database/redistribution use.
 - Production ingestion and registry acceptance: **not approved**.
 - BTC readiness remains **not_evaluable**.
