@@ -124,9 +124,15 @@ export function evaluateBtcEtfResearchEligibility(previous, current, reportingDa
 
   // Source-row stability is necessary but not sufficient: evidence must be durably recoverable,
   // and the retained artifact for each source must have an explicit rights clearance reference.
-  if (controls.archive_restore_verified !== true) {
-    return result("BLOCKED_DURABLE_ARCHIVE", ["DURABLE_ARCHIVE_AND_INDEPENDENT_RESTORE_MUST_BE_VERIFIED"], details);
+  if (controls.archive_restore_verified !== true
+    || typeof controls.archive_restore_evidence_ref !== "string"
+    || !controls.archive_restore_evidence_ref.trim()) {
+    return result("BLOCKED_DURABLE_ARCHIVE", [
+      "DURABLE_ARCHIVE_AND_INDEPENDENT_RESTORE_REQUIRE_VERIFICATION_AND_EVIDENCE_REFERENCE"
+    ], details);
   }
+  details.archive_restore_evidence_ref = controls.archive_restore_evidence_ref.trim();
+  const sourceRightsEvidenceRefs = {};
   for (const source of REQUIRED_SOURCES) {
     const rights = controls.source_rights?.[source.source_id];
     if (rights?.status !== "CLEARED" || typeof rights.evidence_ref !== "string" || !rights.evidence_ref.trim()) {
@@ -135,7 +141,9 @@ export function evaluateBtcEtfResearchEligibility(previous, current, reportingDa
         rights_blocked_source_id: source.source_id
       });
     }
+    sourceRightsEvidenceRefs[source.source_id] = rights.evidence_ref.trim();
   }
+  details.source_rights_evidence_refs = sourceRightsEvidenceRefs;
   return result("ELIGIBLE_FOR_REVIEW", [], details);
 }
 
