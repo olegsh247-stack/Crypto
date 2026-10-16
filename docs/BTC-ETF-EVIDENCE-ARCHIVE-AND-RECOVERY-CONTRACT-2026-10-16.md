@@ -110,3 +110,6 @@ A subsequent staging run found that the writer creates an empty `normalized/` di
 
 
 The verifier test suite now also rehearses copying a generated fixture snapshot to a separate restore directory and verifying the restored copy. This is a same-CI-runner fixture test only, not independent backup/restore. Staging result for this test is pending.
+
+
+CI confirmation: [BTC Public Source Staging #38876362752](https://github.com/olegsh247-stack/Crypto/actions/runs/38876362752) passed the archive writer and verifier tests, including a fixture copy/restore rehearsal. Live capture was skipped. This does not certify an independent backup/restore.
