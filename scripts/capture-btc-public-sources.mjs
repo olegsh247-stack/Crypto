@@ -443,6 +443,74 @@ await capture({
   }
 });
 
+// SoSoValue official keyed API. If no secret is configured, record the blocker without
+// making an unauthenticated request. Never print or persist the API key itself.
+async function captureSoSoValueEtf() {
+  const name = "sosovalue-btc-etf-summary-history";
+  const key = process.env.SOSOVALUE_API_KEY;
+  const url = "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US&limit=300";
+  const item = {
+    name,
+    metric_id: "institutional.etf_net_flow",
+    source_id: "institutional.sosovalue",
+    url,
+    retrieved_at: new Date().toISOString(),
+    status: key ? "FAILED" : "BLOCKED_NO_API_KEY",
+    role: "official keyed API candidate; cross-check only, not canonical ETF flow"
+  };
+  if (!key) {
+    item.note = "SOSOVALUE_API_KEY is not configured. No network request was made; add the free key as a GitHub Actions secret or secure environment variable. Never commit the key.";
+    manifest.sources.push(item);
+    return;
+  }
+  try {
+    const response = await fetch(url, {
+      headers: { "accept": "application/json", "x-soso-api-key": key, "user-agent": "Crypto-BTC-Source-Review/1.0" },
+      signal: AbortSignal.timeout(20000)
+    });
+    const body = await response.text();
+    item.http_status = response.status;
+    item.content_type = response.headers.get("content-type");
+    item.http_date = response.headers.get("date");
+    item.provider_last_modified = response.headers.get("last-modified");
+    item.etag = response.headers.get("etag");
+    item.body_sha256 = await sha256(body);
+    item.source_payload_sha256 = item.body_sha256;
+    item.body_file = name + ".raw";
+    await writeFile(join(outDir, item.body_file), body, "utf8");
+    if (!response.ok) throw new Error("SoSoValue API HTTP " + response.status + ": " + body.slice(0, 300));
+    const decoded = JSON.parse(body);
+    const rows = Array.isArray(decoded) ? decoded : decoded.data ?? decoded.result ?? decoded.records;
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("SoSoValue response has no ETF summary-history rows");
+    const normalized = rows.map(row => ({
+      date: row.date ?? null,
+      total_net_inflow_usd: row.total_net_inflow ?? null,
+      total_net_inflow_usd_million: Number.isFinite(Number(row.total_net_inflow)) ? Number(row.total_net_inflow) / 1e6 : null,
+      total_net_assets_usd: row.total_net_assets ?? null,
+      total_value_traded_usd: row.total_value_traded ?? null
+    }));
+    if (normalized.some(row => !/^\d{4}-\d{2}-\d{2}$/.test(String(row.date)))) throw new Error("SoSoValue response contains a missing or invalid trading date");
+    item.retrieved_at = new Date().toISOString();
+    item.status = "CAPTURED";
+    item.row_count = normalized.length;
+    item.latest_rows = normalized.slice(0, 14);
+    item.series_order = "provider_response_reverse_chronological_preserved";
+    item.source_updated_at = response.headers.get("last-modified");
+    item.observation_timestamp_semantics = "trading date only; exact publication/observation time and finality not supplied by documented response";
+    item.note = "Daily aggregate net inflow is USD in source and converted to USD million/day for comparison. Non-trading days are omitted. Candidate only: reconcile dates/values with Farside and CryptoETF.today; no canonical priority or ingestion approval.";
+  } catch (error) {
+    item.error = error instanceof Error ? error.message : String(error);
+    const errorBody = JSON.stringify({ error: item.error, captured_at: item.retrieved_at });
+    item.body_sha256 = await sha256(errorBody);
+    item.source_payload_sha256 = item.body_sha256;
+    item.body_file = name + ".raw";
+    await writeFile(join(outDir, item.body_file), errorBody, "utf8");
+  }
+  manifest.sources.push(item);
+}
+
+await captureSoSoValueEtf();
+
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
 console.log(JSON.stringify({
   manifest: "tmp/btc-source-review/manifest.json",
