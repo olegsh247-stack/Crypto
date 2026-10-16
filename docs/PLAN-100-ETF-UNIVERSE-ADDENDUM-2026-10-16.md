@@ -39,8 +39,8 @@ SEC Q2 2026 10-Q сообщает на 2026-06-30: 17,650,000 shares, Principal 
 Это периодические контрольные точки, не ежедневный flow series. Не вычислять потоки из изменения AUM, не менять registry/formula/evaluator, не запускать capture или сценарную оценку. Матрица и «Промт 100» обновлены; BTC остаётся `not_evaluable`.
 
 
-## Связанный макро-блокер DXY — уточнение контракта (2026-10-16)
+## Связанный макро-контекст DXY — необязательный контекст (2026-10-16)
 
 Проверка официальных методологий подтвердила, что ICE U.S. Dollar Index (DXY) и Fed/FRED nominal broad dollar index `DTWEXBGS` — разные метрики. ICE DXY использует шесть валют с фиксированными весами (EUR 57.6%, JPY 13.6%, GBP 11.9%, CAD 9.1%, SEK 4.2%, CHF 3.6%). Fed broad index — daily trade-weighted index на базе Jan 2006=100 с более широкой корзиной торговых партнёров и пересматриваемыми весами. Нельзя подменять один другим без явного reviewed решения. Подробный контрактный обзор: [BTC DXY source-contract review](BTC-DXY-SOURCE-CONTRACT-REVIEW-2026-10-16.md).
 
-Следующий шаг по DXY — проверить, какой индекс задан в текущем canonical BTC input registry, и только затем подтвердить разрешённый data route, close timestamp/time zone, revision semantics и retention rights. Runtime registry и scenario logic не менялись; capture не выполнялся. BTC остаётся `not_evaluable`.
+Для первого сценария дополнительное расследование DXY не требуется. Yahoo `DX-Y.NYB` — только ручной research/display reference; FRED `DTWEXBGS` можно использовать только под собственным названием и не записывать в `macro.dxy`. Если контекст недоступен, пропустить его и продолжать сценарий. ETF gate остаётся отдельным блокером. Runtime registry и scenario logic не менялись; capture не выполнялся.
