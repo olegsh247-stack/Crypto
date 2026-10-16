@@ -71,6 +71,23 @@ test("rejects a missing captured source body", async t => {
   await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)));
 });
 
+test("rejects duplicate source IDs and archived bodies without a source URL", async t => {
+  const f = await fixture(t);
+  const manifestPath = join(f.inputDir, "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.sources.push({ ...manifest.sources[0], body_file: "farside-copy.raw" });
+  await writeFile(join(f.inputDir, "farside-copy.raw"), "second response");
+  manifest.sources[1].body_sha256 = sha256("second response");
+  manifest.sources[1].source_payload_sha256 = sha256("second response");
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /Duplicate source_id/);
+
+  manifest.sources = [manifest.sources[0]];
+  delete manifest.sources[0].url;
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /Source URL is required/);
+});
+
 test("rejects a source body whose bytes do not match the declared hash", async t => {
   const f = await fixture(t, { declaredHash: "f".repeat(64) });
   await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /body hash mismatch/);
