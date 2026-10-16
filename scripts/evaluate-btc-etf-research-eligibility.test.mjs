@@ -29,9 +29,16 @@ function snapshot({ at, farside = -484.9, tftc = -487.1, farsideStatus = "CAPTUR
 
 const firstTime = "2026-10-14T10:00:00.000Z";
 const after24h = new Date(Date.parse(firstTime) + BTC_ETF_STABILITY_WINDOW_MS).toISOString();
+const verifiedControls = {
+  archive_restore_verified: true,
+  source_rights: {
+    "institutional.primary": { status: "CLEARED", evidence_ref: "reviewed-license-or-written-permission:Farside" },
+    "institutional.tftc": { status: "CLEARED", evidence_ref: "CC-BY-4.0:TFTC-open-JSON" }
+  }
+};
 
 test("allows a review candidate only after two unchanged, complete source captures 24h apart", () => {
-  const result = evaluateBtcEtfResearchEligibility(snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07");
+  const result = evaluateBtcEtfResearchEligibility(snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07", verifiedControls);
   assert.equal(result.status, "ELIGIBLE_FOR_REVIEW");
   assert.equal(result.reviewer_approval_required, true);
   assert.equal(result.provider_finality_claimed, false);
@@ -63,4 +70,29 @@ test("keeps independent source values even when they differ", () => {
   const result = evaluateBtcEtfResearchEligibility(snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07");
   assert.deepEqual(result.source_checks.map(x => x.value_usd_million), [-484.9, -487.1]);
   assert.equal(result.source_checks.some(x => x.value_usd_million === -486), false);
+});
+
+test("blocks otherwise stable rows when durable archive restore is not verified", () => {
+  const result = evaluateBtcEtfResearchEligibility(
+    snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07",
+    { ...verifiedControls, archive_restore_verified: false }
+  );
+  assert.equal(result.status, "BLOCKED_DURABLE_ARCHIVE");
+});
+
+test("blocks otherwise stable rows when source-specific storage/reuse rights are unresolved", () => {
+  const controls = structuredClone(verifiedControls);
+  controls.source_rights["institutional.primary"] = { status: "UNRESOLVED", evidence_ref: "" };
+  const result = evaluateBtcEtfResearchEligibility(
+    snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07", controls
+  );
+  assert.equal(result.status, "BLOCKED_SOURCE_RIGHTS");
+  assert.equal(result.rights_blocked_source_id, "institutional.primary");
+});
+
+test("rejects impossible calendar dates", () => {
+  const result = evaluateBtcEtfResearchEligibility(
+    snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-02-31", verifiedControls
+  );
+  assert.equal(result.status, "BLOCKED_INVALID_REPORTING_DATE");
 });
