@@ -29,6 +29,8 @@ jobs:
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
       - name: Capture public source responses for review only
+        env:
+          SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
         run: node scripts/capture-btc-public-sources.mjs
       - name: Prepare normalized observation candidates (review only)
         run: node scripts/prepare-btc-observation-candidates.mjs
