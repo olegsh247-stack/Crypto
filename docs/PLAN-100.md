@@ -1960,3 +1960,12 @@ This is a decision proposal, not an adopted policy. Archive location/retention, 
 **Correction:** an earlier staging run exposed a stale v1 snapshot-ID prefix assertion after the v2 identity change; commit `3b39f0d` corrected the validator and the current staging run passed.
 
 **Limits and next gate:** this is CI/test-environment evidence, not provider finality, durable archive/retention, production cutover, or scenario eligibility. PR #83 remains Draft/open/unmerged; BTC remains `not_evaluable`. Do not dispatch live capture or change production data, ingestion, scenario state, scores or probabilities without explicit authorization. Continue with the unresolved ETF retention/revision/eligibility decisions and BTC source-contract blockers.
+
+
+## Plan 100 checkpoint — duplicate ETF snapshot rows rejected; audit aligned with readiness (2026-10-16)
+
+**Implemented on PR #83 branch:** commit 7c284df62e1625b587239a03715dc99b44361742 makes the offline snapshot builder fail closed on duplicate ETF source identities and duplicate source/reporting-date keys; exported snapshot validation rejects duplicate normalized row keys instead of allowing JavaScript Map construction to silently overwrite one row. Regression tests were added. [BTC Public Source Staging #38851210312](https://github.com/olegsh247-stack/Crypto/actions/runs/38851210312) passed for that commit.
+
+**Additional audit correction:** commit 226a3c77d8bd0ee53d4851dac5b502283bb2bdae updates the read-only PostgreSQL provenance audit so ETF history coverage uses explicit period_start reporting dates and the registered canonical Farside source/allowed URL patterns; it no longer substitutes observed_at for a missing reporting date or counts TFTC as canonical. Documentation now distinguishes the 14-day history-coverage diagnostic from the separate 36-hour latest-row and revision/finality gates. [VPS API Build Rehearsal #38851337098](https://github.com/olegsh247-stack/Crypto/actions/runs/38851337098) completed successfully, including PostgreSQL migrations, the read-only BTC provenance audit, backup/restore and all API/Worker E2E steps.
+
+**Limits:** these are code/CI and disposable-PostgreSQL results only. No live capture, production DB write, ingestion, deployment, scenario-state/probability change or PR merge occurred. ETF remains blocked pending retention/revision/eligibility decisions; DXY remains blocked pending an approved metric/source choice; BTC remains not_evaluable.
