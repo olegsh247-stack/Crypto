@@ -732,3 +732,12 @@
 **Результат:** SEC подтверждает только периодические capital-activity totals: EZBC — 150,000 issued / 1,250,000 redeemed за Q2 2026; Grayscale Mini BTC — 9,410,000 / 3,470,000 за Q2 и 22,950,000 / 9,740,000 за первое полугодие; MSBT — 17,900,000 / 250,000 от начала операций 2026-04-07 до 2026-06-30. Ни один filing не устанавливает полную ежедневную историю flows с row-level publication timestamps и correction/finality contract.
 
 **Решение:** оставить все три маршрута periodic primary cross-check only. Не распределять period totals по дням, не выводить flows из holdings/AUM/NAV deltas и не считать missing observations нулями. API/download/capture/archive writes не выполнялись; registry/formula/evaluator/production/scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — Osprey Bitcoin Trust (OBTC): active-universe correction
+
+**Действие:** проверены официальная страница спонсора и SEC Q2 2026 10-Q Osprey Bitcoin Trust. Обнаружено, что ранее зафиксированный active-universe список пропустил OBTC. В матрицу покрытия и План 100 добавлено включение OBTC с даты конверсии в биржевой ETF 2025-12-19; предшествующая OTCQX-история не приравнивается к ETF-периоду.
+
+**Результат:** SEC сообщает 2,940,535 shares на 2026-06-30; за первое полугодие 2026 погашено 1,920,000 shares, за Q2 отдельно указано нулевое создание/погашение. Это периодические данные, не ежедневная flow-series. Daily sponsor snapshots не доказывают полную историю creations/redemptions или разрешённую методику daily USD flows.
+
+**Решение:** исправить universe, но оставить OBTC periodic-primary-cross-check only. Не выводить flows из holdings/NAV/AUM deltas и не распределять периодические итоги по дням. No API/download/capture/archive writes; no registry/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
