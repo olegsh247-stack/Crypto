@@ -92,3 +92,10 @@ Until these are decided and the archive plus independent backup/restore are oper
 7. Only after the archive, backup/restore, source-rights and ETF review gates are satisfied may a human reviewer consider an ETF date for offline research. The writer's success alone does not prove backup/restore, provider finality, or scenario eligibility.
 
 **Explicitly out of scope:** live ingestion, database writes, automatic source promotion, scenario evaluation/state/probability/monitoring changes, deployment, and PR merge.
+
+
+## 8. Offline integrity verifier (2026-10-16)
+
+The verifier is implemented at `scripts/verify-btc-etf-evidence-archive.mjs`. Run it against a snapshot directory with `node scripts/verify-btc-etf-evidence-archive.mjs --snapshot-dir <snapshot-directory>`. It checks the archive record, checksum manifest, SHA-256 hashes and byte lengths, required file metadata, path traversal, symlinks and unmanifested files. Its fixture tests cover an intact archive, modified or missing source bodies, and checksum path traversal. The verifier is wired into `BTC Public Source Staging (Read Only)`.
+
+This verifies one local snapshot only. It does not create a backup or prove restoration from an independent failure domain. Real archive/backup verification remains blocked until source-specific raw-retention rights are cleared and private storage plus an independent encrypted backup are configured.
