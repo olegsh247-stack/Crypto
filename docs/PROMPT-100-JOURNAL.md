@@ -552,3 +552,14 @@
 **Решение:** EZBC остаётся кандидатом для периодической сверки, не источником ежедневных flows. Не рассчитывать flows из изменения AUM, не менять registry/formula/evaluator и не запускать capture. BTC остаётся `not_evaluable`; live capture, ingestion, production writes, scenario evaluation/state/probabilities, deployment и merge не выполнялись.
 
 **Источники:** [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1992870/000114036126033208/ef20077161_10q.htm); [Franklin product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS); [матрица источников](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md).
+
+
+## 2026-10-16 — повторно проверены две BTC/ETF CI-репетиции
+
+**Действие:** проверены фактические job/step-результаты GitHub Actions для [ETF-сверки HODL/BRRR/BTCW #38890141384](https://github.com/olegsh247-stack/Crypto/actions/runs/38890141384) и [синхронизации матрицы #38890191351](https://github.com/olegsh247-stack/Crypto/actions/runs/38890191351).
+
+**Результат:** обе проверки завершились со статусом `completed / success`. В каждой успешно выполнен `build-and-e2e`, включая VPS-only guard, сборки API/Worker, проверку реестра BTC inputs, read-only provenance audit, репетицию идемпотентности/дубликатов, PostgreSQL backup/restore rehearsal и API/E2E-контракты. Это CI-репетиции; они не доказывают восстановление реального production-набора или готовность постоянного внешнего архива.
+
+**Текущее решение:** PR #83 по-прежнему открыт Draft и не объединён. По его актуальному описанию, новая проверка архива имеет отдельное ограничение: source rights, долговременное хранилище и независимое восстановление остаются незакрытыми. Данные источников в runtime-реестре не принимались; live capture, production writes, ingestion, scenario evaluation/state/probabilities и deployment не выполнялись. BTC остаётся `not_evaluable`.
+
+**Следующий шаг по Плану 100:** продолжить проверку оставшихся первичных источников по каждому фонду, отдельно фиксируя ежедневную полноту, дату наблюдения против времени публикации/получения, историю исправлений/finality и разрешение на долговременное хранение. Не вычислять flows из изменения AUM и не считать квартальные SEC-отчёты заменой ежедневному ряду.
