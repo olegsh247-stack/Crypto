@@ -94,3 +94,19 @@ test("source-reviewed October 12 fixture remains Base under rule v2", () => {
   assert.equal(r.scenario_type, "base");
   assert.equal(r.can_persist_scenario_state, false);
 });
+
+
+test("missing or unknown readiness status fails closed without scenario output", () => {
+  for (const readiness_status of [undefined, null, "", "ready", "blocked", "unknown"]) {
+    const input = { ...ready };
+    if (readiness_status === undefined) delete input.readiness_status;
+    else input.readiness_status = readiness_status;
+    const r = evaluateBtcScenarioV2(input);
+    assert.equal(r.status, "not_evaluable");
+    assert.equal(r.reason, "input_quality_gate_not_passed");
+    assert.equal(r.can_persist_scenario_state, false);
+    assert.equal("scenario_type" in r, false);
+    assert.equal("directional_score" in r, false);
+    assert.equal("baseline_probabilities_changed" in r, false);
+  }
+});
