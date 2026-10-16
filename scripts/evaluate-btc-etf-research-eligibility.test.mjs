@@ -36,6 +36,7 @@ const firstTime = "2026-10-14T10:00:00.000Z";
 const after24h = new Date(Date.parse(firstTime) + BTC_ETF_STABILITY_WINDOW_MS).toISOString();
 const verifiedControls = {
   archive_restore_verified: true,
+  archive_restore_evidence_ref: "independent-restore-rehearsal:fixture-evidence",
   source_rights: {
     "institutional.primary": { status: "CLEARED", evidence_ref: "reviewed-license-or-written-permission:Farside" },
     "institutional.tftc": { status: "CLEARED", evidence_ref: "CC-BY-4.0:TFTC-open-JSON" }
@@ -149,4 +150,26 @@ test("CLI writes a reproducible offline eligibility report and fails closed with
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+
+test("blocks archive restore claims without an evidence reference", () => {
+  const controls = { ...verifiedControls, archive_restore_evidence_ref: "  " };
+  const result = evaluateBtcEtfResearchEligibility(
+    snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07", controls
+  );
+  assert.equal(result.status, "BLOCKED_DURABLE_ARCHIVE");
+  assert.equal(result.reasons.includes("DURABLE_ARCHIVE_AND_INDEPENDENT_RESTORE_REQUIRE_VERIFICATION_AND_EVIDENCE_REFERENCE"), true);
+});
+
+test("eligibility report carries the archive and source-rights evidence references", () => {
+  const result = evaluateBtcEtfResearchEligibility(
+    snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-10-07", verifiedControls
+  );
+  assert.equal(result.status, "ELIGIBLE_FOR_REVIEW");
+  assert.equal(result.archive_restore_evidence_ref, verifiedControls.archive_restore_evidence_ref);
+  assert.deepEqual(result.source_rights_evidence_refs, {
+    "institutional.primary": verifiedControls.source_rights["institutional.primary"].evidence_ref,
+    "institutional.tftc": verifiedControls.source_rights["institutional.tftc"].evidence_ref
+  });
 });
