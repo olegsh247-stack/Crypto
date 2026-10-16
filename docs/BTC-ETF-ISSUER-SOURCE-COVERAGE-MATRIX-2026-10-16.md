@@ -12,7 +12,7 @@ A change in net assets is **not** equivalent to daily net flow because BTC price
 
 ## Current-universe caution
 
-The initial US spot BTC ETF cohort included IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC, Grayscale Mini BTC, and Hashdex DEFI. Morgan Stanley Bitcoin Trust (MSBT) began trading on NYSE Arca on 2026-04-08 and must also be included from launch. Hashdex DEFI was delisted effective **2026-09-03**; exclude it from the active aggregate after that date but preserve its historical applicability. Reconfirm the active universe before any future capture.
+The initial US spot BTC ETF cohort included IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC, Grayscale Mini BTC, and Hashdex DEFI. Morgan Stanley Bitcoin Trust (MSBT) began trading on NYSE Arca on 2026-04-08 and must also be included from launch. Osprey Bitcoin Trust (OBTC) must be included from its conversion to a Nasdaq-listed ETF on **2025-12-19**; its earlier OTCQX-traded trust history is a different applicability period. Hashdex DEFI was delisted effective **2026-09-03**; exclude it from the active aggregate after that date but preserve its historical applicability. The active review universe therefore includes OBTC and MSBT and excludes delisted Hashdex DEFI after its delisting date. Reconfirm the full universe before any future capture.
 
 ## Initial coverage matrix
 
@@ -219,3 +219,14 @@ This was a public-document review only. No API calls, downloads, source captures
 **Gate result:** all three SEC routes are useful as dated/periodic primary cross-checks but do not satisfy the canonical daily ETF-flow source gate. These period totals must not be distributed across individual days or converted into daily flows. Missing daily observations remain unknown, not zero. Automated collection, raw-response retention, private backup/restore, and downstream publication rights remain separately unverified.
 
 **Decision unchanged:** no source promotion or changes to source/metric registries, formula, evaluator, production data, or scenario state. BTC remains `not_evaluable`; PR #83 remains Draft/open/unmerged.
+
+
+## Follow-up — Osprey Bitcoin Trust / OBTC universe correction (2026-10-16)
+
+**Universe correction:** add Osprey Bitcoin Trust (ticker **OBTC**) to the active US spot-Bitcoin ETP review universe from its conversion to an exchange-traded ETF on 2025-12-19. Its current sponsor page identifies OBTC as a Nasdaq-listed product holding Bitcoin directly; the trust existed earlier as an OTCQX-quoted product, so its applicability start date must not be backdated to the original trust inception. This corrects the earlier active-universe caution, which omitted OBTC. [Sponsor product page](https://www.rexshares.com/OBTC/).
+
+**Primary-source evidence:** the SEC Q2 2026 10-Q reports 2,940,535 shares outstanding at 2026-06-30 and shows 1,920,000 shares redeemed during the six months ended 2026-06-30; the quarter itself reports zero creations and zero redemptions. It also explains that baskets are created/redeemed based on bitcoin attributable per share and that the trust uses an index-based NAV for these transactions. [SEC Q2 2026 10-Q](https://www.sec.gov/Archives/edgar/data/1767057/000149315226037040/form10-q.htm).
+
+**Gate result:** this is a useful period-level primary cross-check, not a daily flow series. Sponsor page daily snapshots (NAV, shares outstanding and holdings as-of date) do not by themselves establish complete historical daily creation/redemption events or a defensible daily USD-flow calculation. Do not infer daily flows from changes in holdings, NAV or AUM; do not spread six-month redemption totals across dates. Publication timestamps, corrections/revisions, systematic-capture permission, raw retention and independent restore rights remain unverified.
+
+**Decision:** include OBTC in the fund-universe audit from 2025-12-19, but keep it periodic-primary-cross-check only. No registry/source-priority/formula/evaluator/production/scenario-state changes; no API calls, downloads, capture or archive writes. BTC remains `not_evaluable`; PR #83 remains Draft/open/unmerged.
