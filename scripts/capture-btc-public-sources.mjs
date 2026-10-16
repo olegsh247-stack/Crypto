@@ -239,57 +239,30 @@ await capture({
   }
 });
 
-// Yahoo Finance DXY daily chart: capture for review only. This endpoint is not
-// represented as an official/stable API and this result is not ingestion-approved.
-// Use the latest non-null daily close and preserve the provider's candle timestamp;
-// never substitute FRED's broad trade-weighted USD index for DXY.
-await capture({
+// Yahoo Finance DXY was previously reachable, but its general Terms of Service prohibit
+// automated data collection without prior express permission. Do not keep scraping the
+// undocumented chart endpoint. Preserve the source as a blocked candidate until permission
+// or a licensed/official feed is established; this record performs no network request.
+manifest.sources.push({
   name: "yahoo-finance-dxy-daily",
-  metricId: "macro.dxy",
-  sourceId: "macro.yahoo_finance",
+  metric_id: "macro.dxy",
+  source_id: "macro.yahoo_finance_candidate",
   url: "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=5d&interval=1d",
-  parse: body => {
-    const payload = JSON.parse(body);
-    const chartError = payload?.chart?.error;
-    if (chartError) throw new Error(`Yahoo Finance chart error: ${chartError.code ?? "unknown"} ${chartError.description ?? ""}`.trim());
-    const result = payload?.chart?.result?.[0];
-    if (!result || !Array.isArray(result.timestamp) || !Array.isArray(result.indicators?.quote?.[0]?.close)) {
-      throw new Error("Yahoo Finance DXY chart response missing timestamps or daily closes");
-    }
-    const closes = result.indicators.quote[0].close;
-    let latestIndex = -1;
-    for (let i = 0; i < result.timestamp.length; i++) {
-      if (Number.isFinite(Number(closes[i])) && Number(closes[i]) > 0) latestIndex = i;
-    }
-    if (latestIndex < 0) throw new Error("Yahoo Finance DXY chart has no positive daily close");
-    const epochSeconds = Number(result.timestamp[latestIndex]);
-    const close = Number(closes[latestIndex]);
-    if (!Number.isFinite(epochSeconds) || !(close > 0)) throw new Error("Yahoo Finance DXY close or timestamp is invalid");
-    const meta = result.meta ?? {};
-    return {
-      ticker: "DX-Y.NYB",
-      quote_unit: "index_points",
-      daily_close: close,
-      latest_daily_close_observed_at: new Date(epochSeconds * 1000).toISOString(),
-      observed_at: new Date(epochSeconds * 1000).toISOString(),
-      candle_epoch_seconds: epochSeconds,
-      chart_interval: "1d",
-      chart_range: "5d",
-      currency: meta.currency ?? null,
-      exchange_name: meta.exchangeName ?? null,
-      instrument_type: meta.instrumentType ?? null,
-      provider_regular_market_time: Number.isFinite(Number(meta.regularMarketTime))
-        ? new Date(Number(meta.regularMarketTime) * 1000).toISOString() : null,
-      source_row_key: `DX-Y.NYB:1d:${epochSeconds}`,
-      source_row_key_scope: "ticker_interval_candle_timestamp",
-      source_row_identity_status: "derived_from_yahoo_chart_timestamp",
-      methodology: "yahoo-finance-chart-dxy-latest-nonnull-daily-close-review-v1",
-      methodology_version: "1",
-      chart_candles_in_response: result.timestamp.length,
-      role: "review-only DXY candidate; source approval and access terms not yet accepted",
-      note: "observed_at is the provider's daily candle timestamp, not retrieval time or a guaranteed publication timestamp; candidate remains blocked from persistence pending source/contract approval."
-    };
-  }
+  retrieved_at: new Date().toISOString(),
+  status: "BLOCKED_ACCESS_TERMS",
+  role: "manual/review-only candidate; automated capture disabled",
+  ticker: "DX-Y.NYB",
+  chart_interval: "1d",
+  quote_unit: "index_points",
+  contract: {
+    value: "latest completed daily Close, not Adj Close or intraday regularMarketPrice",
+    session_date: "provider candle date interpreted in exchange timezone; preserve separately from UTC timestamp",
+    candle_timestamp_semantics: "Yahoo chart timestamp is a candle/session label, not proven actual close time or publication timestamp",
+    observed_at: null,
+    freshness_policy: "metric registry max age 48h is not computable from candle label alone; require a trustworthy close/publication timestamp or explicitly approved session-age rule",
+    access: "no automated requests until Yahoo grants express prior permission or a permitted licensed API/feed is used"
+  },
+  note: "No HTTP request is made by this run. Previously captured Yahoo chart data is historical review evidence only and must not be refreshed or persisted as a canonical observation."
 });
 
 await capture({
