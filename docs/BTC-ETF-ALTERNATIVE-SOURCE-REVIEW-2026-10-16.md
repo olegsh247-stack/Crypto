@@ -190,3 +190,14 @@ Reviewed the provider's published Terms & Conditions (updated 2023-07-15): https
 The data contract remains technically promising for a separately labelled comparison (USD, US trading-day calendar, window_revised for fund-reported flows, distinct full_replace on-chain series), but technical semantics do not clear legal/contractual rights. Newhedge is not promoted or counted as an independent vote. Canonical source order, metric registry, formula/evaluator, production data and scenario state remain unchanged; BTC remains not_evaluable.
 
 References: https://newhedge.io/terms-and-conditions ; https://docs.newhedge.io/api ; https://docs.newhedge.io/api/spot-bitcoin-etf-flows
+
+
+## 2026-10-16 follow-up — CryptoETF.today API candidate and terms boundary
+
+Reviewed the provider's API page, API reference and Terms of Service: https://cryptoetf.today/en/api ; https://docs.cryptoetf.today/ ; https://cryptoetf.today/en/terms. The API is explicitly presented for apps and scripts, but its public terms also say the Service's content may not be reproduced, redistributed, or made into derivative works without prior written permission. The public docs do not clearly state an API-specific license granting raw-response retention, durable backup, or reuse/publication of derived values. Therefore API availability and script examples do not by themselves clear archive or downstream-use rights.
+
+Technical fit is limited but worth tracking: documented daily per-fund and aggregate USD flow endpoints; T+1 publication; newest day can be revised once later that day; free API history is only 30 days. The docs say BTC/ETH/SOL/XRP/HYPE aggregates are sourced from daily issuer disclosures via aggregators, and the API reference says Fidelity funds come from Farside. Thus it is not established as independent of Farside/TFTC/other upstream sources. Its fund universe and treatment of missing/null versus zero would need bounded reconciliation. The 30-day API window also cannot alone satisfy longer historical coverage requirements.
+
+**Decision:** secondary candidate only; rights and independence remain unverified. Do not call the API or archive responses until the operator confirms in writing that automated research access, raw-data retention/private backup, and use of derived values are permitted. No API request was made, no key requested/stored, and no source was promoted. Canonical source priority, registry, arithmetic_mean_2_sources, evaluator, production data and scenario state remain unchanged; BTC remains not_evaluable.
+
+References: https://cryptoetf.today/en/api ; https://docs.cryptoetf.today/ ; https://cryptoetf.today/en/terms
