@@ -2088,3 +2088,8 @@ The writer consumes an existing local capture directory only. It makes no networ
 Code review выявил и закрыл два пробела до допуска реальных данных: повторный `source_id` в manifest теперь отклоняется, а для каждого сохраняемого raw body обязателен URL источника; имена файлов с обратными косыми чертами также отклоняются. Добавлен регрессионный тест на duplicate source ID и отсутствующий source URL. Коммиты в PR #83: `d848aba559e20c7ac3efe10197fe63d878c521ae`, `440ebf30ae423774050465ba29bac27d74cd0669`, `39d8765bf919ff6e97d0796ebeb196de70c469e5`.
 
 **Статус проверки:** CI после этих коммитов ещё не подтверждён. Не архивировать реальные raw-ответы, пока права конкретного источника не имеют проверяемого подтверждения; durable archive/independent restore не проверены. BTC остаётся `not_evaluable`.
+
+
+### CI confirmation — ETF archive provenance hardening (2026-10-16)
+
+The completed [BTC Public Source Staging run #38874163877](https://github.com/olegsh247-stack/Crypto/actions/runs/38874163877) passed on code commit `39d8765bf919ff6e97d0796ebeb196de70c469e5`. The full `validate` job succeeded, including `Test offline BTC ETF evidence archive safety gates`; the live-capture job was skipped. This confirms offline fixture tests for the archive writer changes, not real source rights, durable archive, or independent restore. VPS Build & E2E for documentation HEAD `47495e3755aa96ff7bd96d6a10c880f49f734697` was still in progress when checked. BTC remains `not_evaluable`.
