@@ -797,3 +797,12 @@
 Статически проверены `scripts/diff-btc-etf-snapshots.mjs` и тесты: сравнение офлайн по source ID + URL + reporting date, различает new/changed/missing/incomplete/not-comparable и не пишет в production. Сам diff не доказывает provider finality, rights clearance или durable restore.
 
 **Следующий gate:** сравнивать только уже существующие local snapshots с подтверждёнными правами; live capture/archive write не выполнять без отдельного разрешения и закрытия source-rights/retention blockers. BTC remains `not_evaluable`.
+
+
+## 2026-10-16 — подтверждён CI для актуального документационного HEAD
+
+**Действие:** повторно проверены GitHub Actions для двух последовательных документационных коммитов на PR #83.
+
+**Результат:** VPS API Build Rehearsal завершился успешно для актуального HEAD `e45626332fa6b020a1be2a76b6a5b0e48ffcd81c` — [run #38911150759](https://github.com/olegsh247-stack/Crypto/actions/runs/38911150759). Предыдущий документальный HEAD `ba9af4919f69e4b8bd6effafb7550d9006ccbb9b` также прошёл [run #38911143573](https://github.com/olegsh247-stack/Crypto/actions/runs/38911143573). PR #83 остаётся Draft/open/unmerged.
+
+**Ограничения и следующий шаг:** успешный VPS Build Rehearsal не подтверждает отдельный BTC Public Source Staging run для актуального HEAD, права на raw retention, реальный долговременный архив или независимое восстановление. В дереве репозитория обнаружен только JSON staging-документ `docs/data-review/BTC-ETF-FLOW-STAGING-2026-10-12.json`; наличие двух независимых локальных снимков с подтверждёнными правами этим не доказано. Поэтому реальное сравнение снимков не запускалось, live capture и архивная запись не выполнялись. Продолжаем только с уже имеющимися разрешёнными доказательствами; при их отсутствии следующий gate — получить/проверить права и подтверждения хранения/восстановления. BTC остаётся `not_evaluable`; production inputs, registry, formula, evaluator и scenario state не менялись.
