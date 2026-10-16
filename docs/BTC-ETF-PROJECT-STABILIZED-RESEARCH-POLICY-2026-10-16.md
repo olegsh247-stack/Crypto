@@ -36,3 +36,20 @@ A reporting date may be proposed for offline BTC research only when **all** chec
 ## Boundaries
 
 This policy is for reproducible, offline research only. It does not set `observed_at` to the reporting date, infer provider finality from HTTP headers or hashes, write database observations, run ingestion, change the scenario state, alter scores/probabilities/monitoring, deploy, or merge PR #83. BTC remains `not_evaluable` until all required scenario gates are independently satisfied.
+
+
+## Offline report command
+
+After two exported, integrity-valid snapshot manifests exist, run:
+
+```sh
+node scripts/evaluate-btc-etf-research-eligibility.mjs \
+  --previous previous-snapshot.json \
+  --current current-snapshot.json \
+  --reporting-date YYYY-MM-DD \
+  --out eligibility-report.json
+```
+
+Omitting `--controls` intentionally returns a blocked result. A reviewed controls JSON may be supplied with `--controls review-controls.json`, containing `archive_restore_verified: true` and a per-source `source_rights` record with `status: "CLEARED"` and a non-empty `evidence_ref`. The report hashes that exact controls file and both snapshot manifests for reproducibility. These fields are attestations, not cryptographic proof that a restore was performed or rights were granted: each reference must resolve to independent evidence, and no source may be marked cleared on assumption alone.
+
+The command never downloads sources, accesses the database, runs the scenario, or writes production state. `ELIGIBLE_FOR_REVIEW` means only that a candidate can be sent for explicit human review; it is not an automatic approval or production acceptance.
