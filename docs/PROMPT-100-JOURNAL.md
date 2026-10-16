@@ -696,3 +696,12 @@
 **Результат:** SEC предоставляет публичные REST API для submissions/XBRL без API key и разрешает scripted access при соблюдении Privacy and Security Policy, declared User-Agent, умеренной частоты и лимита 10 запросов/сек. Это более чётко документированный путь доступа к SEC filings, но не полный daily ETF creations/redemptions feed и не blanket permission для downstream redistribution.
 
 **Решение:** SEC использовать как periodic primary-source cross-check route, не как замену ежедневному ETF flow series. В будущем для SEC-проверок отдельно хранить filing date, reported period, observation date и amendment/version. Сейчас API не вызывался, данные не захватывались, архив не записывался; production/registry/formula/evaluator/scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — BITB / HODL / BTCW: проверка daily-series gate
+
+**Действие:** сопоставлены официальные страницы эмитентов с SEC Q2 2026 для BITB, HODL и BTCW; вывод внесён в матрицу покрытия и План 100 (matrix commit `627251ef286816971e7491004c1285d193a42a53`, Plan 100 commit `238608c7b57d2637db9bad898293d1ca414c9d01`).
+
+**Результат:** BITB имеет датированные issuer facts/price chart и квартальные share transactions в SEC filing; HODL показывает dated shares/BTC snapshots; BTCW имеет dated fund facts и SEC quarterly cross-check. Для ни одного из трёх источников не доказан полный воспроизводимый per-fund daily creations/redemptions ряд с публикационными timestamps и revision/correction semantics. Snapshots и квартальные транзакции остаются только периодическими первичными сверками.
+
+**Решение:** не выводить daily flows из AUM/NAV delta, не считать пропущенные даты нулём, не смешивать quarterly transactions с reported/compiled daily USD flows. Права на automated capture/raw retention/private backup-restore остаются unresolved. API не вызывались, data capture/production writes не выполнялись; registry/source priority/formula/evaluator/scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
