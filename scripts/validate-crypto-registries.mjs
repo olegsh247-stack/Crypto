@@ -53,10 +53,14 @@ assert.ok(!readinessSource.includes("https://api.kraken.com/0/public/Trades?pair
   "runtime readiness must not hardcode per-metric source URL allowlists");
 
 const readinessMetrics = new Map(metricRegistry.metrics.map(metric => [metric.metric_id, metric]));
-for (const metricId of ["market.spot_price", "macro.dxy", "institutional.etf_net_flow"]) {
+for (const [metricId, required] of [
+  ["market.spot_price", true],
+  ["macro.dxy", false],
+  ["institutional.etf_net_flow", true],
+]) {
   const metric = readinessMetrics.get(metricId);
   assert.ok(metric, "missing BTC readiness metric " + metricId);
-  assert.equal(metric.scenario_readiness?.required, true, metricId + " must declare whether it is required for BTC readiness");
+  assert.equal(metric.scenario_readiness?.required, required, metricId + " has an unexpected BTC readiness requirement");
   assert.ok(Array.isArray(metric.scenario_readiness?.allowed_source_url_prefixes),
     metricId + " must declare source URL prefixes in the metric registry");
 }
@@ -64,9 +68,9 @@ assert.deepEqual(readinessMetrics.get("market.spot_price").scenario_readiness.al
   ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"],
   "BTC spot source endpoint allowlist must remain explicit");
 assert.deepEqual(readinessMetrics.get("macro.dxy").source_priority, [],
-  "DXY must remain blocked until an approved source is selected");
+  "DXY must not imply an approved automated source");
 assert.deepEqual(readinessMetrics.get("macro.dxy").scenario_readiness.allowed_source_url_prefixes, [],
-  "DXY must remain fail-closed until an approved quote endpoint is registered");
+  "DXY has no approved automated quote endpoint; it is optional and non-blocking");
 const etfReadiness = readinessMetrics.get("institutional.etf_net_flow").scenario_readiness;
 assert.equal(etfReadiness.latest_max_age_hours, 36, "ETF latest-row freshness contract changed");
 assert.equal(etfReadiness.history_max_age_days, 14, "ETF reporting-date history window changed");
