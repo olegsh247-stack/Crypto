@@ -55,6 +55,8 @@ jobs:
         run: node --test scripts/archive-btc-etf-evidence.test.mjs
       - name: Test offline BTC ETF archive integrity and recovery verification
         run: node --test scripts/verify-btc-etf-evidence-archive.test.mjs
+      - name: Test offline TFTC JSON inspection
+        run: node --test scripts/inspect-tftc-etf-json.test.mjs
 
   capture:
     if: github.event_name == 'workflow_dispatch' && inputs.capture_sources == true
