@@ -206,3 +206,16 @@ Public issuer documentation and SEC filings were reviewed for FBTC and BTCO. Thi
 **Gate result:** neither route currently satisfies the full daily-series gate. For FBTC, daily holdings disclosure is a useful lead for a future separately authorized methodology review, not permission to infer flows from holdings changes. For BTCO, SEC reports establish period-level capital activity only. Complete date coverage, row-level publication timestamps, corrections/revisions and rights for systematic capture/raw retention/private restore remain unverified.
 
 **Decision unchanged:** periodic primary-source cross-check only. Do not infer flow from AUM/NAV/holdings deltas, do not treat missing dates as zero, and do not mix quarterly/annual capital activity with daily reported/compiled USD flows. No source promotion, registry/source-priority/formula/evaluator changes, live capture, production writes or scenario evaluation. BTC remains `not_evaluable`.
+
+
+## Follow-up — EZBC / Grayscale Bitcoin Mini Trust / MSBT (2026-10-16)
+
+This was a public-document review only. No API calls, downloads, source captures, archive writes, or runtime changes were performed.
+
+- **EZBC / Franklin Bitcoin ETF:** SEC Q2 2026 reports 150,000 shares created and 1,250,000 redeemed for the quarter, with reported transaction-date fair values of $5,799,402 and $53,852,604. This is quarterly aggregate activity, not a dated daily flow series. [SEC Q2 2026 10-Q](https://www.sec.gov/Archives/edgar/data/1992870/000114036126033208/ef20077161_10q.htm).
+- **Grayscale Bitcoin Mini Trust (BTC):** SEC Q2 2026 reports 9,410,000 shares issued and 3,470,000 redeemed during Q2 2026; for the first six months, 22,950,000 issued and 9,740,000 redeemed. The filing describes creations/redemptions in baskets and reports periodic aggregates, not the complete daily event history with row-level publication timestamps and correction semantics. [SEC Q2 2026 10-Q](https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm).
+- **MSBT / Morgan Stanley Bitcoin Trust:** the fund began operations on 2026-04-07. SEC Q2 2026 reports 17,900,000 shares issued and 250,000 redeemed through 2026-06-30; dollar capital transactions are period totals. The filing does not establish a complete historical daily USD-flow feed, row-level publication time, or revision/finality contract. [SEC Q2 2026 10-Q](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/msbt-20260630x10q.htm).
+
+**Gate result:** all three SEC routes are useful as dated/periodic primary cross-checks but do not satisfy the canonical daily ETF-flow source gate. These period totals must not be distributed across individual days or converted into daily flows. Missing daily observations remain unknown, not zero. Automated collection, raw-response retention, private backup/restore, and downstream publication rights remain separately unverified.
+
+**Decision unchanged:** no source promotion or changes to source/metric registries, formula, evaluator, production data, or scenario state. BTC remains `not_evaluable`; PR #83 remains Draft/open/unmerged.
