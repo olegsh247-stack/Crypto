@@ -1057,3 +1057,6 @@
 **Сделано:** в `scripts/btc-scenario-direction.test.mjs` добавлена регрессия для отсутствующего/неизвестного `readiness_status`: evaluator обязан отказать без scenario type, directional score и разрешения persistence. Новый commit: `9d50d4d5caedca54f3003e0eec85435ddfc50309`. Для этой дополнительной регрессии CI ещё не подтверждён.
 
 **Граница безопасности:** только офлайн-тест и журнал/план. Нет live capture, сетевого сбора данных, DB/registry writes, ingestion, изменения scenario state/probabilities, deployment или merge. PR #83 остаётся Draft.
+
+
+**Итог проверки нового теста:** GitHub Actions [BTC Scenario Readiness Gate #299](https://github.com/olegsh247-stack/Crypto/actions/runs/38966644329) — **success** на `9d50d4d5caedca54f3003e0eec85435ddfc50309`. Обе ключевые ступени — shared readiness tests и input-quality/directional rules — завершились успешно. Статус предыдущей записи «ожидает CI» закрыт результатом #299. Реальные входы не обновлялись; BTC остаётся `not_evaluable`.
