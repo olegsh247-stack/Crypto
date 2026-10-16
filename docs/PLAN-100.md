@@ -2321,3 +2321,12 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 **Результат:** для SEC появился лучше документированный путь программного доступа, чем неописанный scraping issuer pages. Но это не закрывает ежедневный ETF gate: SEC filings/API не превращают квартальные отчёты в ежедневный ряд creations/redemptions, а доступ к filings сам по себе не означает автоматическое разрешение на любое downstream redistribution. SEC остаётся periodic primary cross-check route; дату подачи, период отчёта и amendments нужно сохранять отдельно.
 
 **Ограничения:** в этой проверке SEC API не вызывался, данные не захватывались, архив не записывался. Автоматизированный сбор/архивирование не запускались. Third-party/provider rights gates остаются отдельными. BTC остаётся `not_evaluable`; registry, formula/evaluator и scenario state не менялись.
+
+
+## Дополнение 2026-10-16 — уточнение BITB / HODL / BTCW: snapshot не равен daily flow
+
+- **BITB:** официальная страница Bitwise показывает датированные факты и NAV/market-price chart; SEC Q2 2026 отдельно сообщает квартальные транзакции shares (4,450,000 выпущено и 6,980,000 погашено за квартал). Это не полный ежедневный ряд. [Issuer](https://bitbetf.com/) · [SEC filing](https://www.sec.gov/Archives/edgar/data/1763415/000119312526340183/bitb-20260630.htm).
+- **HODL:** официальная страница VanEck показывает датированные snapshots shares outstanding и BTC in trust (проверенный снимок 2026-10-08), но не доказана полная воспроизводимая история daily creations/redemptions с revision semantics. [VanEck](https://www.vaneck.com/us/en/investments/bitcoin-etf-hodl/).
+- **BTCW:** официальная страница WisdomTree показывает датированные fund facts (проверенный снимок 2026-09-09), SEC Q2 2026 даёт квартальную контрольную точку; полный daily shares/creation-redemption feed не подтверждён. [WisdomTree](https://www.wisdomtree.com/us/products/crypto/btcw).
+- **Результат:** три источника полезны для датированных первичных сверок, но не закрывают daily-series gate. Хранить отдельно observation date, reported period, filing/publication date; не выводить flows из AUM/NAV delta, не считать пропуски нулём и не смешивать quarterly transactions с daily reported/compiled USD flows.
+- Права на автоматизированный сбор, raw retention и private backup/restore остаются unresolved. API не вызывались, данные не захватывались; registry/source priority/formula/evaluator/production/scenario state не менялись. BTC остаётся `not_evaluable`.
