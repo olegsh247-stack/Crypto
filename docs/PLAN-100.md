@@ -2273,3 +2273,10 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - **Bitcoin-data.com:** Swagger advertises per-fund daily net flow in BTC for 12 funds since 2024-01-11 and says values are flows, not holdings/AUM. Upstream lineage, method, timestamps/revisions and license/retention rights remain unverified; USD conversion requires a separate documented price source and timestamp. No API call or capture.
 - **Gate:** do not promote either source or automate capture until provenance, metric semantics, revision/finality, permitted retention/restore, attribution and any USD conversion methodology are documented. XOOMAR values must remain labelled as computed; Bitcoin-data.com values must remain in BTC unless a separate conversion contract is accepted.
 - No source priority, registry, formula/evaluator, production data, or scenario state changed. BTC remains not_evaluable; PR #83 remains Draft/open/unmerged.
+
+### Plan 100 — BGeometrics / Bitcoin-data.com rights gate (2026-10-16)
+
+- Reviewed the official BGeometrics terms (updated 2026-10-14) alongside the ETF endpoint documentation. The API advertises per-fund daily net flow in BTC for 12 funds from 2024-01-11, but terms restrict bulk harvesting without written permission and separate commercial publishing/redistribution rights.
+- No explicit permission was found for systematic historical extraction and private durable raw archive/backup under research use. No API request, key request/storage or data capture.
+- **Required before adoption:** obtain written confirmation of permitted automated access and frequency, retention, private backup/restore, use of derived values, and publication rights; verify fund-level lineage, calculation method, record timestamps, finality and revisions. Any USD conversion needs its own documented price source and valuation timestamp.
+- Until gates are resolved, do not promote the source or implement ingestion. BTC remains not_evaluable; no registry/formula/evaluator or scenario-state change.
