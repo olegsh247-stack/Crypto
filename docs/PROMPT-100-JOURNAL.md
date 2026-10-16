@@ -489,7 +489,7 @@
 
 **Действие:** проведён первый проход по публичным страницам эмитентов и SEC; создана [матрица покрытия official issuer sources](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md) для ETF universe.
 
-**Результат:** по IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC и Grayscale Mini BTC найдены отдельные официальные страницы/документы с частью NAV, AUM, shares-outstanding или holdings полей, но полный одинаковый daily historical series и разрешённый автоматизированный retention ещё не подтверждены для всего universe. Важная коррекция состава: официальный Hashdex DEFI page сообщает о delisting с NYSE Arca с 2026-09-03; DEFI нельзя включать в текущий active aggregate после этой даты, но исторические строки до закрытия требуют сохранения.
+**Результат:** по IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC и Grayscale Mini BTC найдены отдельные официальные страницы/документы с частью NAV, AUM, shares-outstanding или holdings полей, но полный одинаковый daily historical series и разрешённый автоматизированный retention ещё не подтверждены для всего universe. Важная коррекция состава: SEC filings establish 2026-08-17 as Hashdex DEFI's last trading day; DEFI must not be included in the active trading aggregate after that date. The 2026-09-03 Form 15 is a later reporting-termination filing, но исторические строки до закрытия требуют сохранения.
 
 **Решение:** матрица — исследовательский инвентарь, не утверждённый источник и не готовый расчёт net flows. Изменение net assets не считать net flow без approved methodology; реестр и формула не менялись. Следующий шаг — уточнить точные официальные ежедневные поля/историю для оставшихся фондов и правила даты/creation-redemption. Live capture и сценарий не запускались; BTC остаётся `not_evaluable`.
 
@@ -500,7 +500,7 @@
 
 **Результат:** обнаружен пропущенный активный фонд MSBT, торгуется с 2026-04-08. SEC сообщает на 2026-06-30: 17,650,000 акций, NAV/share $16.94, net assets $298,979,473 и 5,059.30771216 BTC; cover отдельно сообщает 21,740,000 акций на 2026-07-31. За период с запуска до конца Q2 раскрыты 17,900,000 выпущенных и 250,000 погашенных акций. Это периодические сведения, не ежедневный flow series. Для BITB зафиксированы 68,780,000 shares и AUM $3,047,421,621 на 2026-10-13, NAV $45.11 на 2026-10-12 и 37,317.87 BTC на 2026-10-13; полная ежедневная история shares/creation-redemption и права систематического хранения не подтверждены.
 
-**Решение:** включать MSBT с даты запуска, исключать DEFI из active aggregate после 2026-09-03, сохраняя исторические данные до delisting. Реестр, приоритет источников, формула и evaluator не менялись. Не выполнялись API-запросы, live capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment или merge. BTC остаётся `not_evaluable`; PR #83 Draft.
+**Решение:** включать MSBT с даты запуска, исключать DEFI из active trading aggregate после 2026-08-17, сохраняя исторические данные до delisting. Реестр, приоритет источников, формула и evaluator не менялись. Не выполнялись API-запросы, live capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment или merge. BTC остаётся `not_evaluable`; PR #83 Draft.
 
 **Ссылки:** [матрица источников](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md); [Morgan Stanley SEC 10-Q](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/msbt-20260630x10q.htm); [Bitwise BITB](https://bitbetf.com/).
 
@@ -749,4 +749,13 @@
 
 **Результат:** DACFP (страница обозначена как обновлённая 2026-09-17) перечисляет 12 продуктов, включая MSBT, но не OBTC; в строке Morgan Stanley повторно указан тикер BTCW, совпадающий с WisdomTree. Список пригоден только как дополнительный cross-check, не как полный реестр. SEC filing показывает, что BITA держит BTC и IBIT и использует covered-call опционы преимущественно на IBIT; он не включён в основной plain spot-ETF cohort, чтобы не смешивать отдельную premium-income стратегию и базовые IBIT shares без явного правила агрегирования.
 
-**Решение:** рабочий активный core cohort остаётся предварительно равным 13 продуктам на 2026-10-16 (MSBT с 2026-04-08; OBTC с 2025-12-19; Hashdex DEFI вне active set после 2026-09-03). Не замораживать universe до окончательной сверки effective dates, delisting/closure/conversion по официальным источникам для каждого фонда. API/download/capture/archive writes не выполнялись; source/metric registry, formula, evaluator, production/scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+**Решение:** рабочий активный core cohort остаётся предварительно равным 13 продуктам на 2026-10-16 (MSBT с 2026-04-08; OBTC с 2025-12-19; Hashdex DEFI вне active trading cohort после 2026-08-17). Не замораживать universe до окончательной сверки effective dates, delisting/closure/conversion по официальным источникам для каждого фонда. API/download/capture/archive writes не выполнялись; source/metric registry, formula, evaluator, production/scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — correction: Hashdex DEFI final trading date
+
+**Действие:** проверены SEC Form 8-K/A, SEC filing о завершении реализации активов и Form 15 Hashdex Commodities Trust.
+
+**Результат:** последний торговый день Hashdex DEFI — **2026-08-17**; торги были приостановлены после закрытия в этот день. Реализация активов завершена 2026-08-24. Form 15 от 2026-09-03 — более поздний документ о прекращении отчётности и не определяет последний торговый день.
+
+**Решение:** исправить дату конца active trading cohort на 2026-08-17. Ликвидационный период учитывать отдельно, не как обычные daily ETF-flow observations. Источники: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026096933/ea0304221-1512g_hashdex.htm.
