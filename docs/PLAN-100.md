@@ -1632,3 +1632,10 @@ SoSoValue's documented API is the strongest next candidate for a manual, offline
 SatoshiMacro (Farside + SoSoValue with last-known-good fallback), CryptoETF.today (API key; terms/lineage not established), and Newhedge (BTC-denominated series with a seven-day revision window) were reviewed as alternatives; none is approved or promoted to canonical priority.
 
 **Next safe gate:** inspect SoSoValue API terms and exact aggregate contract, confirm key access without exposing secrets, then implement a manual-only offline candidate adapter and compare the same reporting dates/fund universe. Do not commit raw payloads to the public repo until redistribution rights are established. Durable project-controlled evidence retention remains a blocker; BTC stays `not_evaluable`.
+
+
+### Offline SoSoValue candidate adapter — 2026-10-16
+
+Added on PR #83 branch: `scripts/prepare-btc-sosovalue-etf-candidates.mjs` and dedicated tests wired into `btc-public-source-staging.yml`. This adapter only normalizes an already captured response; it performs no network calls and reads no API key. It preserves the response-body SHA-256 and retrieval timestamp, converts documented USD totals to USD million/day, keeps provider observation time and finality unknown, and blocks malformed dates, duplicate dates, missing/non-numeric values, invalid endpoint URLs, invalid retrieval timestamps, and non-200 responses. Output is explicitly non-persistable and remains a candidate only.
+
+No SoSoValue request was made because API access/terms and redistribution rights have not been verified. This is an offline adapter scaffold, not evidence that the provider returned any particular value. Latest policy tests are being validated in CI; do not report the new head as green until its run completes.
