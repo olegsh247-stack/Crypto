@@ -19,6 +19,8 @@ function result(status, reasons, details = {}) {
     previous_snapshot_id: details.previous_snapshot_id ?? null,
     current_snapshot_id: details.current_snapshot_id ?? null,
     rights_blocked_source_id: details.rights_blocked_source_id ?? null,
+    archive_restore_evidence_ref: details.archive_restore_evidence_ref ?? null,
+    source_rights_evidence_refs: details.source_rights_evidence_refs ?? {},
     elapsed_ms: details.elapsed_ms ?? null,
     source_checks: details.source_checks ?? [],
     reasons,
