@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 function validDate(value) {
-  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(value + "T00:00:00.000Z");
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
@@ -68,8 +68,8 @@ export function inspectTftcEtfJson(bytes) {
     row_count: rows.length,
     numeric_net_flow_rows: numericRows,
     zero_value_rows: zeroRows,
-    min_reporting_date: dates.length ? dates.sort()[0] : null,
-    max_reporting_date: dates.length ? dates.sort().at(-1) : null,
+    min_reporting_date: dates.length ? [...dates].sort()[0] : null,
+    max_reporting_date: dates.length ? [...dates].sort().at(-1) : null,
     invalid_date_row_indexes: invalidDateRows,
     missing_value_row_indexes: missingValueRows,
     invalid_value_row_indexes: invalidValueRows,
@@ -96,10 +96,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     const path = inputPath(process.argv.slice(2));
     const result = inspectTftcEtfJson(await readFile(path));
-    process.stdout.write(JSON.stringify(result, null, 2) + "\\n");
-    if (!["STRUCTURE_VALID_REVIEW_REQUIRED"].includes(result.status)) process.exitCode = 1;
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    if (result.status !== "STRUCTURE_VALID_REVIEW_REQUIRED") process.exitCode = 1;
   } catch (error) {
-    process.stderr.write("TFTC offline inspection blocked: " + (error instanceof Error ? error.message : String(error)) + "\\n");
+    process.stderr.write("TFTC offline inspection blocked: " + (error instanceof Error ? error.message : String(error)) + "\n");
     process.exitCode = 1;
   }
 }
