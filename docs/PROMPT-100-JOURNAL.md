@@ -636,3 +636,14 @@
 **Результат:** documented API automation is allowed within rate limits, but systematic copying of its archive into a substitute database/archive/service is prohibited. Its research-use licence covers ByKaranteli's own computed data, not third-party source values; those remain under original-source terms. ETF page reports aggregate backfill from 2025-05-20 and per-fund recording since 2026-07-30, but identifies issuer pages and a public flow tracker as inputs. The frozen CC0 mirror is stale and CC0 does not cover third-party values.
 
 **Решение/границы:** possible small manual comparison with attribution only after checking upstream rights and lineage; not canonical, not approved for bulk download or durable archive. No API request/key/capture. No source promotion, registry/formula/evaluator or scenario-state change. PR #83 remains open Draft; BTC remains not_evaluable.
+
+
+## 2026-10-16 — XOOMAR and Bitcoin-data.com ETF candidate review
+
+**Action:** reviewed public ETF dataset/API documentation and terms pages; documented source semantics, coverage, rights and remaining blockers in the alternative-source review and Plan 100.
+
+**Findings:** XOOMAR currently lists BTC ETF holdings-derived data for IBIT, BITB and ARKB only, with incomplete coverage and short history. Its USD flow is computed from day-over-day BTC holdings changes times its own reference price, so it is not equivalent to a fund-reported USD flow; terms allow internal research/storage with attribution but prohibit redistribution/competing dataset use, and third-party issuer-data terms remain applicable. Bitcoin-data.com Swagger advertises daily per-fund flow in BTC for 12 funds since 2024-01-11, but upstream lineage, method, publication/finality/revision fields, and license/retention/backup rights could not be verified from the reviewed documentation.
+
+**Outcome:** neither source promoted to canonical or automated ingestion. XOOMAR may be considered only for bounded internal comparison after unresolved method/upstream-rights checks. Bitcoin-data.com remains blocked pending provenance, methodology, revision and license/retention clarification; no USD conversion made. No API endpoint was called, no key requested/stored, and no data captured.
+
+**Guardrails preserved:** no source-priority, registry, formula/evaluator, production data, or scenario-state changes; BTC remains not_evaluable. PR #83 remains Draft/open/unmerged. CI for prior head aea7a5242f8c88dfa2ce40e06415d3b16ecf34b3 passed build-and-e2e; this new documentation commit requires its own CI confirmation.
