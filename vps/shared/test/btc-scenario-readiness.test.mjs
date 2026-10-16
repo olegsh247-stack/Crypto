@@ -32,7 +32,7 @@ function etf(dayOffset, overrides = {}) {
     value_numeric: 120,
     unit: "USD million/day",
     expected_unit: "USD million/day",
-    observed_at: new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth(), period.getUTCDate(), 16)).toISOString(),
+    observed_at: iso(0.5),
     period_start: new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth(), period.getUTCDate())).toISOString(),
     retrieved_at: iso(0.1),
     freshness: "CURRENT",
