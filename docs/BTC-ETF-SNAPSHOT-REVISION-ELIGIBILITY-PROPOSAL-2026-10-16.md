@@ -42,3 +42,20 @@ The PR branch now provides an offline snapshot builder/diff, a versioned JSON ma
 - Farside and TFTC source values remain separately preserved; `arithmetic_mean_2_sources` remains a research-derived value only.
 - No canonical source priority, registry, production data, scenario state, score, probability, monitoring event, or deployment is changed.
 - BTC remains `not_evaluable` until required source contracts and the scenario input gates pass.
+
+
+## Decision update — project-stabilized research policy approved (2026-10-16)
+
+The project has approved Option B for **offline research only**. The implementation is fail-closed and emits `ELIGIBLE_FOR_REVIEW`, never an automatic approval:
+
+- Two valid, distinct snapshots at least 24 hours apart.
+- Both configured sources (Farside and TFTC) captured successfully in both snapshots.
+- Exactly one complete, reconciled row per source for the target reporting date.
+- Each source's normalized row fingerprint is unchanged across both captures.
+- Explicit human review remains required before using the named date/snapshot IDs in a research scenario.
+- A later change creates a revision candidate; preserve earlier evidence and re-evaluate affected offline research. No provider-finality claim is made.
+- If official sources are unavailable, non-official sources may be investigated as separately labelled corroboration. They cannot silently replace canonical sources; exact identity, metric semantics, coverage, terms and provenance require review before approval.
+
+Policy: [BTC ETF project-stabilized research snapshots](BTC-ETF-PROJECT-STABILIZED-RESEARCH-POLICY-2026-10-16.md). Implementation: `scripts/evaluate-btc-etf-research-eligibility.mjs` with dedicated fail-closed tests wired into the read-only staging workflow.
+
+The seven-day GitHub Actions artifact is still not a durable archive. If the evidence set cannot be retained in the project-controlled review record, the date remains blocked. This policy does not unblock production persistence or automatically make BTC evaluable.
