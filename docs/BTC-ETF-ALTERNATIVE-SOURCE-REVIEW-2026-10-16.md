@@ -70,3 +70,12 @@ This is a source-policy review, not legal advice. It distinguishes permission to
 ## Archive constraint
 
 TFTC's published dataset has an explicit CC BY 4.0 statement, but that does not automatically license Farside or SoSoValue raw payloads copied independently. A seven-day Actions artifact is temporary; a project-controlled durable archive and restore procedure are still required before an ETF row can be approved. Do not commit raw provider payloads to the public repository. Keep any retained TFTC-derived artifact with attribution, license metadata, source URL, retrieval time and hash.
+
+
+## Supplementary check — CryptoETF API documentation (2026-10-16)
+
+A fresh documentation check confirms the public CryptoETF API requires an API key and its free tier returns the latest 30 days; deeper history requires a different plan/contact. The documented BTC daily-flow method is based on issuer filings (shares outstanding × NAV), with Fidelity sourced from Farside. This makes it a potentially useful separately labelled recent-period comparison, but not an independent replacement for the current Farside/TFTC pair: at least one fund lineage explicitly overlaps with Farside, and the reviewed API docs do not by themselves establish long-term raw-response retention/redistribution rights. No API key was requested, no endpoint was called, and no data was captured.
+
+Reference: https://docs.cryptoetf.today/
+
+**Disposition:** keep as an unapproved candidate. Before any use, verify API-specific storage/reuse terms, the full fund universe and metric semantics, reporting-date coverage, revision behavior and exact reconciliation. Do not alter canonical source priority or `arithmetic_mean_2_sources` based on this review.
