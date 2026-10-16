@@ -2482,3 +2482,11 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 
 
 **Подтверждение CI — 2026-10-17:** BTC Scenario Readiness Gate [#299](https://github.com/olegsh247-stack/Crypto/actions/runs/38966644329) завершился **success** на commit `9d50d4d5caedca54f3003e0eec85435ddfc50309`. В том числе успешно прошли шаги сборки/тестов shared readiness и проверки input-quality/directional rules. Добавленная регрессия отсутствующего/неизвестного readiness status подтверждена CI. Это офлайн-проверка, не подтверждение актуальности live BTC inputs.
+
+
+## 2026-10-17 — выполнен read-only preflight обязательных входов BTC
+
+- Добавлен отчёт [BTC required-input preflight](BTC-REQUIRED-INPUT-PREFLIGHT-2026-10-17.md). Kraken API endpoint из allowlist оказался недоступен через используемый канал чтения; свежая цена, timestamp и payload hash не получены. Не подменяли её ценой с другого источника и не записывали предположительное значение.
+- На публичной таблице Farside последняя заполненная строка видна за 2026-10-15; строка 2026-10-16 содержит прочерки по фондам и отображаемый total 0.0. Это не подтверждает finalized zero-flow. Пять значений 5–9 октября с суммой −678.9 USD million — исторический результат, он не проходит требование свежести последней ETF-записи.
+- Решение: BTC остаётся `not_evaluable`. Для spot нужны свежие данные из зарегистрированного Kraken источника; для ETF flow — свежая финализированная строка с доказанными полнотой, происхождением и revision/finality. Не превращать прочерки в нули; raw Farside payload не архивировался.
+- Выполнен только read-only preflight и документация. DB writes, ingestion, scenario evaluation/state/probability changes, deployment и merge не выполнялись; PR #83 остаётся Draft/open/unmerged. Не возобновлять широкий поиск ETF holdings.
