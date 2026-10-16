@@ -627,3 +627,12 @@
 **Результат:** API заявляет daily aggregate и per-fund USD flows, T+1 публикацию и возможность пересмотра последнего дня; free API ограничен 30 днями. Условия запрещают воспроизводить/распространять содержимое и создавать derivative works без предварительного письменного разрешения. Явное разрешение на архив raw responses и downstream use не установлено. BTC-агрегат строится через aggregators; независимость от Farside/TFTC не доказана.
 
 **Границы:** CryptoETF.today добавлен только как кандидат. API не вызывали, ключ не запрашивали, данные не архивировали. Требуется письменное подтверждение rights + bounded reconciliation состава фондов, null/zero и upstream lineage. Не менялись source priority, registry, formula/evaluator, production data или scenario state. PR #83 open Draft; BTC not_evaluable.
+
+
+## 2026-10-16 — ByKaranteli reviewed as bounded manual comparison candidate
+
+**Действие:** изучены live ETF dataset и Terms of Service ByKaranteli (last updated 2026-10-15): https://bykaranteli.com/data ; https://bykaranteli.com/terms .
+
+**Результат:** documented API automation is allowed within rate limits, but systematic copying of its archive into a substitute database/archive/service is prohibited. Its research-use licence covers ByKaranteli's own computed data, not third-party source values; those remain under original-source terms. ETF page reports aggregate backfill from 2025-05-20 and per-fund recording since 2026-07-30, but identifies issuer pages and a public flow tracker as inputs. The frozen CC0 mirror is stale and CC0 does not cover third-party values.
+
+**Решение/границы:** possible small manual comparison with attribution only after checking upstream rights and lineage; not canonical, not approved for bulk download or durable archive. No API request/key/capture. No source promotion, registry/formula/evaluator or scenario-state change. PR #83 remains open Draft; BTC remains not_evaluable.
