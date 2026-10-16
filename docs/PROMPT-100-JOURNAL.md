@@ -416,3 +416,12 @@
 **Результат:** документальные и fixture-проверки подтверждают воспроизводимость офлайн-сравнения, но реальная стабильность данных ещё не проверена. TFTC сообщает о двукратном ежедневном обновлении и исправлении недавних/старых строк, но не даёт гарантированного row-level revision ID или точки финализации. Farside raw-retention rights не подтверждены; частный долговременный архив и независимое восстановление не развернуты; реальный capture в этом шаге не запускался. Поэтому гейт 3 остаётся заблокирован на реальных снимках, гейт 4 не выполнялся, BTC остаётся `not_evaluable`.
 
 **Безопасность:** не было API-запросов, scraping, live capture, DB-доступа/записей, ingestion, оценки сценария, изменения реестра/сценарного состояния/вероятностей, deployment или merge. Не считать fixture restore доказательством независимого резервного восстановления.
+
+
+## 2026-10-16 — подтверждён VPS Build & E2E для текущего ETF-документального HEAD
+
+**Действие:** повторно проверен завершённый GitHub Actions run для commit `3e1e733b5c217d948358d8b3eee21de8112b641a`.
+
+**Результат:** [VPS Build & E2E #38878927759](https://github.com/olegsh247-stack/Crypto/actions/runs/38878927759) — `success`. Успешно завершились VPS-only архитектурная проверка, сборки shared runtime/API/Worker и контейнеров, контрактные E2E API/Worker, проверка канонического BTC input registry, read-only provenance audit, репетиция idempotency/duplicate reconciliation и PostgreSQL backup/restore в CI.
+
+**Границы доказательства:** это успешная CI-репетиция, не подтверждение работы на предоставленном пользователю VPS, не реальный долговременный ETF-архив и не независимое восстановление в другом failure domain. ETF live capture не запускался; права на raw-retention Farside/SoSoValue, частное хранилище и независимый restore остаются блокерами. BTC остаётся `not_evaluable`; scenario state/probability, production DB, ingestion, deployment и merge не менялись.
