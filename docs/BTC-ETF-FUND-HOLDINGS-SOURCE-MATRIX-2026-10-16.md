@@ -55,6 +55,22 @@
 - Until then, keep only permitted bibliographic metadata/links and reviewed numerical facts needed for the research report.
 - Project-controlled durable storage, independent encrypted backup, checksum verification, and restore rehearsal are not yet demonstrated. GitHub Actions' temporary artifact retention is not a durable archive.
 
+## Data-use, retention, and access-terms review (2026-10-16)
+
+This was a public-documentation review only. No files were downloaded and no APIs were called.
+
+- **SEC EDGAR:** the SEC states that filings are freely accessible, and requests users to download only what is needed, moderate request rates, and observe its fair-access rules (currently up to 10 requests/second). This supports a carefully rate-limited research retrieval plan, but the cited access guidance is not an explicit blanket license for unrestricted mirroring, redistribution, or permanent retention of every embedded third-party asset. Reference: https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data and https://www.sec.gov/about/developer-resources.
+- **BlackRock / iShares:** official product pages expose a Holdings CSV. Public holdings pages include a disclaimer that holdings data may be unaudited and that users rely on the data at their own risk; the general legal-documents page lists “Terms of Use,” but this review did not establish a specific permission to retain, back up, or redistribute IBIT CSV snapshots indefinitely. References: https://www.ishares.com/us/products/333011/ishares-bitcoin-trust-etf and https://www.ishares.com/us/library/financial-legal-tax.
+- **Franklin Templeton / EZBC:** the official product route exposes an XLS holdings file and describes holdings as updated daily. A general Franklin site page contains terms about confidential/non-public holdings, but it is not demonstrated to govern the public EZBC file; do not apply it to EZBC as a definitive restriction or permission. The specific EZBC file's retention, backup, and redistribution terms remain unverified. Reference: https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS/franklin-bitcoin-etf/EZBC.
+- **CoinShares / BRRR:** the official product page publishes dated holdings and links to prospectus and SEC filings. The reviewed privacy policy concerns personal information and website usage; it is not a data license for holdings values. No explicit permission for indefinite raw snapshot storage, backup, or redistribution was confirmed. References: https://coinshares.com/us/etf/brrr/ and https://coinshares.com/us/privacy-policy/.
+
+### Decision from terms review
+
+1. Classify **SEC filing URLs and filing identifiers** as the preferred auditable reference trail; retrieve only what is needed, use conservative request pacing, and retain citation metadata. Do not claim unrestricted redistribution rights for embedded third-party content based only on EDGAR accessibility.
+2. For issuer CSV/XLS/HTML holdings, allow **link-and-metadata tracking only** at this stage. Do not assume permanent raw-file retention, external redistribution, or independent backup rights until the exact terms applicable to each data product are established.
+3. A terms page for a different product/fund, a privacy policy, a prospectus, or a disclaimer is not a substitute for explicit data-retention terms. Where no clear permission is found, mark rights **unverified**, not “prohibited” and not “permitted.”
+4. This review does not change source acceptance, registry state, scenario state, scores, probabilities, or readiness. BTC remains **not_evaluable**.
+
 ## Final status
 
 - Issuer routes/current holdings views: confirmed for some funds, incomplete across the full universe.
