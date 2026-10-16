@@ -31,6 +31,8 @@ jobs:
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
       - name: Test offline BTC ETF snapshot diff
         run: node --test scripts/diff-btc-etf-snapshots.test.mjs
+      - name: Test BTC ETF research eligibility policy
+        run: node --test scripts/evaluate-btc-etf-research-eligibility.test.mjs
 
   capture:
     if: github.event_name == 'workflow_dispatch'
