@@ -908,3 +908,12 @@
 Ограничение: в этом проходе независимо не переоткрыты HODL, BRRR, BTCW, MSBT и OBTC; их строки не считаются заново подтверждёнными этим recheck. Для BTCW отдельно сохранена методологическая оговорка: schedule quantity 2,310 BTC округлён, а reference-rate quantity в примечании 2,309.689 BTC — отдельное значение. Полная daily-history задача не закрыта; квартальные значения не подставляются в дневной ряд.
 
 Изменения только в документации ветки `fix/btc-readiness-registry-runtime-source` / PR #83 Draft. Не менялись ingestion, БД, source registry, scenario state, scores/probabilities, deployment или merge.
+
+
+### 2026-10-16 — Завершена проверка SEC-среза 13/13
+
+Продолжение повторной проверки закрыло оставшиеся пять строк SEC-контрольной таблицы: HODL 16,241.00 BTC, BRRR 5,864 BTC, BTCW 2,310 BTC по investment schedule, MSBT 5,059.30771216 BTC, OBTC 945.07 BTC. Вместе с ранее проверенными IBIT, FBTC, GBTC, BTC (Grayscale Mini), ARKB, BITB, BTCO и EZBC теперь **все 13/13 значений на 2026-06-30 сверены с первичными SEC Form 10-Q**.
+
+Особая семантика BTCW сохранена: SEC schedule показывает округлённые 2,310 BTC, а reference-rate расчёт — 2,309.689 BTC. Это разные поля методологии, не ошибка округления, которую следует скрывать. Исправленная ссылка IBIT также внесена в контрольный документ.
+
+Это закрывает только квартальный SEC контрольный срез. Ежедневная holdings-история с момента запуска всё ещё не собрана; ежедневный gate остаётся NOT DONE. Не менялись БД, ingestion, source registry, сценарий, scores/probabilities, deployment или merge.
