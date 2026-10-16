@@ -1039,3 +1039,12 @@
 **Статус:** исторический офлайн-прогон остаётся fixture rehearsal (Base, score −1, low confidence), не текущей оценкой рынка. Фактический сценарий BTC остаётся `not_evaluable` до прохождения freshness/provenance gate. Live capture, БД, ingestion, runtime/registry, вероятности, deployment и merge не выполнялись; PR #83 остаётся Draft.
 
 **Следующее действие:** добавить/проверить специализированные regression tests readiness gate в существующем тестовом harness; не ослаблять gate ради прохождения старых candidate данных. Обновление текущих обязательных входов — только отдельным явно разрешённым действием.
+
+
+## 2026-10-16 — добавлены regression tests для BTC readiness gate
+
+**Действие:** добавлен `vps/shared/test/btc-scenario-readiness.test.mjs`; в `vps/shared/package.json` добавлена команда `npm test` (сборка runtime + Node test runner). Сценарии: валидные входы, устаревшая цена, неразрешённый источник, будущий timestamp, неполный ETF coverage, дубли reporting dates, отсутствие подтверждения revision/finality.
+
+**Статус проверки:** тесты закоммичены, но ещё не исполнены в доступной среде. Результат PASS не заявляется. См. [BTC offline contract review](BTC-SCENARIO-OFFLINE-CONTRACT-REVIEW-2026-10-16.md).
+
+**Граница безопасности:** только код тестов, npm script и документация. Текущие данные не загружались; live capture, БД, ingestion, production, deployment и merge не выполнялись. PR #83 остаётся Draft.
