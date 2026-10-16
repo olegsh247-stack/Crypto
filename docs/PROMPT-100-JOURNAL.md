@@ -1,5 +1,16 @@
 # Промт 100 — журнал существенных работ проекта Crypto
 
+## 2026-10-16 — проверен дополнительный архивный кандидат BuildWithData
+
+**Действие:** прочитаны публичные README и дерево исходников [BuildWithData/BTC-ETF-Tracker](https://github.com/BuildWithData/BTC-ETF-Tracker), а также открытые issues по BTCW, BTCO, FBTC и ARKB.
+
+**Результат:** README ссылается на внешний Google Drive архив снимков, который, по заявлению автора, обновляется не реже раза в неделю. В исходниках есть scrapers для 10 американских фондов, но нет BTCW, MSBT и OBTC. Сам архив с данными в этой проверке не удалось подтвердить по содержимому, поэтому его покрытие/даты не засчитаны. В публичном дереве репозитория не обнаружен LICENSE, поэтому права на повторное использование и распространение не установлены. Открытые issues: BTCW scraper (#15), BTCO holdings (#14), FBTC загрузка holdings Excel (#99), ARKB изменившийся HTML (#87). Issue BTCO прямо предлагает оценку holdings через AUM / reference price; такой метод отклонён, поскольку не даёт точное количество BTC.
+
+**Решение:** кандидат оставлен только как направление для дальнейшей проверки фактических архивных файлов. Не принимать оценку AUM/цена, не переносить данные без проверки дат, provenance, исправлений и прав. Daily holdings по всем 13 фондам остаётся **NOT DONE**.
+
+**Граница безопасности:** только чтение публичного репозитория/issues и документационные изменения в ветке `fix/btc-readiness-registry-runtime-source`; сторонний репозиторий не менялся, production/runtime/DB/registry/scenario не затрагивались.
+
+
 ## 2026-10-16 — SEC XBRL extractor compared against 13 filing-verified ETF controls
 
 **Действие:** read-only повторно получены публичные `etf_quarterly.json` и `etf_holdings.json` из [akpasz/btc-data](https://github.com/akpasz/btc-data); квартальные значения сопоставлены с прямыми SEC 10-Q controls за 2026-06-30 по всем 13 текущим spot BTC trust тикерам.
