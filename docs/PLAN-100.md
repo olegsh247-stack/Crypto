@@ -2105,3 +2105,6 @@ The completed [BTC Public Source Staging run #38874163877](https://github.com/ol
 ### Verifier CI correction (2026-10-16)
 
 The first staging run [#38876064841](https://github.com/olegsh247-stack/Crypto/actions/runs/38876064841) failed because recursive tree verification mistakenly treated the required `checksums.sha256` file as unmanifested. The other archive-writer tests and three of four verifier tests passed. Fixed the tree walker to allow the checksum manifest itself while continuing to reject other unmanifested files. Fix commit: `a51ae5b700c572fe076d8641b860f7022cee8d5a`. Repeat staging run [#38876188724](https://github.com/olegsh247-stack/Crypto/actions/runs/38876188724) was in progress when recorded; do not mark verifier tests green until the run completes.
+
+
+**Follow-up CI correction:** staging run [#38876188724](https://github.com/olegsh247-stack/Crypto/actions/runs/38876188724) exposed a second issue: the archive writer always creates an empty `normalized/` directory when there is no normalized candidate file. The verifier now allows the writer's expected `source/` and `normalized/` directories while still rejecting unmanifested files. Fix commit: `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`; the new staging result is pending.
