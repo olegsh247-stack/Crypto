@@ -1619,3 +1619,16 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 ### Validation completion update — 2026-10-16
 
 The previously pending [VPS API Build Rehearsal #38854319826](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319826) has completed successfully. Together with [BTC Public Source Staging #38854319856](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319856), this confirms the policy unit tests and VPS build/E2E rehearsal for the implementation commit. This is CI/test-environment evidence only; it does not validate live source availability or durable archive retention. PR #83 remains Draft/open/unmerged, and BTC is not automatically evaluable.
+
+
+## Plan 100 — alternative BTC ETF source review (2026-10-16)
+
+**Completed on PR #83 branch:** [BTC ETF alternative-source review](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md).
+
+SoSoValue's documented API is the strongest next candidate for a manual, offline corroborating capture: it exposes ETF aggregate/per-fund history, requires an API key, and the documented per-fund history is limited to the most recent month. API terms, exact aggregate semantics, key access, timestamp/finality behavior, and actual date-level parity remain unverified. No API request or capture was performed.
+
+**Critical lineage finding:** TFTC states that its current daily aggregates and ongoing per-fund flows come from SoSoValue, while historical per-fund history through mid-2026 is compiled from issuer disclosures tabulated by Farside. Farside and TFTC are different publishers but current daily lineage overlaps. The approved arithmetic mean remains a project-defined research comparison metric, **not an independent two-source consensus**. SoSoValue can help verify lineage but must not be counted as a third independent vote. Changing the metric requires a separate decision.
+
+SatoshiMacro (Farside + SoSoValue with last-known-good fallback), CryptoETF.today (API key; terms/lineage not established), and Newhedge (BTC-denominated series with a seven-day revision window) were reviewed as alternatives; none is approved or promoted to canonical priority.
+
+**Next safe gate:** inspect SoSoValue API terms and exact aggregate contract, confirm key access without exposing secrets, then implement a manual-only offline candidate adapter and compare the same reporting dates/fund universe. Do not commit raw payloads to the public repo until redistribution rights are established. Durable project-controlled evidence retention remains a blocker; BTC stays `not_evaluable`.
