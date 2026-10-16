@@ -49,3 +49,8 @@ Added `vps/shared/test/btc-scenario-readiness.test.mjs` and a package test comma
 The dedicated readiness tests are now confirmed by GitHub Actions run [#298](https://github.com/olegsh247-stack/Crypto/actions/runs/38965974798), which succeeded on `bb5ad42002f7826505bf311f02e5b9444e0f0af3`. Coverage includes fresh/traced inputs, stale spot, unapproved source, future timestamp, incomplete ETF coverage, duplicate reporting dates, and missing revision/finality evidence.
 
 A further offline regression test was added in commit `9d50d4d5caedca54f3003e0eec85435ddfc50309` to ensure missing or unknown `readiness_status` fails closed without scenario output or persistence permission. This additional test is pending CI; no PASS is claimed yet. BTC remains `not_evaluable` on audited real candidates. No live capture, database writes, ingestion, deployment, probability/state change, or PR merge occurred; PR #83 remains Draft.
+
+
+### CI result for the follow-up regression
+
+GitHub Actions [BTC Scenario Readiness Gate #299](https://github.com/olegsh247-stack/Crypto/actions/runs/38966644329) completed successfully on commit `9d50d4d5caedca54f3003e0eec85435ddfc50309`. The new missing/unknown-readiness-status fail-closed regression is therefore CI-confirmed. This verifies offline behavior only; actual BTC inputs remain `not_evaluable` until freshness and provenance blockers are cleared through a separately authorized data update.
