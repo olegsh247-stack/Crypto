@@ -2312,3 +2312,12 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 **Итог gate:** первая проверка пройдена только на уровне датированных первичных evidence; вторая не пройдена для полного universe; третья остаётся unresolved. Поэтому issuer-primary route пока не может заменить текущий ETF source contract. Не выводить flow из AUM delta, не трактовать пропущенные даты как ноль и не смешивать quarterly transactions, holdings-based estimates и reported/compiled USD flows.
 
 Нет API calls, capture, ключей, production writes, registry/source priority/formula/evaluator changes или scenario evaluation. BTC остаётся `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
+
+
+## Дополнение 2026-10-16 — проверен официальный доступ к SEC EDGAR
+
+Официальная документация SEC подтверждает REST API без API key для истории подач и извлечённых XBRL-данных на `data.sec.gov`; публичные EDGAR filings можно скачивать, а scripted access разрешён при соблюдении Privacy and Security Policy, корректного User-Agent, умеренной частоты запросов и лимита не более 10 запросов/сек. Источники: [SEC Developer Resources](https://www.sec.gov/about/developer-resources), [Accessing EDGAR Data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data), [EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces).
+
+**Результат:** для SEC появился лучше документированный путь программного доступа, чем неописанный scraping issuer pages. Но это не закрывает ежедневный ETF gate: SEC filings/API не превращают квартальные отчёты в ежедневный ряд creations/redemptions, а доступ к filings сам по себе не означает автоматическое разрешение на любое downstream redistribution. SEC остаётся periodic primary cross-check route; дату подачи, период отчёта и amendments нужно сохранять отдельно.
+
+**Ограничения:** в этой проверке SEC API не вызывался, данные не захватывались, архив не записывался. Автоматизированный сбор/архивирование не запускались. Third-party/provider rights gates остаются отдельными. BTC остаётся `not_evaluable`; registry, formula/evaluator и scenario state не менялись.
