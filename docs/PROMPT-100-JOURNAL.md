@@ -377,3 +377,12 @@
 **Результат:** [BTC Public Source Staging #38876268169](https://github.com/olegsh247-stack/Crypto/actions/runs/38876268169) — `success` для кода verifier `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`. Успешны оба шага — archive writer safety tests и archive integrity/recovery verifier tests; job `capture` пропущен. Это подтверждает локальные fixture-сценарии целостности/повреждения/отсутствующего файла/path traversal, но не реальный backup/restore.
 
 **Статус:** verifier теперь проходит staging. PR #83 остаётся Draft. Права на raw-retention, фактическое частное хранилище и независимый encrypted backup/restore не закрыты; live capture не запускался, BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — добавлена fixture-репетиция восстановления архива
+
+**Действие:** в verifier tests добавлен сценарий, который копирует сформированный fixture-снимок в отдельный каталог восстановления и запускает полный verifier уже на восстановленной копии. Используется только временная директория CI; реальные данные, сеть, VPS и SSD не задействуются.
+
+**Результат на момент записи:** тест добавлен коммитом `e236bc53d512824e825f6c81f7efab0a1d34e24d`. Staging run для нового теста ожидается; пока он не завершится успешно, тест не считать подтверждённым.
+
+**Ограничения:** это репетиция копирования и checksum-проверки в рамках одного CI runner, не независимый backup/restore в отдельном failure domain. Права на хранение raw-источников остаются блокером; BTC остаётся `not_evaluable`.
