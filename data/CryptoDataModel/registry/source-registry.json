@@ -151,6 +151,16 @@
       "reliability": "to_validate",
       "access_method": "REST API with x-soso-api-key",
       "notes": "Official API candidate: GET https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US (date-range/limit parameters documented). Returns daily aggregate total_net_inflow in USD and trading date only; supports only the most recent month and excludes non-trading days. API key required. Documentation does not establish an exact publication timestamp or revision/finalization guarantee. Candidate only; not in institutional.etf_net_flow source_priority and not allowed by readiness until access, response schema, timestamp semantics, revision policy and reconciliation are verified."
+    },
+    {
+      "source_id": "macro.yahoo_finance_candidate",
+      "name": "Yahoo Finance DXY chart — access-restricted candidate",
+      "type": "market_data_candidate",
+      "url": "https://finance.yahoo.com/quote/DX-Y.NYB/history/",
+      "priority": 4,
+      "reliability": "blocked_pending_permission",
+      "access_method": "Yahoo Finance website / undocumented chart endpoint; automated capture disabled",
+      "notes": "Ticker DX-Y.NYB is the U.S. Dollar Index (DXY), shown as an ICE Futures instrument. The chart endpoint is undocumented and is not an approved public API. Yahoo's general Terms of Service prohibit automated data collection without express prior permission. Daily Close must be distinguished from Adj Close and intraday price. Provider timestamp is a candle/session label, not proven actual close or publication time. Session date must use provider exchange timezone and be stored separately. No macro.dxy source_priority approval; no canonical ingestion until access/reuse permission, exact close timestamp semantics, and freshness rule are verified."
     }
   ]
 }
