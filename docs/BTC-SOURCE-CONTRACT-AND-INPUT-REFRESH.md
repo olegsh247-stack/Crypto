@@ -512,3 +512,10 @@ Container packaging correction during validation: the API/Worker image test expo
 ## 25. BTC ETF observation contract — 2026-10-15
 
 Formalized the field semantics and revision guard in [the BTC ETF observation contract](./data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md). ETF candidate rows now explicitly distinguish a date-derived logical key from provider-assigned identity, and set both `provider_revision` and `revision` to `null` while provider revision/finality remains unknown. The full-response SHA-256 is explicitly scoped to the captured body, not an individual row. Tests protect these semantics. This does not unblock ETF: `observed_at` remains null, HTTP Date/retrieval time are not substitutes, and all ETF rows remain review-only/non-persistable.
+
+
+## Superseding decision — DXY is optional for the first BTC scenario (2026-10-16)
+
+This decision supersedes the historical sections above that describe DXY as a required readiness blocker. The first BTC scenario requires a valid spot-price input and an accepted ETF-flow series; DXY is optional macro context. Hashrate is supporting context, and fee/subsidy ratio remains deferred. The readiness registry now marks DXY optional, and offline scenario rule v2 omits missing DXY/hashrate/fee-ratio signals rather than inventing values. With only spot-price return and ETF flows available, the rule can return a deterministic Base result, but cannot reach Bull/Bear thresholds without additional valid signals. This is a research-only calculation; it does not change published probabilities or persist scenario state.
+
+Source references: Yahoo Finance `DX-Y.NYB` is a manual/display reference for ICE DXY only; automated Yahoo collection is not approved. FRED `DTWEXBGS` is a separate broad-dollar index and may be used only under that explicit name, never as a DXY replacement. If neither is usable, omit DXY context and continue.

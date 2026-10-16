@@ -52,7 +52,7 @@ No free/public candidate has yet passed all four gates: (1) exact instrument ide
 
 The best next *technical investigation* is to request/inspect the exact product and data terms for a licensed ICE DXY feed, while treating Yahoo as a visible reference only unless written automated-use permission exists. If a free data source is required, the clean alternative is to propose a **new, explicitly named broad-dollar metric** based on FRED DTWEXBGS and assess its research value; do not call it DXY. The Dukascopy symbol remains a secondary lead only, pending its exact instrument specification and applicable license.
 
-No source priority or metric registry is changed by this review. `macro.dxy` remains blocked; BTC remains `not_evaluable`.
+At the time of this initial review, no source priority or metric registry was changed. This DXY-blocker decision was superseded on 2026-10-16 by the optional-context decision below; the ETF gate remains separate.
 
 
 ## Decision update — DXY is optional context, not a BTC readiness gate (2026-10-16)

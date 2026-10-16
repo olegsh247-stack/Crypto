@@ -1988,3 +1988,8 @@ Reviewed the user-supplied candidates against current public instrument and term
 - The metric registry now marks `macro.dxy` as optional; its source priority remains empty, so no unapproved automated feed is implied.
 
 **Next work:** continue BTC source-contract/readiness work, prioritizing the remaining ETF-flow revision/finality/eligibility blocker and then the reproducible offline scenario rule. Do not spend another research cycle on DXY unless a concrete failure materially affects the scenario. No production data, ingestion, scenario state, probabilities, or deployment changed.
+
+
+## Plan 100 correction — DXY is optional through readiness and rule evaluation (2026-10-16)
+
+The DXY source hunt is closed for the first BTC scenario. The readiness gate no longer requires DXY, and deterministic offline rule v2 no longer throws when DXY, supporting hashrate, or deferred fee/subsidy context is absent. Required rule inputs are price return and the five-session ETF-flow aggregate; missing optional signals are omitted, never treated as zero. The existing ±3 score threshold remains unchanged, so with only two required signals the outcome is Base. This changes neither published 30/50/20 probabilities nor any stored scenario state. Yahoo `DX-Y.NYB` remains a manual reference only; FRED `DTWEXBGS` is a distinct optional proxy, not DXY. ETF publication/revision/finality is the remaining source-acceptance blocker.

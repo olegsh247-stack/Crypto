@@ -236,3 +236,10 @@ The target VPS API and disposable-PostgreSQL Build Rehearsal now verify the publ
 These are target API contract checks against disposable PostgreSQL. They do not prove that the currently serving public API is on the VPS, do not repair the historical duplicate/stale production observations, and do not authorize a scenario-state or event write.
 
 The current factor-to-input and event acceptance requirements are documented in [BTC Monitoring Readiness Matrix v1](./BTC-MONITORING-READINESS-MATRIX.md). Remaining BTC blockers are source-verified fresh observations, reviewed metric aggregation windows, and explicit confirmation/invalidation conditions before any live state/event is persisted.
+
+
+## Decision update — optional macro input and offline rule v2 (2026-10-16)
+
+The DXY macro proxy is optional for the first BTC scenario and must not block readiness or offline evaluation. Yahoo Finance `DX-Y.NYB` may be used as a manual reference for ICE DXY; it is not approved as an automated collector absent permission. FRED `DTWEXBGS` is a distinct broad-dollar proxy and must retain its own name. If neither source is usable, omit DXY.
+
+The deterministic offline rule is now versioned as `BTC-Scenario-Rule-v2`: price-return and ETF-flow inputs are required; hashrate and DXY are optional directional signals; fee/subsidy ratio is optional context only. Missing optional inputs are omitted, never imputed as zero. If only the two required signals are present, the current ±3 score threshold means the result remains Base; this is an explicit conservative outcome, not a refreshed probability or a persisted scenario state. Published baseline probabilities remain 30/50/20 and unchanged.
