@@ -102,6 +102,28 @@ export function prepareBtcObservationCandidates(manifest) {
         raw_body_file: source.body_file ?? null,
         note: "Candidate only. Freshness, duplicate/revision policy and ingestion approval remain separate checks."
       });
+    } else if (source?.metric_id === "macro.dxy") {
+      const reasons = [];
+      if (source.status !== "CAPTURED") reasons.push("dxy_source_capture_blocked_or_missing");
+      if (source.source_id !== "macro.yahoo_finance_candidate") reasons.push("dxy_source_identity_not_reviewed");
+      if (source.url !== "https://finance.yahoo.com/quote/DX-Y.NYB/history/") reasons.push("dxy_source_url_not_approved");
+      if (!(Number(source.daily_close) > 0) || !Number.isFinite(Number(source.daily_close))) reasons.push("dxy_daily_close_missing_or_invalid");
+      if (source.quote_unit !== "index_points") reasons.push("dxy_unit_mismatch");
+      if (!validIso(source.observed_at)) reasons.push("dxy_observation_timestamp_unverified");
+      if (!validIso(source.retrieved_at)) reasons.push("dxy_retrieval_timestamp_missing_or_invalid");
+      blocked.push({
+        source_id: source.source_id ?? null,
+        metric_id: source.metric_id,
+        reasons: reasons.length ? reasons : ["dxy_not_approved_for_canonical_input"],
+        candidate_state: "REVIEW_ONLY_BLOCKED",
+        session_date: source.session_date ?? null,
+        observed_at: validIso(source.observed_at) ? source.observed_at : null,
+        retrieved_at: source.retrieved_at ?? null,
+        source_url: source.url ?? null,
+        freshness_window: "48h",
+        freshness_status: "UNVERIFIABLE_UNTIL_SOURCE_TIMESTAMP_CONTRACT_PASSES",
+        persistable: false
+      });
     } else if (source?.metric_id === "institutional.etf_net_flow") {
       if (source?.source_id === "institutional.primary"
         && source?.url === "https://farside.co.uk/bitcoin-etf-flow-all-data/"
@@ -225,6 +247,51 @@ export function prepareBtcObservationCandidates(manifest) {
         source_b_updated_through: tftc.updated_through ?? null,
         decision: "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE",
         note: "TFTC is an auxiliary mirror with distinct lineage. The 0.65m band is a screening flag only; cross-source agreement does not approve ingestion, and a difference does not by itself prove which source is wrong."
+      });
+    }
+  }
+
+  const sosovalue = sources.find(source =>
+    source?.source_id === "institutional.sosovalue"
+    && source?.url?.startsWith("https://openapi.sosovalue.com/openapi/v1/etfs/summary-history")
+    && source?.status === "CAPTURED"
+    && Array.isArray(source.latest_rows));
+  if (farside && sosovalue) {
+    const sosoByDate = new Map(sosovalue.latest_rows
+      .filter(row => typeof row?.date === "string")
+      .map(row => [row.date, row]));
+    for (const row of farside.latest_rows) {
+      const date = row?.period_start;
+      const sosoRow = typeof date === "string" ? sosoByDate.get(date) : null;
+      if (!sosoRow) continue;
+      const farsideTotal = row?.status === "REPORTED_CANDIDATE"
+        && typeof row.reported_total_usd_million === "number"
+        && Number.isFinite(row.reported_total_usd_million)
+        ? row.reported_total_usd_million : null;
+      const sosoTotal = typeof sosoRow.total_net_inflow_usd_million === "number"
+        && Number.isFinite(sosoRow.total_net_inflow_usd_million)
+        ? sosoRow.total_net_inflow_usd_million : null;
+      const delta = farsideTotal !== null && sosoTotal !== null
+        ? Number((sosoTotal - farsideTotal).toFixed(9)) : null;
+      etfCrossSourceComparisons.push({
+        period_start: date,
+        source_a: "institutional.primary",
+        source_a_url: farside.url,
+        source_a_payload_sha256: farside.source_payload_sha256 ?? farside.body_sha256 ?? null,
+        source_a_total_usd_million: farsideTotal,
+        source_b: "institutional.sosovalue",
+        source_b_url: sosovalue.url,
+        source_b_payload_sha256: sosovalue.source_payload_sha256 ?? sosovalue.body_sha256 ?? null,
+        source_b_total_usd_million: sosoTotal,
+        delta_b_minus_a_usd_million: delta,
+        absolute_delta_usd_million: delta === null ? null : Math.abs(delta),
+        screening_band_usd_million: 0.65,
+        screening_status: delta === null ? "NOT_COMPARABLE"
+          : Math.abs(delta) > 0.65 ? "DELTA_EXCEEDS_SCREENING_BAND"
+          : "DELTA_WITHIN_SCREENING_BAND",
+        decision: "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE",
+        source_b_observation_timestamp_semantics: sosovalue.observation_timestamp_semantics ?? "trading date only; publication/finality unverified",
+        note: "SoSoValue comparison is a cross-check only. Agreement does not approve either source; date-only rows do not establish publication time, finality or revision semantics."
       });
     }
   }
