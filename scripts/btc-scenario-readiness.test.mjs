@@ -88,14 +88,14 @@ test("historical ETF sessions count toward the five-day series even when they ar
 test("deferred fee/subsidy ratio is not required for the first BTC scenario", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_subsidy_ratio");
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio"));
 });
 
 test("supporting hashrate is not a mandatory directional input", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.hashrate");
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "security.hashrate"));
 });
 
@@ -347,7 +347,7 @@ test("DXY remains optional and no unapproved source is canonical", () => {
 test("official Farside all-data endpoint is accepted as the same canonical source", () => {
   const inputs = completeInputs();
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
     && x.reason === "source_url_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
