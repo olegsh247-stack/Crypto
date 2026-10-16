@@ -514,3 +514,14 @@
 **Решение:** первичные квартальные отчёты усиливают reconciliation, но не закрывают daily flow series для полного active universe. Не считать изменение AUM потоком; не менять registry, priority, формулу или evaluator. Capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
 
 **Источники:** [матрица](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md); [IBIT SEC Q2](https://www.sec.gov/Archives/edgar/data/1980994/000143774926026004/bit20260630c_10q.htm); [FBTC SEC Q2](https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm); [BITB SEC Q2](https://www.sec.gov/Archives/edgar/data/1763415/000119312526340183/bitb-20260630.htm).
+
+
+## 2026-10-16 — уточнён блокер DXY: ICE DXY не равен индексу ФРС
+
+**Действие:** проверены официальная документация ICE по DXY и методология Федеральной резервной системы по nominal broad dollar index. Создан [обзор контракта DXY](BTC-DXY-SOURCE-CONTRACT-REVIEW-2026-10-16.md).
+
+**Результат:** ICE DXY — фиксированный геометрический индекс шести валют (EUR 57.6%, JPY 13.6%, GBP 11.9%, CAD 9.1%, SEK 4.2%, CHF 3.6%); ICE перечисляет дневную/внутридневную историю, но условия и разрешённый путь для durable retention проекта ещё не подтверждены. Fed/FRED `DTWEXBGS` — ежедневный broad trade-weighted index на базе 2006=100 с более широким набором торговых партнёров и пересматриваемыми весами; это не DXY и не может быть тихой заменой.
+
+**Решение:** сначала проверить, какой именно индекс уже определён каноническим BTC metric contract. Если ICE DXY — нужно подтвердить легальный/доступный feed, retention rights, close timestamp и revision semantics. Если нужен Fed broad index, смена метрики требует отдельного reviewed решения. Registry и scenario logic не менялись; capture, DB writes, ingestion, scenario evaluation, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
+
+**Источники:** [ICE DXY](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices); [Fed methodology](https://www.federalreserve.gov/econres/notes/feds-notes/revisions-to-the-federal-reserve-dollar-indexes-20190115.html); [FRED DTWEXBGS](https://alfred.stlouisfed.org/series?seid=DTWEXBGS).
