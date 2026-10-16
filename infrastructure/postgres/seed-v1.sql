@@ -67,6 +67,7 @@ values
   ('analytics','Glassnode','analytics','https://glassnode.com/','high','On-chain and market analytics.'),
   ('lightning.primary','Mempool.space Lightning','primary','https://mempool.space/docs/api/rest','high','Lightning network statistics.'),
   ('macro.primary','US Treasury / Federal Reserve / BLS','official','https://home.treasury.gov/','high','US macroeconomic series.'),
+  ('macro.yahoo_finance_candidate','Yahoo Finance DXY chart — access-restricted candidate','market_data_candidate','https://finance.yahoo.com/quote/DX-Y.NYB/history/','blocked_pending_permission','DXY candidate only. Automated capture is disabled because Yahoo terms require express prior permission; timestamp semantics and reuse rights remain unverified.'),
   ('market.binance','Binance Spot Market API','primary','https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints','high','Primary spot market adapter.'),
   ('market.bybit','Bybit V5 Market API','primary','https://bybit-exchange.github.io/docs/v5/market/tickers','high','Fallback spot market adapter.'),
   ('market.okx','OKX V5 Market API','primary','https://www.okx.com/docs-v5/en/','high','Fallback spot market adapter.'),
