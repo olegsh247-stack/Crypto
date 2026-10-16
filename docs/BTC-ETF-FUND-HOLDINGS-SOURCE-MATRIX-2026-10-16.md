@@ -204,3 +204,18 @@ The read-only `etf_holdings.json` candidate contains 162 rows across only five t
 It has no 2026-06-30 rows, so it cannot be reconciled directly against the common-date SEC controls. The data schema stores date/value pairs but does not, in the inspected payload, provide per-row source URL, source publication time, retrieval time, revision/correction semantics, or evidence that repeated values on successive dates are independently observed rather than carried forward. These rows remain an unapproved research candidate, not a verified complete daily history.
 
 **Next work:** continue finding publicly accessible dated issuer holdings snapshots/archives for the missing eight tickers in the daily panel, and inspect source provenance for the five covered tickers. Do not use quarterly values as daily values, derive holdings from USD flows/AUM, or copy the third-party payload into production data. Daily history for all 13 remains **NOT DONE**; production ingestion/registry acceptance remains **not approved**.
+
+
+## Additional public-history candidate: BuildWithData BTC-ETF-Tracker — 2026-10-16
+
+Reviewed the public [repository](https://github.com/BuildWithData/BTC-ETF-Tracker), its README, source tree and relevant open issues. The README says scraping began on 23 February (year not specified in that sentence) and the external Google Drive folder is expected to be updated at least weekly: [data folder](https://drive.google.com/drive/folders/14vDsj7pfQTJaPXL-BFKf6bsU_a63FLW8?usp=sharing). The actual folder files and full historical series were not verified in this pass.
+
+The code tree contains US issuer scrapers for ARKB, BITB, BRRR, BTC (Grayscale Mini), BTCO, EZBC, FBTC, GBTC, HODL and IBIT. It does not contain US scrapers for BTCW, MSBT or OBTC. The implementation generally saves timestamped snapshots of source files/pages, which makes the external archive worth a follow-up if its contents can be inspected. However, the public repo tree inspected here contains no top-level LICENSE file, so public visibility alone does not establish reuse/redistribution rights for its code or data.
+
+Known open source-quality blockers in the project's own issue tracker:
+- [BTCW scraper issue #15](https://github.com/BuildWithData/BTC-ETF-Tracker/issues/15) remains open.
+- [BTCO holdings issue #14](https://github.com/BuildWithData/BTC-ETF-Tracker/issues/14) describes holdings as unavailable on the website and proposes estimating them as AUM / reference price. That estimate is explicitly unsuitable for our exact holdings contract and will not be adopted.
+- [FBTC scraper issue #99](https://github.com/BuildWithData/BTC-ETF-Tracker/issues/99) remains open and says the holdings Excel download had been failing.
+- [ARKB scraper issue #87](https://github.com/BuildWithData/BTC-ETF-Tracker/issues/87) remains open because changed HTML caused required fields to disappear.
+
+**Decision:** retain this as a lead for inspecting historical snapshot files only, not as an accepted source. Do not use AUM/BTC-price reconstruction. Do not import its payload until actual file coverage, per-row observation dates, provenance, correction behavior and rights are verified. The 13-fund daily panel remains **NOT DONE**.
