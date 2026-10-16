@@ -2007,3 +2007,21 @@ The DXY source hunt is closed for the first BTC scenario. The readiness gate no 
 **Confirmed for code commit `27a18a3d1434ac1298e42222c288c9560ce30950`:** [BTC Scenario Readiness Gate #38853311612](https://github.com/olegsh247-stack/Crypto/actions/runs/38853311612) passed, including registry validation and the readiness/directional-rule unit suite. [VPS API Build Rehearsal #38853311389](https://github.com/olegsh247-stack/Crypto/actions/runs/38853311389) also passed all build, PostgreSQL rehearsal, read-only provenance, idempotency, backup/restore and API/Worker E2E checks.
 
 **Result:** DXY is optional in the canonical readiness registry and offline rule v2; missing DXY/hashrate/fee-ratio inputs are omitted rather than imputed. ETF source revision/finality/eligibility remains the independent blocker for current persisted observations. No production write, ingestion, deployment, scenario-state persistence, probability change, or PR merge occurred.
+
+
+## Plan 100 decision and implementation — ETF project-stabilized research eligibility (2026-10-16)
+
+**Decision accepted by the user:** use a project-stabilized snapshot for offline research when provider-declared finality is unavailable. Do not claim provider finality.
+
+**Implemented on PR #83 branch:**
+- Policy: `docs/BTC-ETF-PROJECT-STABILIZED-RESEARCH-POLICY-2026-10-16.md`.
+- Evaluator: `scripts/evaluate-btc-etf-research-eligibility.mjs`.
+- Dedicated tests: `scripts/evaluate-btc-etf-research-eligibility.test.mjs`, wired into the read-only source-staging workflow.
+- Eligibility requires two valid distinct captures at least 24 hours apart; both Farside and TFTC captured in both; exactly one complete/reconciled row per source for the date; and unchanged per-source row fingerprints across captures. Output is `ELIGIBLE_FOR_REVIEW` only and requires explicit human approval.
+- Changed rows are revision candidates; prior evidence is retained and affected offline research must be re-evaluated. Failed/incomplete/missing data never becomes zero.
+- If official sources fail, non-official sources may be researched as clearly labelled corroboration, but cannot silently replace canonical sources. Instrument identity, metric meaning, coverage, terms/licensing and provenance require review before approval.
+- The 7-day GitHub Actions artifact is not a durable archive. Until project-controlled retention and recovery are demonstrated, a date cannot pass review merely because a temporary artifact exists.
+
+**Validation:** [BTC Public Source Staging #38854319856](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319856) passed, including the new eligibility-policy tests; live capture was skipped as intended. VPS API Build Rehearsal [#38854319826](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319826) is still running at the time of this note; do not mark it successful until completed.
+
+**Boundary:** no live capture, production database writes, ingestion, scenario evaluation, scenario-state/probability/monitoring changes, deployment, or PR merge. This closes the policy/code gate only; it does not automatically make BTC `evaluable`.
