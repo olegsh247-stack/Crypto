@@ -83,7 +83,7 @@ export async function verifyBtcEtfEvidenceArchive(snapshotDir) {
   }
 
   const expectedFiles = new Set(expected.keys());
-  const expectedDirs = new Set();
+  const expectedDirs = new Set(["source", "normalized"]);
   for (const path of expectedFiles) {
     const parts = path.split("/");
     for (let i = 1; i < parts.length; i += 1) expectedDirs.add(parts.slice(0, i).join("/"));
