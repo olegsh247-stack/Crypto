@@ -2113,3 +2113,8 @@ The first staging run [#38876064841](https://github.com/olegsh247-stack/Crypto/a
 ### Offline archive verifier CI passed (2026-10-16)
 
 [BTC Public Source Staging run #38876268169](https://github.com/olegsh247-stack/Crypto/actions/runs/38876268169) completed successfully on verifier code commit `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`. Both the archive-writer safety tests and archive-integrity/recovery-verifier tests passed; live capture was skipped. This validates fixture-based local integrity checks, not a real independent backup/restore. PR #83 remains Draft; source retention rights and durable storage/restore remain blockers. BTC remains `not_evaluable`.
+
+
+### Fixture restore rehearsal (2026-10-16)
+
+Added a test that copies a generated fixture snapshot to a separate restore directory and runs the full verifier against the restored copy. Commit: `e236bc53d512824e825f6c81f7efab0a1d34e24d`. Staging result pending at the time of writing. This is a same-runner fixture rehearsal, not an independent backup/restore test; source retention rights and durable storage remain blockers, BTC remains `not_evaluable`.
