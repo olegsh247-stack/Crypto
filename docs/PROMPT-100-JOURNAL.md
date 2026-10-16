@@ -503,3 +503,14 @@
 **Решение:** включать MSBT с даты запуска, исключать DEFI из active aggregate после 2026-09-03, сохраняя исторические данные до delisting. Реестр, приоритет источников, формула и evaluator не менялись. Не выполнялись API-запросы, live capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment или merge. BTC остаётся `not_evaluable`; PR #83 Draft.
 
 **Ссылки:** [матрица источников](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md); [Morgan Stanley SEC 10-Q](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/msbt-20260630x10q.htm); [Bitwise BITB](https://bitbetf.com/).
+
+
+## 2026-10-16 — усилена первичная сверка ETF по SEC Q2: IBIT, FBTC, BITB
+
+**Действие:** проверены официальные SEC 10-Q за квартал, завершившийся 2026-06-30, для IBIT, FBTC и BITB; матрица issuer-primary source coverage обновлена.
+
+**Результат:** IBIT на 2026-06-30 — 1,296,040,000 акций, NAV/share $33.48, net assets $43.386012125 млрд, 734,261 BTC; отчёт отдельно раскрывает 187,360,000 погашенных акций за Q2 с помесячной разбивкой. FBTC на 2026-06-30 — 200,328,476 акций, NAV/share $51.44, net assets $10.304103 млрд и 174,383 BTC; cover отдельно указывает 197,403,476 акций на 2026-07-31. BITB на 2026-06-30 — 66,690,000 акций, NAV/share $31.87, net assets $2.125612 млрд и 36,207.6919 BTC; официальный сайт отдельно показывает более поздние значения на 2026-10-12/13. Даты наблюдений не смешивать.
+
+**Решение:** первичные квартальные отчёты усиливают reconciliation, но не закрывают daily flow series для полного active universe. Не считать изменение AUM потоком; не менять registry, priority, формулу или evaluator. Capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
+
+**Источники:** [матрица](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md); [IBIT SEC Q2](https://www.sec.gov/Archives/edgar/data/1980994/000143774926026004/bit20260630c_10q.htm); [FBTC SEC Q2](https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm); [BITB SEC Q2](https://www.sec.gov/Archives/edgar/data/1763415/000119312526340183/bitb-20260630.htm).
