@@ -1067,3 +1067,15 @@
 **Результат:** создан [BTC-REQUIRED-INPUT-PREFLIGHT-2026-10-17.md](BTC-REQUIRED-INPUT-PREFLIGHT-2026-10-17.md). Kraken API endpoint из утверждённого allowlist не удалось прочитать текущим каналом; цена и доказательства наблюдения не получены. Farside показывает последнюю заполненную дату 15 октября; строка 16 октября содержит прочерки и total 0.0, что не считается подтверждённым finalized zero-flow. Историческая сумма за 5–9 октября (−678.9 USD million) не подходит как свежий вход.
 
 **Решение:** входы не подменять альтернативными источниками или нулями. BTC остаётся `not_evaluable`; нужны свежая проверяемая цена из разрешённого источника и финализированный ETF flow с provenance/completeness/revision evidence. Это была read-only проверка, не production capture: raw payload не архивировался, БД/ingestion/state/probabilities/deployment/merge не затрагивались. PR #83 остаётся Draft.
+
+
+## 2026-10-17 — GitHub Runner успешно получил обязательный market source
+
+После первоначальной недоступности Kraken через прямой канал выполнен read-only [BTC Public Source Staging run #156](https://github.com/olegsh247-stack/Crypto/actions/runs/38967487610) на `main`. Workflow завершился success, artifact [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38967487610/artifacts/12075551423) загружен (SHA-256 `7be48d15498a71319c72ab5e0f8825deb28dc0ad7bb0dd7f1be35bd9d390dca0`, retention до 2026-10-23).
+
+- Kraken allowlisted endpoint: HTTP 200; captured 81,574 USD/BTC, trade observed_at `2026-10-16T21:10:30.066Z`, retrieved_at `2026-10-16T21:10:31.607Z`, payload SHA-256 `47b214e44d915913a9f83a95146d1e8017d52229a9c88888e4e582809e2c7569`. Доступ подтверждён, но наблюдение уже не проходит 1-hour freshness gate.
+- Binance market-data-only и OKX дали независимые BTC/USDT cross-checks; не считать USDT равным USD и не менять canonical source. Binance primary API вернул 451, Bybit — 403.
+- Mempool hashrate/fees получены, но пока не используются до проверки окон и единиц. Farside main page вернула 403, all-data page — 200; ETF rows распарсены только как review candidates, blocked из-за неподтверждённых publication/observation time и revision/finality.
+- Workflow подтвердил `production_database_accessed=false`, `production_writes_performed=false`. Warning Node.js 20 deprecation и notice Ubuntu migration не блокируют успешный run.
+
+**Решение:** доступ Kraken через runner восстановлен; требуется новый capture для свежей цены. ETF flow остаётся блокером, BTC — `not_evaluable`. Ни ingestion, ни БД, ни scenario state/probabilities, deployment или merge не менялись.
