@@ -786,3 +786,14 @@
 **Результат:** Franklin Bitcoin ETF — это уже учтённый фонд EZBC с inception 2024-01-11, а не отдельный новый продукт. Hedgeye Hedged Bitcoin ETF (HBIT) в prospectus от 2026-08-24 прямо указывает, что не инвестирует непосредственно в Bitcoin; экспозиция строится через другие BTC ETF/ETP и опционы. HBIT не включается в core direct-holding spot-BTC cohort, чтобы не смешивать продукт-обёртку с базовыми фондами и не допускать double-counting.
 
 **Решение:** count core cohort не меняется в этом pass. Перед любым будущим capture нужен повторный dated official listing-status check. Источники: https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS/franklin-bitcoin-etf/EZBC ; https://www.sec.gov/Archives/edgar/data/1992870/000199287026000002/posam.htm ; https://www.sec.gov/Archives/edgar/data/1771146/000177114626001708/ck0001771146-20260824.htm.
+
+
+## 2026-10-16 — confirmation of latest build and next snapshot gate
+
+**Действие:** проверены workflow runs по ветке PR #83 после официальной сверки universe и статически просмотрены offline snapshot diff script/test.
+
+**Результат:** VPS API Build Rehearsal для последнего на тот момент docs-head `41d05983158cda6916360875596ed3824bafb03f` завершился success: [run #38910865157](https://github.com/olegsh247-stack/Crypto/actions/runs/38910865157). Это подтверждает VPS build/rehearsal, но не live ETF data, archive durability или права на источники. На текущем docs-only head отдельного BTC Public Source Staging run нет; поэтому не заявлять новый успешный staging run для этого head. Ранее задокументированные fixture tests остаются подтверждением только указанной в соответствующем разделе версии кода.
+
+Статически проверены `scripts/diff-btc-etf-snapshots.mjs` и тесты: сравнение офлайн по source ID + URL + reporting date, различает new/changed/missing/incomplete/not-comparable и не пишет в production. Сам diff не доказывает provider finality, rights clearance или durable restore.
+
+**Следующий gate:** сравнивать только уже существующие local snapshots с подтверждёнными правами; live capture/archive write не выполнять без отдельного разрешения и закрытия source-rights/retention blockers. BTC remains `not_evaluable`.
