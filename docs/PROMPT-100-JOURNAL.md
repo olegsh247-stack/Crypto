@@ -1015,3 +1015,16 @@
 **Решение:** этап поиска/сводного подсчёта закрыт в корректной формулировке: «имеющиеся данные подсчитаны, покрытие и ограничения зафиксированы». Не продолжать широкий поиск поставщиков в этом же подразделе. Частичный daily total не называть полным рынком; не использовать его как подтверждённый flow/сценарный сигнал без отдельного согласования качества. Полная daily panel 13/13 остаётся не достигнутой; это ограничение не маскируется.
 
 **Граница безопасности:** только read-only чтение публичного JSON и документационные изменения. Runtime, registry, БД, сценарий, оценки/вероятности, ingestion, deployment и production не менялись; PR #83 остаётся Draft, merge не выполнялся.
+
+
+## 2026-10-16 — BTC Rule v2: контракт обязательных входов и офлайн-прогон
+
+**Действие:** сверены canonical metric registry, readiness implementation и pure Rule v2 evaluator после закрытия расчётного ETF holdings подраздела. Добавлен input-readiness report и отдельный offline historical rehearsal.
+
+**Подтверждённый контракт:** обязательны `market.spot_price` (USD/BTC, максимум 1h) и `institutional.etf_net_flow` (USD million/day, latest максимум 36h плюс не менее пяти разных reporting dates и complete-fund/revision/finality evidence). Hashrate и DXY — optional context; fee/subsidy ratio — optional non-directional context. Пропущенные optional inputs не заполняются догадками.
+
+**Результат офлайн-прогона исторического fixture:** price return −3.2383%; ETF five-session sum −678.9 USD million; hashrate +1%; DXY +0.1467%; fee/subsidy 0.004128. Rule v2 возвращает Base, directional score −1, confidence low. Это подтверждает только детерминированное поведение правила на историческом fixture, не свежую оценку рынка.
+
+**Блокеры остаются:** last audited spot and ETF candidate are stale; ETF observation/publication timestamp, completeness, revision/finality and rights are not cleared. BTC remains `not_evaluable`; no state persistence or probability change. Runtime, registry, DB, live capture, deployment, VPS/storage and PR merge untouched. PR #83 remains Draft.
+
+**Следующий шаг:** завершить offline contract/test review одного сценария; актуальные реальные входы собирать только отдельным разрешённым действием. Daily ETF holdings search не возобновлять как блокер.
