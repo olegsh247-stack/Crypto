@@ -275,3 +275,11 @@ A final public SEC/sponsor search found adjacent products that must not be silen
 - **BITA — iShares Bitcoin Premium Income ETF:** remains a separate premium-income/options strategy with BTC and IBIT holdings, as documented above; do not include it in the plain spot cohort without explicit aggregate design and double-count controls.
 
 **Scope result:** no additional plain, direct-holding US spot-Bitcoin product was identified in this pass beyond the 13-product active cohort in the effective-date ledger. This is a documented research result, not an absolute guarantee against a later launch or status change. Keep a dated official-listing check before any future capture. BTCU, BITA and 7RCC remain outside the core cohort under the current definition.
+
+
+## Additional official filing check — Franklin EZBC and Hedgeye HBIT (2026-10-16)
+
+- **Franklin Bitcoin ETF is not an additional fund.** Franklin's official product page identifies ticker **EZBC** and inception date **2024-01-11**, already represented in this cohort. SEC's February 2026 post-effective amendment is a revised filing for the existing Franklin Bitcoin ETF, not evidence of a new ticker or separate fund. Do not double-count it. [Franklin official product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS/franklin-bitcoin-etf/EZBC); [SEC post-effective amendment](https://www.sec.gov/Archives/edgar/data/1992870/000199287026000002/posam.htm).
+- **HBIT — Hedgeye Hedged Bitcoin ETF:** SEC prospectus dated 2026-08-24 says it does **not invest directly in Bitcoin**; it primarily obtains exposure through other ETFs/ETPs that directly hold BTC and manages downside risk with options. It is a distinct Bitcoin-linked product but excluded from the core direct-holding spot-Bitcoin ETF cohort. Its inclusion in a broader BTC-linked fund universe would require a separate contract and double-count controls because holdings may include the underlying spot ETFs. [SEC prospectus](https://www.sec.gov/Archives/edgar/data/1771146/000177114626001708/ck0001771146-20260824.htm).
+
+**Outcome of this pass:** neither product changes the core cohort count. This is a classification result based on issuer/SEC records, not proof that no other product can launch later; rerun the official listing-status scan before any future capture.
