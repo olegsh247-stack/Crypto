@@ -43,7 +43,7 @@ ETF rows remain blocked until source-specific publication/revision/finality sema
 **Disposition:** BTC remains `not_evaluable`. No production inputs, scenario state, score, probability, or monitoring state changed.
 
 
-## 5. Offline eligibility report CLI — staging verified; VPS rehearsal pending
+## 5. Offline eligibility report CLI — staging and VPS rehearsal verified
 
 The policy evaluator now has a CLI for two exported, integrity-validated snapshot manifests:
 `node scripts/evaluate-btc-etf-research-eligibility.mjs --previous <snapshot.json> --current <snapshot.json> --reporting-date YYYY-MM-DD [--controls <review-controls.json>] --out <report.json>`
@@ -52,4 +52,4 @@ The report records both snapshot IDs, SHA-256 of the exact input manifest bytes,
 
 **Important limitation:** the controls JSON is a human-supplied assertion record, not self-verifying proof that a backup restore or data rights clearance actually occurred. Each evidence reference must point to independently reviewable evidence; reviewers must not mark archive restore or rights `CLEARED` without that evidence. The evaluator returns the references in the report so the reviewed claims remain visible alongside the controls-file hash. The CLI is offline-only and reads files supplied by the operator; it does not fetch providers, access PostgreSQL, ingest observations, or alter scenario state.
 
-An integration test exercises the CLI with fixture manifests, confirms fail-closed behavior when controls are omitted, and verifies report hashes. Confirmed: [BTC Public Source Staging #38867336990](https://github.com/olegsh247-stack/Crypto/actions/runs/38867336990) passed all validation steps for code commit `f1f2aa70fcbbaaf4f835cef6dcc96a80c9e161a1`; capture was skipped. An earlier staging attempt exposed a newline-escaping defect in CLI output; that defect was corrected before the passing run. The VPS Build & E2E rehearsal for the current code is still running and must be checked before this verification item is complete. No live capture was run.
+An integration test exercises the CLI with fixture manifests, confirms fail-closed behavior when controls are omitted, and verifies report hashes. Confirmed: [BTC Public Source Staging #38867336990](https://github.com/olegsh247-stack/Crypto/actions/runs/38867336990) passed all validation steps for code commit `f1f2aa70fcbbaaf4f835cef6dcc96a80c9e161a1`; capture was skipped. An earlier staging attempt exposed a newline-escaping defect in CLI output; that defect was corrected before the passing run. The VPS Build & E2E rehearsal for code commit `a92b717833a99d87775619075e7e7ac9c1ad33b5` completed successfully: [run #38867561274](https://github.com/olegsh247-stack/Crypto/actions/runs/38867561274). The CLI implementation has now passed both staging validation and VPS Build & E2E. This verifies test/build contracts, not a real provisioned archive or source rights. No live capture was run.
