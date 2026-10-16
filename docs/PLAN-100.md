@@ -2108,3 +2108,8 @@ The first staging run [#38876064841](https://github.com/olegsh247-stack/Crypto/a
 
 
 **Follow-up CI correction:** staging run [#38876188724](https://github.com/olegsh247-stack/Crypto/actions/runs/38876188724) exposed a second issue: the archive writer always creates an empty `normalized/` directory when there is no normalized candidate file. The verifier now allows the writer's expected `source/` and `normalized/` directories while still rejecting unmanifested files. Fix commit: `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`; the new staging result is pending.
+
+
+### Offline archive verifier CI passed (2026-10-16)
+
+[BTC Public Source Staging run #38876268169](https://github.com/olegsh247-stack/Crypto/actions/runs/38876268169) completed successfully on verifier code commit `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`. Both the archive-writer safety tests and archive-integrity/recovery-verifier tests passed; live capture was skipped. This validates fixture-based local integrity checks, not a real independent backup/restore. PR #83 remains Draft; source retention rights and durable storage/restore remain blockers. BTC remains `not_evaluable`.
