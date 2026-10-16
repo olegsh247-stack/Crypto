@@ -34,4 +34,12 @@
 
 Direct SEC document content was re-opened for the following control rows and the stated quantity was confirmed in the filing's investment schedule: **IBIT (734,261), FBTC (174,383), GBTC (138,505.75680424), Grayscale Mini BTC (54,280.40050138), ARKB (32,178.2280), BITB (36,207.6919), BTCO (5,345), and EZBC (5,664.0163)**. The IBIT URL was corrected to the actual SEC document filename `bit20260630c_10q.htm`; the previously listed `ibit-20260630.htm` was not the filing's actual document URL.
 
-This is a targeted verification of 8 rows, not a claim that all 13 rows have been independently re-opened in this pass. The remaining rows (HODL, BRRR, BTCW, MSBT, OBTC) remain in the table with their direct SEC links but should be treated as not independently rechecked in this specific pass. In particular, BTCW's filing distinguishes its rounded schedule quantity (2,310 BTC) from a reference-rate quantity (2,309.689 BTC); the chosen field must remain tied to the explicitly named measurement methodology.
+The first pass verified 8 rows. A second pass then re-opened the SEC filings for the remaining five rows: HODL (16,241.00), BRRR (5,864), BTCW (2,310), MSBT (5,059.30771216), and OBTC (945.07). Together, all **13/13** listed values have now been checked against the cited SEC filings' investment schedules. In particular, BTCW's filing distinguishes its rounded schedule quantity (2,310 BTC) from a reference-rate quantity (2,309.689 BTC); this table intentionally records the schedule quantity, and the methodology distinction must be retained.
+
+
+Second-pass primary-source checks:
+- HODL: SEC investment schedule reports 16,241.00 BTC at 2026-06-30.
+- BRRR: SEC investment schedule reports 5,864 BTC.
+- BTCW: SEC investment schedule reports 2,310 BTC; Note describes 2,309.689 BTC at the Reference Rate valuation.
+- MSBT: SEC investment schedule reports 5,059.30771216 BTC.
+- OBTC: SEC investment schedule reports 945.07 BTC.
