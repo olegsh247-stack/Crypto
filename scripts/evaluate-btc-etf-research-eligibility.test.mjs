@@ -1,4 +1,9 @@
 import test from "node:test";
+import { spawnSync } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { buildBtcEtfSnapshot } from "./diff-btc-etf-snapshots.mjs";
 import { evaluateBtcEtfResearchEligibility, BTC_ETF_STABILITY_WINDOW_MS } from "./evaluate-btc-etf-research-eligibility.mjs";
@@ -95,4 +100,53 @@ test("rejects impossible calendar dates", () => {
     snapshot({ at: firstTime }), snapshot({ at: after24h }), "2026-02-31", verifiedControls
   );
   assert.equal(result.status, "BLOCKED_INVALID_REPORTING_DATE");
+});
+
+
+test("CLI writes a reproducible offline eligibility report and fails closed without review controls", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "btc-etf-eligibility-"));
+  try {
+    const previous = snapshot({ at: firstTime });
+    const current = snapshot({ at: after24h });
+    const previousPath = join(directory, "previous.json");
+    const currentPath = join(directory, "current.json");
+    const controlsPath = join(directory, "controls.json");
+    const blockedPath = join(directory, "blocked-report.json");
+    const eligiblePath = join(directory, "eligible-report.json");
+    await Promise.all([
+      writeFile(previousPath, JSON.stringify(previous), "utf8"),
+      writeFile(currentPath, JSON.stringify(current), "utf8"),
+      writeFile(controlsPath, JSON.stringify(verifiedControls), "utf8")
+    ]);
+    const scriptPath = resolve(fileURLToPath(new URL("./evaluate-btc-etf-research-eligibility.mjs", import.meta.url)));
+    const baseArgs = [
+      scriptPath,
+      "--previous", previousPath,
+      "--current", currentPath,
+      "--reporting-date", "2026-10-07"
+    ];
+
+    const blocked = spawnSync(process.execPath, [...baseArgs, "--out", blockedPath], { encoding: "utf8" });
+    assert.equal(blocked.status, 0, blocked.stderr);
+    assert.equal(JSON.parse(blocked.stdout).status, "BLOCKED_DURABLE_ARCHIVE");
+    const blockedReport = JSON.parse(await readFile(blockedPath, "utf8"));
+    assert.equal(blockedReport.scenario_evaluated, false);
+    assert.equal(blockedReport.production_writes_performed, false);
+    assert.equal(blockedReport.reviewer_approval_required, true);
+
+    const eligible = spawnSync(process.execPath, [
+      ...baseArgs, "--controls", controlsPath, "--out", eligiblePath
+    ], { encoding: "utf8" });
+    assert.equal(eligible.status, 0, eligible.stderr);
+    assert.equal(JSON.parse(eligible.stdout).status, "ELIGIBLE_FOR_REVIEW");
+    const eligibleReport = JSON.parse(await readFile(eligiblePath, "utf8"));
+    assert.match(eligibleReport.input_manifest_sha256.previous, /^[a-f0-9]{64}$/);
+    assert.match(eligibleReport.input_manifest_sha256.current, /^[a-f0-9]{64}$/);
+    assert.match(eligibleReport.controls_file_sha256, /^[a-f0-9]{64}$/);
+    assert.equal(eligibleReport.scenario_evaluated, false);
+    assert.equal(eligibleReport.production_writes_performed, false);
+    assert.equal(eligibleReport.reviewer_approval_required, true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
