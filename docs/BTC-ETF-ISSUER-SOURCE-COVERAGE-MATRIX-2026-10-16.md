@@ -246,3 +246,21 @@ This was a public-document review only. No API calls, downloads, source captures
 ## Correction — Hashdex DEFI final trading date (2026-10-16)
 
 The prior date of 2026-09-03 was incorrect for the active trading universe. Hashdex's SEC Form 8-K/A states that trading was suspended after close on **2026-08-17** and creation orders stopped after that date; the SEC Form 8-K dated 2026-08-24 states the fund completed disposition of all assets on 2026-08-24. The Form 15 dated 2026-09-03 is a later termination-of-reporting filing, not the final trading date. Use 2026-08-17 as the final trading date for the active spot-Bitcoin ETF cohort; retain liquidation-period evidence separately and do not treat the post-trading liquidation as normal ETF flow observations. [SEC Form 8-K/A](https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm) · [SEC completion of liquidation](https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm) · [SEC Form 15](https://www.sec.gov/Archives/edgar/data/1985840/000121390026096933/ea0304221-1512g_hashdex.htm).
+
+
+## Provisional effective-date ledger — core US spot-Bitcoin cohort (2026-10-16)
+
+This ledger defines when a product first enters the *spot-Bitcoin trading cohort* for research aggregation. It is not a source-acceptance decision and does not imply a usable daily flow feed.
+
+| First applicable date | Product(s) | Inclusion / exit rule | Primary reference |
+|---|---|---|---|
+| 2024-01-11 | IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC | First-wave US spot-Bitcoin ETP trading; GBTC's existing trust uplisted as an ETF | [SEC filing on first-wave trading](https://www.sec.gov/Archives/edgar/data/1050446/000119312525230977/d49048d8k.htm); [GBTC uplisting](https://www.sec.gov/Archives/edgar/data/1588489/000095017024003852/fact_sheet_fwp.htm); [EZBC launch](https://www.sec.gov/Archives/edgar/data/1992870/000113743924000184/ftdhtfwp7.htm) |
+| 2024-03-27 | DEFI (Hashdex Bitcoin ETF) | Enters only from conversion of futures strategy to spot-Bitcoin strategy; not from its earlier futures-fund launch | [SEC-filed announcement](https://www.sec.gov/Archives/edgar/data/1985840/000199937124003989/defi_fwp-032624.htm) |
+| 2024-07-31 | BTC (Grayscale Bitcoin Mini Trust) | Begins trading; do not backdate to trust formation | [SEC Q2 2026 10-Q](https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm) |
+| 2025-12-19 | OBTC (Osprey Bitcoin Trust) | Enters on ETF conversion/listing; earlier OTCQX history is not ETF trading history | [SEC 2025 10-K](https://www.sec.gov/Archives/edgar/data/1767057/000149315226014439/form10-k.htm) |
+| 2026-04-08 | MSBT (Morgan Stanley Bitcoin Trust) | Enters from first NYSE Arca trading date | [SEC Q2 2026 10-Q XBRL](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/R8.htm) |
+| 2026-08-17 | DEFI (Hashdex Bitcoin ETF) | Last trading day; exclude from active trading cohort after close; liquidation completed 2026-08-24 and is not normal trading flow | [SEC Form 8-K/A](https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm); [SEC liquidation completion](https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm) |
+
+**Count reconciliation:** 10 products at the 2024-01-11 first wave; 11 after DEFI's 2024-03-27 spot conversion; 12 after BTC Mini's 2024-07-31 launch; 13 after OBTC's 2025-12-19 ETF conversion; 14 after MSBT's 2026-04-08 launch; 13 active trading products after DEFI's last trading day 2026-08-17. This is a **provisional but source-backed cohort ledger**; final freeze still requires a final search for any other direct-holding US spot BTC product, listing-status changes, and official issuer/exchange evidence for each row. BITA remains outside this core cohort because it is a premium-income/options strategy holding both BTC and IBIT; broader BTC-linked ETP aggregation would need separate rules.
+
+No ETF source is promoted by this ledger. It only defines cohort membership dates; source rights, daily completeness, publication time, revisions/finality, retention and restore gates remain open.
