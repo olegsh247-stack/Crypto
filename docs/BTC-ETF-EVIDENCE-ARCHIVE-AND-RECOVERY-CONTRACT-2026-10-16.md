@@ -99,3 +99,8 @@ Until these are decided and the archive plus independent backup/restore are oper
 The verifier is implemented at `scripts/verify-btc-etf-evidence-archive.mjs`. Run it against a snapshot directory with `node scripts/verify-btc-etf-evidence-archive.mjs --snapshot-dir <snapshot-directory>`. It checks the archive record, checksum manifest, SHA-256 hashes and byte lengths, required file metadata, path traversal, symlinks and unmanifested files. Its fixture tests cover an intact archive, modified or missing source bodies, and checksum path traversal. The verifier is wired into `BTC Public Source Staging (Read Only)`.
 
 This verifies one local snapshot only. It does not create a backup or prove restoration from an independent failure domain. Real archive/backup verification remains blocked until source-specific raw-retention rights are cleared and private storage plus an independent encrypted backup are configured.
+
+
+### CI finding and correction (2026-10-16)
+
+The first verifier staging run failed because the tree walker treated `checksums.sha256` itself as an unmanifested file. This was corrected in commit `a51ae5b700c572fe076d8641b860f7022cee8d5a`: the checksum manifest is now allowed as the verifier's required control file, while arbitrary extra files remain rejected. Repeat staging run #38876188724 was still in progress at the time of this note. The verifier must not be considered validated until that run succeeds.
