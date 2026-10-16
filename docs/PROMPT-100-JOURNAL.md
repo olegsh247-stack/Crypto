@@ -609,3 +609,12 @@
 **Результат:** у fund-reported ряда документированы USD, US trading-day calendar, семидневное окно возможных пересмотров и заявленное Newhedge правило задержки/финализации. On-chain flows явно отделены: их `full_replace` допускает пересмотр любой даты, поэтому они не являются тем же показателем. Это полезный дополнительный кандидат для сверки и изучения семантики, но не доказательство времени публикации Farside/TFTC.
 
 **Ограничения/следующий шаг:** API требует token; live запрос не выполнялся. Права на хранение/повторное использование, coverage, universe, точная сверка и полный provenance ещё не проверены. 00:00 UTC — метка торговой даты, не publication timestamp. Token не запрашивался и в репозиторий не помещался. Canonical priority, реестр, метод `arithmetic_mean_2_sources`, production data и scenario state не менялись; PR #83 остаётся Draft, BTC — `not_evaluable`.
+
+
+## 2026-10-16 — Newhedge API terms checked; rights gate remains blocked
+
+**Действие:** проверены официальные Newhedge Terms & Conditions и общая API-документация: https://newhedge.io/terms-and-conditions ; https://docs.newhedge.io/api .
+
+**Результат:** общие условия описывают personal/noncommercial доступ, запрещают копирование/зеркалирование и распространение контента без разрешения, а также запрещают автоматизированное извлечение/scraping/mining. В просмотренных материалах не найдено отдельного API-разрешения на автоматический сбор и длительное хранение raw responses. Поэтому наличие API token само по себе не закрывает права.
+
+**Решение/границы:** Newhedge — технически подходящий кандидат для отдельно маркированной сверки, но юридико-договорный gate не пройден. Не вызывали API, не запрашивали и не сохраняли token, не архивировали данные. Нужны явные API-условия или письменное разрешение на automated research access, retention, backup/restore и использование производных значений. Не менялись source priority, registry, arithmetic_mean_2_sources, evaluator, production data или scenario state. PR #83 остаётся open Draft; BTC остаётся not_evaluable.
