@@ -35,3 +35,10 @@ Therefore the rule evaluator's fixture tests must not be described as proving th
 ## Next step
 
 Add and run dedicated readiness-gate regression tests in the existing project test harness. Only after that, a separate explicitly authorized action may refresh current required inputs; no live capture is authorized by this review.
+
+
+## Regression coverage added after the review
+
+Added `vps/shared/test/btc-scenario-readiness.test.mjs` and a package test command (`npm test`) that builds the TypeScript runtime and runs Node's test runner. The new suite covers a valid complete input set, stale spot price, unapproved source, future-dated spot observation, incomplete ETF fund coverage, duplicate reporting dates, and missing ETF revision/finality evidence.
+
+**Execution status:** tests have been added but have not yet been executed in this environment. Do not interpret test existence as a passing result. The next low-cost verification is to run `npm test` in `vps/shared` / confirm the existing non-production CI runs it. No live capture, DB write, deployment, or merge was performed.
