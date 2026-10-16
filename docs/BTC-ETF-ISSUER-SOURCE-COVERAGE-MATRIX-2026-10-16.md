@@ -182,3 +182,15 @@ This review checked whether the issuer-visible historical features for these thr
 **Gate result:** the three routes strengthen dated primary-source cross-check coverage but do not pass the daily-series gate. Preserve the observation date, source URL, reported period and filing/publication date as separate fields if these are used in a future approved workflow. Do not derive daily flows from AUM/NAV changes, infer zero from missing observations, or merge these quarterly/share-count facts with reported/compiled daily USD flows. Automated collection, durable raw archiving and restore rights remain unresolved per route.
 
 **Decision unchanged:** issuer pages/SEC remain periodic cross-checks only; no source promotion, source-priority/registry/formula/evaluator changes, API calls, data capture, production writes or scenario evaluation. BTC remains `not_evaluable`.
+
+
+## Follow-up — IBIT / ARKB historical data contract check (2026-10-16)
+
+Public issuer pages and SEC filings were reviewed to test whether the largest remaining issuer routes expose a reproducible daily flow series. This was a documentation-only review: no API calls, downloads, capture, or archive writes were performed.
+
+- **IBIT / iShares:** the official page exposes dated key facts including shares outstanding (for example, 1,387,360,000 as of 2026-09-10) and a downloadable holdings CSV for the current holdings view. These are point-in-time facts/current holdings, not evidence of a complete historical daily shares or creations/redemptions series. [Official iShares page](https://www.ishares.com/us/products/333011/ishares).
+- **ARKB / ARK 21Shares:** the official ARK page provides current holdings snapshots and historical premium/discount charting; the SEC 10-K/10-Q provide period-end shares and period-level issuance/redemption totals. For example, the 2025 10-K reports 172,675,000 shares issued and 198,990,000 redeemed during 2025. Those annual figures are not daily observations. [ARKB issuer page](https://www.ark-funds.com/funds/arkb) · [SEC 2025 10-K](https://www.sec.gov/Archives/edgar/data/1869699/000121390026021831/ea0276464-10k_ark21share.htm).
+
+**Gate result:** both routes add useful dated/periodic primary evidence but do not establish a complete per-fund daily creations/redemptions history with publication timestamps and revision/correction semantics. A current holdings CSV is not a historical archive; premium/discount and NAV charts are not flow data. Automated access, raw retention, backup/restore and downstream-use rights remain separately unresolved for any future systematic collection.
+
+**Decision unchanged:** keep IBIT and ARKB as periodic primary-source cross-checks only. Do not infer flow from AUM/NAV or holdings deltas, do not treat missing dates as zero, and do not mix annual/quarterly capital activity with daily reported/compiled USD flow. No source promotion, registry/source-priority/formula/evaluator changes, live capture, production writes or scenario evaluation. BTC remains `not_evaluable`.
