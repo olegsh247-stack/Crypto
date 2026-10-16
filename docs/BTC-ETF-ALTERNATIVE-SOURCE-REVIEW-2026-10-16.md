@@ -212,3 +212,31 @@ The ETF page advertises BTC daily aggregate history backfilled to 2025-05-20 and
 **Decision:** candidate for bounded manually reviewed corroboration only, subject to source-specific rights; not canonical, not an archive feed, and not an independent vote until lineage is checked. Do not automate a full-history download or persist systematic copies. No API was called, no key was requested/stored, and no data was captured. Source priority, metric registry, formula/evaluator, production data and scenario state remain unchanged; BTC remains not_evaluable.
 
 References: https://bykaranteli.com/data ; https://bykaranteli.com/terms ; https://github.com/bykarantelicom/crypto-datasets
+
+
+## Additional candidate review — XOOMAR and Bitcoin-data.com (2026-10-16)
+
+### XOOMAR ETF flows
+
+References: https://xoomar.com/markets/etf-flows ; https://xoomar.com/markets/api/etf-flows ; https://xoomar.com/terms
+
+- The public dataset currently describes BTC coverage from issuer-published holdings for IBIT, BITB and ARKB, with incomplete per-fund coverage and history beginning 2026-08-20 (ARKB begins 2026-09-15). Totals are only for funds that have reported; this is not full-universe coverage.
+- flowUsd is a derived estimate: change in issuer-file BTC holdings between dates multiplied by XOOMAR's own exchange reference price at collection time. Raw holdings are included, but the exact reference-price venue, timestamp/selection rule, precision/rounding, corrections and immutable revision history are not fully specified in the reviewed ETF page. It must not be labelled issuer-reported USD flow or directly treated as equivalent to Farside/SoSoValue reported/compiled USD values.
+- Dataset page describes updates three times daily at 12:30, 16:30 and 22:30 UTC, while public overview describes daily updates as issuers post. These are service update times, not proven per-record issuer publication timestamps; per-fund date is the file date/as-of label.
+- XOOMAR terms permit personal, academic and internal use, storage and modelling, with attribution for excerpts/charts/figures. They prohibit resale/redistribution, building a competing dataset, and removing attribution; ETF holdings remain under source-specific third-party terms on every plan. This is not a blanket authorization to redistribute issuer values or create a public mirror.
+- Lineage is closer to primary issuer files than aggregator-derived sources, but current fund coverage is too narrow and source-document persistence/revision semantics are not proven. No API call or data capture was made.
+
+**Decision:** bounded internal research comparison may be considered after source-specific terms and calculation details are resolved. Not canonical, not full-universe, not a replacement for reported daily USD flows, and not approved for automated durable raw archiving or public redistribution.
+
+### Bitcoin-data.com ETF flow API
+
+Reference: https://api.bitcoin-data.com/swagger-ui/index.html
+
+- Public Swagger description advertises daily per-fund net flow in BTC for 12 listed funds, trading days only, from 2024-01-11, and explicitly distinguishes flow values from point-in-time holdings/AUM.
+- The reviewed documentation did not establish the upstream lineage per fund, calculation methodology, publication timestamp/finality or correction/revision history, license/retention rights, or permission for durable raw-response archive and restore. USD comparability would require a separately documented conversion price and timestamp; no conversion was performed or approved.
+- The Swagger page did not expose inspectable terms in this review. This is an unresolved rights/provenance gate, not evidence that use is prohibited or permitted.
+- No API endpoint was called, no key was requested/stored, and no data was captured.
+
+**Decision:** potentially useful for later manual research comparison because the stated coverage is broad and in BTC units, but blocked from source promotion, automated ingestion and durable archiving until terms, lineage, methodology, timestamps/revisions and conversion policy are established.
+
+**BTC readiness remains unchanged:** not_evaluable. No registry, source-priority, formula, evaluator, production data or scenario-state change.
