@@ -993,3 +993,14 @@
 **Ссылки:** [TradingView BTC ETFs](https://www.tradingview.com/symbols/BTCUSD/etfs/), [Yahoo IBIT holdings](https://finance.yahoo.com/quote/IBIT/holdings/), [BitcoinETFdb](https://bitcoinetfdb.com/), [BlackRock IBIT](https://www.blackrock.com/us/individual/products/333011/ishares-bitcoin-trust-4), [ARKB](https://www.ark-funds.com/funds/arkb), [Bitbo ETF API docs](https://bitbo.io/api/docs/endpoints/etf-holdings).
 
 **Граница безопасности:** только публичная read-only проверка и документация в ветке `fix/btc-readiness-registry-runtime-source`. Не менялись runtime, source registry, БД, ingestion, scenario state, scores/probabilities; не выполнялись capture, deployment или merge. PR #83 остаётся Draft.
+
+
+## 2026-10-16 — адресная инвентаризация официальных ETF holdings-файлов и ежедневного захвата
+
+**Действие:** добавлен [план проверки официальных holdings-файлов и возможности ежедневного захвата](BTC-ETF-OFFICIAL-HOLDINGS-FILE-CAPTURE-PLAN-2026-10-16.md) для всех 13 активных тикеров. Для IBIT, ARKB, HODL, EZBC и BRRR зафиксированы конкретные официальные маршруты, где опубликованы CSV/XLS/PDF или датированная таблица; для остальных отдельно отмечено, что точный файл с количеством BTC и датой наблюдения ещё не верифицирован.
+
+**Результат:** выявлены критичные различия между полями и источниками: у ARKB доступный PDF показывает округлённое количество; у HODL точная метрика “Bitcoin in Trust” отличается от округлённого Quantity в holdings-таблице; у BTCW открытая таблица показывает 100% веса, а не количество BTC; для IBIT и EZBC наличие CSV/XLS-кнопки ещё не доказывает наличие исторического архива. Датированные SEC filing controls на 2026-06-30 остаются отдельными квартальными контрольными точками, не ежедневным рядом.
+
+**Решение:** ежедневный сбор проектировать как перспективное накопление неизменяемых наблюдений с issuer-provided observed date, retrieval timestamp, source URL, hash, parser version и версиями исправлений. До подтверждения прав конкретного файла не включать бессрочное хранение/резервное копирование raw payload. Исторический backfill допускается только из реально существующих датированных снимков/официальных filing controls; никакой реконструкции через AUM/цену, forward-fill или нулевые значения.
+
+**Граница безопасности:** публичная read-only проверка и документация. В рамках этого этапа файлы эмитентов не скачивались, live capture/workflow не запускался, runtime, registry, БД, ingestion, scenario state и scores/probabilities не менялись. PR #83 остаётся Draft и не объединён.
