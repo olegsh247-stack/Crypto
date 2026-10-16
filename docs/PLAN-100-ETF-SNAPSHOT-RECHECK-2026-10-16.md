@@ -41,3 +41,15 @@ ETF rows remain blocked until source-specific publication/revision/finality sema
 **Code enforcement added:** `scripts/evaluate-btc-etf-research-eligibility.mjs` now fails closed unless the caller explicitly supplies `archive_restore_verified: true` and a `CLEARED` rights status plus non-empty evidence reference for each configured source. It also rejects impossible calendar dates (not just malformed date strings). New tests cover the archive block, unresolved rights block, and invalid dates. This is a policy-code gate, not a claim that the current VPS archive or Farside rights are cleared; therefore the real project state remains blocked. Preserve Farside and TFTC raw values separately. `arithmetic_mean_2_sources` remains a project-derived research comparison and must not be represented as either provider's reported value or independent-source consensus; current TFTC lineage overlaps with SoSoValue.
 
 **Disposition:** BTC remains `not_evaluable`. No production inputs, scenario state, score, probability, or monitoring state changed.
+
+
+## 5. Offline eligibility report CLI — implementation awaiting CI
+
+The policy evaluator now has a CLI for two exported, integrity-validated snapshot manifests:
+`node scripts/evaluate-btc-etf-research-eligibility.mjs --previous <snapshot.json> --current <snapshot.json> --reporting-date YYYY-MM-DD [--controls <review-controls.json>] --out <report.json>`
+
+The report records both snapshot IDs, SHA-256 of the exact input manifest bytes, and (when supplied) the review-controls file SHA-256. Without controls, it fails closed at `BLOCKED_DURABLE_ARCHIVE`; a complete and stable pair is not enough on its own. Even `ELIGIBLE_FOR_REVIEW` remains a review candidate and never evaluates/persists the BTC scenario.
+
+**Important limitation:** the controls JSON is a human-supplied assertion record, not self-verifying proof that a backup restore or data rights clearance actually occurred. Each evidence reference must point to independently reviewable evidence; reviewers must not mark archive restore or rights `CLEARED` without that evidence. The CLI is offline-only and reads files supplied by the operator; it does not fetch providers, access PostgreSQL, ingest observations, or alter scenario state.
+
+An integration test now exercises the CLI with fixture manifests, confirms fail-closed behavior when controls are omitted, and verifies report hashes. The next required step is to confirm BTC staging CI and VPS build/E2E for the new CLI. Until those runs pass, do not mark this implementation verified. No live capture was run.
