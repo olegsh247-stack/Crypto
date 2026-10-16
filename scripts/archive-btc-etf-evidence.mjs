@@ -167,7 +167,7 @@ export async function archiveBtcEtfEvidence({
     const recordBytes = Buffer.from(JSON.stringify(archiveRecord, null, 2) + "\n");
     await writeFile(join(targetTemp, "archive-record.json"), recordBytes, { flag: "wx" });
     const checksums = [...copied, { path: "archive-record.json", sha256: sha256(recordBytes), bytes: recordBytes.length }]
-      .map(file => sha256(Buffer.from(file.path)) + "  " + file.path + "  " + file.sha256 + "  " + file.bytes)
+      .map(file => file.sha256 + "  " + file.path)
       .join("\n") + "\n";
     await writeFile(join(targetTemp, "checksums.sha256"), checksums, { flag: "wx" });
     await rename(targetTemp, target);
