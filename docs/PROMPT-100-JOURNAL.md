@@ -836,3 +836,14 @@
 **Результат:** run [#38933624118](https://github.com/olegsh247-stack/Crypto/actions/runs/38933624118) завершился `success` для commit `d3feae2f3440e3cc63cafbd8677710518793089d`; run [#38933630022](https://github.com/olegsh247-stack/Crypto/actions/runs/38933630022) завершился `success` для commit `8b7a3495309a8150c850fc51eea04aaaf3394a9f`.
 
 **Ограничения:** CI success не доказывает наличие VPS, долговременного архива или независимого восстановления. Правила retention/deletion не отмечены как утверждённые без явного согласования пользователя. Raw SoSoValue/Farside retention rights остаются неподтверждёнными. Live capture, archive writes, database/registry/scenario changes, deployment и merge не выполнялись; BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — матрица первичных источников BTC ETF holdings
+
+**Действие:** завершён документальный обзор доступных issuer/SEC путей для ежедневных BTC holdings по 12 потенциально действующим US spot Bitcoin ETF; добавлена [матрица источников holdings](BTC-ETF-FUND-HOLDINGS-SOURCE-MATRIX-2026-10-16.md).
+
+**Результат:** для IBIT подтверждён официальный Holdings CSV; для EZBC — официальный XLS и маркировка ежедневного обновления; для BRRR — датированная таблица holdings. Для BTCO, BTCW и MSBT подтверждены квартальные SEC контрольные точки (соответственно 5,345 BTC, 2,310 BTC и 5,059.30771216 BTC на 2026-06-30). Для FBTC есть подтверждение ежедневного раскрытия holdings в документации фонда, но машиночитаемая история не проверена. Для остальных фондов полная ежедневная историческая глубина не доказана. DEFI отнесён к историческому, а не текущему охвату после ликвидации в августе 2026 года.
+
+**Решение:** ни один источник не одобрен этой проверкой для production ingestion или бессрочного хранения raw payload. Нужны точные условия хранения/backup каждого конкретного файла; публичный доступ не трактуется как архивная лицензия. Полное same-date сравнение всех фондов не выполнено, поскольку live capture и загрузка наборов не проводились.
+
+**Граница безопасности:** только документация и исследование публичных страниц/SEC filings. Не выполнялись live capture, API requests, bulk downloads, DB writes, source registry changes, scenario evaluation, deployment или merge. BTC остаётся `not_evaluable`.
