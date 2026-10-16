@@ -250,3 +250,15 @@ A read-only inspection of the public upstream parser ([`fetch/etf.py`](https://g
 - The parser's history-merging design accumulates daily observations, but the output payload does not retain per-row source URL, source publication time, retrieval time, parser version, or a source-value fingerprint. Accumulation alone does not make historical rows reproducible.
 
 **Disposition:** withdraw BITB's row dates as verified daily observations; keep them as unaccepted candidates with date provenance explicitly marked asserted. Keep HODL rows as rounded/inexact candidate values only, not precise holdings. Do not “correct” or interpolate either series from adjacent observations. For other tickers, repeated values remain unresolved until exact-dated issuer evidence is available. This materially narrows acceptance: 162 structurally valid rows are not 162 independently verified daily observations.
+
+
+## Additional public history lead — Bitbo ETF holdings charts (checked 2026-10-16)
+
+Bitbo publicly lists individual historical BTC-holdings charts for **12 products**: IBIT, FBTC, GBTC, Grayscale Mini BTC, BITB, ARKB, HODL, BTCO, BRRR, EZBC, MSBT and BTCW. Its chart description says the series represents cumulative BTC holdings reported by each issuer on each day, and pages advertise CSV/XLSX/JSON export controls. Example pages: [IBIT](https://charts.bitbo.io/ibit-holdings/), [FBTC](https://charts.bitbo.io/fbtc-holdings/), [MSBT](https://charts.bitbo.io/msbt-holdings/), [BTCW](https://charts.bitbo.io/btcw-holdings/). The index does not list OBTC, so this lead does not cover all 13 in scope.
+
+**Important limitations from this check:**
+- The browser-readable page confirmed the chart and export-control labels, but did not expose a downloadable historical payload in this review. No CSV/JSON was downloaded or parsed, so coverage start dates, row completeness, per-row provenance and exact quantities remain unverified.
+- Bitbo's API documentation says the API requires API access and is restricted to internal/private purposes; it explicitly disallows public-facing websites or reproducing its charts. Do not use the API for public project output, and do not assume chart visibility grants rights to bulk-download, archive, or redistribute its data.
+- Search-indexed Bitbo fund pages provide event/snapshot histories for some funds, but these are often sparse and rounded (for example HODL shown to 0.1 BTC and BTCW as whole BTC). They are useful as independent comparison leads, not proof of a complete daily series.
+
+**Disposition:** promote Bitbo to a high-priority manual investigation lead for 12 funds, not an accepted dataset. Next verification must identify the actual export URL and inspect terms/licensing before any capture; then compare exact-date rows against SEC 2026-06-30 controls and issuer files. OBTC still requires a separate route. Do not acquire a paid API key/subscription in the current phase.
