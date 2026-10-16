@@ -723,3 +723,12 @@
 **Результат:** FBTC публикует ежедневные holdings и предыдущий business-day NAV/closing price, однако полный historical creations/redemptions feed и метод, позволяющий выводить flow из holdings changes, не подтверждены. BTCO SEC reports подтверждают annual/quarterly capital-activity totals, не ежедневный ряд. Publication timestamps, correction/revision contract and systematic capture/raw retention/private restore rights remain unresolved.
 
 **Решение:** оба источника остаются periodic primary cross-check only. Не выводить flow из AUM/NAV/holdings deltas, не считать missing observations нулями и не смешивать period totals с daily reported/compiled USD flows. No API calls/downloads/capture or archive writes. No registry/source-priority/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — EZBC / Grayscale Mini BTC / MSBT SEC source review
+
+**Действие:** сверены SEC Q2 2026 filings для Franklin Bitcoin ETF (EZBC), Grayscale Bitcoin Mini Trust и Morgan Stanley Bitcoin Trust (MSBT); результаты внесены в матрицу покрытия и План 100.
+
+**Результат:** SEC подтверждает только периодические capital-activity totals: EZBC — 150,000 issued / 1,250,000 redeemed за Q2 2026; Grayscale Mini BTC — 9,410,000 / 3,470,000 за Q2 и 22,950,000 / 9,740,000 за первое полугодие; MSBT — 17,900,000 / 250,000 от начала операций 2026-04-07 до 2026-06-30. Ни один filing не устанавливает полную ежедневную историю flows с row-level publication timestamps и correction/finality contract.
+
+**Решение:** оставить все три маршрута periodic primary cross-check only. Не распределять period totals по дням, не выводить flows из holdings/AUM/NAV deltas и не считать missing observations нулями. API/download/capture/archive writes не выполнялись; registry/formula/evaluator/production/scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
