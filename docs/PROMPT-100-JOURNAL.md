@@ -741,3 +741,12 @@
 **Результат:** SEC сообщает 2,940,535 shares на 2026-06-30; за первое полугодие 2026 погашено 1,920,000 shares, за Q2 отдельно указано нулевое создание/погашение. Это периодические данные, не ежедневная flow-series. Daily sponsor snapshots не доказывают полную историю creations/redemptions или разрешённую методику daily USD flows.
 
 **Решение:** исправить universe, но оставить OBTC periodic-primary-cross-check only. Не выводить flows из holdings/NAV/AUM deltas и не распределять периодические итоги по дням. No API/download/capture/archive writes; no registry/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — ETF universe: DACFP cross-check and BITA boundary
+
+**Действие:** проверен сторонний Spot Bitcoin ETF Investor Guide DACFP и SEC Q2 2026 filing iShares Bitcoin Premium Income ETF (BITA), чтобы проверить пропущенные продукты и границы определения spot-Bitcoin cohort.
+
+**Результат:** DACFP (страница обозначена как обновлённая 2026-09-17) перечисляет 12 продуктов, включая MSBT, но не OBTC; в строке Morgan Stanley повторно указан тикер BTCW, совпадающий с WisdomTree. Список пригоден только как дополнительный cross-check, не как полный реестр. SEC filing показывает, что BITA держит BTC и IBIT и использует covered-call опционы преимущественно на IBIT; он не включён в основной plain spot-ETF cohort, чтобы не смешивать отдельную premium-income стратегию и базовые IBIT shares без явного правила агрегирования.
+
+**Решение:** рабочий активный core cohort остаётся предварительно равным 13 продуктам на 2026-10-16 (MSBT с 2026-04-08; OBTC с 2025-12-19; Hashdex DEFI вне active set после 2026-09-03). Не замораживать universe до окончательной сверки effective dates, delisting/closure/conversion по официальным источникам для каждого фонда. API/download/capture/archive writes не выполнялись; source/metric registry, formula, evaluator, production/scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
