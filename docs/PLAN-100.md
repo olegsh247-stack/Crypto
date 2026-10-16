@@ -2070,3 +2070,14 @@ Added [BTC ETF evidence archive and recovery contract](BTC-ETF-EVIDENCE-ARCHIVE-
 **4. Scenario gate.** ETF values remain blocked until publication/revision/finality handling or an explicitly approved project-stabilized research-only policy is in force, and durable evidence retention/licensing gates are satisfied. The arithmetic mean remains a separate `RESEARCH_DERIVED` comparison; it does not replace either raw source value and is not an independent-source consensus. No production DB write, ingestion, live capture, scenario evaluation, probability/state/monitoring change, deployment, or merge was performed.
 
 **Current disposition:** snapshot comparison is reproducible on deterministic fixtures; durable archival and eligibility are not complete. BTC remains `not_evaluable`.
+
+
+## Plan 100 — offline evidence archive writer added (2026-10-16)
+
+The next safe substage is implemented in `scripts/archive-btc-etf-evidence.mjs`, with tests in `scripts/archive-btc-etf-evidence.test.mjs` and a validation step added to `.github/workflows/btc-public-source-staging.yml`.
+
+The writer consumes an existing local capture directory only. It makes no network requests, reads no API credentials, accesses no PostgreSQL, and does not evaluate the scenario. It requires an explicit reporting date/snapshot ID and a rights evidence file; every source whose raw body would be retained must be marked `CLEARED` with a non-empty evidence reference. It verifies source-body SHA-256, rejects incomplete manifests, unsafe body paths and credential-like URL query parameters, writes a new snapshot with manifest/archive record/checksum file, and refuses to overwrite an existing snapshot ID.
+
+**Validation state:** implementation and tests have been committed to the PR branch; a passing CI run has not yet been verified. The new test covers fixture success, unresolved rights, missing body, hash mismatch, overwrite, incomplete manifest, credential-like URL, invalid date and unsafe snapshot ID. This is not a real archive run: current Farside/SoSoValue raw-retention rights remain unresolved, no live capture was run, and no SSD/VPS is required for the CI fixture tests.
+
+**Acceptance remains unchanged:** the archive writer does not verify independent backup/restore, source finality, or ETF scenario eligibility. BTC remains `not_evaluable`; no production writes, ingestion, scenario-state changes, deployment or merge were performed.
