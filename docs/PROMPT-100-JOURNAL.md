@@ -600,3 +600,12 @@
 **Результат:** отделены подтверждённые факты от неутверждённых решений: владелец архива и восстановления, минимальный срок хранения, правила удаления с учётом ссылок на snapshots, cadence проверки восстановления, независимое место backup и source-specific права. Без этих решений нельзя называть архив операционным или удалять доказательства автоматически. Это decision sheet, а не утверждённая эксплуатационная политика; срок хранения и cadence не придуманы.
 
 **Границы:** реальный архив не создавался, SSD не предполагался доступным, live capture/ingestion/production writes не запускались. Не менялись registry, source priority, formula/evaluator, scenario state/probabilities; deployment и merge не выполнялись. PR #83 остаётся Draft; BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — документирован Newhedge как дополнительный ETF-flow кандидат
+
+**Действие:** изучены публичные API-описания Newhedge для fund-reported ETF flows в USD, on-chain flows и общие правила revision/publication. Обзор источников обновлён commit `d869cf90e365eefa5a6760049c24c5173f127b61`; План 100 обновлён commit `0b978e67a25ac14d200e1b371f2927c03ce7f66e`.
+
+**Результат:** у fund-reported ряда документированы USD, US trading-day calendar, семидневное окно возможных пересмотров и заявленное Newhedge правило задержки/финализации. On-chain flows явно отделены: их `full_replace` допускает пересмотр любой даты, поэтому они не являются тем же показателем. Это полезный дополнительный кандидат для сверки и изучения семантики, но не доказательство времени публикации Farside/TFTC.
+
+**Ограничения/следующий шаг:** API требует token; live запрос не выполнялся. Права на хранение/повторное использование, coverage, universe, точная сверка и полный provenance ещё не проверены. 00:00 UTC — метка торговой даты, не publication timestamp. Token не запрашивался и в репозиторий не помещался. Canonical priority, реестр, метод `arithmetic_mean_2_sources`, production data и scenario state не менялись; PR #83 остаётся Draft, BTC — `not_evaluable`.
