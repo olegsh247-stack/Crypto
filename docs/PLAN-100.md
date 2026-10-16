@@ -2201,7 +2201,7 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 
 Создана `docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md` — первый инвентарь официальных issuer/SEC-страниц для текущего US spot BTC ETF universe. По ряду фондов видны датированные NAV, AUM, shares outstanding и/или holdings, но полный сопоставимый daily historical feed, дата действия shares outstanding, revision history и разрешение на систематический retention пока не подтверждены для всех фондов.
 
-Важное уточнение universe: официальный Hashdex DEFI page сообщает delisting с NYSE Arca effective 2026-09-03. Не включать DEFI в текущий активный агрегат после этой даты, но сохранять историческую применимость до даты закрытия. Изменение net assets не является net flow, поскольку содержит изменение цены BTC; формулу на базе shares/NAV нельзя вводить без отдельного контракта и reconciliation.
+Важное уточнение universe: SEC filing сообщает, что последний торговый день Hashdex DEFI — 2026-08-17; не включать DEFI в активный торговый cohort после этой даты. Form 15 от 2026-09-03 — более позднее прекращение отчётности, а не дата последней торговли, но сохранять историческую применимость до даты закрытия. Изменение net assets не является net flow, поскольку содержит изменение цены BTC; формулу на базе shares/NAV нельзя вводить без отдельного контракта и reconciliation.
 
 **Следующий шаг:** продолжить fund-by-fund проверку официальной истории, полей shares outstanding/creation-redemption, даты оценки NAV, прав автоматизированного хранения и полноты universe. Не запускать capture, не менять реестр/формулу и не оценивать сценарий до прохождения этого контракта. BTC остаётся `not_evaluable`.
 
@@ -2369,5 +2369,11 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 
 - Сверен вторичный справочник DACFP (обновлён 2026-09-17): он перечисляет 12 продуктов, включает MSBT, но пропускает OBTC. В строке Morgan Stanley ошибочно повторён тикер BTCW, уже относящийся к WisdomTree. Поэтому справочник не принимается как исчерпывающий реестр: https://dacfp.com/spot-bitcoin-investor-guide/.
 - Проверен SEC Q2 2026 filing по BITA (iShares Bitcoin Premium Income ETF): фонд держит Bitcoin и акции IBIT, а также пишет covered-call опционы преимущественно на IBIT. BITA не включён в основной cohort plain spot-Bitcoin ETF; возможное включение в более широкий BTC-linked ETP aggregate потребует отдельного определения границ и проверки двойного счёта: https://www.sec.gov/Archives/edgar/data/2089969/000143774926027004/bitp20260630_10q.htm.
-- Рабочий активный cohort на 2026-10-16 остаётся предварительно равным 13 продуктам: MSBT — с 2026-04-08; OBTC — с конверсии в биржевой ETF 2025-12-19; Hashdex DEFI исключён из active set после 2026-09-03. Это ещё не финальная фиксация: требуется сверить даты применимости и события закрытия/делистинга/конверсии каждого фонда по официальным страницам эмитентов, бирж и SEC.
+- Рабочий активный cohort на 2026-10-16 остаётся предварительно равным 13 продуктам: MSBT — с 2026-04-08; OBTC — с конверсии в биржевой ETF 2025-12-19; Hashdex DEFI исключён из active trading cohort после 2026-08-17. Это ещё не финальная фиксация: требуется сверить даты применимости и события закрытия/делистинга/конверсии каждого фонда по официальным страницам эмитентов, бирж и SEC.
 - API/capture/download/archive writes не выполнялись. Source/metric registry, formula, evaluator, production data и scenario state не менялись. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+### 2026-10-16 — correction: Hashdex DEFI end date
+
+- Исправлена дата окончания торгов Hashdex DEFI. SEC Form 8-K/A указывает приостановку торгов после закрытия 2026-08-17; SEC filing от 2026-08-24 подтверждает завершение реализации активов. Form 15 от 2026-09-03 относится к прекращению отчётности, а не к последнему торговому дню.
+- Для active trading cohort использовать **2026-08-17** как последний торговый день; ликвидационный период до 2026-08-24 хранить отдельно, не трактовать его как обычные ETF-flow observations. Источники: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026096933/ea0304221-1512g_hashdex.htm.
