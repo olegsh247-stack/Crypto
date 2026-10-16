@@ -44,3 +44,10 @@ SEC Q2 2026 10-Q сообщает на 2026-06-30: 17,650,000 shares, Principal 
 Проверка официальных методологий подтвердила, что ICE U.S. Dollar Index (DXY) и Fed/FRED nominal broad dollar index `DTWEXBGS` — разные метрики. ICE DXY использует шесть валют с фиксированными весами (EUR 57.6%, JPY 13.6%, GBP 11.9%, CAD 9.1%, SEK 4.2%, CHF 3.6%). Fed broad index — daily trade-weighted index на базе Jan 2006=100 с более широкой корзиной торговых партнёров и пересматриваемыми весами. Нельзя подменять один другим без явного reviewed решения. Подробный контрактный обзор: [BTC DXY source-contract review](BTC-DXY-SOURCE-CONTRACT-REVIEW-2026-10-16.md).
 
 Для первого сценария дополнительное расследование DXY не требуется. Yahoo `DX-Y.NYB` — только ручной research/display reference; FRED `DTWEXBGS` можно использовать только под собственным названием и не записывать в `macro.dxy`. Если контекст недоступен, пропустить его и продолжать сценарий. ETF gate остаётся отдельным блокером. Runtime registry и scenario logic не менялись; capture не выполнялся.
+
+
+## SEC cross-check — EZBC / Franklin Bitcoin ETF (2026-10-16)
+
+The official SEC Q2 2026 Form 10-Q reports EZBC at 2026-06-30: 9,800,000 shares outstanding, NAV/share $34.15, net assets $334,694,929 and 5,664.0163 BTC. During Q2 the fund issued 150,000 shares and redeemed 1,250,000. Source: [SEC Form 10-Q](https://www.sec.gov/Archives/edgar/data/1992870/000114036126033208/ef20077161_10q.htm). The [Franklin product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS) exposes dated fund facts marked updated daily, but a complete daily machine-readable share-creation/redemption history, correction semantics and durable-retention permissions have not been verified.
+
+**Plan decision:** retain EZBC as a periodic primary-source cross-check candidate only. Quarterly activity is not a daily series; changes in AUM are not flows. No capture, source promotion, registry/formula/evaluator change or scenario evaluation. BTC remains `not_evaluable` pending the separate ETF snapshot/source-rights/archive gate.
