@@ -2445,3 +2445,11 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 - SEC issuer filings and other attributed quarterly datasets can provide periodic holdings/NAV/share-count cross-checks, but do not replace a complete daily ETF-flow series.
 - Archive governance remains a proposal, not approved: named owner, minimum retention/deletion policy, private primary storage, independent encrypted backup destination, and restore-test cadence. No VPS/storage was provisioned; no real source payload was captured, compared, or archived.
 - **Next gate:** obtain a permitted TFTC dataset copy through an explicitly authorized route and inspect it offline; separately record source-specific rights evidence and archive-governance approvals. Only after private storage and independent restore are operationally verified may two real snapshots be retained and compared. No live capture, archive write, DB/registry/scenario change, deployment, or merge. PR #83 remains Draft/open/unmerged; BTC remains `not_evaluable`.
+
+
+## Обновление 2026-10-16 — подтверждены CI для прав источников и archive-gate документации
+
+- VPS API Build Rehearsal [#38933624118](https://github.com/olegsh247-stack/Crypto/actions/runs/38933624118) завершился `success` для commit `d3feae2f3440e3cc63cafbd8677710518793089d`.
+- VPS API Build Rehearsal [#38933630022](https://github.com/olegsh247-stack/Crypto/actions/runs/38933630022) завершился `success` для commit `8b7a3495309a8150c850fc51eea04aaaf3394a9f`.
+- Это подтверждает CI-проверки документационных изменений, но не является доказательством работающего VPS, долговременного архива или независимого восстановления.
+- Решения по сроку хранения/удалению и операционным владельцам остаются неутверждёнными, поскольку пользователь не дал отдельного явного согласования. Live capture, archive writes, database/registry/scenario changes, deployment и PR merge не выполнялись. TFTC можно рассматривать только в пределах его лицензии и атрибуции; права на raw SoSoValue/Farside остаются незакрытыми. BTC остаётся `not_evaluable`.
