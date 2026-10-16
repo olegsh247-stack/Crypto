@@ -88,11 +88,14 @@ test("rejects an incomplete capture manifest", async t => {
   await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /manifest is incomplete/);
 });
 
-test("rejects a credential-like query parameter in source URL", async t => {
+test("rejects credentials in source URL query parameters or URL userinfo", async t => {
   const f = await fixture(t);
   const manifestPath = join(f.inputDir, "manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.sources[0].url = "https://example.test/data?api_key=secret";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /Possible credential in source URL/);
+  manifest.sources[0].url = "https://user:secret@example.test/data";
   await writeFile(manifestPath, JSON.stringify(manifest));
   await assert.rejects(() => archiveBtcEtfEvidence(baseArgs(f)), /Possible credential in source URL/);
 });
