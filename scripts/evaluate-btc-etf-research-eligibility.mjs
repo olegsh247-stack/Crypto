@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { validateBtcEtfSnapshotManifest } from "./diff-btc-etf-snapshots.mjs";
 
 export const BTC_ETF_STABILITY_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -133,4 +137,97 @@ export function evaluateBtcEtfResearchEligibility(previous, current, reportingDa
     }
   }
   return result("ELIGIBLE_FOR_REVIEW", [], details);
+}
+
+
+function parseCliArgs(args) {
+  const parsed = {};
+  for (let i = 0; i < args.length; i += 1) {
+    const key = args[i];
+    if (!["--previous", "--current", "--reporting-date", "--controls", "--out"].includes(key)) {
+      throw new Error("Unknown argument: " + key);
+    }
+    const value = args[i + 1];
+    if (!value || value.startsWith("--")) throw new Error("Missing value for " + key);
+    if (parsed[key]) throw new Error("Duplicate argument: " + key);
+    parsed[key] = value;
+    i += 1;
+  }
+  for (const key of ["--previous", "--current", "--reporting-date", "--out"]) {
+    if (!parsed[key]) {
+      throw new Error("Usage: node scripts/evaluate-btc-etf-research-eligibility.mjs --previous <snapshot.json> --current <snapshot.json> --reporting-date YYYY-MM-DD [--controls <review-controls.json>] --out <report.json>");
+    }
+  }
+  return parsed;
+}
+
+async function main() {
+  const args = parseCliArgs(process.argv.slice(2));
+  const previousPath = resolve(args["--previous"]);
+  const currentPath = resolve(args["--current"]);
+  const outputPath = resolve(args["--out"]);
+  const [previousBytes, currentBytes] = await Promise.all([
+    readFile(previousPath, "utf8"),
+    readFile(currentPath, "utf8")
+  ]);
+  const previous = JSON.parse(previousBytes);
+  const current = JSON.parse(currentBytes);
+  if (!validateBtcEtfSnapshotManifest(previous)) {
+    throw new Error("Previous input is not a valid versioned BTC ETF snapshot manifest");
+  }
+  if (!validateBtcEtfSnapshotManifest(current)) {
+    throw new Error("Current input is not a valid versioned BTC ETF snapshot manifest");
+  }
+
+  let controls = {};
+  let controlsSha256 = null;
+  let controlsPath = null;
+  if (args["--controls"]) {
+    controlsPath = resolve(args["--controls"]);
+    const controlsBytes = await readFile(controlsPath, "utf8");
+    controls = JSON.parse(controlsBytes);
+    if (!controls || typeof controls !== "object" || Array.isArray(controls)) {
+      throw new Error("Review controls must be a JSON object");
+    }
+    controlsSha256 = createHash("sha256").update(controlsBytes).digest("hex");
+  }
+
+  const eligibility = evaluateBtcEtfResearchEligibility(
+    previous, current, args["--reporting-date"], controls
+  );
+  const report = {
+    ...eligibility,
+    input_manifest_sha256: {
+      previous: createHash("sha256").update(previousBytes).digest("hex"),
+      current: createHash("sha256").update(currentBytes).digest("hex")
+    },
+    controls_file_sha256: controlsSha256,
+    controls_file: controlsPath,
+    report_mode: "offline-review-only",
+    scenario_evaluated: false,
+    production_database_accessed: false,
+    production_writes_performed: false,
+    scenario_state_changed: false,
+    reviewer_approval_required: true
+  };
+  await writeFile(outputPath, JSON.stringify(report, null, 2) + "\\n", "utf8");
+  process.stdout.write(JSON.stringify({
+    status: report.status,
+    reporting_date: report.reporting_date,
+    previous_snapshot_id: report.previous_snapshot_id,
+    current_snapshot_id: report.current_snapshot_id,
+    rights_blocked_source_id: report.rights_blocked_source_id,
+    output: outputPath,
+    report_mode: report.report_mode,
+    scenario_evaluated: false,
+    production_database_accessed: false,
+    production_writes_performed: false
+  }) + "\\n");
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(error => {
+    process.stderr.write((error instanceof Error ? error.message : String(error)) + "\\n");
+    process.exitCode = 1;
+  });
 }
