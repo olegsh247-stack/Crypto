@@ -1060,3 +1060,10 @@
 
 
 **Итог проверки нового теста:** GitHub Actions [BTC Scenario Readiness Gate #299](https://github.com/olegsh247-stack/Crypto/actions/runs/38966644329) — **success** на `9d50d4d5caedca54f3003e0eec85435ddfc50309`. Обе ключевые ступени — shared readiness tests и input-quality/directional rules — завершились успешно. Статус предыдущей записи «ожидает CI» закрыт результатом #299. Реальные входы не обновлялись; BTC остаётся `not_evaluable`.
+
+
+## 2026-10-17 — read-only preflight обязательных BTC inputs
+
+**Результат:** создан [BTC-REQUIRED-INPUT-PREFLIGHT-2026-10-17.md](BTC-REQUIRED-INPUT-PREFLIGHT-2026-10-17.md). Kraken API endpoint из утверждённого allowlist не удалось прочитать текущим каналом; цена и доказательства наблюдения не получены. Farside показывает последнюю заполненную дату 15 октября; строка 16 октября содержит прочерки и total 0.0, что не считается подтверждённым finalized zero-flow. Историческая сумма за 5–9 октября (−678.9 USD million) не подходит как свежий вход.
+
+**Решение:** входы не подменять альтернативными источниками или нулями. BTC остаётся `not_evaluable`; нужны свежая проверяемая цена из разрешённого источника и финализированный ETF flow с provenance/completeness/revision evidence. Это была read-only проверка, не production capture: raw payload не архивировался, БД/ingestion/state/probabilities/deployment/merge не затрагивались. PR #83 остаётся Draft.
