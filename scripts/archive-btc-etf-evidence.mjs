@@ -103,7 +103,7 @@ export async function archiveBtcEtfEvidence({
     }
     if (source.body_file == null) continue;
     if (typeof source.body_file !== "string" || basename(source.body_file) !== source.body_file
-        || source.body_file.includes("/") || source.body_file.includes("\\\\")
+        || source.body_file.includes("/") || source.body_file.includes("\\")
         || source.body_file === "." || source.body_file === "..") {
       throw new Error("Unsafe body_file path for " + source.source_id);
     }
