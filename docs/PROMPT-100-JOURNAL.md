@@ -351,3 +351,12 @@
 **Результат:** [BTC Public Source Staging #38874163877](https://github.com/olegsh247-stack/Crypto/actions/runs/38874163877) — `success`. Все шаги `validate`, включая `Test offline BTC ETF evidence archive safety gates`, завершились успешно; live-capture job был `skipped`. Это подтверждает fixture-тесты и staging-набор для commit `39d8765bf919ff6e97d0796ebeb196de70c469e5`. VPS Build & E2E для последнего документального HEAD `47495e3755aa96ff7bd96d6a10c880f49f734697` на момент проверки ещё выполняется.
 
 **Ограничения:** CI не подтверждает права на хранение данных, реальный архив или независимое восстановление. Live capture, production writes, ingestion, scenario evaluation/state, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — добавлен офлайн-верификатор целостности ETF-архива
+
+**Действие:** добавлен `scripts/verify-btc-etf-evidence-archive.mjs` и набор тестов `scripts/verify-btc-etf-evidence-archive.test.mjs`; проверка подключена к `BTC Public Source Staging (Read Only)`. Верификатор сверяет SHA-256 и длины файлов с archive record/checksum manifest, проверяет path traversal, symlink и неучтённые файлы.
+
+**Результат на момент записи:** код и тесты закоммичены в PR #83: `b886ca97f4ded7473131a4944a52c1e7100f2d97`, `8b8bed9ff56643cc2435641d833032e476b6f80c`, `cd2bfd3ab5e8cfb08838f0bb3ee93dc06c5aee89`, `934b74505dd9c4067e9988a26e9ac1b632514884`. GitHub Actions staging для последнего commit при проверке ещё был в очереди; новые тесты пока не считать прошедшими. Обновлён контракт архива с командой проверки.
+
+**Ограничения:** верификатор проверяет целостность одной локальной копии; он не создаёт независимую резервную копию и не доказывает восстановление с другого failure domain. Реальные источники не захватывались, архив не создавался, права Farside/SoSoValue не подтверждены, BTC остаётся `not_evaluable`. Без production writes, ingestion, scenario changes, deployment и merge.
