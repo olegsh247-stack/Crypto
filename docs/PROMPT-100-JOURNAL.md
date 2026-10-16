@@ -714,3 +714,12 @@
 **Результат:** IBIT предоставляет dated shares-outstanding facts и текущий holdings CSV; ARKB — holdings snapshots, premium/discount chart и годовые/квартальные SEC capital-activity totals. Ни один из этих признаков не подтверждает полную воспроизводимую ежедневную историю creations/redemptions с publication timestamps и revision/correction semantics.
 
 **Решение:** оставить оба маршрута periodic primary cross-check only. Не выводить daily flows из AUM/NAV/holdings deltas; не считать missing observations нулями и не смешивать annual/quarterly activity с daily reported/compiled USD flows. No API calls, downloads/capture or archive writes. No registry/source-priority/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — FBTC / BTCO daily-flow evidence review
+
+**Действие:** сверены официальные материалы Fidelity и Invesco с SEC Q2 2026 FBTC, SEC 2025 10-K BTCO и SEC Q1 2026 BTCO; результаты добавлены в матрицу покрытия и План 100 (matrix commit `02de8907b0157172299e718fece8359836fadbb9`, Plan 100 commit `8fb67610daa98e13a0b7b345865bb6706ba04ce5`).
+
+**Результат:** FBTC публикует ежедневные holdings и предыдущий business-day NAV/closing price, однако полный historical creations/redemptions feed и метод, позволяющий выводить flow из holdings changes, не подтверждены. BTCO SEC reports подтверждают annual/quarterly capital-activity totals, не ежедневный ряд. Publication timestamps, correction/revision contract and systematic capture/raw retention/private restore rights remain unresolved.
+
+**Решение:** оба источника остаются periodic primary cross-check only. Не выводить flow из AUM/NAV/holdings deltas, не считать missing observations нулями и не смешивать period totals с daily reported/compiled USD flows. No API calls/downloads/capture or archive writes. No registry/source-priority/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
