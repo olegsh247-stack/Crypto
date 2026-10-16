@@ -61,3 +61,12 @@ test("preserves response-body SHA-256 for candidate provenance", () => {
   assert.match(result.source_payload_sha256, /^[a-f0-9]{64}$/);
   assert.equal(result.rows[0].source_payload_sha256, result.source_payload_sha256);
 });
+
+
+test("invalid calendar dates are blocked without throwing", () => {
+  const result = prepareBtcSoSoValueEtfCandidates({
+    responseBody: JSON.stringify([{ date: "2026-99-99", total_net_inflow: 5 }]),
+    retrievedAt
+  });
+  assert.equal(result.rows[0].status, "BLOCKED_INVALID_REPORTING_DATE");
+});
