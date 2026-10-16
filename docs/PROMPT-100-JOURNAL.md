@@ -1048,3 +1048,12 @@
 **Статус проверки:** тесты закоммичены, но ещё не исполнены в доступной среде. Результат PASS не заявляется. См. [BTC offline contract review](BTC-SCENARIO-OFFLINE-CONTRACT-REVIEW-2026-10-16.md).
 
 **Граница безопасности:** только код тестов, npm script и документация. Текущие данные не загружались; live capture, БД, ingestion, production, deployment и merge не выполнялись. PR #83 остаётся Draft.
+
+
+## 2026-10-17 — CI readiness gate и fail-closed регрессия
+
+**Подтверждено:** GitHub Actions [#298](https://github.com/olegsh247-stack/Crypto/actions/runs/38965974798) — success на `bb5ad42`; тесты readiness-матрицы и сценарного правила прошли. Старое утверждение в предыдущей записи о том, что тесты ещё не запускались, заменено этим более поздним подтверждённым результатом.
+
+**Сделано:** в `scripts/btc-scenario-direction.test.mjs` добавлена регрессия для отсутствующего/неизвестного `readiness_status`: evaluator обязан отказать без scenario type, directional score и разрешения persistence. Новый commit: `9d50d4d5caedca54f3003e0eec85435ddfc50309`. Для этой дополнительной регрессии CI ещё не подтверждён.
+
+**Граница безопасности:** только офлайн-тест и журнал/план. Нет live capture, сетевого сбора данных, DB/registry writes, ingestion, изменения scenario state/probabilities, deployment или merge. PR #83 остаётся Draft.
