@@ -39,9 +39,15 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
   const etfSources = sources.filter(source => source?.metric_id === "institutional.etf_net_flow");
   const rows = [];
   const sourceCoverage = {};
+  const seenSourceKeys = new Set();
+  const seenRowKeys = new Set();
   for (const source of etfSources) {
     const sourceId = source.source_id ?? "unknown-source";
     const sourceKey = sourceId + "|" + String(source.url ?? "");
+    if (seenSourceKeys.has(sourceKey)) {
+      throw new Error("Duplicate ETF source identity in capture manifest: " + sourceKey);
+    }
+    seenSourceKeys.add(sourceKey);
     const sourceRows = source.status !== "CAPTURED" ? [] : sourceId === "institutional.primary"
       ? (Array.isArray(source.latest_rows) ? source.latest_rows.map(row => ({
           date: row?.period_start,
@@ -89,6 +95,10 @@ export function buildBtcEtfSnapshot({ manifest, candidates, manifestBytes = "", 
         per_etf_usd_million: row.per_etf_usd_million ?? null
       };
       const key = sourceKey + "|" + row.date;
+      if (seenRowKeys.has(key)) {
+        throw new Error("Duplicate ETF source/reporting-date row in capture manifest: " + key);
+      }
+      seenRowKeys.add(key);
       rows.push({ key, source_key: sourceKey, reporting_date: row.date,
         fingerprint: sha256(canonicalJson(normalized)), normalized });
     }
@@ -222,6 +232,12 @@ export function validateBtcEtfSnapshotManifest(value) {
     && HASH_RE.test(String(value.candidates_sha256 ?? ""))
     && HASH_RE.test(String(value.snapshot_content_sha256 ?? ""));
   if (!shapeValid) return false;
+  const rowKeys = value.rows.map(row => row?.key);
+  if (rowKeys.some(key => typeof key !== "string" || !key)
+      || new Set(rowKeys).size !== rowKeys.length) return false;
+  const sourceKeys = value.source_artifacts.map(source =>
+    String(source?.source_id ?? "") + "|" + String(source?.url ?? ""));
+  if (sourceKeys.some(key => key === "|") || new Set(sourceKeys).size !== sourceKeys.length) return false;
   const identity = {
     schema_version: 2,
     diff_algorithm_version: value.diff_algorithm_version,

@@ -22,7 +22,8 @@ function makeSnapshot({
   farsideStatus = "CAPTURED",
   tftcStatus = "CAPTURED",
   farsideHash = HASH_A,
-  tftcHash = HASH_B
+  tftcHash = HASH_B,
+  duplicateFarsideSource = false
 } = {}) {
   const captureProvenance = { contract_version: "1", capture_script_sha256: HASH_A, farside_parser_sha256: HASH_B };
   const processingProvenance = { contract_version: "1", normalizer_script_sha256: HASH_C, farside_parser_sha256: HASH_B, metric_registry_sha256: HASH_A, capture_provenance: captureProvenance };
@@ -64,6 +65,7 @@ function makeSnapshot({
       }
     ]
   };
+  if (duplicateFarsideSource) manifest.sources.push(structuredClone(manifest.sources[0]));
   return buildBtcEtfSnapshot({
     manifest,
     candidates: { mode: "review-only-normalized-candidates", processing_provenance: processingProvenance },
@@ -71,6 +73,30 @@ function makeSnapshot({
     candidatesBytes: JSON.stringify({ mode: "review-only-normalized-candidates" })
   });
 }
+
+test("rejects duplicate source/reporting-date rows instead of allowing Map overwrite during diff", () => {
+  assert.throws(
+    () => makeSnapshot({ dateRows: [
+      { date: "2026-10-07", total: -484.9 },
+      { date: "2026-10-07", total: -480.0 }
+    ] }),
+    /Duplicate ETF source\/reporting-date row/
+  );
+});
+
+test("rejects duplicate source identity entries in the capture manifest", () => {
+  assert.throws(
+    () => makeSnapshot({ duplicateFarsideSource: true }),
+    /Duplicate ETF source identity/
+  );
+});
+
+test("rejects exported manifests with duplicate normalized row keys", () => {
+  const snapshot = makeSnapshot();
+  const duplicated = structuredClone(snapshot);
+  duplicated.rows.push(structuredClone(duplicated.rows[0]));
+  assert.equal(validateBtcEtfSnapshotManifest(duplicated), false);
+});
 
 test("same provider payload hashes are a no-op even when capture time changes", () => {
   const previous = makeSnapshot({ retrievedAt: "2026-10-16T10:00:00.000Z" });
