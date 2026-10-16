@@ -2138,3 +2138,15 @@ Reviewed the official CoinGlass API terms and The Block Terms of Service in addi
 - **Independence:** TFTC's current daily flow lineage points to SoSoValue and its historical series overlaps issuer disclosures tabulated by Farside. Do not count these as three independent estimators.
 
 **Acceptance impact:** none of these documentation reviews changes source registry, canonical priority, the approved research-only arithmetic_mean_2_sources rule, or readiness. No API calls, scraping, live capture, production writes, ingestion, scenario evaluation/state, deployment, or merge were performed. Durable archive and independent backup/restore remain unverified; BTC remains not_evaluable. Next, keep source selection frozen while checking current CI and finish the source-specific, offline-only evidence contract before any approved capture.
+
+
+### Four follow-through gates — BTC ETF research evidence (2026-10-16)
+
+The execution status is recorded in [Plan 100 ETF snapshot recheck](PLAN-100-ETF-SNAPSHOT-RECHECK-2026-10-16.md).
+
+1. **Source candidate:** TFTC remains the clearest licensed option for an attributed research artifact under CC BY 4.0, not an automatic canonical-source replacement. Its current flow lineage overlaps SoSoValue and its historical series overlaps Farside. CoinGlass and The Block are not cleared for automated durable raw retention under the reviewed public terms.
+2. **Offline contract:** TFTC-specific archive metadata, attribution, exact-byte hashes, retrieval/reporting timestamps, units, schema/normalizer metadata, upstream lineage and revision preservation are documented. Existing writer/verifier tests cover fixtures only; they do not certify durable storage or independent backup/restore.
+3. **Real snapshot stability:** the approved research-only rule requires two distinct valid snapshots at least 24 hours apart; both configured sources must be captured in both; each target-date row must be unique, complete/reconciled and unchanged; rights and independent restore evidence must be reviewable. TFTC's stated twice-daily updates and corrections mean later changes must become revision candidates, not overwrites. Real-provider stability is **not verified** because no live capture was run, Farside raw-retention rights remain unresolved, and private archive/independent recovery are not operational.
+4. **One BTC research scenario:** remains blocked until a real evidence set passes the evaluator, rights/archive evidence is independently reviewable, and a human approves the named snapshot IDs/date. `ELIGIBLE_FOR_REVIEW` is not approval. No scenario evaluation/state/probability changes occurred; BTC remains `not_evaluable`.
+
+No API calls, scraping, live captures, database access/writes, ingestion, deployment, or merge were performed during this documentation follow-through. Do not change source priority or production readiness based on fixture tests alone.
