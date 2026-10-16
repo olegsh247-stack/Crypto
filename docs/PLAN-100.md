@@ -2025,3 +2025,8 @@ The DXY source hunt is closed for the first BTC scenario. The readiness gate no 
 **Validation:** [BTC Public Source Staging #38854319856](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319856) passed, including the new eligibility-policy tests; live capture was skipped as intended. VPS API Build Rehearsal [#38854319826](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319826) is still running at the time of this note; do not mark it successful until completed.
 
 **Boundary:** no live capture, production database writes, ingestion, scenario evaluation, scenario-state/probability/monitoring changes, deployment, or PR merge. This closes the policy/code gate only; it does not automatically make BTC `evaluable`.
+
+
+### Validation completion update — 2026-10-16
+
+The previously pending [VPS API Build Rehearsal #38854319826](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319826) has now completed successfully. Together with [BTC Public Source Staging #38854319856](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319856), this confirms the policy unit tests and the VPS build/E2E rehearsal for the implementation commit. The VPS run is CI/test-environment evidence only; it does not validate live source availability or durable archive retention. PR #83 remains Draft/open/unmerged, and BTC is not automatically evaluable.
