@@ -666,3 +666,12 @@
 **Статус:** только подготовка — вопросы не отправлены. Ни API не вызывался, ни ключи не запрашивались/не сохранялись, ни данные не захватывались. Нет автоматического допуска источников, изменений registry/формулы/evaluator/production observations или scenario state. BTC остаётся `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
 
 **CI:** VPS API Build Rehearsal [#38904095808](https://github.com/olegsh247-stack/Crypto/actions/runs/38904095808) завершился успешно на commit `4e3ea1964018b77f3443c99c4aaef360ce4f77a1`. Это подтверждение CI для того снимка, не для последующих документальных изменений и не доказательство развёрнутого VPS или независимого долговременного архива.
+
+
+## 2026-10-16 — SEC cross-check HODL / BRRR / BTCW включён в матрицу покрытия
+
+**Действие:** результаты отдельной SEC Q2 2026 сверки HODL, BRRR и BTCW внесены в `docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md` отдельным evidence section (commit `e7490e47167fa91038975995bf23277752648de6`).
+
+**Результат:** HODL: quarter-end shares/NAV/net assets/BTC holdings и квартальные выпуски/погашения отражены отдельно; BRRR: share count на 2026-06-30 отделён от cover-page count на 2026-07-30; BTCW: округлённые holdings investment schedule отделены от значения по reference-rate методологии. Ни один показатель не объявлен ежедневным потоком.
+
+**Ограничения:** ежедневная полная история, публикационные timestamps/revision semantics и права на долговременное raw-архивирование/независимое восстановление не подтверждены. AUM delta не используется для вывода flow; live capture, registry/formula/evaluator changes, production writes и scenario evaluation не выполнялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
