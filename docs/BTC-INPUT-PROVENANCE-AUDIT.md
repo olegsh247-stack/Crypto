@@ -12,7 +12,7 @@ Use this against the source database before export and against the restored VPS 
 - `macro.dxy`: no older than 5 days;
 - `institutional.etf_net_flow`: latest observation within 48 hours for scenario readiness and at least five distinct current source-linked days.
 
-The SQL reports the latest timestamp, freshness, source ID, URL presence, source registry integrity, and observation counts. For ETF flow it also counts distinct current, source-linked days within the last 14 days. It lists duplicate logical keys without deleting or merging them, and reports snapshot evidence, scenario-state and monitoring linkage counts.
+The SQL reports the latest timestamp, freshness, source ID, URL presence, source registry integrity, and observation counts. For ETF flow it counts distinct reporting dates (period_start) within the last 14 calendar days only when the row has a numeric value, the canonical Farside source ID/URL, and a registered source. It does not substitute observed_at for a missing reporting date and does not count TFTC as canonical. This count is a history-coverage diagnostic, not proof of ETF finality/eligibility; the latest ETF row must separately pass the 36-hour freshness and revision/finality gates in the runtime readiness check. It lists duplicate logical keys without deleting or merging them, and reports snapshot evidence, scenario-state and monitoring linkage counts.
 
 ## Run
 

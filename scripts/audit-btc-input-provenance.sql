@@ -26,12 +26,21 @@ counts AS (
   GROUP BY metric_id
 ),
 etf_days AS (
-  SELECT count(DISTINCT coalesce(period_start::date, observed_at::date)) AS distinct_traceable_days
+  SELECT count(DISTINCT period_start::date) AS distinct_traceable_days
   FROM btc_observations
   WHERE metric_id = 'institutional.etf_net_flow'
+    AND period_start IS NOT NULL
+    AND period_start::date <= current_date
+    AND period_start::date >= current_date - 14
+    AND observed_at IS NOT NULL
     AND observed_at <= now()
-    AND observed_at >= now() - interval '14 days'
-    AND coalesce(value_numeric::text, value_integer::text, value_text) IS NOT NULL
+    AND (value_numeric IS NOT NULL OR value_integer IS NOT NULL)
+    AND unit = 'USD million/day'
+    AND source_id = 'institutional.primary'
+    AND (
+      source_url LIKE 'https://farside.co.uk/btc/%'
+      OR source_url LIKE 'https://farside.co.uk/bitcoin-etf-flow-all-data/%'
+    )
     AND source_url IS NOT NULL
     AND btrim(source_url) <> ''
     AND EXISTS (SELECT 1 FROM sources s WHERE s.source_id = btc_observations.source_id)
