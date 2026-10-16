@@ -56,15 +56,23 @@ function completeInputs() {
   ];
 }
 
-test("fresh inputs still block while no canonical DXY source is approved", () => {
+test("fresh required inputs can pass readiness without an approved DXY source", () => {
   const result = assessBtcScenarioReadiness(completeInputs(), now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.equal(result.can_persist_scenario_state, false);
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
   assert.equal(result.selected_inputs["market.spot_price"].source_id, "market.kraken");
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
+
+
+test("missing DXY does not block BTC readiness", () => {
+  const inputs = completeInputs().filter(x => x.metric_id !== "macro.dxy");
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
+});
 
 test("historical ETF sessions count toward the five-day series even when they are no longer fresh latest inputs", () => {
   const inputs = completeInputs().map(x =>
@@ -72,8 +80,8 @@ test("historical ETF sessions count toward the five-day series even when they ar
       ? { ...x, freshness: "STALE" }
       : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
@@ -142,12 +150,12 @@ test("future-dated observations are rejected", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
 });
 
-test("untraceable observations are rejected", () => {
+test("untraceable optional DXY context does not block BTC readiness", () => {
   const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
     ? { ...x, source_url: null } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
 });
 
 
@@ -214,7 +222,7 @@ for (const [sourceId, sourceUrl] of [
 }
 
 
-test("registered ICE DXY candidate cannot bypass the unapproved DXY source contract", () => {
+test("registered ICE DXY candidate is not required for BTC readiness", () => {
   const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
     ? {
         ...x,
@@ -224,9 +232,8 @@ test("registered ICE DXY candidate cannot bypass the unapproved DXY source contr
       }
     : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"
-    && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
   assert.equal(result.selected_inputs["macro.dxy"], undefined);
 });
 
@@ -320,13 +327,14 @@ test("readiness result carries source provenance for offline review", () => {
 });
 
 
-test("metric registry does not advertise a generic or unlicensed DXY source as canonical", () => {
+test("DXY remains optional and no unapproved source is canonical", () => {
   const metricRegistry = JSON.parse(readFileSync("data/CryptoDataModel/registry/metric-registry.json", "utf8"));
   const metrics = Array.isArray(metricRegistry) ? metricRegistry : metricRegistry.metrics;
   const dxy = metrics.find(x => x.metric_id === "macro.dxy");
   assert.ok(dxy, "macro.dxy must remain defined");
   assert.deepEqual(dxy.source_priority, []);
-  assert.match(dxy.validation_rule, /blocked until an approved DXY feed/i);
+  assert.equal(dxy.scenario_readiness.required, false);
+  assert.match(dxy.validation_rule, /optional contextual metric/i);
 
   const sourceRegistry = JSON.parse(readFileSync("data/CryptoDataModel/registry/source-registry.json", "utf8"));
   const sources = Array.isArray(sourceRegistry) ? sourceRegistry : sourceRegistry.sources;

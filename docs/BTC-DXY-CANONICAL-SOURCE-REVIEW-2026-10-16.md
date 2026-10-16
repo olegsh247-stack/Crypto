@@ -53,3 +53,15 @@ No free/public candidate has yet passed all four gates: (1) exact instrument ide
 The best next *technical investigation* is to request/inspect the exact product and data terms for a licensed ICE DXY feed, while treating Yahoo as a visible reference only unless written automated-use permission exists. If a free data source is required, the clean alternative is to propose a **new, explicitly named broad-dollar metric** based on FRED DTWEXBGS and assess its research value; do not call it DXY. The Dukascopy symbol remains a secondary lead only, pending its exact instrument specification and applicable license.
 
 No source priority or metric registry is changed by this review. `macro.dxy` remains blocked; BTC remains `not_evaluable`.
+
+
+## Decision update — DXY is optional context, not a BTC readiness gate (2026-10-16)
+
+The source search is closed for the first BTC scenario. DXY is useful macro context, but not important enough to keep the entire BTC workflow blocked.
+
+- **Primary reference for the actual ICE DXY series:** Yahoo Finance [DX-Y.NYB](https://finance.yahoo.com/quote/DX-Y.NYB/), which publicly labels the quote as US Dollar Index / ICE Futures. Treat it as a manual research/display reference only; do not automate collection through Yahoo or redistribute its data without the required permission.
+- **Fallback macro context:** Federal Reserve / FRED [DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS), an official daily broad-dollar index. It is not DXY, uses a different basket/methodology, and is updated with a release lag; only use it under its own explicit name and date/freshness rules. Never write it into `macro.dxy` or splice it into a DXY time series.
+- **Readiness behavior:** `macro.dxy` is now optional and non-blocking. If the primary reference is unavailable, use the clearly labelled broad-dollar proxy only when useful; if neither is available, omit DXY context and continue. No more DXY source investigation is required for the first BTC scenario.
+- **Scope:** this does not approve Yahoo automated ingestion, does not add a new metric/source priority, and does not claim FRED and ICE DXY are interchangeable. ETF flow publication/revision/finality remains a separate readiness gate.
+
+The implementation changes only the read-only readiness requirement and its tests/documentation. No observation, scenario state, score, probability, production database, ingestion job, or deployment is changed.

@@ -1976,3 +1976,15 @@ This is a decision proposal, not an adopted policy. Archive location/retention, 
 Reviewed the user-supplied candidates against current public instrument and terms documentation. Yahoo Finance DX-Y.NYB is visibly labelled US Dollar Index / ICE Futures, but Yahoo terms restrict automated collection without prior permission and redistribution; yfinance is unofficial. Dukascopy's published XML-data license describes derivative index quotes as one-minute averages rather than exchange values and imposes declared-use/approval and non-commercial restrictions; the third-party download tool does not prove an authorized exact ICE cash-DXY feed. TradingView's terms restrict non-display processing. FRED DTWEXBGS remains a different broad-dollar index; Portara/CQG is a paid historical-futures lead, not proof of cash-index data rights. Full findings are in docs/BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md.
 
 **Decision unchanged:** no candidate satisfies instrument identity + permitted automated collection/storage + stable endpoint/timestamp semantics + revision policy. Do not promote a source or relabel another metric as DXY. Keep macro.dxy blocked. Next paths: confirm an authorized ICE DXY product/feed and terms, or separately propose a new broad-dollar metric based on DTWEXBGS with an explicit product-contract change. BTC remains not_evaluable.
+
+
+## Plan 100 decision — stop blocking BTC on DXY (2026-10-16)
+
+**Decision:** DXY is optional macro context for the first BTC research scenario, not a required readiness input. The source hunt is closed for this stage.
+
+- Primary visible/manual reference for ICE DXY: Yahoo Finance `DX-Y.NYB`; no automated Yahoo collection or redistribution without authorization.
+- Backup context if useful: FRED `DTWEXBGS`, clearly named as the Federal Reserve Nominal Broad U.S. Dollar Index. It is not ICE DXY, has a different methodology, and is subject to release lag/revisions; do not substitute it into the DXY series.
+- If neither is usable/current, omit the macro context and proceed. DXY absence or staleness must not block BTC readiness.
+- The metric registry now marks `macro.dxy` as optional; its source priority remains empty, so no unapproved automated feed is implied.
+
+**Next work:** continue BTC source-contract/readiness work, prioritizing the remaining ETF-flow revision/finality/eligibility blocker and then the reproducible offline scenario rule. Do not spend another research cycle on DXY unless a concrete failure materially affects the scenario. No production data, ingestion, scenario state, probabilities, or deployment changed.

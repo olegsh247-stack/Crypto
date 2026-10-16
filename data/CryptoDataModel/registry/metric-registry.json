@@ -348,20 +348,20 @@
     },
     {
       "metric_id": "macro.dxy",
-      "name": "US Dollar Index",
+      "name": "US Dollar Index (optional contextual input)",
       "category": "macro",
       "unit": "index",
-      "update_mode": "AUTO",
+      "update_mode": "MANUAL",
       "frequency": "1d",
       "freshness_window": "48h",
       "source_priority": [],
-      "validation_rule": "value > 0; blocked until an approved DXY feed, endpoint, daily observation convention and access terms are recorded",
+      "validation_rule": "value > 0; optional contextual metric, not a BTC scenario readiness blocker; no automated source approved",
       "research_blocks": [
         "09",
         "15"
       ],
       "scenario_readiness": {
-        "required": true,
+        "required": false,
         "allowed_source_url_prefixes": []
       }
     },
