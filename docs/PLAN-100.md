@@ -2,14 +2,20 @@
 
 > **СТАТУС ДОКУМЕНТА: ГЛАВНЫЙ ПРИОРИТЕТ ПРОЕКТА.** Этот документ задаёт обязательную последовательность работ. При конфликте с отдельными старыми задачами, комментариями, ветками или PR приоритет имеет актуальная версия «План 100», кроме случаев, когда пользователь явно изменил план.
 
-**Актуальность снимка:** 15 октября 2026 года (Europe/Riga)  
+**Актуальность снимка:** 16 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
 **Последние проверенные CI-свидетельства (базовый снимок 14 октября 2026; дополнение 15 октября см. ниже):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
----
+
+## Обновление 2026-10-16 — проверка CI и первичного источника GBTC
+
+- Проверен VPS build-and-E2E workflow run [#38884351373](https://github.com/olegsh247-stack/Crypto/actions/runs/38884351373) для commit `9523d7be7031e92014f6281ba34579458bfcaf1a`: все 27 основных шагов завершились успешно, включая VPS-only границы, сборки API/Worker, проверку canonical BTC registry, provenance audit, идемпотентность и reconciliation дублей, PostgreSQL backup/restore rehearsal, API/Worker E2E и BTC evidence/snapshot lineage E2E. Это CI rehearsal, а не подтверждение фактически развёрнутого VPS, долговременного архива или независимого failure-domain restore.
+- Матрица первичных источников ETF расширена по GBTC: SEC 10-Q за 2026-Q2 содержит точечные NAV/share, net assets, BTC holdings и shares outstanding; 10-Q за Q1 показывает квартальные выпуски/погашения акций. Эти документы подходят для периодической сверки, но не доказывают полный ежедневный поток. Официальная страница Grayscale вернула HTTP 403 при проверке; недокументированный API или права на систематическое хранение не предполагаются.
+- Матрица: [BTC ETF issuer source coverage](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md). Изменение записано commit `630f3dc58eec170e2cb33c6143d309682db24ed6`; запись в «Промт 100» — commit `c0edbf61f1738b0924f523064e95483a4e4e01c6`.
+- Решение не меняется: ни один новый источник не продвинут в runtime registry, формула не менялась, live capture и production writes не запускались. PR #83 остаётся Draft; BTC остаётся `not_evaluable`. Следующий шаг — продолжать документальную проверку ежедневной исторической доступности, методологии и прав для оставшихся активных фондов, прежде чем предлагать замену источника или изменение evaluator.
 
 ## 0. Короткое решение: что строим и в каком порядке
 
