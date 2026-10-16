@@ -24,7 +24,7 @@ const manifest = {
   unresolved: [
     {
       metric_id: "macro.dxy",
-      reason: "Yahoo Finance DX-Y.NYB chart is captured as a review candidate only. The Yahoo chart endpoint is not treated as an official API; source terms/access stability, daily close convention and metric-registry approval remain pending. Do not substitute a broad USD index."
+      reason: "Automated Yahoo Finance chart capture is disabled because Yahoo terms prohibit automated collection without express prior permission. DXY remains a blocked review candidate until permitted access and close/publication timestamp semantics are established. Do not substitute a broad USD index."
     },
     {
       metric_id: "institutional.etf_net_flow",
