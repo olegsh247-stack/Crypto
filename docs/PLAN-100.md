@@ -1680,3 +1680,13 @@ Added an optional read-only request to the official SoSoValue ETF aggregate hist
 ### DXY registry parity correction — 2026-10-17
 
 The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_candidate` failed at the repository consistency validator because the new source-registry entry was not yet present in the PostgreSQL seed. This was a repository validation failure, not a production database failure. Added the same access-blocked candidate to `infrastructure/postgres/seed-v1.sql` so registry and clean-database seed remain consistent. Re-running the gate and source staging is required before calling the changes verified.
+
+
+### Verification after DXY / SoSoValue input-check changes — 2026-10-17
+
+- BTC Public Source Staging passed on commit `932194e54729ff01f40083e75433e1c63fff9673`: [run](https://github.com/olegsh247-stack/Crypto/actions/runs/38970404567). All 13 observation-normalizer tests passed, including new tests that keep DXY explicitly blocked and compare SoSoValue aggregates with Farside by reporting date without promoting either source.
+- BTC Scenario Readiness Gate passed after the source registry/seed parity fix on commit `461eaa027e5bab242850edf0302dd6396553aa9f`: [run](https://github.com/olegsh247-stack/Crypto/actions/runs/38970454012). The earlier failure was the missing PostgreSQL seed row for the newly registered blocked Yahoo candidate; the seed correction resolved the validator failure.
+- Seed observation idempotency rehearsal passed: [run](https://github.com/olegsh247-stack/Crypto/actions/runs/38970453948).
+- The staging artifact/log confirms DXY status `BLOCKED_ACCESS_TERMS` and SoSoValue status `BLOCKED_NO_API_KEY`; no Yahoo HTTP request was made by the updated script and no SoSoValue request was made without a key.
+- The later VPS API build rehearsals and Crypto VPS Release Gate were still running at the time of this entry; do not label them green until completed.
+- DXY is now present in normalized BTC input review as a blocked row with unverified observation time and uncomputable freshness. This does **not** make it an accepted input and does not change the BTC scenario state/probability.
