@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { archiveBtcEtfEvidence } from "./archive-btc-etf-evidence.mjs";
@@ -48,6 +48,17 @@ test("verifies all archived fixture bytes and provenance checksums", async t => 
   assert.equal(result.verified, true);
   assert.equal(result.snapshot_id, "fixture-snapshot-001");
   assert.equal(result.source_bodies, 1);
+  assert.equal(result.verified_files, 3);
+});
+
+test("verifies a fixture snapshot copied to a separate restore directory", async t => {
+  const f = await fixture(t);
+  const restoredDir = join(f.root, "restore", "snapshot-restored");
+  await mkdir(join(f.root, "restore"), { recursive: true });
+  await cp(f.target, restoredDir, { recursive: true, errorOnExist: true, force: false });
+  const result = await verifyBtcEtfEvidenceArchive(restoredDir);
+  assert.equal(result.verified, true);
+  assert.equal(result.snapshot_id, "fixture-snapshot-001");
   assert.equal(result.verified_files, 3);
 });
 
