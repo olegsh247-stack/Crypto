@@ -342,3 +342,12 @@
 **Результат:** изменения закоммичены в PR #83 (коммиты `d848aba559e20c7ac3efe10197fe63d878c521ae`, `440ebf30ae423774050465ba29bac27d74cd0669`, `39d8765bf919ff6e97d0796ebeb196de70c469e5`). Проверка CI именно для этих изменений ещё не подтверждена; не считать новые тесты пройденными до завершённого staging run.
 
 **Ограничения:** live capture, реальный архив, production DB, ingestion, scenario evaluation/state, deployment и merge не выполнялись. Права на долговременное хранение raw Farside/SoSoValue, постоянное хранилище и независимый backup/restore остаются блокерами; BTC — `not_evaluable`.
+
+
+## 2026-10-16 — подтверждён staging для усиленного ETF archive writer
+
+**Действие:** проверен завершённый GitHub Actions run для последней версии кода archive writer с duplicate-source, обязательным source URL и защитой пути.
+
+**Результат:** [BTC Public Source Staging #38874163877](https://github.com/olegsh247-stack/Crypto/actions/runs/38874163877) — `success`. Все шаги `validate`, включая `Test offline BTC ETF evidence archive safety gates`, завершились успешно; live-capture job был `skipped`. Это подтверждает fixture-тесты и staging-набор для commit `39d8765bf919ff6e97d0796ebeb196de70c469e5`. VPS Build & E2E для последнего документального HEAD `47495e3755aa96ff7bd96d6a10c880f49f734697` на момент проверки ещё выполняется.
+
+**Ограничения:** CI не подтверждает права на хранение данных, реальный архив или независимое восстановление. Live capture, production writes, ingestion, scenario evaluation/state, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
