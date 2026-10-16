@@ -1597,3 +1597,20 @@ Recent evidence: BTC Scenario Readiness Gate #228 passed on `296848097481126238c
 - The ETF observation contract in PR #83 was updated at commit `551cbd20043e9d719351aca394c1aa12cad76632`: [contract document](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/data-review/BTC-ETF-OBSERVATION-CONTRACT-2026-10-15.md).
 - This rule is for the offline research dataset only. Production persistence remains blocked until timestamp and revision/finality policy requirements are satisfied. No database writes, ingestion, scenario evaluation, scenario-state/probability/monitoring changes, or deployment were performed.
 - CI for this latest contract commit has not yet been confirmed. Do not mark it green until a run for the commit completes.
+
+
+## Plan 100 decision — ETF project-stabilized research eligibility (2026-10-16)
+
+**Decision accepted by the user:** use a project-stabilized snapshot for offline research when provider-declared finality is unavailable. This is not a claim of provider finality.
+
+**Implementation on PR #83 branch:** [policy](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/docs/BTC-ETF-PROJECT-STABILIZED-RESEARCH-POLICY-2026-10-16.md), [eligibility evaluator](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/scripts/evaluate-btc-etf-research-eligibility.mjs), and [dedicated tests](https://github.com/olegsh247-stack/Crypto/blob/fix/btc-readiness-registry-runtime-source/scripts/evaluate-btc-etf-research-eligibility.test.mjs). The read-only source-staging workflow now runs the policy tests.
+
+**Fail-closed criteria:** two valid distinct captures at least 24 hours apart; both Farside and TFTC captured in both; exactly one complete/reconciled row per source for the target date; and unchanged per-source row fingerprints across captures. The evaluator returns `ELIGIBLE_FOR_REVIEW` only; explicit human approval is required. A changed row is a revision candidate, earlier evidence is retained, and affected offline research must be re-evaluated. Missing, failed, incomplete or duplicate data never becomes zero.
+
+**Source fallback rule:** if official sources are unavailable, non-official sources may be investigated as separately labelled corroboration. They cannot silently replace canonical sources. Instrument identity, metric meaning, coverage, terms/licensing and provenance must be reviewed before approval.
+
+**Retention caveat:** the seven-day GitHub Actions artifact is not a durable archive. Until project-controlled retention and recovery are demonstrated, a date cannot be approved solely on the basis of a temporary artifact.
+
+**Validation:** [BTC Public Source Staging #38854319856](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319856) passed, including the new eligibility-policy tests; live capture was skipped as intended. [VPS API Build Rehearsal #38854319826](https://github.com/olegsh247-stack/Crypto/actions/runs/38854319826) was still running when this entry was prepared.
+
+**Boundary:** no live capture, production database writes, ingestion, scenario evaluation, scenario-state/probability/monitoring changes, deployment, or PR merge. This does not automatically make BTC `evaluable`.
