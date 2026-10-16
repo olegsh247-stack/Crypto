@@ -2081,3 +2081,10 @@ The writer consumes an existing local capture directory only. It makes no networ
 **Validation state:** implementation and tests have been committed to the PR branch; a passing CI run has not yet been verified. The new test covers fixture success, unresolved rights, missing body, hash mismatch, overwrite, incomplete manifest, credential-like URL, invalid date and unsafe snapshot ID. This is not a real archive run: current Farside/SoSoValue raw-retention rights remain unresolved, no live capture was run, and no SSD/VPS is required for the CI fixture tests.
 
 **Acceptance remains unchanged:** the archive writer does not verify independent backup/restore, source finality, or ETF scenario eligibility. BTC remains `not_evaluable`; no production writes, ingestion, scenario-state changes, deployment or merge were performed.
+
+
+### Offline archive writer — дополнительная проверка provenance (2026-10-16)
+
+Code review выявил и закрыл два пробела до допуска реальных данных: повторный `source_id` в manifest теперь отклоняется, а для каждого сохраняемого raw body обязателен URL источника; имена файлов с обратными косыми чертами также отклоняются. Добавлен регрессионный тест на duplicate source ID и отсутствующий source URL. Коммиты в PR #83: `d848aba559e20c7ac3efe10197fe63d878c521ae`, `440ebf30ae423774050465ba29bac27d74cd0669`, `39d8765bf919ff6e97d0796ebeb196de70c469e5`.
+
+**Статус проверки:** CI после этих коммитов ещё не подтверждён. Не архивировать реальные raw-ответы, пока права конкретного источника не имеют проверяемого подтверждения; durable archive/independent restore не проверены. BTC остаётся `not_evaluable`.
