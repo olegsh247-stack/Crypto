@@ -2166,3 +2166,12 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 Начат следующий безопасный путь исследования — официальные данные самих эмитентов и SEC. Проверенные материалы BlackRock IBIT и Fidelity FBTC содержат некоторые датированные NAV/share-count значения; SEC содержит point-in-time/periodic сведения. Пока не доказано наличие полного единого ежедневного исторического ряда для всех US spot BTC ETF. Изменение net assets не эквивалентно ETF net flow, поскольку включает движение цены BTC; любые расчёты на shares outstanding/NAV требуют отдельного контракта дат, охвата фондов и сверки.
 
 **Следующий шаг:** offline fund-by-fund coverage matrix для полного актуального US spot BTC ETF universe (официальный источник, поля, cadence, history depth, terms, machine-readable access). Не запускать live capture и не менять source registry/priority/формулу до завершения этой проверки. Подробности — в `docs/BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md`. BTC остаётся `not_evaluable`.
+
+
+### Матрица официальных источников ETF по фондам — 2026-10-16
+
+Создана `docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md` — первый инвентарь официальных issuer/SEC-страниц для текущего US spot BTC ETF universe. По ряду фондов видны датированные NAV, AUM, shares outstanding и/или holdings, но полный сопоставимый daily historical feed, дата действия shares outstanding, revision history и разрешение на систематический retention пока не подтверждены для всех фондов.
+
+Важное уточнение universe: официальный Hashdex DEFI page сообщает delisting с NYSE Arca effective 2026-09-03. Не включать DEFI в текущий активный агрегат после этой даты, но сохранять историческую применимость до даты закрытия. Изменение net assets не является net flow, поскольку содержит изменение цены BTC; формулу на базе shares/NAV нельзя вводить без отдельного контракта и reconciliation.
+
+**Следующий шаг:** продолжить fund-by-fund проверку официальной истории, полей shares outstanding/creation-redemption, даты оценки NAV, прав автоматизированного хранения и полноты universe. Не запускать capture, не менять реестр/формулу и не оценивать сценарий до прохождения этого контракта. BTC остаётся `not_evaluable`.
