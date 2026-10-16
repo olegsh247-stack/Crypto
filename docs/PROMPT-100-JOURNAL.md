@@ -1028,3 +1028,14 @@
 **Блокеры остаются:** last audited spot and ETF candidate are stale; ETF observation/publication timestamp, completeness, revision/finality and rights are not cleared. BTC remains `not_evaluable`; no state persistence or probability change. Runtime, registry, DB, live capture, deployment, VPS/storage and PR merge untouched. PR #83 remains Draft.
 
 **Следующий шаг:** завершить offline contract/test review одного сценария; актуальные реальные входы собирать только отдельным разрешённым действием. Daily ETF holdings search не возобновлять как блокер.
+
+
+## 2026-10-16 — завершена сверка офлайн-контракта BTC-сценария
+
+**Действие:** сверены обязательные/необязательные метрики в canonical registry, read-only readiness gate и pure Rule v2 evaluator. Результат: `market.spot_price` и `institutional.etf_net_flow` остаются обязательными; hashrate, DXY и fee/subsidy — optional context, причём fee/subsidy не влияет на directional score. Пороговые значения и runtime-поведение не менялись.
+
+**Важное ограничение тестового покрытия:** доступный `scripts/btc-scenario-direction.test.mjs` проверяет детерминированное правило, optional-input omission и fail-closed поведение при статусе readiness, но напрямую не покрывает матрицу source-quality readiness (fresh/stale, source allowlist, будущие timestamps, ETF completeness/revision/finality и дубли). Зафиксировано в [BTC-SCENARIO-OFFLINE-CONTRACT-REVIEW-2026-10-16.md](BTC-SCENARIO-OFFLINE-CONTRACT-REVIEW-2026-10-16.md). Наличие иных readiness-тестов не утверждается: искомый файл по первому проверенному пути не найден.
+
+**Статус:** исторический офлайн-прогон остаётся fixture rehearsal (Base, score −1, low confidence), не текущей оценкой рынка. Фактический сценарий BTC остаётся `not_evaluable` до прохождения freshness/provenance gate. Live capture, БД, ingestion, runtime/registry, вероятности, deployment и merge не выполнялись; PR #83 остаётся Draft.
+
+**Следующее действие:** добавить/проверить специализированные regression tests readiness gate в существующем тестовом harness; не ослаблять gate ради прохождения старых candidate данных. Обновление текущих обязательных входов — только отдельным явно разрешённым действием.
