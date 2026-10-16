@@ -201,3 +201,14 @@ Technical fit is limited but worth tracking: documented daily per-fund and aggre
 **Decision:** secondary candidate only; rights and independence remain unverified. Do not call the API or archive responses until the operator confirms in writing that automated research access, raw-data retention/private backup, and use of derived values are permitted. No API request was made, no key requested/stored, and no source was promoted. Canonical source priority, registry, arithmetic_mean_2_sources, evaluator, production data and scenario state remain unchanged; BTC remains not_evaluable.
 
 References: https://cryptoetf.today/en/api ; https://docs.cryptoetf.today/ ; https://cryptoetf.today/en/terms
+
+
+## 2026-10-16 follow-up — ByKaranteli data terms and ETF candidate boundary
+
+Reviewed ByKaranteli's live dataset page and Terms of Service (last updated 2026-10-15): https://bykaranteli.com/data ; https://bykaranteli.com/terms. Its documented API permits automated access within rate limits, and the computed datasets/API responses are licensed for personal/research use with visible attribution. However, the terms explicitly prohibit systematically copying its archive into a substitute database/archive/service. The same terms state that third-party series remain under the original publisher's terms, and that ByKaranteli grants no rights to third-party records. Commercial use requires Business and redistribution of derived data requires Scale.
+
+The ETF page advertises BTC daily aggregate history backfilled to 2025-05-20 and per-fund history recorded since 2026-07-30, finalized US trading days only, with current day provisional until funds report. Its source description says ETF flows use issuer pages and a public flow tracker. The live record is therefore potentially useful for a small, attributed, noncommercial/manual comparison, but it is not cleared for bulk replication or our durable raw archive, and upstream permissions/lineage still need to be established. The frozen CC0 GitHub/Zenodo archive is explicitly no longer updated; CC0 covers ByKaranteli's own computations, not third-party data.
+
+**Decision:** candidate for bounded manually reviewed corroboration only, subject to source-specific rights; not canonical, not an archive feed, and not an independent vote until lineage is checked. Do not automate a full-history download or persist systematic copies. No API was called, no key was requested/stored, and no data was captured. Source priority, metric registry, formula/evaluator, production data and scenario state remain unchanged; BTC remains not_evaluable.
+
+References: https://bykaranteli.com/data ; https://bykaranteli.com/terms ; https://github.com/bykarantelicom/crypto-datasets
