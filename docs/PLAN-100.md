@@ -2471,3 +2471,11 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 - Readiness report: [BTC-SINGLE-SCENARIO-INPUT-READINESS-2026-10-16.md](BTC-SINGLE-SCENARIO-INPUT-READINESS-2026-10-16.md). Offline rehearsal: [BTC-SCENARIO-RULE-V2-OFFLINE-REHEARSAL-2026-10-16.md](BTC-SCENARIO-RULE-V2-OFFLINE-REHEARSAL-2026-10-16.md).
 - Текущий сценарий всё ещё `not_evaluable`: spot-price candidate устарел относительно 1h gate, ETF latest candidate — относительно 36h gate; ETF publication timestamp/finality and source eligibility remain unresolved. Не обновлялись probability, score, scenario state, metric/source registry or runtime. PR #83 remains Draft/unmerged. No live capture, DB write, deployment, or VPS/storage provisioning.
 - **Следующий рабочий этап:** завершать контракт и тесты для одного сценария на имеющихся offline fixtures, затем отдельно запрашивать разрешение на обновление реальных входов. Не возвращаться к широкому ETF holdings search и не блокировать офлайн-работу из-за отсутствия daily panel 13/13.
+
+
+## 2026-10-17 — BTC readiness CI подтверждён; усилен fail-closed тест Rule v2
+
+- GitHub Actions run [#298](https://github.com/olegsh247-stack/Crypto/actions/runs/38965974798) на commit `bb5ad42002f7826505bf311f02e5b9444e0f0af3` завершился **success**. Успешно выполнены сборка/тесты общей readiness-реализации и проверки качества входов/направленных правил. Это подтверждает офлайн-тесты, не свежесть реальных BTC-данных.
+- Добавлен regression test: отсутствие `readiness_status` и любые значения статуса, кроме точного `ready_for_rule_evaluation`, должны вернуть `not_evaluable`, не выдавать `scenario_type`/направленный score и не разрешать persistence. Результат нового теста ожидает CI и пока не объявляется PASS.
+- Сценарий остаётся `not_evaluable`: проверка не обновляет данные и не меняет текущие оценки/вероятности. Live capture, DB writes, ingestion, deployment и merge не выполнялись. PR #83 остаётся Draft/open/unmerged.
+- Следующий шаг: проверить CI нового commit; после подтверждения закрыть офлайн-контрактный тестовый этап и отдельно зафиксировать остающиеся блокеры реальных входов. Не возобновлять поиск поставщиков ETF holdings.
