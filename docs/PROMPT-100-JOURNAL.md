@@ -816,3 +816,14 @@
 - VPS API Build Rehearsal [#38914137831](https://github.com/olegsh247-stack/Crypto/actions/runs/38914137831) passed: build, disposable PostgreSQL migration, registry/provenance/idempotency checks, backup/restore rehearsal, API/Worker E2E, and BTC evidence lineage E2E succeeded. This is CI-local rehearsal evidence, not proof of an operational VPS or independent off-host archive recovery.
 - Test fixtures are synthetic only. No real TFTC JSON payload has been captured or inspected. Source rights/handling approval and durable private storage with independent backup/restore remain blockers; BTC remains `not_evaluable`.
 - No live capture, production DB write, ingestion, source registry or scenario state change, deployment, or PR merge was performed. PR #83 remains Draft.
+
+
+## 2026-10-16 — ETF source-rights review and archive gate
+
+**Действие:** повторно проверены завершившиеся CI runs и документально разделены лицензия опубликованного набора TFTC, происхождение данных и права на хранение сырых ответов upstream-провайдеров.
+
+**Результат:** VPS API Build Rehearsal [#38914477952](https://github.com/olegsh247-stack/Crypto/actions/runs/38914477952) и [#38914504318](https://github.com/olegsh247-stack/Crypto/actions/runs/38914504318) завершились успешно. BTC Public Source Staging [#38914138558](https://github.com/olegsh247-stack/Crypto/actions/runs/38914138558) прошёл validation; capture был skipped, артефактов нет. TFTC указан как опубликованный набор под CC BY 4.0 и раскрывает lineage: текущие ежедневные агрегаты связаны с SoSoValue, исторические строки фондов — с Farside. Поэтому TFTC — кандидат на отдельно атрибутированную офлайн-копию, но не независимый третий источник измерения и не автоматическое подтверждение корректности каждой строки.
+
+**Ограничения и решение:** до сохранения реальной копии TFTC проверить точную версию набора, атрибуцию/лицензионное уведомление, дату получения, hash и применимые условия на фактически полученном файле. Права на долговременное хранение сырых SoSoValue API responses и Farside responses остаются неподтверждёнными; не архивировать их без source-specific evidence. SEC/issuer filings и квартальные наборы годятся для периодической сверки, но не заменяют ежедневный flow ряд. Предложения по владельцу, retention/deletion, private storage, independent encrypted backup и restore cadence не утверждены; VPS/storage не развёрнуты.
+
+**Безопасность:** реальный payload не захватывался, архив и БД не изменялись, снимки не сравнивались, registry/formula/evaluator/scenario state не менялись. Нет deployment или merge. PR #83 остаётся Draft/open/unmerged; BTC остаётся `not_evaluable`. Следующий gate — разрешённая копия TFTC для офлайн-инспекции и документальное закрытие прав/архивных решений.
