@@ -591,3 +591,12 @@
 **5. Безопасность и следующий блокер.** Не скачивались JSON/issuer payloads, не создавался реальный архив, не выполнялись live ingestion, production writes, scenario evaluation, deployment или merge. Следующий этап: определить владельца архива, минимальный срок хранения и периодичность restore-check; после закрытия этих условий — спроектировать ограниченную офлайн-проверку покрытия/исправлений TFTC без помещения сырых SoSoValue/Farside данных в TFTC-архив. PR #83 open Draft; BTC остаётся `not_evaluable`.
 
 **Источники:** https://www.tftc.io/bitcoin-etf-flows ; https://bitbetf.com/ ; https://bitbetf.com/materials
+
+
+## 2026-10-16 — оформлена матрица решений по хранению архива BTC ETF
+
+**Действие:** создан документ `docs/BTC-ETF-ARCHIVE-RETENTION-DECISION-SHEET-2026-10-16.md`, commit `194633ea911cfe3db50b1e6a0af006d9e9611c48`; План 100 обновлён commit `0ce795d56d2237677259be9f114162bdb9577919`.
+
+**Результат:** отделены подтверждённые факты от неутверждённых решений: владелец архива и восстановления, минимальный срок хранения, правила удаления с учётом ссылок на snapshots, cadence проверки восстановления, независимое место backup и source-specific права. Без этих решений нельзя называть архив операционным или удалять доказательства автоматически. Это decision sheet, а не утверждённая эксплуатационная политика; срок хранения и cadence не придуманы.
+
+**Границы:** реальный архив не создавался, SSD не предполагался доступным, live capture/ingestion/production writes не запускались. Не менялись registry, source priority, formula/evaluator, scenario state/probabilities; deployment и merge не выполнялись. PR #83 остаётся Draft; BTC остаётся `not_evaluable`.
