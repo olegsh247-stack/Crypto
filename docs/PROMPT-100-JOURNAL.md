@@ -675,3 +675,15 @@
 **Результат:** HODL: quarter-end shares/NAV/net assets/BTC holdings и квартальные выпуски/погашения отражены отдельно; BRRR: share count на 2026-06-30 отделён от cover-page count на 2026-07-30; BTCW: округлённые holdings investment schedule отделены от значения по reference-rate методологии. Ни один показатель не объявлен ежедневным потоком.
 
 **Ограничения:** ежедневная полная история, публикационные timestamps/revision semantics и права на долговременное raw-архивирование/независимое восстановление не подтверждены. AUM delta не используется для вывода flow; live capture, registry/formula/evaluator changes, production writes и scenario evaluation не выполнялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — три критерия проверены по всем 12 активным BTC ETF
+
+**Действие:** в матрицу `docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md` добавлена таблица Gate 1/2/3 для IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC, Grayscale Mini BTC и MSBT (commit `7fc19fff9246ab86d361f61c3544da0b3aba46d8`).
+
+**Результат:**
+- Gate 1 (первичная датированная evidence): официальные страницы эмитентов и/или SEC-отчёты найдены по всем 12 фондам.
+- Gate 2 (полная воспроизводимая ежедневная история shares/creation-redemption с семантикой дат и revision handling): ни один фонд пока не прошёл строгую проверку; графики NAV/market price и текущие daily-updated snapshots недостаточны.
+- Gate 3 (права на automated capture, raw retention, private backup/restore и downstream publication): не подтверждены для всех 12 фондов; публичная доступность не является разрешением на систематическое извлечение/архивирование.
+
+**Решение:** issuer-primary route пока не заменяет daily ETF source contract. Не выводить flows из AUM delta, не считать пропуски нулями и не смешивать квартальные транзакции, holdings-based estimates и reported/compiled USD flows. Никаких API calls/capture/ключей/production writes/registry/formula/evaluator/scenario changes не было. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
