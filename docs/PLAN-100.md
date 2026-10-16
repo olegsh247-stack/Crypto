@@ -2224,3 +2224,10 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 3. Rechecked BITB/Bitwise's public primary page and materials index. Dated shares/NAV/net-assets/holdings snapshots and SEC filings support periodic reconciliation, but the review did not establish a complete machine-readable daily historical shares/creations/redemptions series, row-level revision semantics, or long-term raw-page retention rights.
 4. Preserved the no-proxy rule: no daily flows inferred from AUM changes; periodic SEC creation/redemption totals and current dated snapshots are not a daily flow series. No source was promoted and no registry/formula/evaluator was changed.
 5. No JSON dataset, issuer payload or raw page was captured; no live ingestion, production write, scenario evaluation, deployment or merge occurred. PR #83 remains open Draft; BTC remains `not_evaluable`. Next: settle archive retention owner/period and independent restore-check cadence; then design an offline bounded sample/revision-diff review under the TFTC license without copying upstream raw SoSoValue/Farside data.
+
+
+## 2026-10-16 — formalized archive retention/recovery decisions (proposal only)
+
+Создана [BTC ETF archive retention decision sheet](BTC-ETF-ARCHIVE-RETENTION-DECISION-SHEET-2026-10-16.md), commit `194633ea911cfe3db50b1e6a0af006d9e9611c48`. Она разделяет подтверждённое состояние и решения, которые нельзя выдумывать: владелец архива/восстановления, минимальный срок хранения, правило удаления, периодичность restore-check, независимый failure domain и права хранения для каждого raw payload. Временное безопасное правило — не выполнять pruning и не считать архив operational, пока решения не утверждены и независимый restore не пройден. Это не утверждает бессрочное хранение как финальную политику.
+
+Новый документ не разрешает capture, ingestion, production writes, source promotion, registry/evaluator changes, scenario evaluation/state/probabilities, deployment или merge. SSD пользователя не подключён; реальный архив не создавался. PR #83 остаётся Draft, BTC остаётся `not_evaluable`.
