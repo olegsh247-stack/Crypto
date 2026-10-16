@@ -97,7 +97,7 @@ export async function verifyBtcEtfEvidenceArchive(snapshotDir) {
       if (info.isDirectory()) {
         if (!expectedDirs.has(relPath)) throw new Error("Unexpected unmanifested directory: " + relPath);
         await walk(fullPath, relPath);
-      } else if (!info.isFile() || !expectedFiles.has(relPath)) {
+      } else if (!info.isFile() || (relPath !== "checksums.sha256" && !expectedFiles.has(relPath))) {
         throw new Error("Unexpected unmanifested file: " + relPath);
       }
     }
