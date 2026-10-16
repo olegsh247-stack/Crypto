@@ -127,3 +127,36 @@ The linked SEC cross-check has now been brought into this matrix as a separate d
 **Interpretation and limits:** HODL's quarterly share creations/redemptions help reconcile quarter-level activity but are not daily records. BRRR's later cover-page share count is a different observation date from quarter-end. BTCW's principal-market and reference-rate holdings figures are not interchangeable. These filings do not establish complete daily creations/redemptions, row-level publication/finality/revision behavior, or rights to systematic raw-response retention and independent archive/restore.
 
 **Decision:** retain these as primary-source periodic cross-checks only. Do not infer flows from AUM changes, do not promote any of these records to the canonical daily source, and do not change registry, formula, evaluator, production observations, or scenario state. No live capture was performed.
+
+
+## Three-gate review for the full active universe (2026-10-16)
+
+This section applies the same three checks to every fund in the current active cohort. “Primary evidence found” means a public issuer/SEC source was identified; it does **not** mean a complete daily flow feed or archival permission exists. “Not established” means the reviewed material did not prove the condition; it is not a claim that the provider forbids all use.
+
+| Fund | Gate 1 — primary source for dated evidence | Gate 2 — reproducible daily shares/creation-redemption history | Gate 3 — automated capture + durable private archive/backup/restore rights | Current conclusion |
+|---|---|---|---|---|
+| IBIT | **Found:** BlackRock page and SEC Q2 10-Q; SEC also reports Q2 redemptions with monthly breakdown | **Not established:** SEC is periodic; current product facts do not prove complete downloadable daily shares/creation-redemption history | **Unresolved:** no reviewed source-specific permission for systematic raw retention and independent restore | Periodic cross-check only |
+| FBTC | **Found:** Fidelity quote page and SEC Q2 10-Q | **Not established:** dated shares and quarter-end report, but no verified complete daily historical share/creation-redemption endpoint | **Unresolved:** API/archive rights and retention terms not established | Periodic cross-check only |
+| ARKB | **Found:** 21shares product overview and SEC Q2 10-Q | **Not established:** NAV/AUM history and quarter-end shares do not prove daily shares/creation-redemption history | **Unresolved:** systematic capture and durable raw archive rights not established | Periodic cross-check only |
+| BITB | **Found:** Bitwise page, materials page and SEC Q2 10-Q; current dated facts and NAV/market-price chart located | **Partial only:** NAV/market-price chart spans 2024-01-10 onward; complete daily shares/creation-redemption series not established | **Unresolved:** public page/chart does not grant systematic raw-page retention rights | Periodic cross-check only |
+| BTCO | **Found:** Invesco product page and SEC reports; Q2 report gives quarterly share purchases/redemptions | **Not established:** quarterly transactions and daily NAV publication do not equal a complete daily flow series | **Unresolved:** archive/automation terms not verified | Periodic cross-check only |
+| HODL | **Found:** VanEck product page and SEC Q2 10-Q | **Partial/unclear:** dated daily fund facts are visible, but complete reproducible daily history, endpoint stability and revision behavior not verified | **Unresolved:** no verified permission for systematic capture and independent durable restore | Periodic cross-check only |
+| BRRR | **Found:** CoinShares product page and SEC Q2 10-Q | **Not established:** dated values and quarter-level report, no complete daily share/creation-redemption series verified | **Unresolved:** machine-readable contract and archive rights not verified | Periodic cross-check only |
+| EZBC | **Found:** Franklin product page and SEC Q2 10-Q; quarter-level issued/redeemed share counts | **Not established:** daily-updated fact block and quarterly transactions do not prove a complete daily history | **Unresolved:** correction semantics and durable retention rights not verified | Periodic cross-check only |
+| BTCW | **Found:** WisdomTree product page and SEC Q2 10-Q | **Partial/unclear:** historical NAV/market-price chart exists, but daily shares/creation-redemption endpoint and complete series not verified | **Unresolved:** durable archive terms not verified | Periodic cross-check only |
+| GBTC | **Found:** SEC Q1/Q2 10-Qs; Grayscale product page returned HTTP 403 during review | **Not established:** SEC disclosures are periodic; inaccessible product page does not justify assuming an undocumented endpoint | **Unresolved:** systematic access/retention rights not verified | SEC periodic cross-check only |
+| BTC (Grayscale Mini Trust) | **Found:** SEC Q2 10-Q and SEC periodic reports | **Not established:** point-in-time quarter-end and later cover-page share counts are not a complete daily series | **Unresolved:** systematic archive/restore rights not assessed/verified | SEC periodic cross-check only |
+| MSBT | **Found:** Morgan Stanley product page, launch announcement and SEC Q2 10-Q | **Not established:** quarterly launch-to-quarter-end transactions and later cover-page count do not prove daily history | **Unresolved:** complete machine-readable contract, correction history and retention rights not verified | Periodic cross-check only |
+
+### Gate results
+
+1. **Primary dated evidence:** identified for all 12 active funds through issuer pages and/or SEC filings. Evidence quality varies; SEC/issuer snapshots remain tied to their exact observation dates.
+2. **Complete daily history:** no fund has yet passed the strict gate for a verified, reproducible, complete per-fund daily shares/creation-redemption series with documented date semantics and revision/correction behavior. BITB, HODL and BTCW expose some historical chart/daily fact capability, but the required flow history is still not proven.
+3. **Rights to automate and archive:** unresolved for every fund in this review. A public page, a “daily updated” label or a SEC filing does not by itself establish permission for automated extraction, long-term raw retention, private backup/restore, or downstream publication. Applicable issuer, provider and third-party terms must be checked per route.
+
+### Operational decision
+
+- The issuer-primary route currently **fails the combined acceptance gate**: Gate 1 is met at a dated-evidence level; Gate 2 is not met for the complete universe; Gate 3 remains unresolved.
+- Do not calculate daily flows from AUM changes. Do not infer a zero flow from a missing date. Keep quarterly creations/redemptions, dated snapshots, holdings-based estimates and reported/compiled USD flows as distinct metric types.
+- No source registry or source priority change; no automated capture, API call, key request, production write, scenario evaluation, or scenario-state/probability change. BTC remains `not_evaluable`.
+- This is a documentation review of public pages/filings. It is not legal advice and is not a provider authorization.
