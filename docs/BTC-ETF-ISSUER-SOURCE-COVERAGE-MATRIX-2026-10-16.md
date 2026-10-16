@@ -1,0 +1,59 @@
+# BTC ETF issuer-primary source coverage matrix — 2026-10-16
+
+**Status:** initial public-documentation inventory; not an approved ingestion contract.  
+**Purpose:** assess whether official issuer/SEC material can support an auditable daily US spot BTC ETF net-flow series without relying on an aggregator's retained raw responses.  
+**Mode:** public documentation/search-result review only. No issuer endpoints were queried, no data captured, and no source registry changed.
+
+## Decision so far
+
+Official issuer pages do expose dated NAV, assets and/or shares-outstanding information for several products. This is promising for per-fund cross-checks. The review has **not** established a single complete, machine-readable, daily historical feed for every active fund with uniform date semantics, correction history, stable endpoints and acceptable retention terms. Therefore this is not yet a replacement for Farside/TFTC and does not unblock the ETF gate.
+
+A change in net assets is **not** equivalent to daily net flow because BTC price movement changes assets. Any issuer-derived calculation must be based on an explicitly approved per-share/creation-redemption method, valuation date convention and full fund-universe reconciliation.
+
+## Current-universe caution
+
+The initial US spot BTC ETF cohort included IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC, Grayscale Mini BTC, and Hashdex DEFI. Hashdex's official page currently says DEFI was delisted from NYSE Arca effective **2026-09-03**. Do not include it in the current active-fund aggregate after that date; its historical rows may still matter for dates when it was active. Reconfirm the active universe before any future source capture.
+
+## Initial coverage matrix
+
+| Ticker | Official source located | Publicly visible fields in reviewed material | History / automation evidence | Status |
+|---|---|---|---|---|
+| IBIT | [BlackRock iShares product page](https://www.blackrock.com/us/individual/products/333011/fund) | Dated NAV, net assets, shares outstanding; holdings CSV link | Page shows date-stamped daily facts; downloadable/history endpoint contract and complete daily share-count history not verified | Candidate for issuer cross-check; not accepted |
+| FBTC | [Fidelity quote page](https://digital.fidelity.com/prgw/digital/research/quote/dashboard/summary?symbol=FBTC); [SEC quarterly report](https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm) | NAV, shares outstanding on quote page; SEC reports give point-in-time share counts and statements | Daily historical share-count endpoint and correction semantics not verified; SEC reports are periodic, not daily flow history | Candidate for cross-check; not accepted |
+| ARKB | [21shares US product overview](https://www.21shares.com/en-us/products-us) | Dated NAV, market price, AUM, returns | Complete daily historical shares outstanding and machine-readable series not verified | Partial evidence; investigate |
+| BITB | [Bitwise official product page](https://bitbetf.com/) | Dated NAV/AUM, Bitcoin held, holdings; history controls shown from Jan 2024 | Historical NAV/market-price chart shown; complete daily shares-outstanding history and terms for systematic archival not verified | Partial evidence; investigate |
+| BTCO | [Invesco Galaxy SEC annual report](https://www.sec.gov/Archives/edgar/data/1855781/000119312526083572/btco-20251231.htm) | SEC filing confirms daily NAV determination and provides reported trust/share information | Filing is periodic; official daily machine-readable historical share count not verified | Partial evidence; investigate |
+| HODL | [VanEck official product page](https://www.vaneck.com/us/en/investments/bitcoin-etf-hodl/) | Dated daily NAV, net assets, shares outstanding, BTC in trust; NAV history controls | Dated historical pages are discoverable; exact bulk/API endpoint, full history completeness, and archive terms not verified | Strong candidate for cross-check; not accepted |
+| BRRR | [CoinShares official product page](https://coinshares.com/us/etf/brrr/) | Dated NAV/AUM and holdings; SEC filing links | Some date-specific records and filings located; complete daily share-count series and machine-readable contract not verified | Partial evidence; investigate |
+| EZBC | [Franklin Templeton official product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS) | Daily prices, dated NAV, shares outstanding and fund details | Page labels information updated daily; exact machine-readable history/retention contract not verified | Strong candidate for cross-check; not accepted |
+| BTCW | [WisdomTree US product page](https://www.wisdomtree.com/us/products/crypto/btcw) | Dated NAV, total assets, shares outstanding; NAV/market-price history controls | Historical chart is exposed; daily series endpoint and durable archive terms not verified | Strong candidate for cross-check; not accepted |
+| GBTC | [Grayscale product site](https://etfs.grayscale.com/gbtc) | Not yet sufficiently reviewed in this pass | Daily history and machine-readable share-count source not verified | Open research item |
+| BTC (Grayscale Bitcoin Mini Trust) | [SEC 10-Q](https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm) | Periodic shares outstanding, NAV/share and net assets | SEC report gives quarterly/date-specific values, not a daily flow series; official daily history not verified | Partial evidence; investigate |
+| DEFI | [Hashdex official page](https://www.hashdex-etfs.com/defi) | NAV/closing price and shares outstanding shown for dates around closure | Official page states delisted from NYSE Arca effective 2026-09-03 | Exclude from active aggregate after delisting; retain historical-universe metadata |
+
+## Required next checks before this becomes an accepted source contract
+
+1. Confirm the complete current active fund universe from primary exchange/issuer records, including launch, ticker changes, mergers, liquidation and delisting dates.
+2. For each active fund, identify the exact official page/API/file that publishes **shares outstanding or creation/redemption units** and NAV for each reporting date; record date semantics and source timezone.
+3. Establish whether history can be downloaded reproducibly without scraping prohibited content or violating issuer/provider terms. Public visibility alone is not archival permission.
+4. Verify historical depth and missing-date behaviour. Distinguish current snapshots from actual historical series.
+5. Define and test an approved per-fund calculation with units, NAV valuation timestamp, share-count effective date, basket size, split/corporate-action handling and rounding. Do not use change in net assets as a proxy for flows.
+6. Reconcile all active funds and compare the aggregate to existing candidate series for several identical dates; retain disagreements rather than replacing them with zero or silently selecting one provider.
+7. Only after the source contract is complete, update the metric registry and evaluator through a reviewed code change. No source promotion or formula change is implied by this matrix.
+
+## Sources
+
+- BlackRock IBIT: https://www.blackrock.com/us/individual/products/333011/fund
+- Fidelity FBTC: https://digital.fidelity.com/prgw/digital/research/quote/dashboard/summary?symbol=FBTC
+- 21shares ARKB: https://www.21shares.com/en-us/products-us
+- Bitwise BITB: https://bitbetf.com/
+- Invesco Galaxy BTCO SEC filing: https://www.sec.gov/Archives/edgar/data/1855781/000119312526083572/btco-20251231.htm
+- VanEck HODL: https://www.vaneck.com/us/en/investments/bitcoin-etf-hodl/
+- CoinShares BRRR: https://coinshares.com/us/etf/brrr/
+- Franklin EZBC: https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS
+- WisdomTree BTCW: https://www.wisdomtree.com/us/products/crypto/btcw
+- Grayscale GBTC: https://etfs.grayscale.com/gbtc
+- Grayscale Mini BTC SEC filing: https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm
+- Hashdex DEFI closure notice/product page: https://www.hashdex-etfs.com/defi
+
+This is a research inventory, not legal advice and not evidence that any page permits systematic automated retention.
