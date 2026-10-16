@@ -759,3 +759,12 @@
 **Результат:** последний торговый день Hashdex DEFI — **2026-08-17**; торги были приостановлены после закрытия в этот день. Реализация активов завершена 2026-08-24. Form 15 от 2026-09-03 — более поздний документ о прекращении отчётности и не определяет последний торговый день.
 
 **Решение:** исправить дату конца active trading cohort на 2026-08-17. Ликвидационный период учитывать отдельно, не как обычные daily ETF-flow observations. Источники: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026096933/ea0304221-1512g_hashdex.htm.
+
+
+## 2026-10-16 — provisional effective-date ledger for spot-BTC cohort
+
+**Действие:** сверены первичные SEC/issuer filings для определения дат включения продуктов в spot-Bitcoin trading cohort и даты выхода DEFI.
+
+**Результат:** ledger: 2024-01-11 — IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC; 2024-03-27 — DEFI после конверсии из futures в spot; 2024-07-31 — Grayscale Mini BTC; 2025-12-19 — OBTC после конверсии в ETF; 2026-04-08 — MSBT; 2026-08-17 — последний торговый день DEFI. Count reconciliation: 10 → 11 → 12 → 13 → 14 → 13 active products.
+
+**Решение:** добавить в матрицу coverage и План 100 даты применимости с первичными ссылками. Ledger пока provisional: до окончательной фиксации нужен последний поиск иных US spot BTC products, прямого владения BTC и событий listing/closure/conversion. BITA не включать в core plain spot-ETF cohort без отдельного определения broader BTC-linked ETP aggregate. Ledger не одобряет источники ежедневных flows; source rights/completeness/publication/revision/finality/retention/restore gates остаются открытыми. BTC remains not_evaluable; PR #83 Draft/open/unmerged.
