@@ -168,3 +168,39 @@ A separate source-linked control table was assembled from the trusts' own SEC Fo
 - The values retain each filing's reported precision. In particular, whole-BTC figures in a filing must not be upgraded to artificial decimal precision.
 - The daily panel remains **NOT DONE**; same-date daily-vs-quarterly reconciliation remains pending because the inspected daily file starts in late August/September 2026 and does not contain 2026-06-30 rows.
 - No raw bulk dataset was copied from the third-party daily repo; no database, source registry, scenario, score/probability, production ingestion, deployment, or merge was changed.
+
+
+## SEC XBRL candidate reconciliation against filing-verified controls — 2026-10-16
+
+**Purpose:** test whether the public candidate file `akpasz/btc-data/data/etf_quarterly.json` reproduces the 13 directly checked SEC schedule quantities in [BTC-ETF-SEC-QUARTERLY-CONTROLS-2026-06-30.md](BTC-ETF-SEC-QUARTERLY-CONTROLS-2026-06-30.md). Candidate JSON reports `fetched_at=2026-10-16T11:21:47Z`; upstream files were read-only fetched for this comparison.
+
+| Ticker | Filing-verified control (BTC) | Candidate 2026-06-30 (BTC) | Result |
+|---|---:|---:|---|
+| IBIT | 734261 | 734261 | Match |
+| FBTC | 174383 | Missing | Extractor has no row for this quarter; do not treat as zero |
+| GBTC | 138505.75680424 | 138505.756804 | Matches at candidate's 6-decimal precision; candidate truncates precision |
+| BTC (Grayscale Mini) | 54280.40050138 | 54280.400501 | Matches at candidate's 6-decimal precision; candidate truncates precision |
+| ARKB | 32178.2280 | 32178.228 | Match at reported precision |
+| BITB | 36207.6919 | Missing | Extractor status is `error`; manual filing-level extraction needed |
+| HODL | 16241.00 | Missing | Extractor status is `error`; manual filing-level extraction needed |
+| BTCO | 5345 | Missing | Extractor status is `error`; manual filing-level extraction needed |
+| EZBC | 5664.0163 | 5664.0163 | Match |
+| BRRR | 5864 | Missing | Extractor status is `error`; manual filing-level extraction needed |
+| BTCW | 2310 schedule quantity | Missing | Extractor status is `error`; schedule quantity is the selected control convention |
+| MSBT | 5059.30771216 | Missing | Extractor status is `error`; manual filing-level extraction needed |
+| OBTC | 945.07 | 945.07 | Match |
+
+**Result:** 6/13 candidate rows match the filing-verified controls (allowing for the candidate's 6-decimal precision on GBTC and Mini BTC); 7/13 are missing. The extractor marks six of those missing tickers as errors and FBTC as `ok` despite having no 2026-06-30 row. This demonstrates that a top-level `status=ok` is not sufficient evidence of quarter-end coverage. Do not describe the extractor as complete or use its absence of a row as a zero.
+
+### Daily candidate file — coverage and quality boundary
+
+The read-only `etf_holdings.json` candidate contains 162 rows across only five tickers:
+- IBIT: 31 observations, 2026-08-31–2026-10-14
+- ARKB: 33 observations, 2026-09-01–2026-10-16
+- BITB: 34 observations, 2026-09-01–2026-10-16
+- HODL: 33 observations, 2026-08-31–2026-10-15
+- OBTC: 31 observations, 2026-09-01–2026-10-14
+
+It has no 2026-06-30 rows, so it cannot be reconciled directly against the common-date SEC controls. The data schema stores date/value pairs but does not, in the inspected payload, provide per-row source URL, source publication time, retrieval time, revision/correction semantics, or evidence that repeated values on successive dates are independently observed rather than carried forward. These rows remain an unapproved research candidate, not a verified complete daily history.
+
+**Next work:** continue finding publicly accessible dated issuer holdings snapshots/archives for the missing eight tickers in the daily panel, and inspect source provenance for the five covered tickers. Do not use quarterly values as daily values, derive holdings from USD flows/AUM, or copy the third-party payload into production data. Daily history for all 13 remains **NOT DONE**; production ingestion/registry acceptance remains **not approved**.
