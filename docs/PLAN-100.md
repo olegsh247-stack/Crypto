@@ -2093,3 +2093,10 @@ Code review выявил и закрыл два пробела до допуск
 ### CI confirmation — ETF archive provenance hardening (2026-10-16)
 
 The completed [BTC Public Source Staging run #38874163877](https://github.com/olegsh247-stack/Crypto/actions/runs/38874163877) passed on code commit `39d8765bf919ff6e97d0796ebeb196de70c469e5`. The full `validate` job succeeded, including `Test offline BTC ETF evidence archive safety gates`; the live-capture job was skipped. This confirms offline fixture tests for the archive writer changes, not real source rights, durable archive, or independent restore. VPS Build & E2E for documentation HEAD `47495e3755aa96ff7bd96d6a10c880f49f734697` was still in progress when checked. BTC remains `not_evaluable`.
+
+
+### Archive integrity verifier — офлайн-проверка (2026-10-16)
+
+Добавлены `scripts/verify-btc-etf-evidence-archive.mjs` и тесты. Верификатор сверяет SHA-256, длины файлов, archive record и checksum manifest; отклоняет path traversal, symlinks и неучтённые файлы. Staging workflow подключён к тестам верификатора. Коммиты: `b886ca97f4ded7473131a4944a52c1e7100f2d97`, `8b8bed9ff56643cc2435641d833032e476b6f80c`, `cd2bfd3ab5e8cfb08838f0bb3ee93dc06c5aee89`, `934b74505dd9c4067e9988a26e9ac1b632514884`.
+
+На момент записи BTC Public Source Staging для HEAD `934b74505dd9c4067e9988a26e9ac1b632514884` находился в очереди; новый тестовый набор ещё не подтверждён CI. Верификация одного снимка не заменяет независимый backup/restore. Никаких live captures, реальных архивов, production writes или сценарных изменений; BTC остаётся `not_evaluable`.
