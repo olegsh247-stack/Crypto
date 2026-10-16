@@ -2391,3 +2391,14 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - **2026-08-17:** DEFI — последний торговый день; ликвидация завершена 2026-08-24 и не относится к обычным торговым flow observations: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm.
 
 Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start dates occur, then 13 active products after DEFI's final trading day. Ledger remains provisional pending final search for any other US direct-holding spot-BTC products and official listing-status changes. BITA stays outside the core cohort pending any separately defined broader BTC-linked ETP aggregation rule. Source-acceptance/rights/freshness/revision/retention gates remain unchanged; BTC remains not_evaluable.
+
+
+### 2026-10-16 — adjacent BTC products checked; cohort boundary retained
+
+В дополнительном SEC/sponsor search найдены BTC-linked продукты, не входящие в основной cohort прямых spot-Bitcoin ETP:
+
+- **BTCU:** Direxion Daily Bitcoin Bull 2X ETF — daily 2x exposure to US-listed Bitcoin reference ETPs (including IBIT), with daily rebalancing; leveraged strategy, не plain direct-holding spot cohort: https://www.sec.gov/Archives/edgar/data/1424958/000119312526239876/d110971d497k.htm.
+- **7RCC:** Spot Bitcoin and Carbon Credit Futures ETF — SEC reporting identifies both BTC holdings and commodity-futures exposure; mixed product, отдельно от plain spot-BTC cohort: https://www.sec.gov/Archives/edgar/data/1471824/000143774926027963/R65.htm.
+- **BITA:** premium-income/options strategy holding BTC and IBIT; remains outside core cohort pending explicit broader-aggregate rules.
+
+В этом pass других plain direct-holding US spot-BTC products сверх 13 products в provisional ledger не выявлено. Это dated research result, не гарантия отсутствия будущих запусков/изменений статуса; перед любым capture повторить official listing-status check. Source acceptance remains blocked; BTC remains not_evaluable.
