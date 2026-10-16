@@ -2121,3 +2121,8 @@ Added a test that copies a generated fixture snapshot to a separate restore dire
 
 
 The fixture restore rehearsal passed in [BTC Public Source Staging #38876362752](https://github.com/olegsh247-stack/Crypto/actions/runs/38876362752) on commit `e236bc53d512824e825f6c81f7efab0a1d34e24d`. Both archive-writer safety and archive-integrity/verifier test steps passed; live capture was skipped. This validates copying and verifying a fixture within one CI runner only, not an independent backup/restore.
+
+
+### Source-rights refresh (2026-10-16)
+
+Official terms review: TFTC explicitly permits quoting, charting and republishing its ETF-flow dataset under CC BY 4.0 with attribution/link. SoSoValue's published Website Terms prohibit automated/manual copying or monitoring absent authorization and restrict reproduction/redistribution; these terms do not settle separate API rights. Farside's official ETF-flow page still does not establish a clear license for long-term raw-response storage/redistribution. The source review was updated; no API calls or live captures were made. Use TFTC-derived research artifacts with attribution as the clearest candidate; keep raw SoSoValue and Farside retention blocked pending source-specific permission. BTC remains `not_evaluable`.
