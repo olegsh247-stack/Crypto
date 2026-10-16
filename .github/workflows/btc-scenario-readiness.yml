@@ -13,6 +13,9 @@ on:
       - "scripts/validate-crypto-registries.mjs"
       - "infrastructure/postgres/seed-v1.sql"
       - "vps/shared/src/btc-scenario-readiness.ts"
+      - "vps/shared/test/btc-scenario-readiness.test.mjs"
+      - "vps/shared/package.json"
+      - "vps/shared/tsconfig.json"
       - "data/CryptoDataModel/registry/metric-registry.json"
       - "data/CryptoDataModel/registry/source-registry.json"
       - ".github/workflows/btc-scenario-readiness.yml"
@@ -27,6 +30,9 @@ on:
       - "scripts/prepare-btc-observation-candidates.test.mjs"
       - "scripts/validate-crypto-registries.mjs"
       - "vps/shared/src/btc-scenario-readiness.ts"
+      - "vps/shared/test/btc-scenario-readiness.test.mjs"
+      - "vps/shared/package.json"
+      - "vps/shared/tsconfig.json"
       - "data/CryptoDataModel/registry/metric-registry.json"
       - "data/CryptoDataModel/registry/source-registry.json"
       - ".github/workflows/btc-scenario-readiness.yml"
@@ -45,8 +51,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build canonical shared readiness implementation
+      - name: Build and test canonical shared BTC readiness implementation
         working-directory: vps/shared
-        run: npm install && npm run build
+        run: npm install && npm test
       - name: Test scenario input-quality and directional rules
         run: node scripts/validate-crypto-registries.mjs && node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs scripts/prepare-btc-observation-candidates.test.mjs
