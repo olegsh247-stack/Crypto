@@ -2479,3 +2479,6 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 - Добавлен regression test: отсутствие `readiness_status` и любые значения статуса, кроме точного `ready_for_rule_evaluation`, должны вернуть `not_evaluable`, не выдавать `scenario_type`/направленный score и не разрешать persistence. Результат нового теста ожидает CI и пока не объявляется PASS.
 - Сценарий остаётся `not_evaluable`: проверка не обновляет данные и не меняет текущие оценки/вероятности. Live capture, DB writes, ingestion, deployment и merge не выполнялись. PR #83 остаётся Draft/open/unmerged.
 - Следующий шаг: проверить CI нового commit; после подтверждения закрыть офлайн-контрактный тестовый этап и отдельно зафиксировать остающиеся блокеры реальных входов. Не возобновлять поиск поставщиков ETF holdings.
+
+
+**Подтверждение CI — 2026-10-17:** BTC Scenario Readiness Gate [#299](https://github.com/olegsh247-stack/Crypto/actions/runs/38966644329) завершился **success** на commit `9d50d4d5caedca54f3003e0eec85435ddfc50309`. В том числе успешно прошли шаги сборки/тестов shared readiness и проверки input-quality/directional rules. Добавленная регрессия отсутствующего/неизвестного readiness status подтверждена CI. Это офлайн-проверка, не подтверждение актуальности live BTC inputs.
