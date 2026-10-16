@@ -52,14 +52,16 @@ function isComplete(row, sourceId) {
  * Evaluates one reporting date across two immutable source snapshots.
  * This produces a review candidate only; a human must approve the named date/snapshot IDs.
  */
-export function evaluateBtcEtfResearchEligibility(previous, current, reportingDate) {
+export function evaluateBtcEtfResearchEligibility(previous, current, reportingDate, controls = {}) {
   const details = {
     reporting_date: reportingDate,
     previous_snapshot_id: previous?.snapshot_id,
     current_snapshot_id: current?.snapshot_id
   };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(reportingDate ?? ""))) {
-    return result("BLOCKED_INVALID_REPORTING_DATE", ["REPORTING_DATE_MUST_BE_ISO_DATE"], details);
+  const dateText = String(reportingDate ?? "");
+  const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateText) ? new Date(dateText + "T00:00:00Z") : null;
+  if (!parsedDate || !Number.isFinite(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== dateText) {
+    return result("BLOCKED_INVALID_REPORTING_DATE", ["REPORTING_DATE_MUST_BE_A_REAL_ISO_CALENDAR_DATE"], details);
   }
   if (!validateBtcEtfSnapshotManifest(previous) || !validateBtcEtfSnapshotManifest(current)) {
     return result("BLOCKED_INVALID_SNAPSHOT", ["BOTH_SNAPSHOTS_MUST_PASS_MANIFEST_INTEGRITY_VALIDATION"], details);
@@ -114,5 +116,20 @@ export function evaluateBtcEtfResearchEligibility(previous, current, reportingDa
     });
   }
   details.source_checks = sourceChecks;
+
+  // Source-row stability is necessary but not sufficient: evidence must be durably recoverable,
+  // and the retained artifact for each source must have an explicit rights clearance reference.
+  if (controls.archive_restore_verified !== true) {
+    return result("BLOCKED_DURABLE_ARCHIVE", ["DURABLE_ARCHIVE_AND_INDEPENDENT_RESTORE_MUST_BE_VERIFIED"], details);
+  }
+  for (const source of REQUIRED_SOURCES) {
+    const rights = controls.source_rights?.[source.source_id];
+    if (rights?.status !== "CLEARED" || typeof rights.evidence_ref !== "string" || !rights.evidence_ref.trim()) {
+      return result("BLOCKED_SOURCE_RIGHTS", ["EACH_SOURCE_REQUIRES_EXPLICIT_STORAGE_REUSE_RIGHTS_CLEARANCE"], {
+        ...details,
+        rights_blocked_source_id: source.source_id
+      });
+    }
+  }
   return result("ELIGIBLE_FOR_REVIEW", [], details);
 }
