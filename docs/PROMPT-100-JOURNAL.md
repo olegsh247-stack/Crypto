@@ -899,3 +899,12 @@
 **Изменения в GitHub:** добавлен SEC-контрольный документ; в `docs/BTC-ETF-FUND-HOLDINGS-SOURCE-MATRIX-2026-10-16.md` зафиксирован результат и сохранён статус NOT DONE. Изменения находятся в ветке `fix/btc-readiness-registry-runtime-source` / PR #83 Draft; не мержились.
 
 **Безопасность:** БД, source registry, scenario state, scores/probabilities, production ingestion и deployment не менялись. BTC остаётся `not_evaluable`.
+
+
+### 2026-10-16 — Повторная проверка SEC-контрольных значений
+
+Повторно открыты первичные SEC Form 10-Q и проверены значения holdings на 2026-06-30 для 8 фондов: IBIT 734,261; FBTC 174,383; GBTC 138,505.75680424; Grayscale Mini BTC 54,280.40050138; ARKB 32,178.2280; BITB 36,207.6919; BTCO 5,345; EZBC 5,664.0163 BTC. В документе `docs/BTC-ETF-SEC-QUARTERLY-CONTROLS-2026-06-30.md` исправлена неверная ссылка IBIT на фактический SEC document filename `bit20260630c_10q.htm` и добавлен явный recheck log.
+
+Ограничение: в этом проходе независимо не переоткрыты HODL, BRRR, BTCW, MSBT и OBTC; их строки не считаются заново подтверждёнными этим recheck. Для BTCW отдельно сохранена методологическая оговорка: schedule quantity 2,310 BTC округлён, а reference-rate quantity в примечании 2,309.689 BTC — отдельное значение. Полная daily-history задача не закрыта; квартальные значения не подставляются в дневной ряд.
+
+Изменения только в документации ветки `fix/btc-readiness-registry-runtime-source` / PR #83 Draft. Не менялись ingestion, БД, source registry, scenario state, scores/probabilities, deployment или merge.
