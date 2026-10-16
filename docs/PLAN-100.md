@@ -2425,3 +2425,13 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 - Это подтверждает VPS build/rehearsal для документационных коммитов, но не новый BTC Public Source Staging run на текущем HEAD и не реальный live capture, долговременный архив, независимый restore или права источников.
 - Проверка дерева PR #83 не подтвердила наличие двух независимых локальных snapshot manifests с разрешёнными для хранения исходными данными; JSON `docs/data-review/BTC-ETF-FLOW-STAGING-2026-10-12.json` сам по себе не доказывает наличие пригодной пары snapshots. Поэтому snapshot diff/evaluator на реальных данных не запускать и данные не выдумывать.
 - **Следующий gate:** использовать только две уже существующие snapshot manifests при подтверждённых правах и независимой проверяемости; если их нет, сначала закрыть source-specific raw-retention rights, private durable storage и независимый encrypted backup/restore evidence. Любой capture требует отдельной явной авторизации. PR #83 остаётся Draft/open/unmerged; BTC остаётся `not_evaluable`; runtime registry/formula/evaluator/production/scenario state не менялись.
+
+
+## Дополнение 2026-10-16 — TFTC offline inspector CI gate
+
+- Исправлена ISO date validation и CLI newline output в `scripts/inspect-tftc-etf-json.mjs` (commit [89b2c14](https://github.com/olegsh247-stack/Crypto/commit/89b2c14dac88cca75d3c1340b7df5ea27216b974)).
+- Тест инспектора включён в staging validation (commit [abf4cbf](https://github.com/olegsh247-stack/Crypto/commit/abf4cbf45fc1a61de6afeedec2f37c2809b55566)).
+- BTC Public Source Staging [#38914138558](https://github.com/olegsh247-stack/Crypto/actions/runs/38914138558) и VPS API Build Rehearsal [#38914137831](https://github.com/olegsh247-stack/Crypto/actions/runs/38914137831) завершились успешно на одном SHA `abf4cbf45fc1a61de6afeedec2f37c2809b55566`. В staging все validation tests прошли, capture был skipped; артефактов нет.
+- Успешный CI не означает, что реальный TFTC payload проверен, VPS-архив создан или независимое восстановление доказано. Тестовые данные синтетические; source handling/rights gate и operational archive/backup/restore остаются блокерами.
+- Никаких live capture, production writes, ingestion, registry/scenario changes, deployment или merge не выполнялось. PR #83 остаётся Draft; BTC — `not_evaluable`.
+- Журнал «Промт 100» обновлён в commit [dfe3d9f](https://github.com/olegsh247-stack/Crypto/commit/dfe3d9f8cd70d2ba0fe97a090fa29e0a2d901909).
