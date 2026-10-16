@@ -83,12 +83,12 @@ Until these are decided and the archive plus independent backup/restore are oper
 
 ## 7. Safe implementation sequence
 
-1. Keep this contract as documentation only while no VPS is provisioned.
-2. Confirm source terms before retaining raw bodies for long periods.
-3. After VPS provisioning, create a private evidence directory with least-privilege ownership and permissions.
-4. Implement a local archive writer that consumes already reviewed capture artifacts, writes a new immutable snapshot directory, and emits manifest/checksums. It must not perform network requests, read provider secrets, or write to PostgreSQL.
-5. Add tests for duplicate snapshot IDs, missing source bodies, hash mismatch, overwrite attempts, and incomplete manifests.
-6. Test backup and restore in an isolated location.
-7. Only then permit a human reviewer to consider an ETF date for offline research.
+1. Keep the durable archive **not operational** until source-specific rights, private storage permissions, independent backup, and restore checks are satisfied; a VPS is not required to develop or test the offline writer.
+2. Confirm source terms before retaining raw bodies. The writer must refuse raw-body retention unless every source with a body file has `source_rights[source_id].status = CLEARED` and a non-empty evidence reference in the supplied rights file.
+3. The offline writer is implemented at `scripts/archive-btc-etf-evidence.mjs`. It consumes an existing local capture directory; it does not fetch providers, access credentials, connect to PostgreSQL, or evaluate a scenario. It requires an explicit reporting date and snapshot ID, validates manifest completeness and source-body SHA-256, writes a new snapshot directory, and refuses to overwrite an existing snapshot ID.
+4. The writer emits the original manifest, source bodies, optional normalized candidates, an archive record and a SHA-256 checksum manifest. Rights evidence references and hashes are recorded; the supplied rights file itself is not copied into the archive.
+5. Offline tests were added for successful fixture archiving, unresolved rights, missing body, body-hash mismatch, overwrite attempt, incomplete manifest, credential-like URL parameters, invalid dates and unsafe IDs. **CI result is pending until a run is observed and verified.**
+6. After source rights are cleared, test the writer with approved artifacts in a private local directory. After the VPS exists, configure least-privilege storage and an independent encrypted backup, then test restore in an isolated location and compare checksums.
+7. Only after the archive, backup/restore, source-rights and ETF review gates are satisfied may a human reviewer consider an ETF date for offline research. The writer's success alone does not prove backup/restore, provider finality, or scenario eligibility.
 
 **Explicitly out of scope:** live ingestion, database writes, automatic source promotion, scenario evaluation/state/probability/monitoring changes, deployment, and PR merge.
