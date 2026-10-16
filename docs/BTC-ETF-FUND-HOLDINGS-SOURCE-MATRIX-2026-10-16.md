@@ -219,3 +219,20 @@ Known open source-quality blockers in the project's own issue tracker:
 - [ARKB scraper issue #87](https://github.com/BuildWithData/BTC-ETF-Tracker/issues/87) remains open because changed HTML caused required fields to disappear.
 
 **Decision:** retain this as a lead for inspecting historical snapshot files only, not as an accepted source. Do not use AUM/BTC-price reconstruction. Do not import its payload until actual file coverage, per-row observation dates, provenance, correction behavior and rights are verified. The 13-fund daily panel remains **NOT DONE**.
+
+
+## Daily candidate payload integrity audit — 2026-10-16
+
+Read-only structural audit of the public `akpasz/btc-data/data/etf_holdings.json` payload (162 rows, five tickers). There are no duplicate dates, no out-of-order dates and no non-positive or non-numeric quantities in the inspected series. However, repeated unchanged values form runs long enough to require source-level verification:
+
+| Ticker | Repeated-value run | Value (BTC) | Assessment |
+|---|---|---:|---|
+| OBTC | 28 observations, 2026-09-02–2026-10-12 | 934 | Critical stale/frozen-series suspicion; not accepted without independent source confirmation |
+| HODL | 7 observations, 2026-09-23–2026-10-01 | 14,726 | Possible carry-forward or rounded/stale source; verify exact issuer quantity and each observation date |
+| ARKB | 6 observations, 2026-10-09–2026-10-16 | 32,024 | Possible stale/frozen series; issuer-level verification required |
+| BITB | 4 observations, 2026-10-02–2026-10-07 and 4 observations, 2026-10-09–2026-10-14 | 37,838.72; 37,290.75 | Repeated values span multiple dates; verify whether independent observations or carry-forward |
+| HODL | Additional runs of 4 observations each | 14,938; 14,768; 14,681; 14,667 | Repetition needs explicit source cadence/rounding explanation |
+
+Other shorter unchanged runs exist in ARKB and BITB. This audit identifies suspicious patterns; it does **not** prove the values are wrong because some source snapshots may be published only on certain days or use rounded quantities. No value has been corrected or filled. Before accepting any candidate series, record the issuer/source URL and retrieval/publication time for each observation, compare exact quantities against issuer snapshots where available, and distinguish a true observed unchanged quantity from a carried-forward value.
+
+**Decision:** the daily candidate is not only short in history and universe; its per-row provenance is insufficient and repeated-value patterns need investigation. Keep all 162 rows out of accepted/production data until verified. Daily history for all 13 remains **NOT DONE**.
