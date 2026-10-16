@@ -6,7 +6,7 @@
 
 | Ticker | Trust | Reported BTC on 2026-06-30 | Official SEC filing |
 |---|---|---:|---|
-| IBIT | iShares Bitcoin Trust ETF | 734,261 | [Form 10-Q](https://www.sec.gov/Archives/edgar/data/1980994/000143774926026004/ibit-20260630.htm) |
+| IBIT | iShares Bitcoin Trust ETF | 734,261 | [Form 10-Q](https://www.sec.gov/Archives/edgar/data/1980994/000143774926026004/bit20260630c_10q.htm) |
 | FBTC | Fidelity Wise Origin Bitcoin Fund | 174,383 | [Form 10-Q](https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm) |
 | GBTC | Grayscale Bitcoin Trust ETF | 138,505.75680424 | [Form 10-Q](https://www.sec.gov/Archives/edgar/data/1588489/000158848926000005/gbtc-20260630.htm) |
 | BTC | Grayscale Bitcoin Mini Trust ETF | 54,280.40050138 | [Form 10-Q](https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm) |
@@ -28,3 +28,10 @@
 - Do not compare to daily observations unless their observed_date is exactly 2026-06-30 and the field represents the same fund-held BTC quantity.
 - Missing daily history remains missing, not zero. No values here are derived from USD flows or AUM/price.
 - No production ingestion, database write, source-registry acceptance, scenario evaluation, score/probability change, deployment, or PR merge is implied.
+
+
+## Recheck log — 2026-10-16
+
+Direct SEC document content was re-opened for the following control rows and the stated quantity was confirmed in the filing's investment schedule: **IBIT (734,261), FBTC (174,383), GBTC (138,505.75680424), Grayscale Mini BTC (54,280.40050138), ARKB (32,178.2280), BITB (36,207.6919), BTCO (5,345), and EZBC (5,664.0163)**. The IBIT URL was corrected to the actual SEC document filename `bit20260630c_10q.htm`; the previously listed `ibit-20260630.htm` was not the filing's actual document URL.
+
+This is a targeted verification of 8 rows, not a claim that all 13 rows have been independently re-opened in this pass. The remaining rows (HODL, BRRR, BTCW, MSBT, OBTC) remain in the table with their direct SEC links but should be treated as not independently rechecked in this specific pass. In particular, BTCW's filing distinguishes its rounded schedule quantity (2,310 BTC) from a reference-rate quantity (2,309.689 BTC); the chosen field must remain tied to the explicitly named measurement methodology.
