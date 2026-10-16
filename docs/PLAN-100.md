@@ -2355,3 +2355,11 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - **MSBT:** операции начались 2026-04-07; SEC Q2 2026 сообщает 17,900,000 issued и 250,000 redeemed по 2026-06-30. Это данные за период, а не complete daily USD-flow feed. [SEC 10-Q](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/msbt-20260630x10q.htm).
 - **Результат:** все три маршрута годятся для датированных/периодических первичных cross-checks, но не проходят gate канонического ежедневного ряда. Нельзя распределять периодические итоги по дням или выводить daily flows из изменений holdings/AUM/NAV; пропуски не считать нулями. Права на automated capture, raw retention, private backup/restore и downstream publication остаются отдельными непроверенными gates.
 - API/capture/download/archive writes не выполнялись; source/metric registries, формулы, evaluator, production data и scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## Дополнение 2026-10-16 — исправление universe: Osprey Bitcoin Trust (OBTC)
+
+- В active US spot-Bitcoin ETP review universe добавлен **OBTC** с даты конверсии в биржевой ETF — **2025-12-19**. До этого траст торговался на OTCQX; нельзя переносить начало применимости на дату исходного создания траста. Страница спонсора указывает листинг Nasdaq и прямое владение Bitcoin: https://www.rexshares.com/OBTC/.
+- SEC Q2 2026: 2,940,535 shares outstanding на 2026-06-30; за первое полугодие погашено 1,920,000 shares, за сам II квартал — ноль выпусков и погашений. Это периодические итоги, не daily flows: https://www.sec.gov/Archives/edgar/data/1767057/000149315226037040/form10-q.htm.
+- **Результат:** предыдущая оговорка о составе universe была неполной — OBTC пропущен. Добавить его в перечень для будущей полной сверки, но пока считать только periodic primary cross-check. Не выводить daily flows из holdings/NAV/AUM deltas и не распределять шестимесячный итог по дням. Доступность daily snapshots не доказывает полную ежедневную историю creations/redemptions. Права и правила публикации/исправлений/хранения не подтверждены.
+- API/download/capture/archive writes не выполнялись; registry/formula/evaluator/production/scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
