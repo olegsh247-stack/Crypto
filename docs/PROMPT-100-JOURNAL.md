@@ -525,3 +525,10 @@
 **Решение:** сначала проверить, какой именно индекс уже определён каноническим BTC metric contract. Если ICE DXY — нужно подтвердить легальный/доступный feed, retention rights, close timestamp и revision semantics. Если нужен Fed broad index, смена метрики требует отдельного reviewed решения. Registry и scenario logic не менялись; capture, DB writes, ingestion, scenario evaluation, deployment и merge не выполнялись. BTC остаётся `not_evaluable`.
 
 **Источники:** [ICE DXY](https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices); [Fed methodology](https://www.federalreserve.gov/econres/notes/feds-notes/revisions-to-the-federal-reserve-dollar-indexes-20190115.html); [FRED DTWEXBGS](https://alfred.stlouisfed.org/series?seid=DTWEXBGS).
+
+
+## 2026-10-16 — коррекция: DXY не блокирует первый BTC-сценарий
+
+**Уточнение:** при сверке действующей документации обнаружено, что прежнее решение о DXY как optional context уже принято в `BTC-DXY-CANONICAL-SOURCE-REVIEW-2026-10-16.md`. Новая исследовательская заметка не должна переоткрывать этот вопрос. Обновлён `BTC-DXY-SOURCE-CONTRACT-REVIEW-2026-10-16.md` и создано [дополнение к Плану 100](PLAN-100-DXY-OPTIONAL-CONTEXT-CORRECTION-2026-10-16.md), которое явно фиксирует приоритет канонического решения.
+
+**Результат:** DXY — необязательный контекст; если недоступен, пропускаем его и продолжаем первый BTC-сценарий. Yahoo `DX-Y.NYB` — только ручной reference; Fed `DTWEXBGS` — отдельная метрика, не DXY. ETF gate остаётся отдельным блокером. Registry, source priority и сценарий не менялись; capture, DB writes, ingestion, evaluation, deployment и merge не выполнялись.
