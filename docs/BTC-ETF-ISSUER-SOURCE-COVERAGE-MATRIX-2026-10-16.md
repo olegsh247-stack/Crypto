@@ -160,3 +160,12 @@ This section applies the same three checks to every fund in the current active c
 - Do not calculate daily flows from AUM changes. Do not infer a zero flow from a missing date. Keep quarterly creations/redemptions, dated snapshots, holdings-based estimates and reported/compiled USD flows as distinct metric types.
 - No source registry or source priority change; no automated capture, API call, key request, production write, scenario evaluation, or scenario-state/probability change. BTC remains `not_evaluable`.
 - This is a documentation review of public pages/filings. It is not legal advice and is not a provider authorization.
+
+
+## Follow-up — SEC EDGAR access versus daily-series capability (2026-10-16)
+
+The SEC's official developer documentation confirms that public submissions history and extracted XBRL data are available through unauthenticated REST APIs at `data.sec.gov`; SEC permits scripted access subject to its Privacy and Security Policy, declared User-Agent, efficient requests, and a maximum of 10 requests per second. EDGAR filings are publicly downloadable. Sources: [SEC Developer Resources](https://www.sec.gov/about/developer-resources), [Accessing EDGAR Data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data), [EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces).
+
+**Important boundary:** this establishes a documented route for compliant programmatic access to SEC filings/API data. It does not make quarterly 10-Q reports into daily observations, does not itself establish a complete daily ETF creations/redemptions series, and is not treated here as blanket legal advice for downstream redistribution. For the current source contract, SEC remains a periodic primary-source reconciliation route. Its publication timing, filing amendments and exact reported-period dates must be retained as provenance if a future approved workflow uses it.
+
+**Operational decision:** SEC filing retrieval is a better-documented access route than undocumented issuer-page scraping, but it cannot satisfy the daily ETF flow gate on its own. Do not start automated retrieval or archive writes in this step; no API was called and no data was captured. Existing rights gates for third-party/provider sources remain separate.
