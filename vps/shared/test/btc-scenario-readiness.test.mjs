@@ -62,7 +62,7 @@ test("accepts fresh, traceable spot price and complete five-day ETF history", ()
   assert.deepEqual(result.blockers, []);
   assert.equal(result.can_persist_scenario_state, false);
   assert.equal(result.selected_inputs["market.spot_price"].unit, "USD/BTC");
-  assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 6);
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
 test("blocks stale spot price", () => {
