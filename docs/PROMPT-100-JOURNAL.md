@@ -425,3 +425,12 @@
 **Результат:** [VPS Build & E2E #38878927759](https://github.com/olegsh247-stack/Crypto/actions/runs/38878927759) — `success`. Успешно завершились VPS-only архитектурная проверка, сборки shared runtime/API/Worker и контейнеров, контрактные E2E API/Worker, проверка канонического BTC input registry, read-only provenance audit, репетиция idempotency/duplicate reconciliation и PostgreSQL backup/restore в CI.
 
 **Границы доказательства:** это успешная CI-репетиция, не подтверждение работы на предоставленном пользователю VPS, не реальный долговременный ETF-архив и не независимое восстановление в другом failure domain. ETF live capture не запускался; права на raw-retention Farside/SoSoValue, частное хранилище и независимый restore остаются блокерами. BTC остаётся `not_evaluable`; scenario state/probability, production DB, ingestion, deployment и merge не менялись.
+
+
+## 2026-10-16 — проверены условия ещё одного кандидата ETF flows
+
+**Действие:** изучены текущая страница датасетов ByKaranteli и Terms of Service, обновлённые 2026-10-15; результат добавлен в обзор альтернативных ETF-источников.
+
+**Результат:** ByKaranteli публикует дневные агрегированные и per-fund ETF flows, указывает закрытые US trading days как finalized и отдельно показывает issuer-derived сравнение IBIT/XRPC. Однако условия разрешают личное/исследовательское использование с атрибуцией, одновременно запрещая систематически копировать API-архив в заменяющую базу/архив; права на сторонние provider records остаются у соответствующих источников. Upstream lineage агрегированных строк также не полностью установлен. Поэтому источник не cleared для требуемого долговременного raw-архива без письменного уточнения; он остаётся методологическим кандидатом, а не заменой текущей пары.
+
+**Ограничения:** API key не запрашивался, endpoint не вызывался, capture и архивирование не выполнялись. Источник не меняет реестр, приоритет, формулу `arithmetic_mean_2_sources` или readiness; BTC остаётся `not_evaluable`.
