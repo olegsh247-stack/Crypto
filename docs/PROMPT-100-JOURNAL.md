@@ -806,3 +806,13 @@
 **Результат:** VPS API Build Rehearsal завершился успешно для актуального HEAD `e45626332fa6b020a1be2a76b6a5b0e48ffcd81c` — [run #38911150759](https://github.com/olegsh247-stack/Crypto/actions/runs/38911150759). Предыдущий документальный HEAD `ba9af4919f69e4b8bd6effafb7550d9006ccbb9b` также прошёл [run #38911143573](https://github.com/olegsh247-stack/Crypto/actions/runs/38911143573). PR #83 остаётся Draft/open/unmerged.
 
 **Ограничения и следующий шаг:** успешный VPS Build Rehearsal не подтверждает отдельный BTC Public Source Staging run для актуального HEAD, права на raw retention, реальный долговременный архив или независимое восстановление. В дереве репозитория обнаружен только JSON staging-документ `docs/data-review/BTC-ETF-FLOW-STAGING-2026-10-12.json`; наличие двух независимых локальных снимков с подтверждёнными правами этим не доказано. Поэтому реальное сравнение снимков не запускалось, live capture и архивная запись не выполнялись. Продолжаем только с уже имеющимися разрешёнными доказательствами; при их отсутствии следующий gate — получить/проверить права и подтверждения хранения/восстановления. BTC остаётся `not_evaluable`; production inputs, registry, formula, evaluator и scenario state не менялись.
+
+
+## 2026-10-16 — TFTC offline inspector and CI gate
+
+- Corrected the offline TFTC JSON inspector's ISO date validation and CLI newline output in commit [89b2c14](https://github.com/olegsh247-stack/Crypto/commit/89b2c14dac88cca75d3c1340b7df5ea27216b974).
+- Added the inspector's test file to BTC Public Source Staging validation in commit [abf4cbf](https://github.com/olegsh247-stack/Crypto/commit/abf4cbf45fc1a61de6afeedec2f37c2809b55566).
+- BTC Public Source Staging [#38914138558](https://github.com/olegsh247-stack/Crypto/actions/runs/38914138558) passed: all validation steps including TFTC inspector tests succeeded; the capture job was skipped and no artifacts were produced.
+- VPS API Build Rehearsal [#38914137831](https://github.com/olegsh247-stack/Crypto/actions/runs/38914137831) passed: build, disposable PostgreSQL migration, registry/provenance/idempotency checks, backup/restore rehearsal, API/Worker E2E, and BTC evidence lineage E2E succeeded. This is CI-local rehearsal evidence, not proof of an operational VPS or independent off-host archive recovery.
+- Test fixtures are synthetic only. No real TFTC JSON payload has been captured or inspected. Source rights/handling approval and durable private storage with independent backup/restore remain blockers; BTC remains `not_evaluable`.
+- No live capture, production DB write, ingestion, source registry or scenario state change, deployment, or PR merge was performed. PR #83 remains Draft.
