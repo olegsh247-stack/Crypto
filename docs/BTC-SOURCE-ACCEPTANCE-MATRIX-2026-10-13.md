@@ -105,3 +105,16 @@ The REST example shows startBlock, endBlock and string-valued totalReward, total
 ### Reward-stats continuity gate — 2026-10-14
 
 The aggregate endpoint is insufficient as the sole continuity proof: its upstream query returns min/max heights and sums for up to N non-stale rows, but not the selected-row count or full height list. Keep it as a possible cross-check, not the canonical evidence for a fee/subsidy calculation. Prefer a reviewed block-level window with an explicit expected height set and per-height canonical hash, timestamp, reward and fees; validate gaps, duplicates, stale/canonical conflicts, units and reorg revisions. Match protocol subsidy to those exact heights. This remains a proposed capture contract, not approval of a methodology ID; no live API or database was accessed.
+
+
+### ETF source review follow-up — live keyless MCP capture (2026-10-16)
+
+CryptoETF.today's public MCP endpoint was exercised by the read-only staging workflow and returned HTTP 200 with a 31-row BTC flow series (nominal 30-day window). Its rows are now captured with retrieval time, response hash and source metadata in the temporary Actions artifact. This confirms reachability, not source acceptance.
+
+The captured series **fails the current canonical-source gate**:
+- It reports zero for weekend dates, which must not be promoted to actual zero-flow observations without a documented trading-calendar/placeholder contract.
+- It reports zero for 2026-10-16 at 21:29 UTC while the provider describes its flow data as T+1; that same-day value is provisional/placeholder-suspect and cannot be accepted as a finalized observation.
+- Against Farside's displayed totals, CryptoETF.today differs by -3.5m USD (2026-10-12), -4.1m (2026-10-13), and +4.0m (2026-10-14), then matches +5.1m on 2026-10-15. These deltas exceed the existing 0.65m display-rounding screening band. TFTC's precise aggregates round to Farside's displayed totals on these dates, but TFTC's current lineage overlaps Farside/SoSoValue and must not be counted as an independent consensus vote.
+- Provider observation/publication timestamp, revision/finality semantics and terms for automated reuse/retention remain unapproved.
+
+Disposition: retain CryptoETF.today as a **review-only cross-check candidate**, not the canonical `institutional.etf_net_flow` source. Do not set it as source priority or ingest its observations. SoSoValue was not queried because a key is required and access/terms have not been verified. No production data or scenario state was changed.
