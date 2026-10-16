@@ -3,6 +3,12 @@ import { createHash } from "node:crypto";
 export const SOSOVALUE_SUMMARY_HISTORY_URL =
   "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history";
 
+function isIsoCalendarDate(value) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value ?? ""))) return false;
+  const ms = Date.parse(value + "T00:00:00.000Z");
+  return Number.isFinite(ms) && new Date(ms).toISOString().slice(0, 10) === value;
+}
+
 /**
  * Offline-only normalizer for a previously captured SoSoValue summary-history
  * response. It performs no network request and never reads an API key.
@@ -62,7 +68,9 @@ export function prepareBtcSoSoValueEtfCandidates({
     return base;
   }
 
-  const records = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.data) ? parsed.data : null;
+  const records = Array.isArray(parsed) ? parsed
+    : Array.isArray(parsed?.data) ? parsed.data
+      : Array.isArray(parsed?.data?.list) ? parsed.data.list : null;
   if (!records) {
     base.blockers.push("SUMMARY_HISTORY_ARRAY_NOT_FOUND");
     return base;
