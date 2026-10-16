@@ -264,3 +264,14 @@ This ledger defines when a product first enters the *spot-Bitcoin trading cohort
 **Count reconciliation:** 10 products at the 2024-01-11 first wave; 11 after DEFI's 2024-03-27 spot conversion; 12 after BTC Mini's 2024-07-31 launch; 13 after OBTC's 2025-12-19 ETF conversion; 14 after MSBT's 2026-04-08 launch; 13 active trading products after DEFI's last trading day 2026-08-17. This is a **provisional but source-backed cohort ledger**; final freeze still requires a final search for any other direct-holding US spot BTC product, listing-status changes, and official issuer/exchange evidence for each row. BITA remains outside this core cohort because it is a premium-income/options strategy holding both BTC and IBIT; broader BTC-linked ETP aggregation would need separate rules.
 
 No ETF source is promoted by this ledger. It only defines cohort membership dates; source rights, daily completeness, publication time, revisions/finality, retention and restore gates remain open.
+
+
+## Final scope scan — adjacent BTC products not in the core spot cohort (2026-10-16)
+
+A final public SEC/sponsor search found adjacent products that must not be silently mixed into the direct-holding spot-Bitcoin cohort:
+
+- **BTCU — Direxion Daily Bitcoin Bull 2X ETF:** its SEC prospectus describes a daily 2x strategy on US-listed Bitcoin reference ETPs (including IBIT), with daily rebalancing. This is leveraged derivative/ETP exposure, not a plain fund whose net creations/redemptions can be added to direct spot-BTC ETF flows. [SEC prospectus](https://www.sec.gov/Archives/edgar/data/1424958/000119312526239876/d110971d497k.htm).
+- **7RCC Spot Bitcoin and Carbon Credit Futures ETF:** SEC reporting identifies both Bitcoin holdings and commodity-futures exposure. It is a mixed Bitcoin/carbon-credit product, not part of the plain spot-Bitcoin-only cohort; any broader BTC-linked aggregate needs a separate inclusion rule. [SEC 2026 filing](https://www.sec.gov/Archives/edgar/data/1471824/000143774926027963/R65.htm); [SEC prospectus supplement](https://www.sec.gov/Archives/edgar/data/1471824/000143774926016240/weat20260508g_424b3.htm).
+- **BITA — iShares Bitcoin Premium Income ETF:** remains a separate premium-income/options strategy with BTC and IBIT holdings, as documented above; do not include it in the plain spot cohort without explicit aggregate design and double-count controls.
+
+**Scope result:** no additional plain, direct-holding US spot-Bitcoin product was identified in this pass beyond the 13-product active cohort in the effective-date ledger. This is a documented research result, not an absolute guarantee against a later launch or status change. Keep a dated official-listing check before any future capture. BTCU, BITA and 7RCC remain outside the core cohort under the current definition.
