@@ -370,3 +370,10 @@
 
 
 **Дополнительная проверка CI:** повторный run `#38876188724` также завершился `failure`: после исправления `checksums.sha256` верификатор обнаружил, что writer всегда создаёт каталог `normalized/`, даже когда в нём нет нормализованного файла. Это ожидаемая структура текущего writer, а не лишний файл. Верификатор скорректирован и теперь разрешает предусмотренные каталоги `source/` и `normalized/`, сохраняя проверку всех файлов внутри них. Fix commit: `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`. Новый staging run ожидается; успех ещё не подтверждён.
+
+
+## 2026-10-16 — подтверждён CI для offline archive verifier
+
+**Результат:** [BTC Public Source Staging #38876268169](https://github.com/olegsh247-stack/Crypto/actions/runs/38876268169) — `success` для кода verifier `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`. Успешны оба шага — archive writer safety tests и archive integrity/recovery verifier tests; job `capture` пропущен. Это подтверждает локальные fixture-сценарии целостности/повреждения/отсутствующего файла/path traversal, но не реальный backup/restore.
+
+**Статус:** verifier теперь проходит staging. PR #83 остаётся Draft. Права на raw-retention, фактическое частное хранилище и независимый encrypted backup/restore не закрыты; live capture не запускался, BTC остаётся `not_evaluable`.
