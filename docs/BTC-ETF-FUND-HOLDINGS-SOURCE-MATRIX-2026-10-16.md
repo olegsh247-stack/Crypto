@@ -156,3 +156,15 @@ This recheck was triggered because the earlier source-coverage matrix had been d
 - Do not fabricate daily holdings by forward-filling quarterly points, treating absent values as zero, or cumulatively converting USD flows into exact holdings.
 - To finish the data deliverable, a provider must supply actual per-fund historical daily holdings for all 13 tickers, with dates/units/revision semantics and permission for the intended storage and research use. If data are to be committed to this public repository or shown publicly, redistribution/public-display rights must explicitly cover that use. Otherwise the raw panel must remain in approved private storage and only non-sensitive provenance/quality summaries can be committed here.
 - No database write, registry acceptance, scenario change, production ingestion, deployment, or PR merge was performed during this recheck.
+
+
+## SEC quarter-end control snapshot completed — 2026-10-16
+
+A separate source-linked control table was assembled from the trusts' own SEC Form 10-Q filings for the common observation date **2026-06-30**: [BTC-ETF-SEC-QUARTERLY-CONTROLS-2026-06-30.md](BTC-ETF-SEC-QUARTERLY-CONTROLS-2026-06-30.md).
+
+- Coverage: **13/13 active tickers**, all at the same quarter-end date, with a direct SEC filing URL for every value.
+- This closes the narrow task of assembling a same-date quarterly SEC control snapshot and provides direct filing references to check the SEC XBRL extractor's missing concepts.
+- It does **not** close the daily-history requirement. These are quarter-end controls only; no forward-fill, daily interpolation, or holdings reconstruction from USD flows is permitted.
+- The values retain each filing's reported precision. In particular, whole-BTC figures in a filing must not be upgraded to artificial decimal precision.
+- The daily panel remains **NOT DONE**; same-date daily-vs-quarterly reconciliation remains pending because the inspected daily file starts in late August/September 2026 and does not contain 2026-06-30 rows.
+- No raw bulk dataset was copied from the third-party daily repo; no database, source registry, scenario, score/probability, production ingestion, deployment, or merge was changed.
