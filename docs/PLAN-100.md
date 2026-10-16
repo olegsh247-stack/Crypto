@@ -2000,3 +2000,10 @@ The DXY source hunt is closed for the first BTC scenario. The readiness gate no 
 **Confirmed:** [VPS API Build Rehearsal #38853001917](https://github.com/olegsh247-stack/Crypto/actions/runs/38853001917) passed for commit `d3df1e81f21e8af1ba0af2f511fb92abaca84e59`. The run completed the VPS-only guard, shared runtime/API/Worker builds, PostgreSQL migration/bootstrap, read-only BTC provenance audit, idempotency/duplicate rehearsal, backup/restore, and API/Worker E2E checks. The E2E assertion now confirms that missing DXY does not block readiness while ETF source acceptance can still block the live input gate.
 
 **Scope:** this validates the read-only readiness contract and VPS test environment, not a production scenario evaluation. Rule v2 unit tests are configured to run on feature/fix-branch pushes so optional-input behavior can be checked independently. No production database, ingestion, scenario state, published probabilities, deployment, or PR merge was changed.
+
+
+## Plan 100 checkpoint — optional-input unit tests and VPS rehearsal passed (2026-10-16)
+
+**Confirmed for code commit `27a18a3d1434ac1298e42222c288c9560ce30950`:** [BTC Scenario Readiness Gate #38853311612](https://github.com/olegsh247-stack/Crypto/actions/runs/38853311612) passed, including registry validation and the readiness/directional-rule unit suite. [VPS API Build Rehearsal #38853311389](https://github.com/olegsh247-stack/Crypto/actions/runs/38853311389) also passed all build, PostgreSQL rehearsal, read-only provenance, idempotency, backup/restore and API/Worker E2E checks.
+
+**Result:** DXY is optional in the canonical readiness registry and offline rule v2; missing DXY/hashrate/fee-ratio inputs are omitted rather than imputed. ETF source revision/finality/eligibility remains the independent blocker for current persisted observations. No production write, ingestion, deployment, scenario-state persistence, probability change, or PR merge occurred.
