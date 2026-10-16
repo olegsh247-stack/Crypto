@@ -2126,3 +2126,15 @@ The fixture restore rehearsal passed in [BTC Public Source Staging #38876362752]
 ### Source-rights refresh (2026-10-16)
 
 Official terms review: TFTC explicitly permits quoting, charting and republishing its ETF-flow dataset under CC BY 4.0 with attribution/link. SoSoValue's published Website Terms prohibit automated/manual copying or monitoring absent authorization and restrict reproduction/redistribution; these terms do not settle separate API rights. Farside's official ETF-flow page still does not establish a clear license for long-term raw-response storage/redistribution. The source review was updated; no API calls or live captures were made. Use TFTC-derived research artifacts with attribution as the clearest candidate; keep raw SoSoValue and Farside retention blocked pending source-specific permission. BTC remains `not_evaluable`.
+
+
+### ETF source rights — additional alternatives reviewed (2026-10-16)
+
+Reviewed the official CoinGlass API terms and The Block Terms of Service in addition to the earlier TFTC, SoSoValue, Farside, CryptoETF.today, Newhedge, and SatoshiMacro review. The detailed disposition is in [BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md](BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md).
+
+- **TFTC:** currently the clearest documented candidate for an attributed research archive because the publisher explicitly states CC BY 4.0 and requires credit/link. A separate [TFTC dataset archive contract](BTC-TFTC-ETF-DATASET-ARCHIVE-CONTRACT-2026-10-16.md) specifies attribution, license metadata, raw-body hash, retrieval time, reporting dates, units, schema/version where available, and lineage/revision handling.
+- **CoinGlass:** the API provides daily USD flow and per-fund breakdown, but its public API terms restrict bulk storage for independent databases and redistribution without prior written consent. Not cleared for durable raw archive.
+- **The Block:** public flow charts are useful for manual comparison, but terms restrict systematic/automated extraction and limit republication. Not cleared for automated capture/archive.
+- **Independence:** TFTC's current daily flow lineage points to SoSoValue and its historical series overlaps issuer disclosures tabulated by Farside. Do not count these as three independent estimators.
+
+**Acceptance impact:** none of these documentation reviews changes source registry, canonical priority, the approved research-only arithmetic_mean_2_sources rule, or readiness. No API calls, scraping, live capture, production writes, ingestion, scenario evaluation/state, deployment, or merge were performed. Durable archive and independent backup/restore remain unverified; BTC remains not_evaluable. Next, keep source selection frozen while checking current CI and finish the source-specific, offline-only evidence contract before any approved capture.
