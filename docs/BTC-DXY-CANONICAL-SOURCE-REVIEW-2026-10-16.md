@@ -31,3 +31,25 @@ No choice between A and B is made by this review. Do not scrape ICE pages, rever
 - `macro.dxy` remains **blocked / source not approved**.
 - No metric registry, source registry, observation, scenario, score, probability, or monitoring state changed.
 - BTC remains `not_evaluable` while this required input and the separate ETF publication/revision/finality contract remain unresolved.
+
+
+## Additional candidate review — public pages, unofficial access and historical-data providers (2026-10-16)
+
+The user supplied a shortlist of Yahoo Finance `DX-Y.NYB`, TradingView `TVC:DXY` / `INDEX:DXY`, Dukascopy `dollaridxusd`, FRED `DTWEXBGS`, and paid historical providers. These are candidate leads, not approved ingestion sources.
+
+### Findings from current public documentation
+
+- **Yahoo Finance `DX-Y.NYB`:** Yahoo's page identifies the instrument as “US Dollar Index” and labels ICE Futures as the market. However, Yahoo's terms prohibit automated collection without express prior permission and prohibit redistribution of Yahoo Finance data. The `yfinance` package is unofficial and does not grant permission from Yahoo. Therefore do not use it as the project's unattended collector absent explicit authorization or a separate authorized feed. References: https://finance.yahoo.com/quote/DX-Y.NYB/ ; https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html ; https://help.yahoo.com/kb/SLN2352.html
+- **Dukascopy `dollaridxusd`:** a third-party tool documents downloadable tick/minute/hour/day history from 2017-12-01. Dukascopy's published XML-data license, however, describes the relevant derivative index quotes as one-minute statistical averages, not actual exchange index values; requires prior registration/approval for the declared use, non-commercial temporary use under that agreement, and restrictions including a visible Dukascopy attribution/banner for derivative products. This does not establish that the tool's downloadable bars have the same terms or that the series equals the official ICE cash DXY. Do not promote it without instrument-identity and applicable-license confirmation. References: https://www.dukascopy-node.app/instrument/dollaridxusd ; https://www.dukascopy.com/plugins/cont.php?ref_id=1273
+- **TradingView `TVC:DXY` / `INDEX:DXY`:** TradingView's terms describe its market data as licensed for display-only use and restrict non-display processing. A public chart is not an authorized ingestion API for the BTC research pipeline. Reference: https://www.tradingview.com/policies/
+- **FRED `DTWEXBGS`:** daily Federal Reserve Nominal Broad U.S. Dollar Index, index Jan 2006=100, with data subject to revision. It is technically attractive for a separate broad-dollar macro metric but is not ICE DXY. References: https://fred.stlouisfed.org/series/DTWEXBGS ; https://alfred.stlouisfed.org/series?seid=DTWEXBGS
+- **Portara/CQG:** Portara lists ICE Futures US dollar-index futures data with daily history from 1985-11-20 and intraday data from 1987-09-01. This is a credible paid historical-futures lead, but futures/settlement data must not be relabelled as the cash DXY index level; price, delivery, continuity/roll semantics, and reuse rights need confirmation. References: https://portaracqg.com/futures/bats/dxa ; https://portaracqg.com/historical-daily-futures-data/
+- **FirstRate Data:** its public catalog advertises historical futures/index datasets, but the reviewed evidence did not establish a specific authorized ICE cash-DXY endpoint at the quoted price. Treat the price and availability as unverified for this exact metric until a product page/quote confirms it.
+
+### Current decision
+
+No free/public candidate has yet passed all four gates: (1) exact instrument identity, (2) permitted automated collection and durable storage, (3) a stable endpoint and timestamps/date convention, and (4) publication/revision semantics suitable for a reproducible research observation.
+
+The best next *technical investigation* is to request/inspect the exact product and data terms for a licensed ICE DXY feed, while treating Yahoo as a visible reference only unless written automated-use permission exists. If a free data source is required, the clean alternative is to propose a **new, explicitly named broad-dollar metric** based on FRED DTWEXBGS and assess its research value; do not call it DXY. The Dukascopy symbol remains a secondary lead only, pending its exact instrument specification and applicable license.
+
+No source priority or metric registry is changed by this review. `macro.dxy` remains blocked; BTC remains `not_evaluable`.
