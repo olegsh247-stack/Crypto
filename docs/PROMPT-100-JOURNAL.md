@@ -687,3 +687,12 @@
 - Gate 3 (права на automated capture, raw retention, private backup/restore и downstream publication): не подтверждены для всех 12 фондов; публичная доступность не является разрешением на систематическое извлечение/архивирование.
 
 **Решение:** issuer-primary route пока не заменяет daily ETF source contract. Не выводить flows из AUM delta, не считать пропуски нулями и не смешивать квартальные транзакции, holdings-based estimates и reported/compiled USD flows. Никаких API calls/capture/ключей/production writes/registry/formula/evaluator/scenario changes не было. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — проверен путь SEC EDGAR для первичных контрольных данных
+
+**Действие:** сверена официальная документация SEC по API и программному доступу; вывод внесён в матрицу (commit `a724f1bee49b1a65c519c0aaf4cbb7638e147f27`) и План 100 (commit `785e675142464de12489ff76859a8f8f8ff58823`).
+
+**Результат:** SEC предоставляет публичные REST API для submissions/XBRL без API key и разрешает scripted access при соблюдении Privacy and Security Policy, declared User-Agent, умеренной частоты и лимита 10 запросов/сек. Это более чётко документированный путь доступа к SEC filings, но не полный daily ETF creations/redemptions feed и не blanket permission для downstream redistribution.
+
+**Решение:** SEC использовать как periodic primary-source cross-check route, не как замену ежедневному ETF flow series. В будущем для SEC-проверок отдельно хранить filing date, reported period, observation date и amendment/version. Сейчас API не вызывался, данные не захватывались, архив не записывался; production/registry/formula/evaluator/scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
