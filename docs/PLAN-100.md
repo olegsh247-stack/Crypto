@@ -2299,3 +2299,16 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - BTCW: на 2026-06-30 — 2,185,000 shares, NAV/share $62.46, net assets $136,476,680; 2,310 BTC округлено в investment schedule, тогда как отдельная reference-rate методология даёт 2,309.689 BTC. Методологии сохранены раздельно.
 - Это квартальные/точечные первичные сверки, не полный daily flow series и не разрешение на систематическое архивирование. AUM delta не используется для вывода flow; registry, formula/evaluator, production observations и scenario state не менялись; live capture не выполнялся.
 - Следующий безопасный шаг — сверить оставшиеся фонды в матрице и явно отделить подтверждённые исторические snapshots от доступности ежедневной истории, прежде чем менять source contract.
+
+
+## Дополнение 2026-10-16 — три проверки пройдены по всему активному BTC ETF-universe
+
+В матрице `docs/BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md` добавлена единая трёхступенчатая оценка для IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC, Grayscale Mini BTC и MSBT.
+
+1. **Первичные источники:** по всем 12 фондам найдены официальные страницы эмитентов и/или SEC-отчётность, достаточные для отдельных датированных контрольных точек. Это не означает, что у каждого фонда есть полный daily flow feed.
+2. **Воспроизводимая ежедневная история:** ни для одного фонда не подтверждён полный per-fund daily shares/creation-redemption ряд с однозначной семантикой дат и историей исправлений. Графики NAV/market price и daily-updated fact blocks сами по себе не являются таким рядом.
+3. **Права на автоматизацию и долговременный архив:** для всех 12 фондов остаются неразрешёнными права на систематический сбор, raw retention, закрытые backup/restore и downstream publication. Публичность SEC/issuer-страницы не равна разрешению на автоматическое извлечение и архивирование.
+
+**Итог gate:** первая проверка пройдена только на уровне датированных первичных evidence; вторая не пройдена для полного universe; третья остаётся unresolved. Поэтому issuer-primary route пока не может заменить текущий ETF source contract. Не выводить flow из AUM delta, не трактовать пропущенные даты как ноль и не смешивать quarterly transactions, holdings-based estimates и reported/compiled USD flows.
+
+Нет API calls, capture, ключей, production writes, registry/source priority/formula/evaluator changes или scenario evaluation. BTC остаётся `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
