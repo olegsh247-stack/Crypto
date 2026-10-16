@@ -1079,3 +1079,10 @@
 - Workflow подтвердил `production_database_accessed=false`, `production_writes_performed=false`. Warning Node.js 20 deprecation и notice Ubuntu migration не блокируют успешный run.
 
 **Решение:** доступ Kraken через runner восстановлен; требуется новый capture для свежей цены. ETF flow остаётся блокером, BTC — `not_evaluable`. Ни ingestion, ни БД, ни scenario state/probabilities, deployment или merge не менялись.
+
+
+## 2026-10-17 — отсев ETF-flow альтернатив по требованию доступа без ключа
+
+**Проверено:** документация SoSoValue подтверждает обязательный `x-soso-api-key`; документация Newhedge указывает обязательный `api_token`; ByKaranteli сообщает, что программные вызовы требуют бесплатный Bearer key с 2026-09-10, а репозиторий CSV-наборов заморожен на 2026-09-10. Ссылки: https://sodex.com/documentation/for-developers/developers/data-api/getting-started ; https://prod-docs.newhedge.io/api/spot-bitcoin-etf-flows ; https://bykaranteli.com/developers ; https://github.com/bykarantelicom/crypto-datasets.
+
+**Решение:** эти варианты не считаются готовым источником для текущего автоматического захвата без ключа; замороженный CSV не закрывает актуальную свежесть. Не менялись canonical registry, evaluator, формула или правила readiness; нет ingestion, DB writes, scenario-state/probability changes, deployment или merge. ETF flow остаётся blocked, BTC — `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
