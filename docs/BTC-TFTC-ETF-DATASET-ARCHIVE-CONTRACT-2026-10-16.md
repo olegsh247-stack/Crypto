@@ -98,3 +98,16 @@ BTC remains not_evaluable. This is project risk control, not legal advice.
 - CC BY 4.0 legal code: https://creativecommons.org/licenses/by/4.0/
 - Related source-rights review: [BTC ETF alternative-source review](BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md)
 - General archive/recovery contract: [BTC ETF evidence archive and recovery contract](BTC-ETF-EVIDENCE-ARCHIVE-AND-RECOVERY-CONTRACT-2026-10-16.md)
+
+
+## 9. Public-page recheck — 2026-10-16
+
+The public TFTC page was rechecked without downloading or capturing its JSON dataset. It currently states that the record covers US spot Bitcoin ETFs, is published under CC BY 4.0 with credit and a link, and that the full daily record is available as open JSON at `/bitcoin-etf-flows/data.json`, covering every fund and every day since launch. It also states that issuer reports arrive after market close and the published data runs about one day behind the market. The page’s credit line showed data through 2026-10-14 at the time of review.
+
+**What this establishes:** a documented public license/attribution path and a publisher claim of per-fund daily historical coverage. This is enough to keep TFTC as the first candidate for an attributed, read-only research series.
+
+**What it does not establish:** row-by-row completeness for every calendar/trading date, machine-readable publication time per row, immutable revision IDs, a definitive finality time, absence of later corrections, independent confirmation of the underlying values, or operational archive durability. The page describes data provenance that includes SoSoValue and historical issuer disclosures tabulated by Farside; TFTC is therefore not an independent vote against those upstream inputs.
+
+**Decision:** do not fetch/capture the JSON or create a real archive in this step. At the next source-contract review, validate a bounded offline sample only after the dataset terms and approved handling are documented; preserve reporting date separately from retrieval timestamp, represent unavailable publication/revision/finality fields as unknown, and keep each revision immutable. Raw SoSoValue/Farside material remains outside the TFTC archive unless its own retention rights are separately cleared.
+
+Reference: https://www.tftc.io/bitcoin-etf-flows
