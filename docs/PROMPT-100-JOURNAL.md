@@ -705,3 +705,12 @@
 **Результат:** BITB имеет датированные issuer facts/price chart и квартальные share transactions в SEC filing; HODL показывает dated shares/BTC snapshots; BTCW имеет dated fund facts и SEC quarterly cross-check. Для ни одного из трёх источников не доказан полный воспроизводимый per-fund daily creations/redemptions ряд с публикационными timestamps и revision/correction semantics. Snapshots и квартальные транзакции остаются только периодическими первичными сверками.
 
 **Решение:** не выводить daily flows из AUM/NAV delta, не считать пропущенные даты нулём, не смешивать quarterly transactions с reported/compiled daily USD flows. Права на automated capture/raw retention/private backup-restore остаются unresolved. API не вызывались, data capture/production writes не выполнялись; registry/source priority/formula/evaluator/scenario state не менялись. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — IBIT / ARKB historical daily-flow contract review
+
+**Действие:** проверены официальная iShares-страница IBIT, страница ARKB и SEC 2025 10-K; результаты внесены в матрицу покрытия и План 100 (matrix commit `b4def53b9c53f765b0d66d49cfac6ff904d1eb82`, Plan 100 commit `954942c090d4332d93a27b8e13f3c400c9ec1572`).
+
+**Результат:** IBIT предоставляет dated shares-outstanding facts и текущий holdings CSV; ARKB — holdings snapshots, premium/discount chart и годовые/квартальные SEC capital-activity totals. Ни один из этих признаков не подтверждает полную воспроизводимую ежедневную историю creations/redemptions с publication timestamps и revision/correction semantics.
+
+**Решение:** оставить оба маршрута periodic primary cross-check only. Не выводить daily flows из AUM/NAV/holdings deltas; не считать missing observations нулями и не смешивать annual/quarterly activity с daily reported/compiled USD flows. No API calls, downloads/capture or archive writes. No registry/source-priority/formula/evaluator/production/scenario-state changes. BTC remains `not_evaluable`; PR #83 Draft/open/unmerged.
