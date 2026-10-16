@@ -104,3 +104,6 @@ This verifies one local snapshot only. It does not create a backup or prove rest
 ### CI finding and correction (2026-10-16)
 
 The first verifier staging run failed because the tree walker treated `checksums.sha256` itself as an unmanifested file. This was corrected in commit `a51ae5b700c572fe076d8641b860f7022cee8d5a`: the checksum manifest is now allowed as the verifier's required control file, while arbitrary extra files remain rejected. Repeat staging run #38876188724 was still in progress at the time of this note. The verifier must not be considered validated until that run succeeds.
+
+
+A subsequent staging run found that the writer creates an empty `normalized/` directory when no normalized candidate is archived. The verifier now allows the two expected archive directories (`source/`, `normalized/`) but still checks all contained files against the checksum manifest. Fix commit `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`; revalidation is pending.
