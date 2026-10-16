@@ -105,3 +105,12 @@ Further Q2 2026 SEC findings for HODL, BRRR and BTCW are recorded in [Plan 100 E
 The SEC Q2 2026 Form 10-Q for Franklin Bitcoin ETF reports, as of 2026-06-30, 9,800,000 shares outstanding, NAV/share $34.15, net assets $334,694,929 and 5,664.0163 BTC. For Q2 it reports 150,000 shares issued and 1,250,000 redeemed. These quarter-level share transactions are useful for reconciliation, but do not establish a complete daily creations/redemptions series. The Franklin product page presents dated fund facts marked “Updated Daily”; this alone does not prove a complete machine-readable daily share-count history, correction semantics, or permission for systematic durable retention. Sources: [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1992870/000114036126033208/ef20077161_10q.htm), [Franklin official product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS).
 
 **Decision:** EZBC remains a primary-source periodic cross-check candidate, not a daily flow source. Do not infer net flows from AUM changes, promote the source, or change registry/formula/evaluator. No issuer endpoint was queried and no data was captured.
+
+
+## Additional issuer-page review — BITB / Bitwise (2026-10-16)
+
+The public Bitwise BITB page exposes dated fund facts such as shares outstanding, NAV, net assets and holdings; current web results show these fields with an explicit “Data as of” date. Its materials page links prospectus and periodic SEC filings, including Q2 2026 10-Q. This is useful as a dated primary-source snapshot for reconciliation.
+
+The page review did not establish a complete, reproducible daily historical series of shares outstanding or daily creations/redemptions, per-row correction/revision semantics, or permission for automated long-term raw-page retention. A daily-updated current fact block is not equivalent to a downloadable historical time series. Quarterly share issuance/redemption totals are not daily flows, and AUM deltas must not be used as a substitute.
+
+**Decision:** BITB remains a primary-source periodic cross-check candidate, not an accepted daily net-flow source. Do not promote it in the canonical registry or change the calculation. No page payload was captured. References: https://bitbetf.com/ and https://bitbetf.com/materials
