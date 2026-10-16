@@ -114,3 +114,16 @@ The public Bitwise BITB page exposes dated fund facts such as shares outstanding
 The page review did not establish a complete, reproducible daily historical series of shares outstanding or daily creations/redemptions, per-row correction/revision semantics, or permission for automated long-term raw-page retention. A daily-updated current fact block is not equivalent to a downloadable historical time series. Quarterly share issuance/redemption totals are not daily flows, and AUM deltas must not be used as a substitute.
 
 **Decision:** BITB remains a primary-source periodic cross-check candidate, not an accepted daily net-flow source. Do not promote it in the canonical registry or change the calculation. No page payload was captured. References: https://bitbetf.com/ and https://bitbetf.com/materials
+
+
+## Reconciled SEC Q2 2026 cross-check — HODL, BRRR and BTCW (2026-10-16)
+
+The linked SEC cross-check has now been brought into this matrix as a separate dated evidence section. These are point-in-time/quarterly primary records, not a daily flow feed:
+
+- **HODL (VanEck):** at 2026-06-30, 57,425,000 shares, NAV/share $16.70, net assets $958,827,545 and 16,241 BTC. Q2 reported 3,200,000 shares created and 5,900,000 redeemed. [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1838028/000093041326002505/c117299_10q-ixbrl.htm).
+- **BRRR (CoinShares Bitcoin ETF):** at 2026-06-30, 20,795,000 shares, NAV/share $16.46, net assets $342,354,115 and 5,864 BTC on the investment schedule. Filing cover separately reports 20,895,000 shares as of 2026-07-30; keep the two dates distinct. [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1841175/000199937126017701/brrr-10q_063026.htm).
+- **BTCW (WisdomTree):** at 2026-06-30, 2,185,000 shares, NAV/share $62.46 and net assets $136,476,680. The investment schedule rounds holdings to 2,310 BTC; a note separately describes 2,309.689 BTC under a reference-rate valuation versus principal-market value. Preserve the valuation-method distinction. [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1850391/000121465926009996/wtb8626110q.htm).
+
+**Interpretation and limits:** HODL's quarterly share creations/redemptions help reconcile quarter-level activity but are not daily records. BRRR's later cover-page share count is a different observation date from quarter-end. BTCW's principal-market and reference-rate holdings figures are not interchangeable. These filings do not establish complete daily creations/redemptions, row-level publication/finality/revision behavior, or rights to systematic raw-response retention and independent archive/restore.
+
+**Decision:** retain these as primary-source periodic cross-checks only. Do not infer flows from AUM changes, do not promote any of these records to the canonical daily source, and do not change registry, formula, evaluator, production observations, or scenario state. No live capture was performed.
