@@ -280,3 +280,15 @@ This pass closes the question of whether the popular market-data pages solve the
 ## Official holdings-file and daily capture follow-up — 2026-10-16
 
 The per-ticker official-file inventory and proposed daily-capture contract are now documented in [BTC-ETF-OFFICIAL-HOLDINGS-FILE-CAPTURE-PLAN-2026-10-16.md](BTC-ETF-OFFICIAL-HOLDINGS-FILE-CAPTURE-PLAN-2026-10-16.md). This is a research-only inventory, not source acceptance. Direct CSV/XLS/PDF route discovery is not treated as proof of a downloadable exact-quantity payload, a historical archive, or permission for indefinite retention. File-level response tests and source-specific retention terms remain open. No file downloads, scheduled capture, registry changes, database writes, scenario evaluation, deployment, or merge were performed.
+
+
+## Расчёт по уже имеющемуся набору данных — 2026-10-16
+
+Подраздел поиска источников не расширяется дальше в этом этапе: доступный набор посчитан в [отчёте расчёта имеющихся данных](BTC-ETF-AVAILABLE-DATA-CALCULATION-2026-10-16.md).
+
+- Daily candidate: **162 строки / 5 из 13 тикеров**, диапазон 2026-08-31—2026-10-16.
+- Общих дат у всех пяти тикеров: **29**; последняя общая дата — 2026-10-14.
+- Частичная сумма пяти тикеров на 2026-10-14: **888383.5954 BTC**. Не является общим итогом рынка.
+- SEC controls: **13/13** на 2026-06-30; арифметическая сумма опубликованных значений — **1,211,244.47121778 BTC**.
+- SEC XBRL candidate на 2026-06-30: **6/13** значений доступно, 7 отсутствуют.
+- Статус этапа: **расчёт имеющихся данных завершён; полнота ежедневного набора 13/13 не достигнута**. Не подменять это утверждением о полной ежедневной истории.
