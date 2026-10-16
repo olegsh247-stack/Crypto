@@ -51,3 +51,10 @@ Since this static review, the PR branch has added `scripts/diff-btc-etf-snapshot
 **Still not solved:** the GitHub Actions artifact remains a temporary 7-day delivery mechanism unless the user explicitly chooses another storage/retention policy. No durable archive, restore guarantee, project revision/supersession policy, production eligibility/finality rule, or Farside reuse approval is implied. No live capture was dispatched. ETF production acceptance remains blocked; BTC remains `not_evaluable`.
 
 See also [BTC ETF snapshot revision and research eligibility proposal](BTC-ETF-SNAPSHOT-REVISION-ELIGIBILITY-PROPOSAL-2026-10-16.md) for the separate policy decisions that remain after the offline tooling is implemented. The proposal does not authorize a storage destination, retention change, scenario eligibility rule, or production ingestion.
+
+
+## Follow-up — CI confirmed for snapshot v2 and VPS rehearsal (2026-10-16)
+
+The latest code-level validation is no longer pending: [BTC Public Source Staging #38822111790](https://github.com/olegsh247-stack/Crypto/actions/runs/38822111790) and [VPS API Build Rehearsal #38822111807](https://github.com/olegsh247-stack/Crypto/actions/runs/38822111807) both completed successfully for commit `3b39f0db5a059ca091dffe04a83a85e070f577aa`. The staging run exercised the v2 snapshot identity/provenance tests and skipped live capture; the VPS rehearsal also passed the PostgreSQL, backup/restore, and BTC snapshot-lineage E2E steps.
+
+This closes the CI-verification gap for the current offline tooling only. The 7-day artifact retention, durable archive/recovery, provider revision/finality semantics, Farside reuse terms, and research eligibility policy remain unresolved. ETF production acceptance remains blocked and BTC remains `not_evaluable`.

@@ -1951,3 +1951,12 @@ This is a decision proposal, not an adopted policy. Archive location/retention, 
 **Implemented on PR #83 branch:** capture manifest records SHA-256 of the capture script and Farside parser; normalized candidate output records SHA-256 of the candidate normalizer, Farside parser and metric registry, and carries capture provenance forward. Snapshot manifest schema/algorithm moved to version 2 and binds both provenance records into its ID and content integrity hash. Tests cover the new identity and provenance fields.
 
 **Limits:** these hashes identify exact file bytes; they are not a signature, archive, workflow-run attestation or provider-finality proof. Durable retention and eligibility/revision policy remain unresolved. No live capture, production DB operation, ingestion, deployment, scenario evaluation or scenario-state/probability change was performed.
+
+
+## Plan 100 checkpoint — v2 ETF provenance validation and VPS rehearsal passed (2026-10-16)
+
+**Confirmed for commit `3b39f0db5a059ca091dffe04a83a85e070f577aa`:** [BTC Public Source Staging #38822111790](https://github.com/olegsh247-stack/Crypto/actions/runs/38822111790) and [VPS API Build Rehearsal #38822111807](https://github.com/olegsh247-stack/Crypto/actions/runs/38822111807) both completed successfully. Staging validated the v2 ETF snapshot/provenance tests; the live capture job was skipped as intended. VPS rehearsal passed all steps, including VPS-only architecture, API/Worker builds, PostgreSQL bootstrap/migrations, BTC registry/provenance audit, idempotency/duplicate reconciliation, backup/restore, and BTC snapshot-lineage E2E.
+
+**Correction:** an earlier staging run exposed a stale v1 snapshot-ID prefix assertion after the v2 identity change; commit `3b39f0d` corrected the validator and the current staging run passed.
+
+**Limits and next gate:** this is CI/test-environment evidence, not provider finality, durable archive/retention, production cutover, or scenario eligibility. PR #83 remains Draft/open/unmerged; BTC remains `not_evaluable`. Do not dispatch live capture or change production data, ingestion, scenario state, scores or probabilities without explicit authorization. Continue with the unresolved ETF retention/revision/eligibility decisions and BTC source-contract blockers.
