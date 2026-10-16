@@ -210,7 +210,7 @@ async function main() {
     scenario_state_changed: false,
     reviewer_approval_required: true
   };
-  await writeFile(outputPath, JSON.stringify(report, null, 2) + "\\n", "utf8");
+  await writeFile(outputPath, JSON.stringify(report, null, 2) + "\n", "utf8");
   process.stdout.write(JSON.stringify({
     status: report.status,
     reporting_date: report.reporting_date,
@@ -222,12 +222,12 @@ async function main() {
     scenario_evaluated: false,
     production_database_accessed: false,
     production_writes_performed: false
-  }) + "\\n");
+  }) + "\n");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(error => {
-    process.stderr.write((error instanceof Error ? error.message : String(error)) + "\\n");
+    process.stderr.write((error instanceof Error ? error.message : String(error)) + "\n");
     process.exitCode = 1;
   });
 }
