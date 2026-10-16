@@ -88,3 +88,46 @@ Reference: https://docs.cryptoetf.today/
 - **Farside:** the reviewed official ETF-flow page describes the data but does not state a clear license for durable raw-response storage or redistribution. Decision remains unresolved; public accessibility is not treated as permission.
 
 This is a project risk-control review, not legal advice. No API calls, credentials, or live source captures were used. References: https://www.tftc.io/bitcoin-etf-flows ; https://sosovalue.gitbook.io/helpdocument/resources/terms-of-use ; https://farside.co.uk/.
+
+
+## Additional alternatives: CoinGlass and The Block (2026-10-16)
+
+### CoinGlass — ETF flow history API
+
+Official API documentation exposes `GET https://open-api-v4.coinglass.com/api/etf/bitcoin/flow-history`, with daily total flow in USD and per-ETF ticker breakdowns. The endpoint requires an API key and is listed across paid API plans. The API Terms of Use permit access under a limited license but prohibit, without prior written consent, bulk collection/storage to create an independent database and distribution, sublicensing or sharing of API data or derived data with third parties. They also require attribution when displaying or using the data.
+
+**Disposition:** useful as a possible short-window diagnostic comparison if access is available, but **not cleared for durable raw archive, public evidence bundle, or independent database** without written permission. The public website Terms are also restrictive on copying/redistribution and bulk extraction. No key requested, endpoint called, or data captured.
+
+Metric caution: the documented response provides daily flow in USD and per-fund values, but the exact ETF universe, reporting-date convention, publication/finality/revision policy, and underlying source lineage must still be established before row-level comparison. The existence of a second API vendor does not prove independent lineage.
+
+References:
+- API endpoint: https://docs.coinglass.com/reference/etf-flows-history
+- API terms: https://www.coinglass.com/api-terms
+- Website terms: https://www.coinglass.com/terms
+
+### The Block — published flow chart / data dashboard
+
+The Block publishes a daily USD flow chart for named US spot BTC ETFs. Its Terms of Service, effective 2026-04-08, state that the publisher owns or controls the data/analytics, restrict systematic or automated collection (including scraping/data extraction), and generally prohibit republishing or redistributing content except limited sharing/excerpts. The reviewed terms do not grant a general license to archive the full daily series or automate extraction.
+
+**Disposition:** suitable for manual, attributed visual comparison where permitted, but **not cleared as a machine-captured archival source** absent a specific data license or written permission. No scraping or data capture performed.
+
+Metric caution: the chart describes daily USD flows for a defined set of funds, but the reviewed public page/terms do not establish a machine-readable retention license, complete raw provenance, revision identifiers, or finality policy.
+
+References:
+- BTC ETF flow chart: https://www.theblock.co/data/etfs/bitcoin-etf/spot-bitcoin-etf-flows
+- Terms of Service (effective 2026-04-08): https://www.theblock.co/terms-service
+
+### Updated alternative-source disposition
+
+| Candidate | Rights status from reviewed public terms | Technical/metric status | Decision |
+|---|---|---|---|
+| TFTC | Explicit CC BY 4.0 for its published ETF-flow dataset with attribution/link | Open JSON; upstream lineage overlaps SoSoValue and Farside | Best currently documented candidate for an attributed research artifact; not independent of upstream lineage |
+| CoinGlass API | Bulk durable storage/database and redistribution restricted absent prior written consent | API key; USD daily flow and per-fund breakdown documented; lineage/finality still to verify | Not cleared for durable archive; permission required |
+| The Block | Automated collection restricted; redistribution limited; no general full-series archive license identified | Published daily USD chart; raw provenance/revision contract not established | Manual visual cross-check only, within terms; no automated capture |
+| CryptoETF.today | API key; public docs do not establish raw-retention/redistribution rights | Recent daily flows; documented issuer-filings method; Fidelity lineage overlaps Farside | Candidate only; rights and exact coverage need clarification |
+| Newhedge | Retention/redistribution rights not established in reviewed API docs | BTC-denominated series, token required, seven-day revision window | Not directly comparable to USDm without approved conversion/timestamp methodology |
+| SatoshiMacro | No independent licensing clearance established here | Public aggregate appears to use Farside + SoSoValue with fallback | Display-level cross-check only; lineage overlaps |
+
+**Conclusion:** this additional review did not find a new alternative that is both demonstrably independent and clearly licensed for automated durable raw-data retention. TFTC remains the clearest licensed route for a retained attributed dataset. CoinGlass and The Block are useful research leads, not currently archive-cleared sources. Do not alter canonical priority, source registry, the `arithmetic_mean_2_sources` rule, or BTC readiness from this review alone.
+
+No provider API calls, scraping, credentials, live captures, database writes, ingestion, scenario evaluation, deployment, or merge were performed. BTC remains `not_evaluable`.
