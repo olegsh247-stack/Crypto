@@ -10,6 +10,10 @@ on:
       - "scripts/diff-btc-etf-snapshots.test.mjs"
       - "scripts/parse-farside-etf-table.mjs"
       - "scripts/parse-farside-etf-table.test.mjs"
+      - "scripts/evaluate-btc-etf-research-eligibility.mjs"
+      - "scripts/evaluate-btc-etf-research-eligibility.test.mjs"
+      - "scripts/prepare-btc-sosovalue-etf-candidates.mjs"
+      - "scripts/prepare-btc-sosovalue-etf-candidates.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
