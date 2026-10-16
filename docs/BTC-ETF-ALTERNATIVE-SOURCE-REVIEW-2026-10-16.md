@@ -164,3 +164,18 @@ References:
 - BlackRock IBIT official product page: https://www.blackrock.com/us/individual/products/333011/fund
 - Fidelity FBTC quote page: https://digital.fidelity.com/prgw/digital/research/quote/dashboard/summary?symbol=FBTC
 - SEC Fidelity Wise Origin Bitcoin Fund quarterly report: https://www.sec.gov/Archives/edgar/data/1852317/000119312526337679/ck0001852317-20260630.htm
+
+
+## 2026-10-16 follow-up — Newhedge API lifecycle contract
+
+A fresh documentation review found that Newhedge documents a **fund-reported daily ETF flow series in USD** as well as a separate on-chain flow series. These must not be conflated:
+
+- Fund-reported endpoint family: `/api/v2/metrics/spot-bitcoin-etf-flows/{metric_name}`; USD units, US trading-day calendar, daily resolution, and fund-by-fund metrics including the current ETF universe. API token required. The API docs say the most recent seven US trading days may be revised and older values are not revisited (`window_revised`). The API defines the timestamp as 00:00 UTC labeling the US trading day; that is a date label, not a provider publication timestamp.
+- Newhedge's general data-operations documentation states fund-reported ETF values can be partial until funds report and describes a 14-hour next-UTC-day publication lag as its finality rule. This is Newhedge's own series contract; it is not proof that Farside or TFTC has the same finality point.
+- Separate on-chain ETF flow endpoints are marked `full_replace` and can restate any day; they are not interchangeable with fund-reported creations/redemptions and are excluded from the current metric comparison unless separately scoped.
+
+References reviewed: https://docs.newhedge.io/api/spot-bitcoin-etf-flows (fund-reported USD); https://docs.newhedge.io/api (definitions, revision and publication-lag rules); https://docs.newhedge.io/api/spot-bitcoin-etf-onchain-flows-usd (distinct on-chain metric).
+
+**Assessment:** Newhedge is now a stronger *candidate for separately labelled corroboration* than a generic chart aggregator because its public docs expose units, trading calendar, revision window, and a stated lag/finality rule. It is not approved as canonical and has not been queried: token access, historical coverage for the required dates, exact active-fund universe and aggregate reconciliation, methodology/price conversion details, data reuse/retention rights, and response-level provenance still require review. Its 00:00 UTC labels must not be written into `observed_at` as publication time.
+
+**Next controlled step:** review the provider's terms/licensing and key/access path; if access is available, run a separately authorized manual-only bounded comparison for the same dates and fund universe. Do not paste the token into chat or Git. Capture must preserve raw USD values, exact metric names, retrieval time, response hashes, per-fund coverage, and source/methodology version. Do not count Newhedge, TFTC and SoSoValue as independent votes without lineage analysis; do not change canonical priority or the existing Farside/TFTC arithmetic-mean rule from documentation alone.
