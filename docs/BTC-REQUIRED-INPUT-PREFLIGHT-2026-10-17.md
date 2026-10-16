@@ -25,3 +25,16 @@ BTC remains `not_evaluable`. Both required inputs must pass their own freshness,
 - `institutional.etf_net_flow`: latest finalized traceable observation within 36 hours, plus at least five distinct reporting dates in the prior 14 days, complete fund coverage, and verified revision/finality evidence.
 
 No database writes, ingestion, scenario-state changes, probability changes, deployment, or merge occurred. PR #83 remains Draft/open/unmerged.
+
+
+## Follow-up — successful GitHub Runner capture (workflow run #156)
+
+After the initial direct-read failure, the read-only staging workflow was run on `main` at commit `d9b6a9b22d0cde339fc15a7a746fe74d591d8f91`: [run #156](https://github.com/olegsh247-stack/Crypto/actions/runs/38967487610). The job and artifact upload succeeded. Artifact: [btc-public-source-review](https://github.com/olegsh247-stack/Crypto/actions/runs/38967487610/artifacts/12075551423), SHA-256 `7be48d15498a71319c72ab5e0f8825deb28dc0ad7bb0dd7f1be35bd9d390dca0`, expires 2026-10-23.
+
+- **Kraken access is confirmed through GitHub Runner.** Registered endpoint returned HTTP 200. Captured value: **81,574 USD/BTC**, source trade time `2026-10-16T21:10:30.066Z`, retrieval `2026-10-16T21:10:31.607Z`, payload SHA-256 `47b214e44d915913a9f83a95146d1e8017d52229a9c88888e4e582809e2c7569`. It was fresh at capture time but is now older than the 1-hour limit; it is evidence that access works, not a current input.
+- Binance market-data-only and OKX endpoints also returned HTTP 200 for BTC/USDT, but those values are cross-checks only: USDT is not silently treated as USD and neither replaces the canonical Kraken USD/BTC source. Binance's primary API returned 451; Bybit returned 403.
+- Mempool hashrate and block-fee responses were captured, but their measurement-window/unit semantics still require verification before they can be used as research inputs.
+- Farside's main page returned 403 to the runner; the all-data page returned 200. The candidate parser produced historical daily ETF rows and reconciliation results, but all ETF rows remain review-only/blocked because provider observation/publication time and revision/finality are unverified. Dashes are not converted to zero.
+- The workflow reported one market-price candidate and six blocked candidates/inputs; `production_database_accessed=false` and `production_writes_performed=false`. The artifact is temporary and contains raw public-source responses; do not treat it as an approved durable archive.
+
+**Updated decision:** the network-access blocker for Kraken is resolved using GitHub Actions. The freshness blocker is not resolved: a new capture is required before evaluating the BTC scenario. ETF flow remains blocked. BTC remains `not_evaluable`; no ingestion, database write, scenario-state/probability change, deployment or merge occurred. The workflow annotations about Node.js 20 deprecation and the upcoming Ubuntu runner-image migration are maintenance notices, not failures of this run.
