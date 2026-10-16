@@ -16,6 +16,8 @@ on:
       - "scripts/prepare-btc-sosovalue-etf-candidates.test.mjs"
       - "scripts/archive-btc-etf-evidence.mjs"
       - "scripts/archive-btc-etf-evidence.test.mjs"
+      - "scripts/verify-btc-etf-evidence-archive.mjs"
+      - "scripts/verify-btc-etf-evidence-archive.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
     inputs:
@@ -49,6 +51,8 @@ jobs:
         run: node --test scripts/prepare-btc-sosovalue-etf-candidates.test.mjs
       - name: Test offline BTC ETF evidence archive safety gates
         run: node --test scripts/archive-btc-etf-evidence.test.mjs
+      - name: Test offline BTC ETF archive integrity and recovery verification
+        run: node --test scripts/verify-btc-etf-evidence-archive.test.mjs
 
   capture:
     if: github.event_name == 'workflow_dispatch' && inputs.capture_sources == true
