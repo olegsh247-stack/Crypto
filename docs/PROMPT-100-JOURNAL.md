@@ -492,3 +492,14 @@
 **Результат:** по IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC и Grayscale Mini BTC найдены отдельные официальные страницы/документы с частью NAV, AUM, shares-outstanding или holdings полей, но полный одинаковый daily historical series и разрешённый автоматизированный retention ещё не подтверждены для всего universe. Важная коррекция состава: официальный Hashdex DEFI page сообщает о delisting с NYSE Arca с 2026-09-03; DEFI нельзя включать в текущий active aggregate после этой даты, но исторические строки до закрытия требуют сохранения.
 
 **Решение:** матрица — исследовательский инвентарь, не утверждённый источник и не готовый расчёт net flows. Изменение net assets не считать net flow без approved methodology; реестр и формула не менялись. Следующий шаг — уточнить точные официальные ежедневные поля/историю для оставшихся фондов и правила даты/creation-redemption. Live capture и сценарий не запускались; BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — исправлен активный universe BTC ETF: добавлен MSBT
+
+**Действие:** проверены официальный запуск Morgan Stanley Bitcoin Trust, его SEC Q2 2026 10-Q и официальный BITB product page; обновлена матрица ETF issuer-source coverage.
+
+**Результат:** обнаружен пропущенный активный фонд MSBT, торгуется с 2026-04-08. SEC сообщает на 2026-06-30: 17,650,000 акций, NAV/share $16.94, net assets $298,979,473 и 5,059.30771216 BTC; cover отдельно сообщает 21,740,000 акций на 2026-07-31. За период с запуска до конца Q2 раскрыты 17,900,000 выпущенных и 250,000 погашенных акций. Это периодические сведения, не ежедневный flow series. Для BITB зафиксированы 68,780,000 shares и AUM $3,047,421,621 на 2026-10-13, NAV $45.11 на 2026-10-12 и 37,317.87 BTC на 2026-10-13; полная ежедневная история shares/creation-redemption и права систематического хранения не подтверждены.
+
+**Решение:** включать MSBT с даты запуска, исключать DEFI из active aggregate после 2026-09-03, сохраняя исторические данные до delisting. Реестр, приоритет источников, формула и evaluator не менялись. Не выполнялись API-запросы, live capture, production writes, ingestion, scenario evaluation/state/probabilities, deployment или merge. BTC остаётся `not_evaluable`; PR #83 Draft.
+
+**Ссылки:** [матрица источников](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md); [Morgan Stanley SEC 10-Q](https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/msbt-20260630x10q.htm); [Bitwise BITB](https://bitbetf.com/).
