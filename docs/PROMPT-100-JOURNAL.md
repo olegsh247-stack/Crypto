@@ -655,3 +655,14 @@
 **Result:** the API advertises daily per-fund ETF flows in BTC for 12 funds since 2024-01-11, but the terms describe the free API as intended for personal/research/evaluation, prohibit bulk scraping/harvesting without written permission, and apply separate commercial publishing/redistribution restrictions. The reviewed terms do not explicitly authorize systematic historical capture and private durable raw-response archiving/restore for this use case. Upstream lineage, calculation methodology, publication timestamps and revision/finality behavior also remain unverified.
 
 **Decision:** do not call the API, request/store a key, capture data, promote the source or automate ingestion until written rights clarification and technical contract details are obtained. No USD conversion. No registry/formula/evaluator, production data or scenario-state change. BTC remains not_evaluable; PR #83 remains Draft/open/unmerged.
+
+
+## 2026-10-16 — подготовлены вопросы поставщикам ETF-данных
+
+**Действие:** подготовлен внутренний документ `docs/BTC-ETF-PROVIDER-CLARIFICATION-QUESTIONS-2026-10-16.md` с адресными вопросами BGeometrics/Bitcoin-data.com, XOOMAR, Farside и SoSoValue.
+
+**Результат:** вопросы покрывают разрешённую частоту автоматических запросов, хранение raw responses и metadata/hash, retention, закрытый backup/restore, права на производные значения, upstream lineage, единицы и знак, universe фондов, timestamp публикации, null/zero semantics и revisions/finality. Для XOOMAR отдельно запрошены точный ценовой источник и timestamp оценки holdings-based USD flow; для Bitcoin-data.com — отдельный контракт конвертации BTC в USD.
+
+**Статус:** только подготовка — вопросы не отправлены. Ни API не вызывался, ни ключи не запрашивались/не сохранялись, ни данные не захватывались. Нет автоматического допуска источников, изменений registry/формулы/evaluator/production observations или scenario state. BTC остаётся `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
+
+**CI:** VPS API Build Rehearsal [#38904095808](https://github.com/olegsh247-stack/Crypto/actions/runs/38904095808) завершился успешно на commit `4e3ea1964018b77f3443c99c4aaef360ce4f77a1`. Это подтверждение CI для того снимка, не для последующих документальных изменений и не доказательство развёрнутого VPS или независимого долговременного архива.
