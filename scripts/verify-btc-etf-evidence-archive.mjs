@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
-import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 function sha256(bytes) {
@@ -82,11 +82,27 @@ export async function verifyBtcEtfEvidenceArchive(snapshotDir) {
     if (metadata && bytes.length !== metadata.bytes) throw new Error("Byte-length mismatch: " + path);
   }
 
-  const expectedTop = new Set(["archive-record.json", "checksums.sha256", ...[...copied.keys()].map(path => path.split("/")[0])]);
-  const actualTop = await readdir(root);
-  for (const name of actualTop) {
-    if (!expectedTop.has(name)) throw new Error("Unexpected unmanifested top-level entry: " + name);
+  const expectedFiles = new Set(expected.keys());
+  const expectedDirs = new Set();
+  for (const path of expectedFiles) {
+    const parts = path.split("/");
+    for (let i = 1; i < parts.length; i += 1) expectedDirs.add(parts.slice(0, i).join("/"));
   }
+  async function walk(directory, prefix = "") {
+    for (const name of await readdir(directory)) {
+      const relPath = prefix ? prefix + "/" + name : name;
+      const fullPath = join(directory, name);
+      const info = await lstat(fullPath);
+      if (info.isSymbolicLink()) throw new Error("Symlinks are not allowed in archive: " + relPath);
+      if (info.isDirectory()) {
+        if (!expectedDirs.has(relPath)) throw new Error("Unexpected unmanifested directory: " + relPath);
+        await walk(fullPath, relPath);
+      } else if (!info.isFile() || !expectedFiles.has(relPath)) {
+        throw new Error("Unexpected unmanifested file: " + relPath);
+      }
+    }
+  }
+  await walk(root);
   return {
     verified: true,
     snapshot_id: record.snapshot_id,
