@@ -93,3 +93,8 @@ The latest located issuer SEC 10-Qs for the quarter ended 2026-06-30 improve poi
 - Hashdex DEFI closure notice/product page: https://www.hashdex-etfs.com/defi
 
 This is a research inventory, not legal advice and not evidence that any page permits systematic automated retention.
+
+
+## Additional SEC cross-check note
+
+Further Q2 2026 SEC findings for HODL, BRRR and BTCW are recorded in [Plan 100 ETF SEC cross-check — HODL/BRRR/BTCW](PLAN-100-ETF-SEC-CROSSCHECK-HODL-BRRR-BTCW-2026-10-16.md). The main matrix rows above remain the initial inventory until these findings are reconciled into the table. Do not treat this linked note as approval for daily ingestion or source promotion.
