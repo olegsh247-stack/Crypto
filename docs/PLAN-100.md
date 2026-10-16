@@ -2150,3 +2150,10 @@ The execution status is recorded in [Plan 100 ETF snapshot recheck](PLAN-100-ETF
 4. **One BTC research scenario:** remains blocked until a real evidence set passes the evaluator, rights/archive evidence is independently reviewable, and a human approves the named snapshot IDs/date. `ELIGIBLE_FOR_REVIEW` is not approval. No scenario evaluation/state/probability changes occurred; BTC remains `not_evaluable`.
 
 No API calls, scraping, live captures, database access/writes, ingestion, deployment, or merge were performed during this documentation follow-through. Do not change source priority or production readiness based on fixture tests alone.
+
+
+### Дополнение к проверке ETF-источников — ByKaranteli (2026-10-16)
+
+Проверен ещё один потенциальный источник ежедневных BTC ETF flows — ByKaranteli. Публичная страница описывает агрегаты и значения по отдельным фондам, а также отдельную сверку по данным эмитентов для IBIT/XRPC. Однако Terms of Service от 2026-10-15 разрешают личное/исследовательское использование с атрибуцией, но прямо запрещают систематически копировать API-архив в заменяющую базу/архив; для сторонних данных дополнительно действуют права исходных поставщиков. Полная независимость upstream lineage агрегата не подтверждена.
+
+**Решение:** не считать ByKaranteli источником, допущенным к нашему долговременному raw-архиву, пока не получено письменное уточнение. Оставить в списке методологических/сравнительных кандидатов; не менять source registry, приоритет, `arithmetic_mean_2_sources` или readiness. Ссылки и подробности: `docs/BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md`. API key не запрашивался, live endpoint не вызывался, захват данных не выполнялся. BTC остаётся `not_evaluable`.
