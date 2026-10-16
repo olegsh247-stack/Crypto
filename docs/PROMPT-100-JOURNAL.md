@@ -975,3 +975,21 @@
 **Ограничения и решение:** документация Bitbo API требует API access и разрешает API только для внутреннего/частного использования; публичный сайт/воспроизведение графиков запрещены. Поэтому API не принимается как источник для публичного Crypto output, и права на массовую загрузку/архивирование графиков не предполагаются. Bitbo добавлен в матрицу как высокоприоритетный кандидат для ручной проверки условий и реального экспорта, но не как принятый источник. Платный доступ не приобретался; никаких данных не загружали, runtime/registry/DB/scenario не меняли.
 
 **Ссылки:** [Bitbo ETF chart index](https://charts.bitbo.io/index/), [IBIT chart](https://charts.bitbo.io/ibit-holdings/), [FBTC chart](https://charts.bitbo.io/fbtc-holdings/), [MSBT chart](https://charts.bitbo.io/msbt-holdings/), [BTCW chart](https://charts.bitbo.io/btcw-holdings/), [Bitbo API terms](https://charts.bitbo.io/btc-api/).
+
+
+## 2026-10-16 — закрыта проверка TradingView / Yahoo Finance; найден приоритет официальных daily holdings files
+
+**Действие:** проверены публичная страница списка BTC ETF TradingView, страница holdings IBIT в Yahoo Finance, BitcoinETFdb, документация и график Bitbo, а также официальные страницы BlackRock IBIT и ARKB.
+
+**Подтверждённый результат:**
+- TradingView даёт AUM/цену/торговые показатели, но не историю количества BTC в фонде. AUM нельзя переводить в BTC через цену как замену holdings.
+- Yahoo Finance для IBIT явно сообщает, что holdings data unavailable; Yahoo оставляем для цены/рыночного контекста, не для BTC balances.
+- BitcoinETFdb показывает 11 тикеров и только пять датированных дневных flow-значений (12–16 октября 2026); MSBT и OBTC отсутствуют, полного ежедневного holdings-архива в доступном содержимом нет.
+- Bitbo показывает графики 12 продуктов, но выгрузка не доступна как обычная ссылка в читаемом содержимом; API требует ключ и имеет ограничения для публичного использования. API не используется.
+- На официальной странице BlackRock IBIT есть загрузка holdings CSV; quantity определена как общее количество BTC фонда. На официальной странице ARKB также доступен Full Holdings CSV. Это прямые источники для проверки и будущего ежедневного архивирования, но наличие файла за текущий день не доказывает историческую доступность за предыдущие даты.
+
+**Решение:** популярные рыночные страницы больше не рассматриваются как замена ежедневному ряду holdings. Следующий этап — адресная инвентаризация официального daily file для каждого из 13 тикеров и проверка законно доступного исторического архива; для каждого файла фиксировать URL, дату наблюдения, время получения и hash исходного файла. Значения без явной даты/количества BTC не принимать.
+
+**Ссылки:** [TradingView BTC ETFs](https://www.tradingview.com/symbols/BTCUSD/etfs/), [Yahoo IBIT holdings](https://finance.yahoo.com/quote/IBIT/holdings/), [BitcoinETFdb](https://bitcoinetfdb.com/), [BlackRock IBIT](https://www.blackrock.com/us/individual/products/333011/ishares-bitcoin-trust-4), [ARKB](https://www.ark-funds.com/funds/arkb), [Bitbo ETF API docs](https://bitbo.io/api/docs/endpoints/etf-holdings).
+
+**Граница безопасности:** только публичная read-only проверка и документация в ветке `fix/btc-readiness-registry-runtime-source`. Не менялись runtime, source registry, БД, ingestion, scenario state, scores/probabilities; не выполнялись capture, deployment или merge. PR #83 остаётся Draft.
