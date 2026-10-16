@@ -827,3 +827,12 @@
 **Ограничения и решение:** до сохранения реальной копии TFTC проверить точную версию набора, атрибуцию/лицензионное уведомление, дату получения, hash и применимые условия на фактически полученном файле. Права на долговременное хранение сырых SoSoValue API responses и Farside responses остаются неподтверждёнными; не архивировать их без source-specific evidence. SEC/issuer filings и квартальные наборы годятся для периодической сверки, но не заменяют ежедневный flow ряд. Предложения по владельцу, retention/deletion, private storage, independent encrypted backup и restore cadence не утверждены; VPS/storage не развёрнуты.
 
 **Безопасность:** реальный payload не захватывался, архив и БД не изменялись, снимки не сравнивались, registry/formula/evaluator/scenario state не менялись. Нет deployment или merge. PR #83 остаётся Draft/open/unmerged; BTC остаётся `not_evaluable`. Следующий gate — разрешённая копия TFTC для офлайн-инспекции и документальное закрытие прав/архивных решений.
+
+
+## 2026-10-16 — подтверждены CI для archive-gate документации
+
+**Действие:** повторно проверены оба VPS API Build Rehearsal после обновления Plan 100 и описания прав источников/архивного gate.
+
+**Результат:** run [#38933624118](https://github.com/olegsh247-stack/Crypto/actions/runs/38933624118) завершился `success` для commit `d3feae2f3440e3cc63cafbd8677710518793089d`; run [#38933630022](https://github.com/olegsh247-stack/Crypto/actions/runs/38933630022) завершился `success` для commit `8b7a3495309a8150c850fc51eea04aaaf3394a9f`.
+
+**Ограничения:** CI success не доказывает наличие VPS, долговременного архива или независимого восстановления. Правила retention/deletion не отмечены как утверждённые без явного согласования пользователя. Raw SoSoValue/Farside retention rights остаются неподтверждёнными. Live capture, archive writes, database/registry/scenario changes, deployment и merge не выполнялись; BTC остаётся `not_evaluable`.
