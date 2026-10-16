@@ -333,6 +333,85 @@ await capture({
   }
 });
 
+// Keyless hosted MCP source for BTC spot-ETF flows. Capture tool metadata and
+// the returned BTC series as raw evidence; this is still review-only, not canonical.
+async function mcpRequest(url, sessionId, payload) {
+  const headers = { "content-type": "application/json", "accept": "application/json, text/event-stream", "user-agent": "Crypto-BTC-Source-Review/1.0" };
+  if (sessionId) headers["mcp-session-id"] = sessionId;
+  const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(20000) });
+  const body = await response.text();
+  if (!response.ok) throw new Error("MCP HTTP " + response.status + ": " + body.slice(0, 300));
+  let decoded;
+  try { decoded = JSON.parse(body); }
+  catch {
+    const dataLines = body.split(/\r?\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trim());
+    const jsonLine = dataLines.find(line => line.startsWith("{"));
+    if (!jsonLine) throw new Error("MCP response was not JSON or JSON-RPC SSE data");
+    decoded = JSON.parse(jsonLine);
+  }
+  return { response, body, decoded };
+}
+
+async function captureCryptoEtfMcp() {
+  const name = "cryptoetf-today-btc-etf-flows-mcp";
+  const item = { name, metric_id: "institutional.etf_net_flow", source_id: "institutional.cryptoetf_today", url: "https://mcp.cryptoetf.today/api/mcp", retrieved_at: new Date().toISOString(), status: "FAILED", role: "keyless 30-day cross-check candidate; not approved for canonical ingestion" };
+  try {
+    const init = await mcpRequest(item.url, null, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "crypto-btc-source-review", version: "1.0.0" } } });
+    const sessionId = init.response.headers.get("mcp-session-id");
+    item.initialize_protocol_version = init.decoded?.result?.protocolVersion ?? null;
+    item.server_info = init.decoded?.result?.serverInfo ?? null;
+    if (init.decoded?.error) throw new Error("MCP initialize error: " + JSON.stringify(init.decoded.error));
+    await mcpRequest(item.url, sessionId, { jsonrpc: "2.0", method: "notifications/initialized", params: {} }).catch(() => null);
+    const listed = await mcpRequest(item.url, sessionId, { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
+    if (listed.decoded?.error) throw new Error("MCP tools/list error: " + JSON.stringify(listed.decoded.error));
+    const tools = listed.decoded?.result?.tools;
+    if (!Array.isArray(tools)) throw new Error("MCP tools/list response has no tools array");
+    item.available_tools = tools.map(tool => tool.name);
+    const tool = tools.find(candidate => candidate.name === "get_asset_flows");
+    if (!tool) throw new Error("MCP source does not expose get_asset_flows");
+    const properties = tool.inputSchema?.properties ?? {};
+    const args = Object.hasOwn(properties, "symbol") ? { symbol: "BTC" } : Object.hasOwn(properties, "asset") ? { asset: "btc" } : Object.hasOwn(properties, "ticker") ? { ticker: "BTC" } : {};
+    const called = await mcpRequest(item.url, sessionId, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: tool.name, arguments: args } });
+    if (called.decoded?.error) throw new Error("MCP tool-call error: " + JSON.stringify(called.decoded.error));
+    const result = called.decoded?.result;
+    if (result?.isError) throw new Error("MCP tool returned error: " + (result.content ?? []).map(part => part.text ?? "").join("\n"));
+    const rawText = (result?.content ?? []).filter(part => typeof part.text === "string").map(part => part.text).join("\n");
+    if (!rawText) throw new Error("MCP get_asset_flows returned no text content");
+    let data;
+    try { data = JSON.parse(rawText); } catch { throw new Error("MCP get_asset_flows returned non-JSON content: " + rawText.slice(0, 300)); }
+    const days = data.days ?? data.data ?? data.flows;
+    if (!Array.isArray(days) || days.length === 0) throw new Error("MCP BTC flow response has no daily series");
+    const normalized = days.map(row => ({ date: row.date ?? row.day ?? row.period, net_flow_usd_million: row.netFlowUsdM ?? row.net_flow_usd_m ?? row.netFlow ?? null }));
+    if (normalized.some(row => !/^\d{4}-\d{2}-\d{2}$/.test(String(row.date)))) throw new Error("MCP BTC flow series contains a missing or invalid reporting date");
+    item.http_status = init.response.status;
+    item.content_type = init.response.headers.get("content-type");
+    item.retrieved_at = new Date().toISOString();
+    item.status = "CAPTURED";
+    item.tool_name = tool.name;
+    item.tool_arguments = args;
+    item.window_days = data.windowDays ?? null;
+    item.symbol = data.symbol ?? data.asset ?? null;
+    item.updated_at = data.updatedAt ?? data.updated_at ?? null;
+    item.row_count = normalized.length;
+    item.latest_rows = normalized.slice(-14);
+    item.series_order = "provider_response_order_preserved";
+    item.source_payload_sha256 = await sha256(rawText);
+    item.body_sha256 = item.source_payload_sha256;
+    item.body_file = name + ".raw";
+    item.note = "Provider dates are daily flow reporting dates; updatedAt is provider update time, not the observation date. The newest day may be revised; compare with Farside/TFTC before any approval.";
+    await writeFile(join(outDir, item.body_file), rawText, "utf8");
+  } catch (error) {
+    item.error = error instanceof Error ? error.message : String(error);
+    const errorBody = JSON.stringify({ error: item.error, captured_at: item.retrieved_at });
+    item.body_sha256 = await sha256(errorBody);
+    item.source_payload_sha256 = item.body_sha256;
+    item.body_file = name + ".raw";
+    await writeFile(join(outDir, item.body_file), errorBody, "utf8");
+  }
+  manifest.sources.push(item);
+}
+
+await captureCryptoEtfMcp();
 await capture({
   name: "farside-btc-etf-page",
   metricId: "institutional.etf_net_flow",
