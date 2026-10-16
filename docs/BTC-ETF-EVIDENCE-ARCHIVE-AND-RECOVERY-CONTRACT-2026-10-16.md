@@ -107,3 +107,6 @@ The first verifier staging run failed because the tree walker treated `checksums
 
 
 A subsequent staging run found that the writer creates an empty `normalized/` directory when no normalized candidate is archived. The verifier now allows the two expected archive directories (`source/`, `normalized/`) but still checks all contained files against the checksum manifest. Fix commit `9d8dd88a2e6e41965d05302e263a4fc3a46e396b`; revalidation is pending.
+
+
+The verifier test suite now also rehearses copying a generated fixture snapshot to a separate restore directory and verifying the restored copy. This is a same-CI-runner fixture test only, not independent backup/restore. Staging result for this test is pending.
