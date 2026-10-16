@@ -202,7 +202,7 @@ async function main() {
       current: createHash("sha256").update(currentBytes).digest("hex")
     },
     controls_file_sha256: controlsSha256,
-    controls_file: controlsPath,
+    controls_supplied: controlsSha256 !== null,
     report_mode: "offline-review-only",
     scenario_evaluated: false,
     production_database_accessed: false,
