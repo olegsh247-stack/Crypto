@@ -768,3 +768,12 @@
 **Результат:** ledger: 2024-01-11 — IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC; 2024-03-27 — DEFI после конверсии из futures в spot; 2024-07-31 — Grayscale Mini BTC; 2025-12-19 — OBTC после конверсии в ETF; 2026-04-08 — MSBT; 2026-08-17 — последний торговый день DEFI. Count reconciliation: 10 → 11 → 12 → 13 → 14 → 13 active products.
 
 **Решение:** добавить в матрицу coverage и План 100 даты применимости с первичными ссылками. Ledger пока provisional: до окончательной фиксации нужен последний поиск иных US spot BTC products, прямого владения BTC и событий listing/closure/conversion. BITA не включать в core plain spot-ETF cohort без отдельного определения broader BTC-linked ETP aggregate. Ledger не одобряет источники ежедневных flows; source rights/completeness/publication/revision/finality/retention/restore gates остаются открытыми. BTC remains not_evaluable; PR #83 Draft/open/unmerged.
+
+
+## 2026-10-16 — scope scan for adjacent BTC-linked ETFs
+
+**Действие:** выполнен дополнительный поиск SEC/sponsor records на предмет новых продуктов, которые могли быть ошибочно смешаны с direct-holding spot-Bitcoin cohort.
+
+**Результат:** BTCU — daily 2x exposure к reference Bitcoin ETPs с ежедневной ребалансировкой; 7RCC — mixed Bitcoin + carbon-credit futures; BITA — premium-income/options strategy с BTC и IBIT. По текущему определению ни один из этих продуктов не включается в core plain spot-BTC cohort. В этом pass других plain direct-holding US spot-BTC products сверх provisional 13-product cohort не найдено. Sources: https://www.sec.gov/Archives/edgar/data/1424958/000119312526239876/d110971d497k.htm ; https://www.sec.gov/Archives/edgar/data/1471824/000143774926027963/R65.htm ; https://www.sec.gov/Archives/edgar/data/2089969/000143774926027004/bitp-20260630_10q.htm.
+
+**Решение:** сохранить явную границу cohort; не смешивать leveraged/reference-ETP exposure, mixed carbon-credit strategy и premium-income/options strategy с plain spot ETF flows без отдельного aggregate contract and double-counting controls. Перед любым будущим capture перепроверить official listings/status. BTC remains not_evaluable; no source/registry/formula/evaluator/production/scenario-state changes.
