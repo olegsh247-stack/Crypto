@@ -131,3 +131,12 @@ References:
 **Conclusion:** this additional review did not find a new alternative that is both demonstrably independent and clearly licensed for automated durable raw-data retention. TFTC remains the clearest licensed route for a retained attributed dataset. CoinGlass and The Block are useful research leads, not currently archive-cleared sources. Do not alter canonical priority, source registry, the `arithmetic_mean_2_sources` rule, or BTC readiness from this review alone.
 
 No provider API calls, scraping, credentials, live captures, database writes, ingestion, scenario evaluation, deployment, or merge were performed. BTC remains `not_evaluable`.
+
+
+## Additional alternative — ByKaranteli ETF flows (2026-10-16)
+
+The current dataset page describes daily aggregate and per-fund US spot ETF flows, recorded by ByKaranteli, with finalized US trading days only and a provisional current day until all funds report. It also exposes an issuer-primary-source comparison for IBIT and XRPC using shares outstanding/NAV and an issuer-implied flow. These are useful methodological leads, especially the issuer-page comparison, but do not by themselves establish a full-universe independent daily aggregate.
+
+**Rights review:** the current Terms of Service (last updated 2026-10-15) license site datasets/API responses for personal and research use with attribution, but explicitly prohibit using the API/MCP/x402 catalog to copy the archive systematically into a substitute database, archive or service. The terms also state that third-party provider records remain subject to their own terms and that the service grants no rights in those records. The public page does not fully resolve the upstream lineage for each aggregate ETF-flow row. Therefore this is **not cleared for our proposed repeated, durable raw-response archive** without written clarification; research-use permission alone does not override the systematic-archive restriction or third-party rights.
+
+**Disposition:** keep as an unapproved comparison/methodology candidate, not as a replacement for Farside/TFTC and not as evidence of independent lineage. No API key was requested, no endpoint was called, and no data was captured. References: https://bykaranteli.com/data ; https://bykaranteli.com/terms (terms last updated 2026-10-15).
