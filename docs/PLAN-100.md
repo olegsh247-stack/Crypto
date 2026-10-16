@@ -2402,3 +2402,10 @@ Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start
 - **BITA:** premium-income/options strategy holding BTC and IBIT; remains outside core cohort pending explicit broader-aggregate rules.
 
 В этом pass других plain direct-holding US spot-BTC products сверх 13 products в provisional ledger не выявлено. Это dated research result, не гарантия отсутствия будущих запусков/изменений статуса; перед любым capture повторить official listing-status check. Source acceptance remains blocked; BTC remains not_evaluable.
+
+
+### 2026-10-16 — official filing check: Franklin EZBC and Hedgeye HBIT
+
+- Franklin Bitcoin ETF — это уже учтённый **EZBC**, а не новый фонд: официальный сайт указывает тикер EZBC и inception 2024-01-11; SEC filing от февраля 2026 года является post-effective amendment существующего продукта. Не дублировать: https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS/franklin-bitcoin-etf/EZBC ; https://www.sec.gov/Archives/edgar/data/1992870/000199287026000002/posam.htm.
+- Hedgeye Hedged Bitcoin ETF (**HBIT**) — SEC prospectus 2026-08-24 прямо говорит, что фонд не держит BTC напрямую; экспозиция в основном через другие ETF/ETP, которые держат BTC, с опционами для управления риском. Поэтому HBIT — отдельный BTC-linked product, но не core direct-holding spot-BTC cohort. В broader aggregate потребуется отдельный контракт и защита от double-counting: https://www.sec.gov/Archives/edgar/data/1771146/000177114626001708/ck0001771146-20260824.htm.
+- Итог проверки не меняет provisional core cohort count. Это не бессрочная гарантия полноты: перед будущим capture повторить official listing-status scan.
