@@ -2231,3 +2231,10 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 Создана [BTC ETF archive retention decision sheet](BTC-ETF-ARCHIVE-RETENTION-DECISION-SHEET-2026-10-16.md), commit `194633ea911cfe3db50b1e6a0af006d9e9611c48`. Она разделяет подтверждённое состояние и решения, которые нельзя выдумывать: владелец архива/восстановления, минимальный срок хранения, правило удаления, периодичность restore-check, независимый failure domain и права хранения для каждого raw payload. Временное безопасное правило — не выполнять pruning и не считать архив operational, пока решения не утверждены и независимый restore не пройден. Это не утверждает бессрочное хранение как финальную политику.
 
 Новый документ не разрешает capture, ingestion, production writes, source promotion, registry/evaluator changes, scenario evaluation/state/probabilities, deployment или merge. SSD пользователя не подключён; реальный архив не создавался. PR #83 остаётся Draft, BTC остаётся `not_evaluable`.
+
+
+## 2026-10-16 — найден кандидат Newhedge для независимой по издателю сверки ETF
+
+Публичная документация Newhedge описывает отдельный fund-reported daily ETF flow ряд в USD с US trading-day calendar, семидневным окном пересмотра и собственным правилом задержки/финализации. Отдельные on-chain ETF flows имеют `full_replace` и не смешиваются с fund-reported creations/redemptions. Подробности и ограничения внесены в [альтернативный обзор источников](BTC-ETF-ALTERNATIVE-SOURCE-REVIEW-2026-10-16.md), commit `d869cf90e365eefa5a6760049c24c5173f127b61`.
+
+**Решение:** Newhedge — только кандидат на отдельно маркированную сверку, не canonical source. Доступ к API требует token; запрос не выполнялся. Не подтверждены права хранения/повторного использования, покрытие нужных дат, состав universe, точное согласование агрегата с Farside/TFTC и response-level provenance. Время 00:00 UTC в API — метка торговой даты, не время публикации. Не менялись источники/реестр, формула среднего, база или сценарий; BTC остаётся `not_evaluable`.
