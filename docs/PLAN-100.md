@@ -2280,3 +2280,12 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 - No explicit permission was found for systematic historical extraction and private durable raw archive/backup under research use. No API request, key request/storage or data capture.
 - **Required before adoption:** obtain written confirmation of permitted automated access and frequency, retention, private backup/restore, use of derived values, and publication rights; verify fund-level lineage, calculation method, record timestamps, finality and revisions. Any USD conversion needs its own documented price source and valuation timestamp.
 - Until gates are resolved, do not promote the source or implement ingestion. BTC remains not_evaluable; no registry/formula/evaluator or scenario-state change.
+
+
+## Дополнение 2026-10-16 — вопросы поставщикам до допуска ETF-источников
+
+- Подготовлен черновик `docs/BTC-ETF-PROVIDER-CLARIFICATION-QUESTIONS-2026-10-16.md` для BGeometrics/Bitcoin-data.com, XOOMAR, Farside и SoSoValue. Он отдельно проверяет автоматизированный доступ, частоту запросов, raw storage/retention, private backup/restore, использование производных значений, атрибуцию, lineage, units/sign, fund universe, timestamps, null/zero semantics и историю исправлений/finality.
+- Для XOOMAR обязательны точный reference-price source и valuation timestamp: holdings-based USD estimate не приравнивается к опубликованному net flow. Для Bitcoin-data.com BTC values не конвертируются в USD без отдельного контракта цены/времени. Для SoSoValue общие условия сайта не заменяют API-specific разрешение.
+- Документ только подготовлен: вопросы не отправлены, API не вызывались, ключи не запрашивались/не сохранялись, данные не захватывались. Молчание или общая формулировка «для исследований» не считаются разрешением на автоматический сбор и долговременный архив.
+- VPS API Build Rehearsal [#38904095808](https://github.com/olegsh247-stack/Crypto/actions/runs/38904095808) успешно завершился для commit `4e3ea1964018b77f3443c99c4aaef360ce4f77a1`; новые документальные изменения требуют собственной проверки CI. Успех rehearsal не подтверждает фактический VPS или независимый durable archive.
+- Gate остаётся закрытым: не менять registry, source priority, formula/evaluator, production observations или scenario state. BTC остаётся `not_evaluable`; PR #83 Draft/open/unmerged.
