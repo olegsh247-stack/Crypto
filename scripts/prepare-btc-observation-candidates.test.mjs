@@ -247,3 +247,66 @@ test("flags material Farside versus TFTC ETF total deltas without approving eith
   assert.equal(comparison.decision, "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE");
   assert.equal(result.candidates.length, 0);
 });
+
+
+test("keeps DXY in the BTC input check but blocked when automated source access and timestamp are unapproved", () => {
+  const result = prepareBtcObservationCandidates({
+    sources: [{
+      metric_id: "macro.dxy",
+      source_id: "macro.yahoo_finance_candidate",
+      url: "https://finance.yahoo.com/quote/DX-Y.NYB/history/",
+      status: "BLOCKED_ACCESS_TERMS",
+      retrieved_at: "2026-10-17T10:00:00.000Z",
+      ticker: "DX-Y.NYB",
+      quote_unit: "index_points",
+      daily_close: null,
+      observed_at: null,
+      session_date: null
+    }]
+  });
+  assert.equal(result.candidates.length, 0);
+  assert.equal(result.blocked.length, 1);
+  assert.equal(result.blocked[0].metric_id, "macro.dxy");
+  assert.ok(result.blocked[0].reasons.includes("dxy_source_capture_blocked_or_missing"));
+  assert.ok(result.blocked[0].reasons.includes("dxy_observation_timestamp_unverified"));
+  assert.equal(result.blocked[0].freshness_status, "UNVERIFIABLE_UNTIL_SOURCE_TIMESTAMP_CONTRACT_PASSES");
+  assert.equal(result.blocked[0].persistable, false);
+});
+
+test("compares SoSoValue aggregate ETF rows to Farside by trading date without approving either source", () => {
+  const result = prepareBtcObservationCandidates({
+    sources: [
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.primary",
+        url: "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        status: "CAPTURED",
+        source_payload_sha256: hash,
+        latest_rows: [{
+          period_start: "2026-10-15",
+          status: "REPORTED_CANDIDATE",
+          reported_total_usd_million: 5.1,
+          reconciliation_status: "MATCHES_DISPLAY_ROUNDING"
+        }]
+      },
+      {
+        metric_id: "institutional.etf_net_flow",
+        source_id: "institutional.sosovalue",
+        url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US&limit=300",
+        status: "CAPTURED",
+        source_payload_sha256: "c".repeat(64),
+        observation_timestamp_semantics: "trading date only; exact publication/observation time and finality not supplied by documented response",
+        latest_rows: [{ date: "2026-10-15", total_net_inflow_usd_million: 5.4 }]
+      }
+    ]
+  });
+  assert.equal(result.candidates.length, 0);
+  const comparison = result.etf_cross_source_comparisons.find(row => row.source_b === "institutional.sosovalue");
+  assert.ok(comparison);
+  assert.equal(comparison.period_start, "2026-10-15");
+  assert.equal(comparison.source_a_total_usd_million, 5.1);
+  assert.equal(comparison.source_b_total_usd_million, 5.4);
+  assert.equal(comparison.delta_b_minus_a_usd_million, 0.3);
+  assert.equal(comparison.screening_status, "DELTA_WITHIN_SCREENING_BAND");
+  assert.equal(comparison.decision, "DIAGNOSTIC_ONLY_NOT_SOURCE_ACCEPTANCE");
+});
