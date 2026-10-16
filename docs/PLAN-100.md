@@ -2377,3 +2377,17 @@ No API calls, scraping, live captures, database access/writes, ingestion, deploy
 
 - Исправлена дата окончания торгов Hashdex DEFI. SEC Form 8-K/A указывает приостановку торгов после закрытия 2026-08-17; SEC filing от 2026-08-24 подтверждает завершение реализации активов. Form 15 от 2026-09-03 относится к прекращению отчётности, а не к последнему торговому дню.
 - Для active trading cohort использовать **2026-08-17** как последний торговый день; ликвидационный период до 2026-08-24 хранить отдельно, не трактовать его как обычные ETF-flow observations. Источники: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026096933/ea0304221-1512g_hashdex.htm.
+
+
+### 2026-10-16 — provisional effective-date ledger for the BTC ETF cohort
+
+Зафиксирован рабочий ledger применимости продуктов к *spot-Bitcoin trading cohort* (это не подтверждение источника daily flows):
+
+- **2024-01-11:** IBIT, FBTC, ARKB, BITB, BTCO, HODL, BRRR, EZBC, BTCW, GBTC — первая волна spot-Bitcoin ETP; SEC подтверждает начало публичных торгов 2024-01-11: https://www.sec.gov/Archives/edgar/data/1050446/000119312525230977/d49048d8k.htm.
+- **2024-03-27:** DEFI — включать только с конверсии Hashdex Bitcoin Futures ETF в spot-Bitcoin стратегию: https://www.sec.gov/Archives/edgar/data/1985840/000199937124003989/defi_fwp-032624.htm.
+- **2024-07-31:** BTC (Grayscale Bitcoin Mini Trust) — дата начала торгов: https://www.sec.gov/Archives/edgar/data/2015034/000201503426000008/btc-20260630.htm.
+- **2025-12-19:** OBTC — начало торгов после конверсии в ETF; не backdate к OTCQX: https://www.sec.gov/Archives/edgar/data/1767057/000149315226014439/form10-k.htm.
+- **2026-04-08:** MSBT — первая дата торгов: https://www.sec.gov/Archives/edgar/data/2103612/000110465926095885/R8.htm.
+- **2026-08-17:** DEFI — последний торговый день; ликвидация завершена 2026-08-24 и не относится к обычным торговым flow observations: https://www.sec.gov/Archives/edgar/data/1985840/000121390026087992/ea0301660-8ka1_hashdex.htm ; https://www.sec.gov/Archives/edgar/data/1985840/000121390026093020/ea0303094-8k_hashdex.htm.
+
+Count reconciliation: 10 → 11 → 12 → 13 → 14 products as the above start dates occur, then 13 active products after DEFI's final trading day. Ledger remains provisional pending final search for any other US direct-holding spot-BTC products and official listing-status changes. BITA stays outside the core cohort pending any separately defined broader BTC-linked ETP aggregation rule. Source-acceptance/rights/freshness/revision/retention gates remain unchanged; BTC remains not_evaluable.
