@@ -2118,3 +2118,6 @@ The first staging run [#38876064841](https://github.com/olegsh247-stack/Crypto/a
 ### Fixture restore rehearsal (2026-10-16)
 
 Added a test that copies a generated fixture snapshot to a separate restore directory and runs the full verifier against the restored copy. Commit: `e236bc53d512824e825f6c81f7efab0a1d34e24d`. Staging result pending at the time of writing. This is a same-runner fixture rehearsal, not an independent backup/restore test; source retention rights and durable storage remain blockers, BTC remains `not_evaluable`.
+
+
+The fixture restore rehearsal passed in [BTC Public Source Staging #38876362752](https://github.com/olegsh247-stack/Crypto/actions/runs/38876362752) on commit `e236bc53d512824e825f6c81f7efab0a1d34e24d`. Both archive-writer safety and archive-integrity/verifier test steps passed; live capture was skipped. This validates copying and verifying a fixture within one CI runner only, not an independent backup/restore.
