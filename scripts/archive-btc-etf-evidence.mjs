@@ -47,7 +47,8 @@ function validateSourceUrl(url, sourceId) {
   }
   let parsed;
   try { parsed = new URL(url); } catch { throw new Error("Invalid source URL for " + sourceId); }
-  if ([...parsed.searchParams.keys()].some(key => /(api.?key|token|secret|password|authorization|credential)/i.test(key))) {
+  if (parsed.username || parsed.password
+      || [...parsed.searchParams.keys()].some(key => /(api.?key|token|secret|password|authorization|credential)/i.test(key))) {
     throw new Error("Possible credential in source URL; refusing to archive " + sourceId);
   }
 }
