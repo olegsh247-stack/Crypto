@@ -79,8 +79,10 @@ export function prepareBtcSoSoValueEtfCandidates({
   const seen = new Set();
   for (const row of records) {
     const date = typeof row?.date === "string" ? row.date : "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)
-      || new Date(date + "T00:00:00.000Z").toISOString().slice(0, 10) !== date) {
+    const dateMs = /^\d{4}-\d{2}-\d{2}$/.test(date) ? Date.parse(date + "T00:00:00.000Z") : NaN;
+    const validCalendarDate = Number.isFinite(dateMs)
+      && new Date(dateMs).toISOString().slice(0, 10) === date;
+    if (!validCalendarDate) {
       base.rows.push({
         reporting_date: date || null,
         status: "BLOCKED_INVALID_REPORTING_DATE",
