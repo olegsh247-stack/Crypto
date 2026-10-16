@@ -541,3 +541,14 @@
 **Результат:** HODL на 2026-06-30 — 57,425,000 акций, NAV/share $16.70, net assets $958,827,545, 16,241 BTC; за Q2 создано 3,200,000 и погашено 5,900,000 акций. BRRR — 20,795,000 акций, NAV/share $16.46, net assets $342,354,115 и 5,864 BTC на 2026-06-30; cover отдельно сообщает 20,895,000 акций на 2026-07-30. BTCW — 2,185,000 акций, NAV/share $62.46, net assets $136,476,680 на 2026-06-30; SEC отдельно показывает округлённые holdings 2,310 BTC и 2,309.689 BTC в контексте другого метода оценки, поэтому эти значения нельзя схлопывать без сохранения методики.
 
 **Решение:** отчёты полезны для периодической сверки, но не доказывают полный daily creations/redemptions feed и права долговременного архива. Не вычислять flows из изменения AUM, не менять registry/formula/evaluator; capture и сценарная оценка не выполнялись. BTC остаётся `not_evaluable` до закрытия отдельного ETF gate.
+
+
+## 2026-10-16 — усилена SEC-сверка ETF для EZBC (Franklin Bitcoin ETF)
+
+**Действие:** проверен SEC Q2 2026 Form 10-Q Franklin Bitcoin ETF и сопоставлен с официальной продуктовой страницей; уточнена строка EZBC в матрице официальных источников и дополнение к Плану 100.
+
+**Результат:** на 2026-06-30 раскрыты 9,800,000 акций, NAV/share $34.15, net assets $334,694,929 и 5,664.0163 BTC. За Q2 выпущено 150,000 и погашено 1,250,000 акций. Это периодическая первичная контрольная точка, но не полный daily creations/redemptions series. Маркировка страницы “Updated Daily” сама по себе не доказывает полную машинно-читаемую ежедневную историю, семантику исправлений или право долговременного хранения.
+
+**Решение:** EZBC остаётся кандидатом для периодической сверки, не источником ежедневных flows. Не рассчитывать flows из изменения AUM, не менять registry/formula/evaluator и не запускать capture. BTC остаётся `not_evaluable`; live capture, ingestion, production writes, scenario evaluation/state/probabilities, deployment и merge не выполнялись.
+
+**Источники:** [SEC Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1992870/000114036126033208/ef20077161_10q.htm); [Franklin product page](https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/39639/SINGLCLASS); [матрица источников](BTC-ETF-ISSUER-SOURCE-COVERAGE-MATRIX-2026-10-16.md).
