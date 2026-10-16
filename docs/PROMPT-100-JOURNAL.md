@@ -647,3 +647,11 @@
 **Outcome:** neither source promoted to canonical or automated ingestion. XOOMAR may be considered only for bounded internal comparison after unresolved method/upstream-rights checks. Bitcoin-data.com remains blocked pending provenance, methodology, revision and license/retention clarification; no USD conversion made. No API endpoint was called, no key requested/stored, and no data captured.
 
 **Guardrails preserved:** no source-priority, registry, formula/evaluator, production data, or scenario-state changes; BTC remains not_evaluable. PR #83 remains Draft/open/unmerged. CI for prior head aea7a5242f8c88dfa2ce40e06415d3b16ecf34b3 passed build-and-e2e; this new documentation commit requires its own CI confirmation.
+
+## 2026-10-16 — BGeometrics / Bitcoin-data.com rights review
+
+**Action:** reviewed the official BGeometrics terms and the public ETF endpoint description; added the rights and technical gates to the alternative-source review and Plan 100.
+
+**Result:** the API advertises daily per-fund ETF flows in BTC for 12 funds since 2024-01-11, but the terms describe the free API as intended for personal/research/evaluation, prohibit bulk scraping/harvesting without written permission, and apply separate commercial publishing/redistribution restrictions. The reviewed terms do not explicitly authorize systematic historical capture and private durable raw-response archiving/restore for this use case. Upstream lineage, calculation methodology, publication timestamps and revision/finality behavior also remain unverified.
+
+**Decision:** do not call the API, request/store a key, capture data, promote the source or automate ingestion until written rights clarification and technical contract details are obtained. No USD conversion. No registry/formula/evaluator, production data or scenario-state change. BTC remains not_evaluable; PR #83 remains Draft/open/unmerged.
