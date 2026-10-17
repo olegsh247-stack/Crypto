@@ -256,7 +256,7 @@
       "source_id": "institutional.sosovalue",
       "provider": "SoSoValue",
       "name": "ETF daily summary API",
-      "url": "https://api.sosovalue.com",
+      "url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history",
       "access_mode": "api_key",
       "operational_status": "candidate",
       "data_role": "cross_check",
@@ -275,7 +275,7 @@
         "revision_finality": "revision/finality semantics unresolved"
       },
       "terms_status": "api_terms_review_required",
-      "notes": "Existing GitHub Actions secret; cross-check only, not canonical ingestion.",
+      "notes": "Exact summary-history endpoint used by the offline candidate normalizer; keyed cross-check only, not canonical ingestion.",
       "registry_status": "registered"
     },
     {
@@ -871,6 +871,33 @@
       "terms_status": "cc-by-4.0-advertised_review_required",
       "notes": "Exact JSON endpoint used by public source capture; mirror/cross-check only.",
       "registry_status": "registered"
+    },
+    {
+      "catalog_id": "institutional.sosovalue.etf-candidate-output",
+      "source_id": "institutional.sosovalue.candidate",
+      "provider": "SoSoValue",
+      "name": "Offline candidate output identity for ETF summary-history",
+      "url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history",
+      "access_mode": "api_key",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": "SOSOVALUE_API_KEY",
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Offline candidate preparation from captured response; not a live polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day after normalization",
+        "observation_time": "Trading date supplied; publication timestamp not supplied in tested response",
+        "period_semantics": "Daily trading-session row",
+        "revision_finality": "Revision/finality semantics unresolved"
+      },
+      "terms_status": "api_terms_review_required",
+      "notes": "Candidate-output source_id used by prepare-btc-sosovalue-etf-candidates.mjs. Must not be promoted into metric source_priority without separate approval.",
+      "registry_status": "candidate_unregistered"
     }
   ]
 }
