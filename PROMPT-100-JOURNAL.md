@@ -69,3 +69,12 @@
 - Added `scripts/compare-btc-etf-snapshots.mjs` and tests. The utility requires same-source chronological captures separated by at least 24 hours, compares overlapping per-fund/aggregate rows, and flags revisions without normalizing or silently substituting data. Integrated its tests into the read-only staging workflow.
 - Added `docs/BTC-ETF-TWO-SNAPSHOT-ACCEPTANCE-2026-10-17.md` with snapshot provenance, comparison procedure, retention review, and the remaining gates. One successful snapshot is not enough; the second snapshot must be at least 24 hours later. Exact provider publication time and revision/finality policy remain unproven.
 - No production DB access/writes, ingestion, live scenario evaluation, or runtime registry changes. BTC remains `not_evaluable`.
+
+
+## 2026-10-17 — Fresh protocol-issued BTC supply candidate
+
+- Added integer-satoshi issuance calculation through a captured Mempool tip height, inclusive, using the 210,000-block consensus halving schedule. Tests cover genesis, halving boundaries, the fourth halving, the historical Blockchain.com point, and a current-height vector.
+- Read-only staging run [#39056549608](https://github.com/olegsh247-stack/Crypto/actions/runs/39056549608) captured a stable tip: height `971896`, block hash `0000000000000000000142a5ac84bd7c3f866ac84b97d56b1ec23a2267258cf5`, block timestamp `2026-10-17T18:03:12Z`, retrieval `2026-10-17T18:05:22.109Z`. Height and hash were rechecked around the block lookup. Derived total issuance is `2,009,967,812,500,000 sats = 20,099,678.125 BTC`; combined evidence SHA-256 `c62b776119cb8177804135945e4d620eb1db4b8fe0df40b8bfa1bbdb5ea75cab`.
+- Staging run [#39056555560](https://github.com/olegsh247-stack/Crypto/actions/runs/39056555560) passed the new protocol-supply tests, Farside parser tests, ETF two-snapshot comparison tests, observation normalization tests, public-source capture, and candidate preparation.
+- The source ID matches the current `network.primary` priority, and the tip timestamp is fresh under 48 hours. **Not promoted:** this is protocol-scheduled total issuance, not economically spendable supply/UTXO supply; metric semantics still require explicit approval. Blockchain.com’s 2026-10-13 point remains a stale historical cross-check. No registry/runtime changes, DB writes, ingestion, or scenario-state changes.
+- Added `docs/BTC-PROTOCOL-ISSUED-SUPPLY-CANDIDATE-2026-10-17.md` and updated the BTC input recheck. BTC remains `not_evaluable`.
