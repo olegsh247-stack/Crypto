@@ -15,8 +15,10 @@ function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.head
 function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
 
 const tickerCache=new Map<string,{expiresAt:number;value:{price:number;timestamp:string;source:string}}>();
-const TICKER_CACHE_TTL_MS=60_000;
-function tickerJson(data:unknown,status=200,env?:Env):Response{return Response.json(data,{status,headers:{"Cache-Control":"public, max-age=30, s-maxage=60",...corsHeaders(env??{DATABASE_URL:""})}})}
+// Upstream ticker polling/cache floor: 15 minutes to avoid repeating provider calls on every UI refresh.
+// This is retrieval/cache time, not proof of the provider's underlying trade observation timestamp.
+const TICKER_CACHE_TTL_MS=15*60_000;
+function tickerJson(data:unknown,status=200,env?:Env):Response{return Response.json(data,{status,headers:{"Cache-Control":"public, max-age=900, s-maxage=900",...corsHeaders(env??{DATABASE_URL:""})}})}
 async function binanceTicker(symbol:string){
  const endpoints=[`https://data-api.binance.vision/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api-gcp.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`,`https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`];
  for(const endpoint of endpoints){
