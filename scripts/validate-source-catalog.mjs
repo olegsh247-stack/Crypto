@@ -149,6 +149,48 @@ for (const family of candidatePreparationFamilies) {
     assert.equal(entry.data_role, "cross_check", "SoSoValue candidate endpoint must remain cross_check");
   }
 }
+
+function assertCatalogContract({ catalogId, sourceId, host, path, pair, unit, role }) {
+  const entry = catalog.endpoints.find((candidate) => candidate.catalog_id === catalogId);
+  assert.ok(entry, `missing expected catalog contract ${catalogId}`);
+  assert.equal(entry.source_id, sourceId, `${catalogId}: source_id mismatch`);
+  assert.equal(entry.data_role, role, `${catalogId}: data_role mismatch`);
+  assert.equal(entry.data_contract?.asset_pair, pair, `${catalogId}: asset_pair mismatch`);
+  assert.equal(entry.data_contract?.unit, unit, `${catalogId}: unit mismatch`);
+  assert.ok(entry.url != null, `${catalogId}: expected endpoint URL`);
+  const url = new URL(entry.url);
+  assert.equal(url.host, host, `${catalogId}: endpoint host mismatch`);
+  assert.equal(url.pathname, path, `${catalogId}: endpoint path mismatch`);
+}
+
+// Semantic parity is explicit: endpoint presence alone is not enough. In particular,
+// BTC/USDT remains separate from BTC/USD, and all runtime UI sources stay review_only.
+const semanticEndpointContracts = [
+  { catalogId: "market.binance.ticker.btcusdt.ui", sourceId: "market.binance", host: "data-api.binance.vision", path: "/api/v3/ticker/price", pair: "BTC/USDT", unit: "USDT/BTC", role: "review_only" },
+  { catalogId: "market.binance.ticker.btcusdt.ui.apigcp", sourceId: "market.binance", host: "api-gcp.binance.com", path: "/api/v3/ticker/price", pair: "BTC/USDT", unit: "USDT/BTC", role: "review_only" },
+  { catalogId: "market.binance.ticker.btcusdt.ui.primary", sourceId: "market.binance", host: "api.binance.com", path: "/api/v3/ticker/price", pair: "BTC/USDT", unit: "USDT/BTC", role: "review_only" },
+  { catalogId: "market.binance.klines.ui", sourceId: "market.binance", host: "data-api.binance.vision", path: "/api/v3/klines", pair: "BTC/USDT", unit: "USDT/BTC candles", role: "review_only" },
+  { catalogId: "market.binance.klines.ui.apigcp", sourceId: "market.binance", host: "api-gcp.binance.com", path: "/api/v3/klines", pair: "BTC/USDT", unit: "USDT/BTC candles", role: "review_only" },
+  { catalogId: "market.binance.klines.ui.primary", sourceId: "market.binance", host: "api.binance.com", path: "/api/v3/klines", pair: "BTC/USDT", unit: "USDT/BTC candles", role: "review_only" },
+  { catalogId: "market.kraken.ticker.ui", sourceId: "market.kraken", host: "api.kraken.com", path: "/0/public/Ticker", pair: "BTC/USD", unit: "USD/BTC", role: "review_only" },
+  { catalogId: "market.kraken.ohlc.ui", sourceId: "market.kraken", host: "api.kraken.com", path: "/0/public/OHLC", pair: "BTC/USD", unit: "USD/BTC OHLC", role: "review_only" },
+  { catalogId: "market.coingecko.simple-price.ui", sourceId: "market.coingecko", host: "api.coingecko.com", path: "/api/v3/simple/price", pair: "BTC/USD", unit: "USD/BTC", role: "review_only" },
+  { catalogId: "market.coingecko.market-chart.ui", sourceId: "market.coingecko", host: "api.coingecko.com", path: "/api/v3/coins/bitcoin/market_chart", pair: "BTC/USD", unit: "USD price series", role: "review_only" },
+  { catalogId: "market.kraken.trades.xbtusd", sourceId: "market.kraken", host: "api.kraken.com", path: "/0/public/Trades", pair: "BTC/USD", unit: "USD/BTC", role: "canonical_candidate" },
+  { catalogId: "market.binance.trades.btcusdt.primary", sourceId: "market.binance", host: "api.binance.com", path: "/api/v3/trades", pair: "BTC/USDT", unit: "USDT/BTC", role: "cross_check" },
+  { catalogId: "market.binance.trades.btcusdt.dataapi", sourceId: "market.binance", host: "data-api.binance.vision", path: "/api/v3/trades", pair: "BTC/USDT", unit: "USDT/BTC", role: "cross_check" },
+  { catalogId: "market.okx.trades.btcusdt", sourceId: "market.okx", host: "www.okx.com", path: "/api/v5/market/trades", pair: "BTC/USDT", unit: "USDT/BTC", role: "cross_check" },
+  { catalogId: "market.bybit.trades.btcusdt", sourceId: "market.bybit", host: "api.bybit.com", path: "/v5/market/recent-trade", pair: "BTC/USDT", unit: "USDT/BTC", role: "cross_check" },
+  { catalogId: "network.mempool.hashrate", sourceId: "network.primary", host: "mempool.space", path: "/api/v1/mining/hashrate/1w", pair: "BTC network", unit: "EH/s after verified normalization", role: "review_only" },
+  { catalogId: "network.mempool.block-fees", sourceId: "network.primary", host: "mempool.space", path: "/api/v1/mining/blocks/fees/1w", pair: "BTC network", unit: "endpoint-defined fee rate; not yet mapped to a registry metric", role: "review_only" },
+  { catalogId: "institutional.farside.etf-landing", sourceId: "institutional.primary", host: "farside.co.uk", path: "/btc/", pair: "US spot BTC ETFs", unit: "USD million/day", role: "review_only" },
+  { catalogId: "institutional.farside.etf-all-data", sourceId: "institutional.primary", host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/", pair: "US spot BTC ETFs", unit: "USD million/day", role: "review_only" },
+  { catalogId: "institutional.tftc.etf-json", sourceId: "institutional.tftc", host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json", pair: "US spot BTC ETFs", unit: "USD/day after parser confirmation", role: "cross_check" },
+  { catalogId: "institutional.sosovalue.etf-summary", sourceId: "institutional.sosovalue", host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", pair: "US spot BTC ETFs", unit: "USD million/day after normalization", role: "cross_check" },
+  { catalogId: "institutional.sosovalue.etf-candidate-output", sourceId: "institutional.sosovalue.candidate", host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", pair: "US spot BTC ETFs", unit: "USD million/day after normalization", role: "cross_check" }
+];
+for (const contract of semanticEndpointContracts) assertCatalogContract(contract);
+
 const sourceSeedStart = seedSql.toLowerCase().indexOf("insert into sources");
 assert.ok(sourceSeedStart >= 0, "seed-v1.sql must contain a sources seed block");
 const sourceSeedEnd = seedSql.toLowerCase().indexOf("on conflict (source_id)", sourceSeedStart);
