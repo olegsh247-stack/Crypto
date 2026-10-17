@@ -141,3 +141,12 @@ Ticker cache в runtime — 60 секунд, response Cache-Control — max-age 
 ## Дополнение — cache TTL исправлен на рабочей ветке, не в main
 
 В commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78` на `fix/btc-readiness-registry-runtime-source` TTL in-process ticker cache увеличен с 60 секунд до 15 минут; HTTP Cache-Control — с `max-age=30, s-maxage=60` до `max-age=900, s-maxage=900`. Это уменьшает частоту повторных запросов upstream при частом обновлении интерфейса. Изменение пока не в main и не развернуто; дождаться CI build/E2E. Fallback Binance → Kraken → CoinGecko не менялся. Timestamp по-прежнему является временем приложения после fetch, а не подтверждённым trade timestamp.
+
+
+## Дополнение — Source Catalog v1 baseline
+
+Создан первоначальный endpoint-level каталог `data/CryptoDataModel/registry/source-catalog.v1.json` и план миграции `docs/SOURCE-CATALOG-V1-DESIGN-AND-MIGRATION-PLAN-2026-10-17.md`. В каталоге представлены все текущие IDs из `source-registry.json` (включая placeholder entries для невыбранных market/macro providers), плюс два явных unregistered candidates: Yahoo Finance DXY и CryptoETF.today. Эти два кандидата не добавлены в metric source_priority; их наличие в каталоге не даёт права на ingestion или scenario evaluation.
+
+Добавлен `scripts/validate-source-catalog.mjs` в VPS API Build Rehearsal. Проверка валидирует уникальность catalog IDs, source ID alignment, допустимые статус/роль/access/polling enum, наличие unit/observation-time/period/terms fields и отсутствие credential-like URL query parameters; допускает URL-less provider placeholder только если он явно `unknown + blocked + manual`. Проверка выводит coverage gaps как baseline report, не меняя runtime. В последнем наблюдавшемся run [#39015560940](https://github.com/olegsh247-stack/Crypto/actions/runs/39015560940) шаг `Validate source catalog inventory (read-only)` завершился **success**; полный VPS build/E2E на момент записи ещё выполняется.
+
+Каталог пока не является runtime source of truth. Нельзя пока рефакторить capture/runtime/SQL seed на его основе: сначала подтвердить полный CI run и просмотреть baseline coverage report. Source priorities, production data, scenario state/score/probability и deployment не менялись.
