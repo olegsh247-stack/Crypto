@@ -27,3 +27,11 @@
 - Research candidate formula: `sum(fees)/sum(subsidy) = 231274297/45000000000 = 0.0051394288222` (approximately 0.513943%). The capture parser now calculates this only if the inclusive height window is exactly 144 and the inferred subsidy matches the protocol schedule.
 - **Boundary:** aggregate endpoint does not provide block hashes, so chain-reorg/finality handling and deployed-version parity remain open before production acceptance. No database writes, ingestion, scenario evaluation or scenario-state/monitoring writes were performed.
 - Contract and evidence are documented in `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md`. The next staging run must verify the new ratio parser against this real response and preserve the acceptance boundary.
+
+
+## 2026-10-17 — 144-block fee/subsidy parser verified on second live capture
+
+- Updated BTC Public Source Staging run [#39039925329](https://github.com/olegsh247-stack/Crypto/actions/runs/39039925329) passed after adding guarded ratio calculation; artifact digest `sha256:81d972ffb86ee7bf183a7fe48dbc7ba5adaaebc159d778d7fa8ebf6b3a4e76a2`.
+- The captured 144-block window again satisfied the range and subsidy checks. Parser output: `fee_subsidy_ratio=0.005139428822222222`, `fee_share_of_subsidy_percent=0.5139428822222223`, `acceptance_status=RESEARCH_CANDIDATE_RATIO_COMPUTED`.
+- The ratio is reproducible from the raw response, but remains a research candidate because the aggregate lacks per-block hashes and does not itself preserve a reorg/finality proof. Do not mark the metric production-accepted or change BTC scenario readiness from this result alone.
+- Hashrate staging again returned HTTP 200 and the expected seven-point daily series with explicit UTC window boundaries. No database writes or scenario evaluation occurred.
