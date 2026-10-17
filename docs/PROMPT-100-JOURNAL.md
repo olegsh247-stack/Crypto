@@ -1279,3 +1279,12 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Why:** Retrieval time is provenance, not observation time; chronology must be coherent. Multiple eligible rows for a date require explicit revision review rather than automatic deduplication.
 
 **Boundary:** Offline/read-only contract hardening only. No provider finality is inferred, no timestamps/rights/archive attestations are fabricated, and no live capture, production write, source-priority change, scenario evaluation/state change, deployment, or merge occurred. BTC remains `not_evaluable` pending real evidence gates.
+
+
+## 2026-10-17 — Combined BTC gate CI and SoSoValue cross-check result
+
+**Live read-only check:** [SoSoValue BTC ETF API Check #39022606386](https://github.com/olegsh247-stack/Crypto/actions/runs/39022606386) returned HTTP 200 and 21 unique daily reporting dates from 2026-09-18 to 2026-10-16; all 21 totals were numeric, no duplicate dates were found. Response size was 3,689 bytes and response SHA-256 was `6fe2f5e5c57b6d9a30ca28ccd698c2011d593ea8c496c0df9d2c413ef9b2cfb5`. Dates are trading dates (`yyyy-MM-dd`), latest month only. Revision/finality remains unknown; repeat capture/hash and row comparison is required. SoSoValue remains a cross-check only and is not counted as an independent third source because TFTC data lineage overlaps.
+
+**Combined code verification:** [BTC Public Source Staging #39022606383](https://github.com/olegsh247-stack/Crypto/actions/runs/39022606383), [Web Build #39022606410](https://github.com/olegsh247-stack/Crypto/actions/runs/39022606410), [BTC Scenario Readiness Gate #39022659932](https://github.com/olegsh247-stack/Crypto/actions/runs/39022659932), and [VPS Build Rehearsal #39022659927](https://github.com/olegsh247-stack/Crypto/actions/runs/39022659927) passed. Readiness regression coverage now rejects capture-before-observation chronology and duplicate/conflicting ETF rows even when five other sessions exist.
+
+**Still not attested:** The SoSoValue response artifact has 7-day retention only and does not qualify as durable archive evidence. This run does not prove a fresh Kraken capture, two qualifying Farside/TFTC captures at least 24 hours apart, source-specific raw-retention rights, or independent archive restore. It does not certify provider finality or make BTC evaluable. No production DB writes, source-priority changes, scenario evaluation/state/probability changes, deployment, or merge.
