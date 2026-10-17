@@ -265,6 +265,37 @@ manifest.sources.push({
   note: "No HTTP request is made by this run. Previously captured Yahoo chart data is historical review evidence only and must not be refreshed or persisted as a canonical observation."
 });
 
+// Blockchain.com public chart reports total mined bitcoins ("in circulation") by daily timestamp.
+// Treat this as an external candidate only: it is not admitted by the current metric source-priority
+// contract, and total issued supply is not a measure of economically spendable coins.
+await capture({
+  name: "blockchaincom-total-bitcoins-supply",
+  metricId: "monetary.circulating_supply",
+  sourceId: "analytics",
+  url: "https://api.blockchain.info/charts/total-bitcoins?timespan=all&format=json",
+  parse: body => {
+    const data = JSON.parse(body);
+    const rows = Array.isArray(data.values) ? data.values : [];
+    const latest = rows.at(-1);
+    if (!latest || !Number.isFinite(Number(latest.x)) || !Number.isFinite(Number(latest.y))) {
+      throw new Error("Blockchain.com supply chart has no valid latest point");
+    }
+    return {
+      chart_name: data.name ?? null,
+      chart_unit: data.unit ?? null,
+      chart_period: data.period ?? null,
+      row_count: rows.length,
+      latest_supply_btc: Number(latest.y),
+      latest_series_timestamp: new Date(Number(latest.x) * 1000).toISOString(),
+      latest_series_date_utc: new Date(Number(latest.x) * 1000).toISOString().slice(0, 10),
+      methodology: "blockchaincom-total-bitcoins-issued-supply-chart-v1",
+      methodology_version: "1",
+      acceptance_status: "REVIEW_ONLY_SOURCE_PRIORITY_AND_SEMANTICS_CHECK",
+      note: "Provider's chart is total mined/issued bitcoins; this is not a direct measure of economically spendable coins. Candidate only until registry source priority, timestamp semantics, chart unit and agreement with protocol issuance are reviewed."
+    };
+  }
+});
+
 await capture({
   name: "mempool-hashrate-1w",
   metricId: "security.hashrate",
@@ -581,7 +612,7 @@ console.log(JSON.stringify({
   unresolved: manifest.unresolved
 }, null, 2));
 
-const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-block-fees-1w"];
+const requiredNames = ["kraken-xbtusd-trades", "mempool-hashrate-1w", "mempool-mining-reward-stats-144"];
 const requiredCaptureFailed = requiredNames.some(name =>
   !manifest.sources.some(source => source.name === name && source.status === "CAPTURED"));
 const etfCaptureSucceeded = manifest.sources.some(source =>
