@@ -1726,3 +1726,11 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 - Единственный подтверждённо нужный ключ на текущем этапе — `SOSOVALUE_API_KEY`, уже настроенный в GitHub Actions для read-only cross-check. Новые ключи сейчас создавать не требуется. Glassnode, derivatives provider, официальный macro source и DXY остаются кандидатами; ключи откладываются до выбора endpoint, подтверждения тарифов/ToS и необходимости.
 - В аудит источников и отдельный prompt добавлено требование фиксировать для каждого endpoint poll interval, provider rate limit, freshness policy, backoff и секретную переменную (без значения ключа).
 - Runtime cadence/registry/source priorities не менялись. Производственная БД, ingestion и scenario evaluation не затрагивались; BTC остаётся `not_evaluable`.
+
+
+## 2026-10-17 — runtime API source path: найдено отличие от research registry
+
+- Трассирован `vps/api/src/app.ts`: runtime ticker fallback идёт Binance → Kraken → CoinGecko, а research `market.spot_price` source priority указывает только `market.kraken`. Не считать эти контуры идентичными и не смешивать runtime price с canonical research BTC/USD автоматически.
+- Runtime ticker cache установлен на 60 секунд; HTTP cache headers max-age 30 / s-maxage 60. Это может вызывать upstream-запросы чаще целевого диапазона 15–60 минут. Время `timestamp` присваивается приложением после fetch, а не подтверждённым source observation time.
+- Runtime CoinGecko simple/price вызывается без ключа; текущий `vps/.env.production.example` не содержит provider API keys. Новые ключи пока не нужны; сначала рассмотреть кэш/частоту и проверить provider limits.
+- Фактические расхождения добавлены в аудит и polling policy. Код, TTL, API response, canonical source priority, SQL seed и scenario state не менялись. Следующий этап — проверить UI/consumers и тесты перед изменением cache TTL/timestamp contract.
