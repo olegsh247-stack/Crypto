@@ -21,7 +21,7 @@
 5. Raw payload checksum, retrieval time and freshness recorded.
 6. A repeated capture can be compared without creating a second logical observation for the same daily bucket.
 
-**Current status:** capture implementation now emits period boundaries and EH/s for review. This change does not approve the metric for production ingestion; the next staging artifact must confirm actual response shape, endpoint parity, freshness and tests.
+**Observed staging result (2026-10-17 14:13:40 UTC):** HTTP 200; 7 daily points; latest bucket `[2026-10-16T00:00:00Z, 2026-10-17T00:00:00Z)`; estimated hashrate `1009.5138912218121 EH/s`; payload SHA-256 `7554dafd3425d7d52ee717dd446d76ccfd68146a5b70f90705f325b0b8cf9856`. The value was fresh at capture time. This confirms the real response shape and unit conversion for the captured artifact; production ingestion is still not approved until the test run and canonical endpoint/source checks pass.
 
 ## 2. Fee/subsidy ratio
 
@@ -44,7 +44,7 @@
 6. The computed ratio is finite and nonnegative; zero is valid only when source data genuinely show zero total fees.
 7. Raw provenance and the calculation inputs/results are reproducible from the saved artifact.
 
-**Current status:** endpoint added as a review-only capture candidate. The code deliberately does not calculate the ratio. The methodology remains blocked until real response semantics and the listed gates are verified.
+**Observed staging result (2026-10-17 14:13:40 UTC):** HTTP 200, payload `{"startBlock":971728,"endBlock":971871,"totalReward":"45231274297","totalFee":"231274297","totalTx":"714014"}`; raw SHA-256 `92dfedfd15be72e738a7b628a31a7e3cd32b9071cbf0c6352f0f78000e922fe6`. The inclusive height range is exactly 144 blocks. The current public backend implementation calculates these fields as sums over the latest N blocks with `stale = 0` (reviewed in [Mempool BlocksRepository](https://github.com/mempool/mempool/blob/master/backend/src/repositories/BlocksRepository.ts)). Total reward minus total fees is `45,000,000,000 sats = 450 BTC`, matching 144 × 3.125 BTC. Therefore the reproducible research candidate ratio is `231,274,297 / 45,000,000,000 = 0.0051394288222` (fees equal approximately `0.513943%` of subsidy). This is not yet a production-approved observation: the aggregate does not include per-block hashes, so chain reorg/finality risk and exact deployed-version parity still require an explicit policy.
 
 ## 3. Safety boundary and next step
 
