@@ -2567,3 +2567,11 @@ The first real read-only source capture is recorded in [BTC live source capture 
 Farside all-data and TFTC both returned HTTP 200 in the same capture. Five latest overlapping dates (2026-10-09, 12–15) are within the $0.65m diagnostic screening band. The older 2026-10-07 discrepancy remains material: Farside −$484.9m versus TFTC −$487.067m, a −$2.167m difference, mainly BRRR. Preserve both source values. TFTC is updated through 2026-10-15; Farside includes 2026-10-16.
 
 **This is a concrete evidence milestone, not final ETF acceptance.** A second pair capture ≥24 hours later, Farside retention/reuse-rights clearance, durable private archive plus independent restore, and explicit human review remain outstanding. The first raw artifact is temporary and expires 2026-10-24; raw payloads were not committed or written to a database. BTC remains `not_evaluable`. No production writes, registry/source-priority changes, scenario evaluation/state changes, deployment, or merge.
+
+
+## 2026-10-17 — DXY source verification completed
+
+- Completed a comparative source review and recorded evidence/contract in [DXY source verification](DXY-SOURCE-VERIFICATION-2026-10-17.md).
+- Decision: no reviewed provider is approved as a free automated canonical ICE DXY feed. Yahoo Finance `DX-Y.NYB` is manual-only absent explicit permission for automated collection; Alpha Vantage's relevant “Other Major Indices” endpoint is documented as premium; FXMacroData does not document DXY; Live-Rates does not publicly verify DXY coverage and requires a key for instrument discovery/history; FRED `DTWEXBGS` is a distinct broad-dollar index, not DXY; TradingView is visual/manual only. ICE is the authoritative licensing route, but no free public automated feed was verified.
+- No new API keys are needed or requested for DXY. Daily series cadence does not justify polling every 15 minutes. Keep DXY blocked/optional; do not substitute FRED under the DXY identifier or alter BTC source priorities/scenario state.
+- Future contract must retain candle/session date separately from UTC retrieval time, provider/source identity, units/base, hashes, method version, freshness, and provider-supplied revision/finality semantics. Do not invent timestamps/finality; retention rights must be checked before raw archival.
