@@ -96,6 +96,29 @@ for (const family of runtimeEndpointFamilies) {
   assert.equal(entry.data_role, "review_only",
     `runtime UI endpoint ${entry.catalog_id} must remain review_only unless a separate source approval changes the contract`);
 }
+const captureScript = readFileSync(new URL("../scripts/capture-btc-public-sources.mjs", import.meta.url), "utf8");
+const captureEndpointFamilies = [
+  { host: "api.kraken.com", path: "/0/public/Trades" },
+  { host: "api.binance.com", path: "/api/v3/trades" },
+  { host: "data-api.binance.vision", path: "/api/v3/trades" },
+  { host: "www.okx.com", path: "/api/v5/market/trades" },
+  { host: "api.bybit.com", path: "/v5/market/recent-trade" },
+  { host: "mempool.space", path: "/api/v1/mining/hashrate/1w" },
+  { host: "mempool.space", path: "/api/v1/mining/blocks/fees/1w" },
+  { host: "farside.co.uk", path: "/btc/" },
+  { host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/" },
+  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json" }
+];
+for (const family of captureEndpointFamilies) {
+  assert.ok(captureScript.includes(family.host) && captureScript.includes(family.path),
+    `capture script no longer references expected endpoint ${family.host}${family.path}; review catalog parity check`);
+  const entry = catalog.endpoints.find((candidate) => {
+    if (candidate.url == null) return false;
+    const url = new URL(candidate.url);
+    return url.host === family.host && url.pathname === family.path;
+  });
+  assert.ok(entry, `capture endpoint ${family.host}${family.path} is missing from source catalog`);
+}
 const registrySourcesMissingFromCatalog = [...registrySourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 const metricSourcesMissingFromCatalog = [...metricSourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 
@@ -103,6 +126,7 @@ const result = {
   status: "PASS",
   endpoint_count: catalog.endpoints.length,
   runtime_endpoint_families_checked: runtimeEndpointFamilies.length,
+  capture_endpoint_families_checked: captureEndpointFamilies.length,
   registered_source_ids_covered: catalogSourceIds.size,
   metric_source_ids_missing_catalog_entries: metricSourcesMissingFromCatalog,
   registry_source_ids_missing_catalog_entries: registrySourcesMissingFromCatalog,
