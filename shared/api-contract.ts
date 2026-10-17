@@ -17,6 +17,6 @@ export type MetricObservation = {
   source_id: string | null;
   source_url: string | null;
   status: string | null;
-  freshness: "fresh" | "stale" | "unknown";
+  freshness: "CURRENT" | "STALE" | "EXPIRED" | "UNCLASSIFIED";
   revision: number | null;
 };
