@@ -1,0 +1,41 @@
+{
+  "fixture_id": "btc-offline-rehearsal-2026-10-17",
+  "fixture_type": "historical_source_reviewed_test_fixture",
+  "not_live": true,
+  "not_database_observations": true,
+  "not_approved_for_ingestion": true,
+  "input_window_label": "Historical source-reviewed inputs previously used by the BTC rule-v1 test; this is not a current market snapshot.",
+  "provenance": {
+    "btc_spot_close_start_usd": 86480.3,
+    "btc_spot_close_end_usd": 83679.46,
+    "etf_daily_net_flows_usd_millions": {
+      "2026-10-05": -89.8,
+      "2026-10-06": 118.8,
+      "2026-10-07": -484.9,
+      "2026-10-08": -244.1,
+      "2026-10-09": 21.1
+    },
+    "dxy_close_start": 102.24,
+    "dxy_close_end": 102.39,
+    "hashrate_change_7d_pct": 1,
+    "fee_total_btc": 0.0129,
+    "subsidy_per_block_btc": 3.125,
+    "note": "Values are an offline deterministic fixture only. The ETF sessions are historical, not fresh; DXY values are source-reviewed historical inputs; the 1% hashrate change is held as a fixture input and is not asserted to be a fresh accepted observation."
+  },
+  "derived_inputs": {
+    "readiness_status": "ready_for_rule_evaluation",
+    "price_return_7d_pct": -3.239997,
+    "etf_net_flow_5d_usd_millions": -678.9,
+    "hashrate_change_7d_pct": 1,
+    "dxy_change_5d_pct": 0.146712,
+    "fee_subsidy_ratio": 0.004128
+  },
+  "expected": {
+    "methodology_version": "BTC-Scenario-Rule-v1",
+    "scenario_type": "base",
+    "directional_score": -1,
+    "confidence_band": "low",
+    "baseline_probabilities_changed": false,
+    "can_persist_scenario_state": false
+  }
+}
