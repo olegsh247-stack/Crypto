@@ -102,6 +102,18 @@ test("duplicate ETF reporting dates do not satisfy the five-date minimum", () =>
   assert.ok(result.blockers.some((b) => b.metric_id === "institutional.etf_net_flow" && b.reason === "requires_at_least_5_distinct_recent_daily_observations"));
 });
 
+
+test("blocks one ETF source row key reused across distinct reporting days", () => {
+  const inputs = completeInputs();
+  inputs[2] = etf(1.5, { source_row_key: inputs[1].source_row_key });
+  const result = assessBtcScenarioReadiness(inputs, NOW);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some((b) =>
+    b.metric_id === "institutional.etf_net_flow"
+    && b.reason === "duplicate_source_row_key_across_reporting_days"
+  ));
+});
+
 test("blocks missing ETF revision/finality evidence", () => {
   const inputs = completeInputs();
   inputs[0] = price();
