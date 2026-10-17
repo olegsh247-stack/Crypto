@@ -6,3 +6,17 @@ export type PairHistoryRow = { time: string; pair: number; baseUsd: number; quot
 export type PairHistoryResponse = { status: "ok"; source: string; storage_mode: "temporary" | "persisted"; pair: string; interval: string; days: number; rows: PairHistoryRow[]; normalized?: { relative: Array<{value:number}>; base: Array<{value:number}>; quote: Array<{value:number}> }; interpretation?: { relative_strength?: string } };
 
 export type PairTickerResponse = { status: "ok"; pair: string; price: number; timestamp: string; source: string; };
+
+
+/** Canonical per-metric observation shape returned by the VPS Asset Detail API. */
+export type MetricObservation = {
+  metric_id: string;
+  value: unknown;
+  unit: string | null;
+  observed_at: string | null;
+  source_id: string | null;
+  source_url: string | null;
+  status: string | null;
+  freshness: "fresh" | "stale" | "unknown";
+  revision: number | null;
+};
