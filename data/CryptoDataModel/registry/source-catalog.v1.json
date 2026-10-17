@@ -930,7 +930,7 @@
       "terms_status": "api_terms_review_required",
       "notes": "Candidate-output source_id used by prepare-btc-sosovalue-etf-candidates.mjs. Must not be promoted into metric source_priority without separate approval.",
       "registry_status": "candidate_unregistered",
-      "documentation_url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history"
+      "documentation_url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history"
     }
   ]
 }
