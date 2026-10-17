@@ -225,14 +225,14 @@
       "registry_status": "registered"
     },
     {
-      "catalog_id": "institutional.tftc.etf-json",
+      "catalog_id": "institutional.tftc.etf-landing",
       "source_id": "institutional.tftc",
       "provider": "TFTC",
-      "name": "Public Bitcoin ETF flows JSON",
+      "name": "TFTC Bitcoin ETF flows landing page",
       "url": "https://www.tftc.io/bitcoin-etf-flows",
       "access_mode": "public",
       "operational_status": "candidate",
-      "data_role": "cross_check",
+      "data_role": "documentation_only",
       "credential_env": null,
       "polling": {
         "mode": "daily",
@@ -248,7 +248,7 @@
         "revision_finality": "lineage and revision semantics require confirmation"
       },
       "terms_status": "cc-by-4.0-advertised_review_required",
-      "notes": "Mirror/cross-check only; source lineage and row contract must be confirmed.",
+      "notes": "Landing page/documentation reference; the separate data.json endpoint is the actual public JSON capture source.",
       "registry_status": "registered"
     },
     {
