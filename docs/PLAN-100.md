@@ -1734,3 +1734,9 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 - Runtime ticker cache установлен на 60 секунд; HTTP cache headers max-age 30 / s-maxage 60. Это может вызывать upstream-запросы чаще целевого диапазона 15–60 минут. Время `timestamp` присваивается приложением после fetch, а не подтверждённым source observation time.
 - Runtime CoinGecko simple/price вызывается без ключа; текущий `vps/.env.production.example` не содержит provider API keys. Новые ключи пока не нужны; сначала рассмотреть кэш/частоту и проверить provider limits.
 - Фактические расхождения добавлены в аудит и polling policy. Код, TTL, API response, canonical source priority, SQL seed и scenario state не менялись. Следующий этап — проверить UI/consumers и тесты перед изменением cache TTL/timestamp contract.
+
+
+## 2026-10-17 — снижена частота runtime ticker cache на рабочей ветке
+
+- На `fix/btc-readiness-registry-runtime-source` (commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78`) изменён ticker cache TTL 60 секунд → 15 минут; Cache-Control max-age/s-maxage 900 секунд. Это согласует нижнюю границу кэширования с целью не создавать upstream запрос на каждый refresh UI.
+- Изменение только в рабочей ветке; не merge/deploy. Требуется успешный VPS API Build Rehearsal/E2E до рассмотрения дальнейшего шага. Источники/fallback, source priority, SQL seed и scenario state не менялись. Runtime `timestamp` всё ещё означает время получения приложением, не source trade time.
