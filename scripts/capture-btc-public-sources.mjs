@@ -7,6 +7,7 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { parseFarsideEtfTable } from "./parse-farside-etf-table.mjs";
+import { calculateProtocolIssuedSupplyBtc, calculateProtocolIssuedSupplySats } from "./btc-protocol-supply.mjs";
 import { join } from "node:path";
 
 const outDir = join(process.cwd(), "tmp", "btc-source-review");
@@ -295,6 +296,108 @@ await capture({
     };
   }
 });
+
+
+/**
+ * Review-only supply derivation from a consistency-checked Mempool tip.
+ * Recheck height and block hash at the end to reject a moving/reorganized tip.
+ */
+async function captureMempoolProtocolSupply() {
+  const name = "mempool-protocol-issued-supply";
+  const tipHeightUrl = "https://mempool.space/api/blocks/tip/height";
+  const hashAtHeightUrl = height => `https://mempool.space/api/block-height/${height}`;
+  const blockUrl = hash => `https://mempool.space/api/block/${hash}`;
+  const item = {
+    name,
+    metric_id: "monetary.circulating_supply",
+    source_id: "network.primary",
+    url: tipHeightUrl,
+    related_urls: [ "https://mempool.space/api/block-height/{height}", "https://mempool.space/api/block/{hash}" ],
+    retrieved_at: new Date().toISOString(),
+    status: "FAILED",
+    role: "protocol-derived total-issued-supply candidate; review-only, not accepted for canonical ingestion"
+  };
+  try {
+    const getText = async url => {
+      const response = await fetch(url, {
+        headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "text/plain,application/json,*/*" },
+        signal: AbortSignal.timeout(20000)
+      });
+      const body = await response.text();
+      if (!response.ok) throw new Error(`HTTP ${response.status} from ${url}`);
+      return {
+        url,
+        body,
+        http_status: response.status,
+        content_type: response.headers.get("content-type"),
+        http_date: response.headers.get("date"),
+        provider_last_modified: response.headers.get("last-modified"),
+        etag: response.headers.get("etag"),
+        body_sha256: await sha256(body)
+      };
+    };
+    const firstHeightEvidence = await getText(tipHeightUrl);
+    const firstHeight = Number(firstHeightEvidence.body.trim());
+    if (!Number.isSafeInteger(firstHeight) || firstHeight < 0) throw new Error("Mempool tip height is not a valid non-negative integer");
+    const firstHashEvidence = await getText(hashAtHeightUrl(firstHeight));
+    const firstHash = firstHashEvidence.body.trim();
+    if (!/^[0-9a-f]{64}$/i.test(firstHash)) throw new Error("Mempool hash-at-height response is not a 32-byte block hash");
+    const blockEvidence = await getText(blockUrl(firstHash));
+    const block = JSON.parse(blockEvidence.body);
+    if (Number(block.height) !== firstHeight || String(block.id).toLowerCase() !== firstHash.toLowerCase()) {
+      throw new Error("Block detail does not match the requested tip height/hash");
+    }
+    const secondHashEvidence = await getText(hashAtHeightUrl(firstHeight));
+    const secondHeightEvidence = await getText(tipHeightUrl);
+    const secondHeight = Number(secondHeightEvidence.body.trim());
+    const secondHash = secondHashEvidence.body.trim();
+    if (secondHeight !== firstHeight || secondHash.toLowerCase() !== firstHash.toLowerCase()) {
+      throw new Error("Chain tip changed during supply capture; retry from a stable tip");
+    }
+    if (!Number.isSafeInteger(Number(block.timestamp)) || Number(block.timestamp) <= 0) {
+      throw new Error("Tip block has no valid Unix timestamp");
+    }
+    const totalSats = calculateProtocolIssuedSupplySats(firstHeight);
+    const evidence = [firstHeightEvidence, firstHashEvidence, blockEvidence, secondHashEvidence, secondHeightEvidence];
+    const raw = JSON.stringify({
+      captured_at: new Date().toISOString(),
+      consistency_check: "tip height and hash checked before/after block lookup; tip remained stable",
+      endpoints: evidence
+    }, null, 2) + "\n";
+    item.retrieved_at = new Date().toISOString();
+    item.http_status = 200;
+    item.status = "CAPTURED";
+    item.response_evidence = evidence.map(({ url, http_status, content_type, http_date, provider_last_modified, etag, body_sha256 }) => ({
+      url, http_status, content_type, http_date, provider_last_modified, etag, body_sha256
+    }));
+    item.latest_block_height = firstHeight;
+    item.latest_block_hash = firstHash;
+    item.latest_block_timestamp = Number(block.timestamp);
+    item.latest_block_time_utc = new Date(Number(block.timestamp) * 1000).toISOString();
+    item.protocol_issued_supply_sats = totalSats.toString();
+    item.protocol_issued_supply_btc = calculateProtocolIssuedSupplyBtc(firstHeight);
+    item.unit = "BTC";
+    item.methodology = "bitcoin-consensus-subsidy-schedule-through-verified-tip-height-inclusive-v1";
+    item.methodology_version = "1";
+    item.freshness_basis = "tip block header timestamp and height/hash consistency check; block timestamp is miner-supplied and not an exact API publication time";
+    item.acceptance_status = "REVIEW_ONLY_PROTOCOL_DERIVED_SUPPLY";
+    item.source_payload_sha256 = await sha256(raw);
+    item.body_sha256 = item.source_payload_sha256;
+    item.body_file = name + ".raw";
+    item.note = "Computes scheduled coinbase subsidy through the captured tip height inclusive using integer satoshis. This is total protocol-issued supply, not economically spendable supply or UTXO supply. Candidate only pending metric semantics and source-priority review; no registry change or ingestion.";
+    await writeFile(join(outDir, item.body_file), raw, "utf8");
+  } catch (error) {
+    item.error = error instanceof Error ? error.message : String(error);
+    const raw = JSON.stringify({ error: item.error, captured_at: item.retrieved_at });
+    item.body_sha256 = await sha256(raw);
+    item.source_payload_sha256 = item.body_sha256;
+    item.body_file = name + ".raw";
+    await writeFile(join(outDir, item.body_file), raw, "utf8");
+  }
+  manifest.sources.push(item);
+}
+
+await captureMempoolProtocolSupply();
 
 await capture({
   name: "mempool-hashrate-1w",
