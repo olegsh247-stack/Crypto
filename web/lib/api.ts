@@ -1,4 +1,4 @@
-import type { AdminMutationResponse, MarketPair, PairHistoryResponse, PairTickerResponse, PairsResponse } from "../../shared/api-contract";
+import type { AdminMutationResponse, MarketPair, MetricObservation, PairHistoryResponse, PairTickerResponse, PairsResponse } from "../../shared/api-contract";
 export type { MarketPair } from "../../shared/api-contract";
 
 export type ResearchFreshness = {
@@ -57,7 +57,7 @@ export type ResearchSnapshot = { snapshot_id: string; research_version: string; 
 
 export type AssetDetailResponse = {
   api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: ResearchFreshness | null };
-  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
+  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: MetricObservation[]; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   scenario_readiness?: BtcScenarioReadiness;
