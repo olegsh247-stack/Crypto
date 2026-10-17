@@ -1123,3 +1123,12 @@
 **Документация:** добавлен [CRYPTO-SOURCE-INVENTORY-AND-CENTRAL-CONFIG-AUDIT-2026-10-17.md](CRYPTO-SOURCE-INVENTORY-AND-CENTRAL-CONFIG-AUDIT-2026-10-17.md), содержащий mapping metric→research block IDs, provider/endpoint usage roles, current blockers и проект централизованного Source Catalog. Предложение: отдельный endpoint catalog для URL/auth secret reference/adapter/terms/timestamp and revision semantics; metric registry остаётся владельцем units, freshness, source priority и research block mapping. Это документационный вывод, не миграция кода.
 
 **Безопасность/решение:** не менялись registry priorities, SQL seed, production DB, ingestion, evaluator, scenario state/score/probability, deployment или PR state. BTC остаётся `not_evaluable`; следующий безопасный шаг — проверить source-catalog design against all runtime call sites and SQL seed parity before implementation. Не трактовать SoSoValue HTTP 200 как source acceptance.
+
+
+## 2026-10-17 — политика частоты запросов и ключей API
+
+**Решение:** не использовать глобальный 15-минутный опрос. Целевой диапазон 15–60 минут применяется только к оперативным метрикам, если этого требует потребитель и позволяет провайдер. Для spot возможны 15 минут при необходимости, иначе 30–60 минут; ETF daily flows/holdings, macro daily series и corporate holdings — daily/event-driven; протокольные события — по релизу/событию. Poll interval не равен freshness window; учитывать rate limit, cache, backoff и доступность новой публикации.
+
+**Ключи:** `SOSOVALUE_API_KEY` уже настроен и проверен HTTP 200 в staging, только cross-check. Другие ключи пока не создавать. Glassnode, derivatives data, official macro source и DXY не имеют подтверждённого принятого endpoint/потребности; сначала документация, тариф/ToS, timestamp/revision semantics и право хранения, затем решение о ключе. Публичные Kraken/Mempool/Binance market-data/OKX/Farside/TFTC endpoints в текущем staging использовались без отдельного API key (Bybit заблокирован 403 — ключ не добавлять ради обхода отказа).
+
+Создан [SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md); polling/key requirements добавлены в source audit и отдельный audit prompt. В этом шаге расписания автоматических задач и runtime config не менялись.
