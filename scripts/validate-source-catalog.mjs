@@ -69,12 +69,40 @@ for (const endpoint of catalog.endpoints) {
 }
 
 const catalogSourceIds = new Set(catalog.endpoints.filter((entry) => entry.registry_status === "registered").map((entry) => entry.source_id));
+const runtimeApp = readFileSync(new URL("../vps/api/src/app.ts", import.meta.url), "utf8");
+const runtimeEndpointFamilies = [
+  { host: "data-api.binance.vision", path: "/api/v3/ticker/price" },
+  { host: "api-gcp.binance.com", path: "/api/v3/ticker/price" },
+  { host: "api.binance.com", path: "/api/v3/ticker/price" },
+  { host: "data-api.binance.vision", path: "/api/v3/klines" },
+  { host: "api-gcp.binance.com", path: "/api/v3/klines" },
+  { host: "api.binance.com", path: "/api/v3/klines" },
+  { host: "api.kraken.com", path: "/0/public/Ticker" },
+  { host: "api.kraken.com", path: "/0/public/OHLC" },
+  { host: "api.coingecko.com", path: "/api/v3/simple/price" },
+  { host: "api.coingecko.com", path: "/api/v3/coins/bitcoin/market_chart", pathFamily: "/api/v3/coins/" }
+];
+for (const family of runtimeEndpointFamilies) {
+  assert.ok(runtimeApp.includes(family.host), `runtime app no longer references expected host ${family.host}; review catalog parity check`);
+  const entry = catalog.endpoints.find((candidate) => {
+    if (candidate.url == null) return false;
+    const url = new URL(candidate.url);
+    const pathMatches = family.pathFamily
+      ? url.pathname.startsWith(family.pathFamily) && url.pathname.endsWith("/market_chart")
+      : url.pathname === family.path;
+    return url.host === family.host && pathMatches;
+  });
+  assert.ok(entry, `runtime endpoint ${family.host}${family.path} is missing from source catalog`);
+  assert.equal(entry.data_role, "review_only",
+    `runtime UI endpoint ${entry.catalog_id} must remain review_only unless a separate source approval changes the contract`);
+}
 const registrySourcesMissingFromCatalog = [...registrySourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 const metricSourcesMissingFromCatalog = [...metricSourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 
 const result = {
   status: "PASS",
   endpoint_count: catalog.endpoints.length,
+  runtime_endpoint_families_checked: runtimeEndpointFamilies.length,
   registered_source_ids_covered: catalogSourceIds.size,
   metric_source_ids_missing_catalog_entries: metricSourcesMissingFromCatalog,
   registry_source_ids_missing_catalog_entries: registrySourcesMissingFromCatalog,
