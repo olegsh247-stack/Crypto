@@ -1086,3 +1086,14 @@
 **Проверено:** документация SoSoValue подтверждает обязательный `x-soso-api-key`; документация Newhedge указывает обязательный `api_token`; ByKaranteli сообщает, что программные вызовы требуют бесплатный Bearer key с 2026-09-10, а репозиторий CSV-наборов заморожен на 2026-09-10. Ссылки: https://sodex.com/documentation/for-developers/developers/data-api/getting-started ; https://prod-docs.newhedge.io/api/spot-bitcoin-etf-flows ; https://bykaranteli.com/developers ; https://github.com/bykarantelicom/crypto-datasets.
 
 **Решение:** эти варианты не считаются готовым источником для текущего автоматического захвата без ключа; замороженный CSV не закрывает актуальную свежесть. Не менялись canonical registry, evaluator, формула или правила readiness; нет ingestion, DB writes, scenario-state/probability changes, deployment или merge. ETF flow остаётся blocked, BTC — `not_evaluable`; PR #83 остаётся Draft/open/unmerged.
+
+
+## 2026-10-17 — Подготовлен повторный read-only capture после добавления ключа SoSoValue
+
+**Действие:** пользователь подтвердил, что разрешения настроены и секрет `SOSOVALUE_API_KEY` добавлен в GitHub Actions. Проверен staging workflow: секрет передаётся только как переменная окружения шага capture; он не печатается и не сохраняется в репозитории. Доступный ранее артефакт создан до настройки секрета и не мог подтвердить авторизацию SoSoValue.
+
+**Изменение:** в `.github/workflows/btc-public-source-staging.yml` добавлена группа concurrency `btc-public-source-staging` с `cancel-in-progress: false`, чтобы read-only захваты не пересекались. Commit: `7d29e5ff3e91099b7eae58ccd8949b16089e556e`. Workflow-файл входит в push-фильтр запуска.
+
+**Статус:** новый ответ SoSoValue пока не подтверждён доступным результатом запуска. До получения свежего артефакта нельзя утверждать, что ключ работает, API возвращает ожидаемую схему или история сверена по датам. SoSoValue остаётся кандидатом только для cross-check; CryptoETF.today — только cross-check, Farside/TFTC — review-only из-за незакрытых временных и финальных семантик. Yahoo DXY остаётся заблокированным. BTC остаётся `not_evaluable`.
+
+**Граница безопасности:** только конфигурация CI для read-only staging; production DB, ingestion, scenario evaluation/state/probability, deployment и merge не затрагивались.
