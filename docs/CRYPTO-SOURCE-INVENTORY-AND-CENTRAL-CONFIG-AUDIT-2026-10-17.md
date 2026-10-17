@@ -120,3 +120,10 @@ Workflow: [BTC Public Source Staging run #168](https://github.com/olegsh247-stac
 ## Границы
 
 В этом проходе не менялись runtime registry/source priorities, SQL seed, evaluator, scenario state/score/probability, production DB, deployment или PR status. Отчёт не объявляет BTC готовым: BTC остаётся `not_evaluable` до свежего spot и принятого ETF flow; DXY не является обязательным разрешённым источником до завершения своего контракта.
+
+
+## Дополнение 2026-10-17 — polling intervals и API keys
+
+Для целевой частоты 15–60 минут применяется принцип по потребности, а не общий опрос всех провайдеров. Spot может опрашиваться каждые 15 минут только при обоснованной потребности; базовый вариант — 30–60 минут. Дневные ETF flows/holdings, macro daily series, corporate holdings и релизные/протокольные данные должны опрашиваться daily/event-driven или реже, с учётом публикации/ревизий. Poll interval не равен freshness window.
+
+Полный перечень ключей и предложенных интервалов вынесен в [SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md). На текущий момент единственный подтверждённо нужный ключ для проверенного staging — `SOSOVALUE_API_KEY`, уже настроенный в GitHub Actions; SoSoValue остаётся cross-check only. Другие ключи пока не создавать: сначала принять конкретные endpoints и проверить тарифы/ToS. В будущем Source Catalog для каждого endpoint обязателен `poll_interval`, `poll_mode`, `provider_min_interval`, rate limit/backoff и отдельная freshness policy.
