@@ -131,7 +131,7 @@ test("blocks a spot observation retrieved before its source event time", () => {
 });
 
 test("blocks conflicting ETF rows for a reporting date even when five other dates exist", () => {
-  const inputs = [price(), etf(0.5), etf(0.5, { value_numeric: -45, provider_revision: "published-final-2", revision: 2 }), etf(1.5), etf(2.5), etf(3.5), etf(4.5)];
+  const inputs = [price(), etf(0.5), etf(0.5, { value_numeric: -45, provider_revision: "published-final-2", revision: 2 }), etf(1.5), etf(2.5), etf(3.5), etf(4.5), etf(5.5)];
   const result = assessBtcScenarioReadiness(inputs, NOW);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some((b) => b.metric_id === "institutional.etf_net_flow" && b.reason.startsWith("duplicate_or_conflicting_rows_for_reporting_date:")));
