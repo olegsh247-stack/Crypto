@@ -6,7 +6,7 @@
 
 The Mempool.space `/api/v1/mining/reward-stats/144` endpoint returns aggregate totals, not individual block hashes. The upstream implementation reviewed in the repository sums `reward` and `fees` for the latest N rows with `stale = 0`; the public response does not prove the deployed backend version or expose every block identity.
 
-Latest review capture at 2026-10-17 14:29:08 UTC:
+Latest review capture at 2026-10-17 14:30:36 UTC:
 - HTTP 200; blocks `971730–971873`, inclusive count 144.
 - `totalReward = 45,230,958,590 sats`.
 - `totalFee = 230,958,590 sats`.
@@ -29,11 +29,11 @@ Candidate capture: Blockchain.com chart `https://api.blockchain.info/charts/tota
 
 ## 3. Mandatory-input freshness recheck
 
-Read-only staging run: [BTC Public Source Staging #39040928441](https://github.com/olegsh247-stack/Crypto/actions/runs/39040928441). Artifact digest: `sha256:f9cc7a1e73e1a1159230425a151cb721dbd3e76edac4354e2d4141857e4d6f24`; temporary artifact expires 2026-10-24.
+Latest read-only staging run: [BTC Public Source Staging #39041045356](https://github.com/olegsh247-stack/Crypto/actions/runs/39041045356). Artifact digest: `sha256:d36abc2acd66d1a3f31ffa2d078c45eb6cef56da2011460032175ba50b0aac62`; temporary artifact expires 2026-10-24. The run passed after the parser was changed to explicitly block fee/subsidy production acceptance pending reorg/version proof.
 
 | Input | Latest reviewed evidence | Freshness / acceptance |
 |---|---|---|
-| BTC/USD spot | Kraken `81,469.70 USD/BTC`; trade at `2026-10-17T14:28:58.705Z`; retrieval `14:28:59Z` | Fresh under 1 hour; candidate only, not ingested |
+| BTC/USD spot | Kraken `81,451.00 USD/BTC`; trade at `2026-10-17T14:30:34.877Z`; retrieval `14:30:36Z` | Fresh under 1 hour; candidate only, not ingested |
 | Hashrate | `1009.5138912218121 EH/s`; daily bucket `[2026-10-16T00:00Z, 2026-10-17T00:00Z)` | Fresh under 48 hours; daily estimate; candidate only |
 | Fee/subsidy | 144-block candidate ratio `0.0051324131111` | Arithmetic valid; production acceptance blocked by reorg/version proof |
 | DXY | Previously captured Yahoo Finance `DX-Y.NYB` daily close `101.84` for session date 2026-10-16 | Within 48 hours as of this recheck, but not approved by the current canonical source allowlist; optional context only in offline rehearsal |
@@ -58,7 +58,7 @@ Expected result:
 - Baseline probabilities changed: `false`
 - Scenario state persisted: `false`
 
-This is a historical deterministic rehearsal, **not a current market evaluation**. The fixture explicitly marks itself as non-live, not a database observation set, and not approved for ingestion. The BTC Scenario Readiness Gate passed on commit `35c93bd9`, including the offline runner step. The separate VPS build/rehearsal remains tracked by its own workflow.
+This is a historical deterministic rehearsal, **not a current market evaluation**. The fixture explicitly marks itself as non-live, not a database observation set, and not approved for ingestion. The BTC Scenario Readiness Gate passed on commit `35c93bd9`, including the offline runner step. The updated source-staging parser passed on commit `0490aa4b` and now explicitly reports the fee/subsidy metric as blocked for production acceptance. The separate VPS build/rehearsal remains tracked by its own workflow.
 
 ## 5. Safety and next gate
 
