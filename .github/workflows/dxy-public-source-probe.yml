@@ -1,0 +1,116 @@
+name: DXY Public Source Probe (Read Only)
+
+on:
+  push:
+    branches:
+      - fix/btc-readiness-registry-runtime-source
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: contains(github.event.head_commit.message, '[probe-dxy]') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe public endpoints without credentials
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv, hashlib, json, os, pathlib, time
+          from datetime import datetime, timezone
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError, URLError
+
+          out = pathlib.Path("dxy-probe")
+          out.mkdir()
+          report = {
+              "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+              "mode": "read-only; no credentials; no database writes",
+              "sources": {}
+          }
+
+          targets = {
+              "yahoo_dxy_chart": "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=5d&interval=1d",
+              "alphavantage_dxy_demo": "https://www.alphavantage.co/query?function=INDEX_DATA&symbol=DXY&interval=daily&apikey=demo",
+              "alphavantage_index_catalog_demo": "https://www.alphavantage.co/query?function=INDEX_CATALOG&apikey=demo",
+              "fxmacrodata_usd_catalog": "https://api.fxmacrodata.com/v1/data_catalogue/usd",
+              "live_rates_all": "https://www.live-rates.com/api/rates",
+              "fred_broad_dollar_csv": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS"
+          }
+
+          for name, url in targets.items():
+              entry = {"url": url}
+              try:
+                  req = Request(url, headers={"User-Agent": "Crypto-DXY-read-only-probe/1.0", "Accept": "application/json,text/csv,*/*"})
+                  with urlopen(req, timeout=20) as resp:
+                      status = resp.status
+                      body = resp.read()
+                      content_type = resp.headers.get("Content-Type")
+                  entry.update({"http_status": status, "content_type": content_type, "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()})
+                  (out / f"{name}.response").write_bytes(body)
+                  text = body.decode("utf-8", "replace")
+                  try:
+                      payload = json.loads(text)
+                  except Exception:
+                      payload = None
+
+                  if name == "yahoo_dxy_chart" and isinstance(payload, dict):
+                      result = (payload.get("chart") or {}).get("result") or []
+                      error = (payload.get("chart") or {}).get("error")
+                      if result:
+                          r = result[0]
+                          meta = r.get("meta", {})
+                          quote = ((r.get("indicators") or {}).get("quote") or [{}])[0]
+                          closes = quote.get("close") or []
+                          ts = r.get("timestamp") or []
+                          entry["parsed"] = {
+                              "instrument": meta.get("symbol"),
+                              "currency": meta.get("currency"),
+                              "regular_market_price": meta.get("regularMarketPrice"),
+                              "regular_market_time_epoch": meta.get("regularMarketTime"),
+                              "last_candle_epoch": ts[-1] if ts else None,
+                              "last_candle_close": closes[-1] if closes else None
+                          }
+                      else:
+                          entry["parsed"] = {"error": error, "response_preview": text[:500]}
+                  elif name.startswith("alphavantage") and isinstance(payload, dict):
+                      entry["parsed"] = {k: payload.get(k) for k in list(payload.keys())[:8]}
+                      entry["dxy_or_index_matches"] = [str(x)[:300] for x in (payload.get("data") or []) if "dxy" in str(x).lower() or "dollar" in str(x).lower()][:10] if isinstance(payload.get("data"), list) else []
+                  elif name == "fxmacrodata_usd_catalog" and isinstance(payload, dict):
+                      serialized = json.dumps(payload, ensure_ascii=False).lower()
+                      entry["dxy_or_trade_weighted_mentions"] = "dxy" in serialized or "trade_weighted_index" in serialized or "dollar index" in serialized
+                      entry["top_level_keys"] = list(payload.keys())[:20]
+                      entry["response_preview"] = text[:700]
+                  elif name == "live_rates_all":
+                      if isinstance(payload, list):
+                          matches = [row for row in payload if any(term in json.dumps(row).lower() for term in ["dxy", "usdx", "dx-y.nyb", "dollar index"])]
+                          entry["row_count"] = len(payload)
+                          entry["dxy_candidate_rows"] = matches[:10]
+                          entry["sample_rows"] = payload[:3]
+                      else:
+                          entry["response_preview"] = text[:700]
+                  elif name == "fred_broad_dollar_csv":
+                      rows = list(csv.reader(text.splitlines()))
+                      entry["last_rows"] = rows[-6:]
+                  else:
+                      entry["response_preview"] = text[:700]
+              except HTTPError as e:
+                  body = e.read()
+                  entry.update({"http_status": e.code, "error": str(e), "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest(), "response_preview": body.decode("utf-8", "replace")[:500]})
+                  (out / f"{name}.response").write_bytes(body)
+              except Exception as e:
+                  entry["error"] = repr(e)
+              report["sources"][name] = entry
+
+          (out / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+          print(json.dumps(report, indent=2, ensure_ascii=False))
+          PY
+      - name: Upload read-only response evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxy-public-source-probe
+          path: dxy-probe/
+          retention-days: 7
