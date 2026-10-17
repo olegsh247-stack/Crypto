@@ -214,13 +214,23 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     const day = new Date(dateMs(row.period_start)).toISOString().slice(0, 10);
     if (!uniqueByDay.has(day)) uniqueByDay.set(day, row);
   }
+  const distinctDayRows = [...uniqueByDay.entries()];
+  const sourceRowKeys = distinctDayRows.map(([, row]) => String(row.source_row_key));
+  const duplicateSourceRowKey = sourceRowKeys.find((key, index) => sourceRowKeys.indexOf(key) !== index);
+
+  if (duplicateSourceRowKey) {
+    blockers.push({
+      metric_id: "institutional.etf_net_flow",
+      reason: "duplicate_source_row_key_across_reporting_days",
+    });
+  }
   if (uniqueByDay.size < etfMinimumDistinctDays) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
       reason: "requires_at_least_5_distinct_recent_daily_observations",
     });
   } else {
-    selected["institutional.etf_net_flow"] = [...uniqueByDay.entries()]
+    selected["institutional.etf_net_flow"] = distinctDayRows
       .slice(0, 7)
       .map(([day, row]) => ({
         day,
