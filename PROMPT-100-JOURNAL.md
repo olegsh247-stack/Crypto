@@ -105,3 +105,10 @@
 
 - Added `scripts/compare-btc-fee-windows.mjs` and tests. The comparator requires the newer 144-block window to advance at least six heights, compares every overlapping height's block hash, parent hash and fee total, and reports any changed overlap as a reorg/revision review failure. It does not silently accept or normalize changed data.
 - Added comparator tests to the read-only source-staging workflow. The first per-block capture is the baseline; the acceptance comparison must use a later capture at least six blocks ahead. This remains separate from the ETF 24-hour snapshot gate.
+
+
+### Final source-staging baseline after comparator tests — 2026-10-17
+
+- Final successful read-only source-staging run for this code batch: [#39057058042](https://github.com/olegsh247-stack/Crypto/actions/runs/39057058042). The new confirmed-window comparator tests and per-block validation tests passed; the 144-block fee audit reproduced the same verified window and ratio. Because the tip had not advanced by six blocks, this second capture does **not** satisfy the confirmation-interval comparison gate.
+- Pin this run's Farside capture as the ETF 24-hour baseline: retrieved `2026-10-17T18:12:27.119Z`, latest session `2026-10-16`, payload SHA-256 `43ad1085683871d8a3bea755f1d700d843965487bb2298155bcea1a443a163a1`. Next ETF snapshot must be no earlier than `2026-10-18T18:12:27.119Z`.
+- VPS API Build Rehearsal for the code commit `34e7f38a` passed: [#39057058047](https://github.com/olegsh247-stack/Crypto/actions/runs/39057058047). No production effects; BTC remains `not_evaluable`.
