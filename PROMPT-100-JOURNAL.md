@@ -84,3 +84,9 @@
 
 - Pin the latest successful source-staging capture [#39056555560](https://github.com/olegsh247-stack/Crypto/actions/runs/39056555560) as the baseline for the next two-snapshot check: Farside all-data page retrieved at `2026-10-17T18:05:44.360Z`, latest session `2026-10-16`, payload SHA-256 `b327bfaecf7ca85b1e9b7a0bb54c511fe10d7d4b91e5838b54212be0b5d42d19`. The next qualifying snapshot must be captured no earlier than `2026-10-18T18:05:44.360Z`.
 - The same run passed Farside parser, two-snapshot comparator, protocol-supply calculation, observation normalization, and read-only source capture. The prior earlier snapshot remains historical evidence; it does not replace this pinned baseline for the next interval gate.
+
+
+## 2026-10-17 — DXY remains optional context, not a mandatory BTC data gate
+
+- Clarified the BTC input recheck: DXY is optional macro context, not a replacement for any mandatory BTC input. Because Yahoo Finance automated access/observation-time terms remain unapproved, DXY stays excluded from canonical scenario inputs until an approved access method and daily-close freshness contract exist.
+- Current BTC readiness blockers remain the ETF two-snapshot/revision/retention gate, fee/subsidy reorg/deployed-version evidence, and explicit protocol-issued-supply metric semantics. No source registry/runtime changes or production effects.
