@@ -1312,3 +1312,12 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Decision:** No new DXY keys requested. DXY remains blocked/optional. Do not substitute `DTWEXBGS` under the DXY identity. Daily data does not require 15-minute polling. Evidence and future data contract are in [DXY source verification](DXY-SOURCE-VERIFICATION-2026-10-17.md).
 
 **Boundary:** Documentation only; no provider credentials were created, no automated DXY collector/source-priority change was made, and no BTC runtime/scenario state was changed.
+
+
+## 2026-10-17 — Direct DXY source probe: actual provider responses
+
+**Execution:** [DXY Public Source Probe (Read Only) #39029711852](https://github.com/olegsh247-stack/Crypto/actions/runs/39029711852) completed successfully. Six public endpoints were queried from a GitHub runner without credentials or database writes; response hashes and raw response files are in the temporary [probe artifact](https://github.com/olegsh247-stack/Crypto/actions/runs/39029711852/artifacts/12099577539), expiring 2026-10-24. Full result: [DXY-SOURCE-PROBE-2026-10-17.md](DXY-SOURCE-PROBE-2026-10-17.md).
+
+**Actual results:** Yahoo Finance `DX-Y.NYB` chart endpoint HTTP 200; `regularMarketPrice=101.779` at source time `2026-10-16T20:59:59Z`, last daily candle close about 101.84 for 2026-10-16. Alpha Vantage demo query returned its demo-key information message; public index catalog returned no DXY/Dollar Index matches. FXMacroData USD catalogue returned distinct Fed/BIS dollar-index series and explicitly says they are not ICE DXY. Live-Rates `/api/rates` without a key returned HTTP 200 with body `Invalid Authentication`, no quote. FRED public CSV returned `DTWEXBGS=121.6023` for 2026-10-09; this is not DXY.
+
+**Decision/boundary:** Yahoo is the only technically successful direct DXY retrieval among the five services in this test, but technical access does not clear permission for automated collection or raw retention. No source promoted; no key created; no production collector, runtime source-priority change, DB write, scenario evaluation/state change, deployment, or merge.
