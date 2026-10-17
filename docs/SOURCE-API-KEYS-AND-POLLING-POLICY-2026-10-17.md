@@ -97,3 +97,8 @@
 - В `vps/.env.production.example` нет ключей внешних рыночных провайдеров; указаны только настройки VPS/DB/admin. Для публичных runtime endpoints в коде нет настроенной provider auth.
 
 **Решение:** зафиксировать как implementation finding; в этом documentation step runtime code/cache TTL/API response не изменялись. Перед изменением TTL требуется проверить consumers/UI ожидания, response timestamp semantics и тесты, затем выбрать 15/30/60 минут по конкретной метрике. Это не основание автоматически заменить provider fallback или объявить runtime price canonical для BTC research.
+
+
+### Runtime cache change prepared on working branch (not merged/deployed)
+
+After tracing the UI-facing ticker API, the working branch `fix/btc-readiness-registry-runtime-source` changes its in-process ticker cache TTL from 60 seconds to 15 minutes and response cache headers from max-age 30 / s-maxage 60 to max-age 900 / s-maxage 900 (commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78`). This is a branch-only mitigation for request-driven repeated upstream calls. It has not been merged to `main` or deployed. Build/E2E checks must pass before considering it complete. It does not change provider fallback or make the runtime ticker canonical for BTC research.
