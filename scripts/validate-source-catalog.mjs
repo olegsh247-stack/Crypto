@@ -119,6 +119,27 @@ for (const family of captureEndpointFamilies) {
   });
   assert.ok(entry, `capture endpoint ${family.host}${family.path} is missing from source catalog`);
 }
+const candidatePreparation = readFileSync(new URL("../scripts/prepare-btc-observation-candidates.mjs", import.meta.url), "utf8");
+const sosovaluePreparation = readFileSync(new URL("../scripts/prepare-btc-sosovalue-etf-candidates.mjs", import.meta.url), "utf8");
+const candidatePreparationFamilies = [
+  { host: "api.kraken.com", path: "/0/public/Trades", source: candidatePreparation },
+  { host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/", source: candidatePreparation },
+  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json", source: candidatePreparation },
+  { host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", source: sosovaluePreparation }
+];
+for (const family of candidatePreparationFamilies) {
+  assert.ok(family.source.includes(family.host) && family.source.includes(family.path),
+    `candidate preparation script no longer references expected endpoint ${family.host}${family.path}; review catalog parity check`);
+  const entry = catalog.endpoints.find((candidate) => {
+    if (candidate.url == null) return false;
+    const url = new URL(candidate.url);
+    return url.host === family.host && url.pathname === family.path;
+  });
+  assert.ok(entry, `candidate preparation endpoint ${family.host}${family.path} is missing from source catalog`);
+  if (family.host === "openapi.sosovalue.com") {
+    assert.equal(entry.data_role, "cross_check", "SoSoValue candidate endpoint must remain cross_check");
+  }
+}
 const registrySourcesMissingFromCatalog = [...registrySourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 const metricSourcesMissingFromCatalog = [...metricSourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 
@@ -127,6 +148,7 @@ const result = {
   endpoint_count: catalog.endpoints.length,
   runtime_endpoint_families_checked: runtimeEndpointFamilies.length,
   capture_endpoint_families_checked: captureEndpointFamilies.length,
+  candidate_preparation_endpoint_families_checked: candidatePreparationFamilies.length,
   registered_source_ids_covered: catalogSourceIds.size,
   metric_source_ids_missing_catalog_entries: metricSourcesMissingFromCatalog,
   registry_source_ids_missing_catalog_entries: registrySourcesMissingFromCatalog,
