@@ -709,6 +709,114 @@
       "terms_status": "public_api_docs_review_required",
       "notes": "Runtime UI chart fallback only; not a canonical research data source.",
       "registry_status": "candidate_unregistered"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui.apigcp",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback host",
+      "url": "https://api-gcp.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15 minutes on the working branch; not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI ticker fallback host api-gcp",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui.primary",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback host",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15 minutes on the working branch; not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI ticker fallback primary host; HTTP 451 was observed in staging",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui.apigcp",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle fallback host",
+      "url": "https://api-gcp.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; preserve finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI candle fallback host api-gcp",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui.primary",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle fallback host",
+      "url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; preserve finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI candle fallback primary host; HTTP 451 was observed in staging",
+      "registry_status": "registered"
     }
   ]
 }
