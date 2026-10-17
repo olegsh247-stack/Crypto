@@ -18,10 +18,22 @@
       "operational_status": "verified",
       "data_role": "canonical_candidate",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 15, "minimum_interval_minutes": null, "notes": "UI ticker cache is 15m on the working branch; source trade timestamp must remain distinct from retrieval time." },
-      "data_contract": { "asset_pair": "BTC/USD", "unit": "USD/BTC", "observation_time": "provider trade timestamp", "period_semantics": "individual trades", "revision_finality": "trade events; preserve raw response and trade identity" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15m on the working branch; source trade timestamp must remain distinct from retrieval time."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events; preserve raw response and trade identity"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "Research canonical candidate; actual metric eligibility remains controlled by metric-registry.json."
+      "notes": "Research canonical candidate; actual metric eligibility remains controlled by metric-registry.json.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "market.binance.trades.btcusdt.primary",
@@ -33,10 +45,22 @@
       "operational_status": "blocked",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 30, "minimum_interval_minutes": null, "notes": "Runner returned HTTP 451; do not bypass regional/host restrictions." },
-      "data_contract": { "asset_pair": "BTC/USDT", "unit": "USDT/BTC", "observation_time": "provider trade timestamp", "period_semantics": "individual trades", "revision_finality": "trade events" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Runner returned HTTP 451; do not bypass regional/host restrictions."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "USDT is not USD; never blend with canonical BTC/USD."
+      "notes": "USDT is not USD; never blend with canonical BTC/USD.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "market.binance.trades.btcusdt.dataapi",
@@ -48,10 +72,22 @@
       "operational_status": "verified",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 30, "minimum_interval_minutes": null, "notes": "Public market-data-only host; do not use as canonical USD quote." },
-      "data_contract": { "asset_pair": "BTC/USDT", "unit": "USDT/BTC", "observation_time": "provider trade timestamp", "period_semantics": "individual trades", "revision_finality": "trade events" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Public market-data-only host; do not use as canonical USD quote."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "HTTP 200 in staging; cross-check only."
+      "notes": "HTTP 200 in staging; cross-check only.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "market.okx.trades.btcusdt",
@@ -63,10 +99,22 @@
       "operational_status": "verified",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 30, "minimum_interval_minutes": null, "notes": "Cross-check only; preserve source timestamp." },
-      "data_contract": { "asset_pair": "BTC/USDT", "unit": "USDT/BTC", "observation_time": "provider trade timestamp", "period_semantics": "individual trades", "revision_finality": "trade events" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Cross-check only; preserve source timestamp."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "USDT is not USD."
+      "notes": "USDT is not USD.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "market.bybit.trades.btcusdt",
@@ -78,10 +126,22 @@
       "operational_status": "blocked",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 30, "minimum_interval_minutes": null, "notes": "HTTP 403 in staging; do not attempt to bypass access restrictions." },
-      "data_contract": { "asset_pair": "BTC/USDT", "unit": "USDT/BTC", "observation_time": "provider trade timestamp", "period_semantics": "individual trades", "revision_finality": "trade events" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "HTTP 403 in staging; do not attempt to bypass access restrictions."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "No key requested because the observed block is not evidence that authentication is appropriate."
+      "notes": "No key requested because the observed block is not evidence that authentication is appropriate.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "network.mempool.hashrate",
@@ -93,10 +153,22 @@
       "operational_status": "candidate",
       "data_role": "review_only",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 60, "minimum_interval_minutes": null, "notes": "Do not poll more often than needed for a multi-day aggregate." },
-      "data_contract": { "asset_pair": "BTC network", "unit": "EH/s after verified normalization", "observation_time": "endpoint bucket timestamp to be confirmed", "period_semantics": "3-day hashrate series", "revision_finality": "aggregated estimate; methodology/window validation required" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 60,
+        "minimum_interval_minutes": null,
+        "notes": "Do not poll more often than needed for a multi-day aggregate."
+      },
+      "data_contract": {
+        "asset_pair": "BTC network",
+        "unit": "EH/s after verified normalization",
+        "observation_time": "endpoint bucket timestamp to be confirmed",
+        "period_semantics": "3-day hashrate series",
+        "revision_finality": "aggregated estimate; methodology/window validation required"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "Staging HTTP 200; metric remains unready until window and unit checks pass."
+      "notes": "Staging HTTP 200; metric remains unready until window and unit checks pass.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "network.mempool.block-fees",
@@ -108,10 +180,22 @@
       "operational_status": "candidate",
       "data_role": "review_only",
       "credential_env": null,
-      "polling": { "mode": "interval", "preferred_interval_minutes": 30, "minimum_interval_minutes": null, "notes": "Use bounded polling; this endpoint represents current mempool block estimates, not a daily finalized metric." },
-      "data_contract": { "asset_pair": "BTC network", "unit": "endpoint-defined fee rate; not yet mapped to a registry metric", "observation_time": "retrieval time only unless provider timestamp is present", "period_semantics": "current projected mempool blocks", "revision_finality": "projections change as mempool changes" },
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Use bounded polling; this endpoint represents current mempool block estimates, not a daily finalized metric."
+      },
+      "data_contract": {
+        "asset_pair": "BTC network",
+        "unit": "endpoint-defined fee rate; not yet mapped to a registry metric",
+        "observation_time": "retrieval time only unless provider timestamp is present",
+        "period_semantics": "current projected mempool blocks",
+        "revision_finality": "projections change as mempool changes"
+      },
       "terms_status": "public_api_docs_reviewed",
-      "notes": "Staging HTTP 200; do not treat projected block fees as realized fees."
+      "notes": "Staging HTTP 200; do not treat projected block fees as realized fees.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "institutional.farside.etf-all-data",
@@ -123,10 +207,22 @@
       "operational_status": "candidate",
       "data_role": "review_only",
       "credential_env": null,
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "Daily/event-driven; do not poll every 15 minutes." },
-      "data_contract": { "asset_pair": "US spot BTC ETFs", "unit": "USD million/day", "observation_time": "provider publication time not established", "period_semantics": "ETF reporting/trading day; timezone and session semantics need explicit contract", "revision_finality": "revision/finality semantics unresolved" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; do not poll every 15 minutes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day",
+        "observation_time": "provider publication time not established",
+        "period_semantics": "ETF reporting/trading day; timezone and session semantics need explicit contract",
+        "revision_finality": "revision/finality semantics unresolved"
+      },
       "terms_status": "reuse_review_required",
-      "notes": "All-data page HTTP 200 in staging; landing page 403. Rows are review-only until time, identity, revision and finality checks pass."
+      "notes": "All-data page HTTP 200 in staging; landing page 403. Rows are review-only until time, identity, revision and finality checks pass.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "institutional.tftc.etf-json",
@@ -138,10 +234,22 @@
       "operational_status": "candidate",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "Daily/event-driven; no high-frequency polling." },
-      "data_contract": { "asset_pair": "US spot BTC ETFs", "unit": "USD/day after parser confirmation", "observation_time": "publication time not established", "period_semantics": "daily ETF flow rows", "revision_finality": "lineage and revision semantics require confirmation" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; no high-frequency polling."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day after parser confirmation",
+        "observation_time": "publication time not established",
+        "period_semantics": "daily ETF flow rows",
+        "revision_finality": "lineage and revision semantics require confirmation"
+      },
       "terms_status": "cc-by-4.0-advertised_review_required",
-      "notes": "Mirror/cross-check only; source lineage and row contract must be confirmed."
+      "notes": "Mirror/cross-check only; source lineage and row contract must be confirmed.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "institutional.sosovalue.etf-summary",
@@ -153,10 +261,22 @@
       "operational_status": "candidate",
       "data_role": "cross_check",
       "credential_env": "SOSOVALUE_API_KEY",
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "Keyed cross-check; daily/event-driven. Do not increase polling to 15-minute intervals." },
-      "data_contract": { "asset_pair": "US spot BTC ETFs", "unit": "USD million/day after normalization", "observation_time": "trading date supplied; publication timestamp not supplied in tested response", "period_semantics": "daily trading-session row", "revision_finality": "revision/finality semantics unresolved" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Keyed cross-check; daily/event-driven. Do not increase polling to 15-minute intervals."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day after normalization",
+        "observation_time": "trading date supplied; publication timestamp not supplied in tested response",
+        "period_semantics": "daily trading-session row",
+        "revision_finality": "revision/finality semantics unresolved"
+      },
       "terms_status": "api_terms_review_required",
-      "notes": "Existing GitHub Actions secret; cross-check only, not canonical ingestion."
+      "notes": "Existing GitHub Actions secret; cross-check only, not canonical ingestion.",
+      "registry_status": "registered"
     },
     {
       "catalog_id": "institutional.cryptoetf.today.etf-mcp",
@@ -168,10 +288,22 @@
       "operational_status": "candidate",
       "data_role": "cross_check",
       "credential_env": null,
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "Cross-check only; no need to poll more often than the underlying daily ETF data changes." },
-      "data_contract": { "asset_pair": "US spot BTC ETFs", "unit": "USD/day to be verified per response", "observation_time": "provider response timestamp semantics not established", "period_semantics": "daily ETF flow summary", "revision_finality": "not established" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Cross-check only; no need to poll more often than the underlying daily ETF data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day to be verified per response",
+        "observation_time": "provider response timestamp semantics not established",
+        "period_semantics": "daily ETF flow summary",
+        "revision_finality": "not established"
+      },
       "terms_status": "reuse_review_required",
-      "notes": "Automatic cross-check only; never canonical ETF flow source."
+      "notes": "Automatic cross-check only; never canonical ETF flow source.",
+      "registry_status": "candidate_unregistered"
     },
     {
       "catalog_id": "macro.yahoo-finance.dxy",
@@ -183,10 +315,22 @@
       "operational_status": "blocked",
       "data_role": "blocked",
       "credential_env": null,
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "No automated polling until access terms and permitted access method are resolved." },
-      "data_contract": { "asset_pair": "DXY index", "unit": "index points", "observation_time": "daily candle/session date semantics not yet approved", "period_semantics": "daily quote candidate; exact close and timezone semantics unconfirmed", "revision_finality": "unconfirmed" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No automated polling until access terms and permitted access method are resolved."
+      },
+      "data_contract": {
+        "asset_pair": "DXY index",
+        "unit": "index points",
+        "observation_time": "daily candle/session date semantics not yet approved",
+        "period_semantics": "daily quote candidate; exact close and timezone semantics unconfirmed",
+        "revision_finality": "unconfirmed"
+      },
       "terms_status": "access_terms_blocked",
-      "notes": "Do not request a key or scrape to bypass the access decision."
+      "notes": "Do not request a key or scrape to bypass the access decision.",
+      "registry_status": "candidate_unregistered"
     },
     {
       "catalog_id": "macro.ice.dxy",
@@ -198,10 +342,22 @@
       "operational_status": "candidate",
       "data_role": "blocked",
       "credential_env": null,
-      "polling": { "mode": "daily", "preferred_interval_minutes": null, "minimum_interval_minutes": null, "notes": "No polling until an accessible endpoint and license are confirmed." },
-      "data_contract": { "asset_pair": "ICE DXY", "unit": "index points", "observation_time": "official index dissemination timestamp required", "period_semantics": "ICE index business date kept separately from observed_at", "revision_finality": "unconfirmed" },
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No polling until an accessible endpoint and license are confirmed."
+      },
+      "data_contract": {
+        "asset_pair": "ICE DXY",
+        "unit": "index points",
+        "observation_time": "official index dissemination timestamp required",
+        "period_semantics": "ICE index business date kept separately from observed_at",
+        "revision_finality": "unconfirmed"
+      },
       "terms_status": "license_and_endpoint_unconfirmed",
-      "notes": "Product documentation only; not an approved quote endpoint."
+      "notes": "Product documentation only; not an approved quote endpoint.",
+      "registry_status": "registered"
     }
   ]
 }
