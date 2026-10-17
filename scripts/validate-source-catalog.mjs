@@ -6,6 +6,7 @@ const readJson = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url
 const catalog = readJson("../data/CryptoDataModel/registry/source-catalog.v1.json");
 const sourceRegistry = readJson("../data/CryptoDataModel/registry/source-registry.json");
 const metricRegistry = readJson("../data/CryptoDataModel/registry/metric-registry.json");
+const seedSql = readFileSync(new URL("../infrastructure/postgres/seed-v1.sql", import.meta.url), "utf8");
 
 assert.equal(typeof catalog.catalog_version, "string", "catalog_version is required");
 assert.ok(Array.isArray(catalog.endpoints), "catalog must contain endpoints[]");
@@ -140,6 +141,25 @@ for (const family of candidatePreparationFamilies) {
     assert.equal(entry.data_role, "cross_check", "SoSoValue candidate endpoint must remain cross_check");
   }
 }
+const sourceSeedBlock = seedSql.split(/insert into sources\\s*\\(/i)[1]?.split(/on conflict \\(source_id\\)/i)[0];
+assert.ok(sourceSeedBlock, "seed-v1.sql must contain a sources seed block");
+const seededSourceIds = [...sourceSeedBlock.matchAll(/^\\s*\\('([^']+)'/gm)].map((match) => match[1]);
+assert.equal(new Set(seededSourceIds).size, seededSourceIds.length, "seed-v1.sql contains duplicate source IDs");
+const seededSourceSet = new Set(seededSourceIds);
+const sourceRegistryIdsMissingFromSeed = [...registrySourceIds].filter((sourceId) => !seededSourceSet.has(sourceId)).sort();
+assert.deepEqual(sourceRegistryIdsMissingFromSeed, [], "source registry IDs missing from SQL seed");
+
+const catalogAllSourceIds = new Set(catalog.endpoints.map((entry) => entry.source_id));
+const explicitSourceReferences = [
+  ...[...captureScript.matchAll(/sourceId:\\s*"([^"]+)"/g)].map((match) => match[1]),
+  ...[...candidatePreparation.matchAll(/source_id:\\s*"([^"]+)"/g)].map((match) => match[1]),
+  ...[...sosovaluePreparation.matchAll(/source_id:\\s*"([^"]+)"/g)].map((match) => match[1])
+];
+const uniqueExplicitSourceReferences = [...new Set(explicitSourceReferences)].sort();
+const explicitSourceReferencesMissingFromCatalog = uniqueExplicitSourceReferences.filter((sourceId) => !catalogAllSourceIds.has(sourceId));
+assert.deepEqual(explicitSourceReferencesMissingFromCatalog, [],
+  "explicit capture/candidate-preparation source IDs must have catalog records");
+
 const registrySourcesMissingFromCatalog = [...registrySourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 const metricSourcesMissingFromCatalog = [...metricSourceIds].filter((sourceId) => !catalogSourceIds.has(sourceId)).sort();
 
@@ -149,6 +169,9 @@ const result = {
   runtime_endpoint_families_checked: runtimeEndpointFamilies.length,
   capture_endpoint_families_checked: captureEndpointFamilies.length,
   candidate_preparation_endpoint_families_checked: candidatePreparationFamilies.length,
+  explicit_script_source_ids_checked: uniqueExplicitSourceReferences.length,
+  seeded_source_ids_checked: seededSourceSet.size,
+  source_registry_ids_missing_from_seed: sourceRegistryIdsMissingFromSeed,
   registered_source_ids_covered: catalogSourceIds.size,
   metric_source_ids_missing_catalog_entries: metricSourcesMissingFromCatalog,
   registry_source_ids_missing_catalog_entries: registrySourcesMissingFromCatalog,
