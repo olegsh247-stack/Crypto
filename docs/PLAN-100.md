@@ -1,3 +1,29 @@
+## 2026-10-17 — текущий статус Плана 100 и решение по DXY Yahoo Finance
+
+### Статус этапов на основании проверенных артефактов и CI
+
+| Этап | Текущий статус | Что подтверждено / что осталось |
+|---|---|---|
+| 1. Hosting architecture | **Репозиторная архитектура и CI-репетиция подтверждены; реальный cutover не готов** | Целевой self-hosted стек описан; VPS Build Rehearsal [#39029846540](https://github.com/olegsh247-stack/Crypto/actions/runs/39029846540) завершился success: сборки API/Worker, PostgreSQL migrations, registry/provenance audit, duplicate/idempotency, backup/restore rehearsal и E2E прошли. VPS не предоставлен; реальные внешний backup/failure-domain и account-level проверки/traffic cutover не подтверждены. |
+| 2. PR audit против main | **Не завершён** | Нужна актуальная сверка открытых PR и расхождений веток с main. Не считать feature-branch документацию слитой в main; не выполнять merge без отдельного разрешения. |
+| 3. Product Contour v1 | **Частично выполнен; полный audit не закрыт** | API/Web freshness enum mismatch исправлен; Web build и VPS E2E/contract checks проходили. Осталась полная проверка всех фактических контрактов Domains → Factors → Scores → Scenarios → Monitoring → Evidence на актуальном main и проверяемых данных. |
+| 4. BTC inputs / provenance | **Продолжается; BTC остаётся not_evaluable** | Реальный read-only Kraken spot capture прошёл 1h freshness и имеет source/retrieval timestamps + hash, но кандидат review-only; нужен следующий qualifying capture и review. ETF Farside/TFTC снимки получены, но нужны capture pair ≥24h apart, row-level diff, revision/finality policy, права хранения для выбранного набора и независимое долговременное архивирование/restore. Fee/subsidy ratio и hashrate aggregation contracts/evidence не закрыты. |
+| 5. Один воспроизводимый BTC-сценарий | **Не принят; evaluation заблокирована** | Контракты и fail-closed readiness tests развиваются; реальный набор входов ещё не прошёл все gates. Сначала offline/read-only replay и review; persisted state не менять. |
+| 6. BTC end-to-end acceptance | **Не начат как завершённая приёмка** | После успешного воспроизводимого сценария проверить UI/API/evidence/snapshot lineage и повторяемость. |
+| 7. Собственный VPS | **CI rehearsal готов, реальный VPS не развёрнут** | Покупка/предоставление VPS и pre-production security/network/backup checks остаются будущим шагом. |
+| 8. Migration/cutover | **Заблокирован** | Нужны VPS, parity, backup/restore, rollback и явное разрешение пользователя. |
+| 9. Operations | **Проектирование и CI-проверки; production readiness не подтверждена** | Нужны реальные alerts/runbooks, независимый backup/restore и проверка восстановления после provisioning. |
+| 10. Другие активы | **Отложено по плану** | SOL/CAKE и массовое расширение — только после успешного BTC E2E. |
+| 11. Final acceptance | **Не начат** | Зависит от предыдущих этапов. |
+
+### Решение по DXY
+
+Пользователь выбрал Yahoo Finance `DX-Y.NYB` как доступный DXY reference. Фактический read-only запрос подтверждён в [probe #39029711852](https://github.com/olegsh247-stack/Crypto/actions/runs/39029711852): HTTP 200; regular-market quote 101.779 с source time `2026-10-16T20:59:59Z`; закрытие дневной свечи за 2026-10-16 около 101.84. Это подтверждает техническое получение, но не даёт разрешения на автоматизированный сбор или долговременное хранение raw response. Поэтому Yahoo принимается для ручной/offline исследовательской сверки; автоматический collector, durable raw archive и изменение runtime registry/source priority не включаются без подтверждённого разрешения условий использования. DXY — optional input и сам по себе не должен блокировать BTC readiness; не подменять его FRED `DTWEXBGS` или другими broad-dollar индексами.
+
+**Следующий приоритет по BTC:** закрывать реальные evidence gates для spot/ETF, подтвердить методику hashrate и fee/subsidy, затем запускать только offline/read-only воспроизводимый сценарий. Не ждать полной daily holdings panel по 13 ETF: разрешено работать с уже доступным покрытием при явном указании ограничений, не выдавая его за полный рынок.
+
+---
+
 # ПЛАН 100 — главный план проекта Crypto
 
 ## 2026-10-17 — ETF source-row identity gate strengthened
