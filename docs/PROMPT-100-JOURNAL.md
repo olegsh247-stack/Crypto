@@ -1225,3 +1225,11 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 **Вывод:** каталог теперь проверяет связность контракта метрики с источником и единицами на этапе CI; это не подтверждает, что ETF/DXY/spot уже проходят freshness, revision/finality и полную provenance-проверку. BTC остаётся `not_evaluable`.
 
 **Граница безопасности:** изменения ограничены тестами и CI rehearsal. Production DB, live capture, runtime source priority/registry, сценарные оценки/состояния, merge и deploy не затрагивались.
+
+## 2026-10-17 — BTC ETF contract discovery stage closed
+
+**Decision:** closed the repeated source-search/design loop and recorded the final boundary in [BTC-ETF-CONTRACT-CLOSEOUT-2026-10-17.md](BTC-ETF-CONTRACT-CLOSEOUT-2026-10-17.md), linked from Plan 100. Farside + TFTC remain the configured research comparison pair; SoSoValue remains a previously verified API cross-check, not an independent third vote. The existing snapshot builder/diff, archive writer/verifier, and fail-closed eligibility evaluator are the final technical contract for this stage.
+
+**Operational acceptance is not falsely marked complete:** no qualifying real capture pair ≥24 hours apart has been evidenced; source-specific long-term retention/reuse rights for Farside and SoSoValue are not established; and the private ETF archive plus independent backup/restore are not operational. These are concrete external evidence prerequisites, not permission to repeat source discovery. If rights cannot be cleared, leave ETF blocked rather than promoting a fallback implicitly. BTC remains `not_evaluable`.
+
+**Safety:** no new capture/API request, raw-data retention, production DB writes, ingestion, source-priority/registry change, scenario evaluation/state change, merge, or deployment occurred in this closeout.
