@@ -33,7 +33,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Research canonical candidate; actual metric eligibility remains controlled by metric-registry.json.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
     },
     {
       "catalog_id": "market.binance.trades.btcusdt.primary",
@@ -60,7 +61,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "USDT is not USD; never blend with canonical BTC/USD.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.binance.trades.btcusdt.dataapi",
@@ -87,7 +89,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "HTTP 200 in staging; cross-check only.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.okx.trades.btcusdt",
@@ -114,7 +117,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "USDT is not USD.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://www.okx.com/docs-v5/en/"
     },
     {
       "catalog_id": "market.bybit.trades.btcusdt",
@@ -141,7 +145,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "No key requested because the observed block is not evidence that authentication is appropriate.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://bybit-exchange.github.io/docs/v5/market/tickers"
     },
     {
       "catalog_id": "network.mempool.hashrate",
@@ -168,7 +173,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Staging HTTP 200; metric remains unready until window and unit checks pass.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/"
     },
     {
       "catalog_id": "network.mempool.block-fees",
@@ -195,7 +201,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Staging HTTP 200; do not treat projected block fees as realized fees.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/"
     },
     {
       "catalog_id": "institutional.farside.etf-all-data",
@@ -222,7 +229,8 @@
       },
       "terms_status": "reuse_review_required",
       "notes": "All-data page HTTP 200 in staging; landing page 403. Rows are review-only until time, identity, revision and finality checks pass.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://farside.co.uk/bitcoin-etf-flow-all-data/"
     },
     {
       "catalog_id": "institutional.tftc.etf-landing",
@@ -249,7 +257,8 @@
       },
       "terms_status": "cc-by-4.0-advertised_review_required",
       "notes": "Landing page/documentation reference; the separate data.json endpoint is the actual public JSON capture source.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://www.tftc.io/bitcoin-etf-flows"
     },
     {
       "catalog_id": "institutional.sosovalue.etf-summary",
@@ -276,7 +285,8 @@
       },
       "terms_status": "api_terms_review_required",
       "notes": "Exact summary-history endpoint used by the offline candidate normalizer; keyed cross-check only, not canonical ingestion.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history"
     },
     {
       "catalog_id": "institutional.cryptoetf.today.etf-mcp",
@@ -303,7 +313,8 @@
       },
       "terms_status": "reuse_review_required",
       "notes": "Automatic cross-check only; never canonical ETF flow source.",
-      "registry_status": "candidate_unregistered"
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://cryptoetf.today"
     },
     {
       "catalog_id": "macro.yahoo-finance.dxy",
@@ -330,7 +341,8 @@
       },
       "terms_status": "access_terms_blocked",
       "notes": "Do not request a key or scrape to bypass the access decision.",
-      "registry_status": "candidate_unregistered"
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://finance.yahoo.com/quote/DX-Y.NYB/"
     },
     {
       "catalog_id": "macro.ice.dxy",
@@ -357,7 +369,8 @@
       },
       "terms_status": "license_and_endpoint_unconfirmed",
       "notes": "Product documentation only; not an approved quote endpoint.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices"
     },
     {
       "catalog_id": "protocol.bitcoin-developer-reference",
@@ -384,7 +397,8 @@
       },
       "terms_status": "documentation_reference",
       "notes": "Not a live market-data endpoint; specific node/RPC integrations need separate endpoint contracts.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developer.bitcoin.org/reference/"
     },
     {
       "catalog_id": "market.provider.placeholder",
@@ -411,7 +425,8 @@
       },
       "terms_status": "not_applicable_provider_unselected",
       "notes": "Registry placeholder only; must not be treated as evidence that futures OI, funding, or options OI are available.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": null
     },
     {
       "catalog_id": "analytics.glassnode",
@@ -438,7 +453,8 @@
       },
       "terms_status": "plan_and_terms_review_required",
       "notes": "No credential configured or requested; candidate only.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://glassnode.com/"
     },
     {
       "catalog_id": "lightning.mempool.documentation",
@@ -465,7 +481,8 @@
       },
       "terms_status": "documentation_reference",
       "notes": "Registry source identity exists, but a concrete capture call site must be verified before claiming runtime ingestion.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/docs/api/rest"
     },
     {
       "catalog_id": "macro.official-agencies.placeholder",
@@ -492,7 +509,8 @@
       },
       "terms_status": "series_and_endpoint_unselected",
       "notes": "Generic registry entry; does not establish that DXY, US 10Y yield or other macro metrics are supplied.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://home.treasury.gov/"
     },
     {
       "catalog_id": "market.mexc.spot-api",
@@ -519,7 +537,8 @@
       },
       "terms_status": "endpoint_and_terms_review_required",
       "notes": "Registry candidate; no call site was confirmed in this audit.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/"
     },
     {
       "catalog_id": "macro.fred.dtwexbgs",
@@ -546,7 +565,8 @@
       },
       "terms_status": "series_semantics_review_required",
       "notes": "Not a substitute for ICE DXY and must not be assigned to metric macro.dxy.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://fred.stlouisfed.org/series/DTWEXBGS"
     },
     {
       "catalog_id": "market.binance.ticker.btcusdt.ui",
@@ -573,7 +593,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Runtime UI ticker fallback only; BTC/USDT is not BTC/USD and must not be blended into research spot price.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.binance.klines.ui",
@@ -600,7 +621,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Runtime chart history only. USD candle path can also call Binance USDT candles and is not a canonical USD candle source.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.kraken.ticker.ui",
@@ -627,7 +649,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Runtime UI ticker fallback only; research staging separately uses Kraken Trades to preserve individual trade timestamps.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
     },
     {
       "catalog_id": "market.kraken.ohlc.ui",
@@ -654,7 +677,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Runtime chart fallback only; separate from research spot trade observations.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
     },
     {
       "catalog_id": "market.coingecko.simple-price.ui",
@@ -681,7 +705,8 @@
       },
       "terms_status": "public_api_docs_review_required",
       "notes": "Runtime UI fallback only; not an approved canonical research market.spot_price source.",
-      "registry_status": "candidate_unregistered"
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/simple-price"
     },
     {
       "catalog_id": "market.coingecko.market-chart.ui",
@@ -708,7 +733,8 @@
       },
       "terms_status": "public_api_docs_review_required",
       "notes": "Runtime UI chart fallback only; not a canonical research data source.",
-      "registry_status": "candidate_unregistered"
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/coins-id-market-chart"
     },
     {
       "catalog_id": "market.binance.ticker.btcusdt.ui.apigcp",
@@ -735,7 +761,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Binance runtime UI ticker fallback host api-gcp",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.binance.ticker.btcusdt.ui.primary",
@@ -762,7 +789,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Binance runtime UI ticker fallback primary host; HTTP 451 was observed in staging",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.binance.klines.ui.apigcp",
@@ -789,7 +817,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Binance runtime UI candle fallback host api-gcp",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "market.binance.klines.ui.primary",
@@ -816,7 +845,8 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Binance runtime UI candle fallback primary host; HTTP 451 was observed in staging",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
     },
     {
       "catalog_id": "institutional.farside.etf-landing",
@@ -843,7 +873,8 @@
       },
       "terms_status": "reuse_review_required",
       "notes": "Capture-only diagnostic; the all-data page is a separate endpoint. Do not infer a value or freshness from the landing-page response.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://farside.co.uk/bitcoin-etf-flow-all-data/"
     },
     {
       "catalog_id": "institutional.tftc.etf-json",
@@ -870,7 +901,8 @@
       },
       "terms_status": "cc-by-4.0-advertised_review_required",
       "notes": "Exact JSON endpoint used by public source capture; mirror/cross-check only.",
-      "registry_status": "registered"
+      "registry_status": "registered",
+      "documentation_url": "https://www.tftc.io/bitcoin-etf-flows"
     },
     {
       "catalog_id": "institutional.sosovalue.etf-candidate-output",
@@ -897,7 +929,8 @@
       },
       "terms_status": "api_terms_review_required",
       "notes": "Candidate-output source_id used by prepare-btc-sosovalue-etf-candidates.mjs. Must not be promoted into metric source_priority without separate approval.",
-      "registry_status": "candidate_unregistered"
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history"
     }
   ]
 }
