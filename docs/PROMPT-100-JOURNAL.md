@@ -1,5 +1,15 @@
 # Промт 100 — журнал существенных работ проекта Crypto
 
+## 2026-10-17 — ETF duplicate source-row key guard
+
+**Finding:** The readiness gate required a source row key but did not detect a key reused across different ETF reporting dates. Such a fixture could satisfy the distinct-day count without proving distinct provider rows.
+
+**Change:** Added a fail-closed blocker `duplicate_source_row_key_across_reporting_days` after selecting one ETF row per reporting date, plus a regression test. Revisions for the same reporting date remain consolidated into one session.
+
+**Verification:** BTC Scenario Readiness Gate [#39022454551](https://github.com/olegsh247-stack/Crypto/actions/runs/39022454551) passed. VPS Build Rehearsal [#39022454542](https://github.com/olegsh247-stack/Crypto/actions/runs/39022454542) was still running when this entry was prepared; its result will be recorded separately after it completes.
+
+**Boundary:** No live capture, production DB write, source-priority change, scenario-state persistence, deployment, or merge.
+
 
 ## 2026-10-17 — API/Web metric freshness enum aligned and CI verified
 
