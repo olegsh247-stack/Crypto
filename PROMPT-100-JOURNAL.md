@@ -45,3 +45,11 @@
 - Freshness recheck: Kraken and daily hashrate meet their time windows as captured; Yahoo Finance DXY close `101.84` for 2026-10-16 is within 48 hours but remains outside the canonical source allowlist; Farside's latest parsed reported date is 2026-10-09 and lacks provider observation/publication time, so the 36-hour ETF gate remains blocked. TFTC and SoSoValue remain cross-checks, not silent replacements.
 - Added `fixtures/btc-offline-scenario-v1.json` and `scripts/run-btc-offline-scenario.mjs`; updated the BTC Scenario Readiness workflow to run this deterministic offline rehearsal. Gate run [#39040985262](https://github.com/olegsh247-stack/Crypto/actions/runs/39040985262) passed. Historical fixture result is Base, score -1, low confidence; no live data, DB writes, scenario-state persistence, monitoring writes, or probability changes.
 - Detailed evidence and blockers are recorded in `docs/BTC-INPUT-RECHECK-AND-OFFLINE-REHEARSAL-2026-10-17.md`. BTC remains `not_evaluable`; the offline rehearsal does not override current input gates.
+
+
+### Follow-up verification — final parser status and capture artifact
+
+- Updated BTC Public Source Staging run [#39041045356](https://github.com/olegsh247-stack/Crypto/actions/runs/39041045356) passed after the fee/subsidy parser was changed to emit `BLOCKED_REORG_AND_DEPLOYED_VERSION_UNVERIFIED` rather than implying production acceptance. Artifact digest: `sha256:d36abc2acd66d1a3f31ffa2d078c45eb6cef56da2011460032175ba50b0aac62`.
+- Latest Kraken trade in that artifact: `81,451.00 USD/BTC` at `2026-10-17T14:30:34.877Z`; hashrate remained `1009.5138912218121 EH/s` for the prior UTC day bucket.
+- The captured Blockchain.com supply candidate remains dated 2026-10-13 and stale (>48 hours); it is not promoted. Farside remains stale for the latest-row gate. The scenario remains `not_evaluable`.
+- Offline fixture runner passed in [BTC Scenario Readiness Gate #39040985262](https://github.com/olegsh247-stack/Crypto/actions/runs/39040985262). Detailed current results are in `docs/BTC-INPUT-RECHECK-AND-OFFLINE-REHEARSAL-2026-10-17.md`.
