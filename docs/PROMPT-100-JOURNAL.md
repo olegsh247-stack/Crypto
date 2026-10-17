@@ -1303,3 +1303,12 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Remaining real blockers:** second qualifying pair capture ≥24h later and row-level diff; provider publication/revision/finality semantics; Farside long-term retention/reuse rights; real durable private archive plus independent restore; human snapshot review. BTC remains `not_evaluable`.
 
 **Safety:** no production DB access/writes, ingestion, registry/source-priority change, scenario evaluation/state/probability changes, deployment, or merge.
+
+
+## 2026-10-17 — DXY source verification and credential decision
+
+**Finding:** Compared Yahoo Finance `DX-Y.NYB`, Alpha Vantage, FXMacroData, Live-Rates.com, FRED `DTWEXBGS`, ICE, and TradingView against the actual requirement: a lawful, free automated feed for ICE US Dollar Index (DXY). None of the reviewed candidates is currently approved for that role. Yahoo's terms prohibit automated collection without express prior permission; Alpha Vantage documents the relevant major-index endpoint as premium; FXMacroData's public docs do not offer DXY; Live-Rates does not document DXY coverage and requires a key for instrument discovery/history; FRED's `DTWEXBGS` is a different broad-dollar index; TradingView is a visual reference only. ICE is the authoritative licensing route, but a free public feed was not verified.
+
+**Decision:** No new DXY keys requested. DXY remains blocked/optional. Do not substitute `DTWEXBGS` under the DXY identity. Daily data does not require 15-minute polling. Evidence and future data contract are in [DXY source verification](DXY-SOURCE-VERIFICATION-2026-10-17.md).
+
+**Boundary:** Documentation only; no provider credentials were created, no automated DXY collector/source-priority change was made, and no BTC runtime/scenario state was changed.
