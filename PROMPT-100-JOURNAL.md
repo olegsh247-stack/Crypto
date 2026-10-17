@@ -78,3 +78,9 @@
 - Staging run [#39056555560](https://github.com/olegsh247-stack/Crypto/actions/runs/39056555560) passed the new protocol-supply tests, Farside parser tests, ETF two-snapshot comparison tests, observation normalization tests, public-source capture, and candidate preparation.
 - The source ID matches the current `network.primary` priority, and the tip timestamp is fresh under 48 hours. **Not promoted:** this is protocol-scheduled total issuance, not economically spendable supply/UTXO supply; metric semantics still require explicit approval. Blockchain.com’s 2026-10-13 point remains a stale historical cross-check. No registry/runtime changes, DB writes, ingestion, or scenario-state changes.
 - Added `docs/BTC-PROTOCOL-ISSUED-SUPPLY-CANDIDATE-2026-10-17.md` and updated the BTC input recheck. BTC remains `not_evaluable`.
+
+
+### ETF snapshot baseline pin — 2026-10-17
+
+- Pin the latest successful source-staging capture [#39056555560](https://github.com/olegsh247-stack/Crypto/actions/runs/39056555560) as the baseline for the next two-snapshot check: Farside all-data page retrieved at `2026-10-17T18:05:44.360Z`, latest session `2026-10-16`, payload SHA-256 `b327bfaecf7ca85b1e9b7a0bb54c511fe10d7d4b91e5838b54212be0b5d42d19`. The next qualifying snapshot must be captured no earlier than `2026-10-18T18:05:44.360Z`.
+- The same run passed Farside parser, two-snapshot comparator, protocol-supply calculation, observation normalization, and read-only source capture. The prior earlier snapshot remains historical evidence; it does not replace this pinned baseline for the next interval gate.
