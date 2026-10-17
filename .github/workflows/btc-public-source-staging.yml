@@ -13,6 +13,9 @@ on:
       - "scripts/compare-btc-etf-snapshots.test.mjs"
       - "scripts/btc-protocol-supply.mjs"
       - "scripts/btc-protocol-supply.test.mjs"
+      - "scripts/validate-btc-fee-window.mjs"
+      - "scripts/validate-btc-fee-window.test.mjs"
+      - "scripts/capture-btc-fee-subsidy-window.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -33,6 +36,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test BTC per-block fee window validation
+        run: node --test scripts/validate-btc-fee-window.test.mjs
       - name: Test Farside ETF table parsing and placeholder handling
         run: node --test scripts/parse-farside-etf-table.test.mjs
       - name: Test Bitcoin protocol-issued supply calculation
@@ -45,6 +50,8 @@ jobs:
         env:
           SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
         run: node scripts/capture-btc-public-sources.mjs
+      - name: Capture and audit per-block BTC fee/subsidy window (review only)
+        run: node scripts/capture-btc-fee-subsidy-window.mjs
       - name: Prepare normalized observation candidates (review only)
         run: node scripts/prepare-btc-observation-candidates.mjs
       - name: Upload raw responses, provenance manifest, and review-only candidates
