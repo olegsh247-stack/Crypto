@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
 
+# Avoid overlapping public-source captures and ambiguous artifact ownership.
+concurrency:
+  group: btc-public-source-staging
+  cancel-in-progress: false
+
 jobs:
   capture:
     runs-on: ubuntu-latest
