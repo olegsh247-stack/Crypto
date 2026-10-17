@@ -150,3 +150,13 @@ Ticker cache в runtime — 60 секунд, response Cache-Control — max-age 
 Добавлен `scripts/validate-source-catalog.mjs` в VPS API Build Rehearsal. Проверка валидирует уникальность catalog IDs, source ID alignment, допустимые статус/роль/access/polling enum, наличие unit/observation-time/period/terms fields и отсутствие credential-like URL query parameters; допускает URL-less provider placeholder только если он явно `unknown + blocked + manual`. Проверка выводит coverage gaps как baseline report, не меняя runtime. В последнем наблюдавшемся run [#39015560940](https://github.com/olegsh247-stack/Crypto/actions/runs/39015560940) шаг `Validate source catalog inventory (read-only)` завершился **success**; полный VPS build/E2E на момент записи ещё выполняется.
 
 Каталог пока не является runtime source of truth. Нельзя пока рефакторить capture/runtime/SQL seed на его основе: сначала подтвердить полный CI run и просмотреть baseline coverage report. Source priorities, production data, scenario state/score/probability и deployment не менялись.
+
+
+## Дополнение — runtime market endpoints внесены в каталог отдельно от research sources
+
+По фактическим call sites в `vps/api/src/app.ts` в catalog добавлены отдельные записи для runtime UI ticker/candles:
+- Binance ticker и klines (пример BTC/USDT), с fallback hosts `data-api.binance.vision`, `api-gcp.binance.com`, `api.binance.com`;
+- Kraken Ticker и daily OHLC (XBT/USD);
+- CoinGecko simple/price и market_chart (CoinGecko добавлен только как `candidate_unregistered`, потому что отдельного source ID пока нет в source registry).
+
+Эти endpoints помечены `review_only`, а не canonical research ingestion. UI ticker currently stamps `timestamp` at retrieval time for Binance/Kraken/CoinGecko; this must not be mistaken for a provider trade observation timestamp. Binance candle route uses BTC/USDT series, and some USD candle paths derive from USDT candles, so they must not be represented as canonical USD spot observations. Runtime cache remains 15 minutes only on this branch; source fallback order and response contract were not changed by the catalog inventory.
