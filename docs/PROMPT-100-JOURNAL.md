@@ -1195,3 +1195,13 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 Добавлен [SoSoValue BTC ETF API Candidate Check](SOSOVALUE-BTC-ETF-API-CANDIDATE-CHECK-2026-10-17.md): зафиксированы endpoint `/etfs/summary-history`, заголовок `x-soso-api-key`, безопасная схема секрета `SOSOVALUE_API_KEY`, проверки глубины истории, ≥5 недавних торговых дней, единиц, дат/часовых поясов, пропусков/дубликатов, изменений исторических строк и условий хранения данных.
 
 **Результат:** документационный этап завершён; фактическая глубина истории, единицы и revision/finality не подтверждены без авторизованного ответа. SoSoValue остаётся только cross-check candidate; metric `source_priority` и runtime не менялись. Ключ не публиковать в чате или репозитории — для следующего read-only теста он должен быть передан через secret/environment. Не выполнялись live BTC capture, production DB writes, scenario evaluation/state changes, deployment или merge.
+
+## 2026-10-17 — SoSoValue API проверен реальным запросом
+
+Добавлены read-only checker `scripts/check-sosovalue-btc-etf-api.mjs` и workflow [SoSoValue BTC ETF API Check #39019097937](https://github.com/olegsh247-stack/Crypto/actions/runs/39019097937). Workflow подтвердил наличие секрета `SOSOVALUE_API_KEY` без раскрытия значения и выполнил один запрос к официальному `/etfs/summary-history`; HTTP 200, workflow **success**. Проверка не обращалась к БД, не выполняла production writes и не меняла состояние сценариев.
+
+Получены 21 уникальная торговая дата за период 2026-09-18—2026-10-16; все 21 значения `total_net_inflow` числовые. Официальная документация задаёт единицу USD, отрицательное значение означает net outflow, даты — торговые даты; endpoint ограничен последним одним месяцем. Для 2026-10-07 значение SoSoValue `-487.067m USD` совпадает с ранее зафиксированным TFTC `-487.1m` на отображаемой точности, но отличается от Farside `-484.9m`. Последние пять сессий (12–16 октября) суммарно составляют `-228.580m USD`; это только наблюдение кросс-проверки, не каноническое значение.
+
+Добавлен отчёт [SOSOVALUE-BTC-ETF-API-CANDIDATE-CHECK-2026-10-17.md](SOSOVALUE-BTC-ETF-API-CANDIDATE-CHECK-2026-10-17.md) с диапазоном, полями, хешем ответа и ограничениями. Сырой ответ сохранён только во временном Actions artifact с retention 3 дня; в Git он не добавлялся.
+
+**Решение:** доступ, схема краткосрочной истории и единицы подтверждены; SoSoValue остаётся daily cross-check candidate. Полный исторический архив, timestamp публикации, revision/finality и условия долговременного хранения/перераспространения не подтверждены. Нужен повторный снимок в следующий торговый день для проверки изменений истории. Registry, metric `source_priority`, runtime и сценарии не менялись; BTC остаётся `not_evaluable`.
