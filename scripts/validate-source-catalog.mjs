@@ -158,7 +158,9 @@ const seededSourceIds = sourceSeedBlock.split("\n").map((line) => line.trim()).f
 assert.equal(new Set(seededSourceIds).size, seededSourceIds.length, "seed-v1.sql contains duplicate source IDs");
 const seededSourceSet = new Set(seededSourceIds);
 const sourceRegistryIdsMissingFromSeed = [...registrySourceIds].filter((sourceId) => !seededSourceSet.has(sourceId)).sort();
+const seededSourceIdsMissingFromRegistry = [...seededSourceSet].filter((sourceId) => !registrySourceIds.has(sourceId)).sort();
 assert.deepEqual(sourceRegistryIdsMissingFromSeed, [], "source registry IDs missing from SQL seed");
+assert.deepEqual(seededSourceIdsMissingFromRegistry, [], "SQL seed contains source IDs absent from source-registry.json");
 
 const catalogAllSourceIds = new Set(catalog.endpoints.map((entry) => entry.source_id));
 const explicitSourceReferences = [
