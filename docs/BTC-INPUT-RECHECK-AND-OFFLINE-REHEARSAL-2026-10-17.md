@@ -38,7 +38,7 @@ Latest read-only staging run: [BTC Public Source Staging #39041045356](https://g
 | Fee/subsidy | 144-block candidate ratio `0.0051324131111` | Arithmetic valid; production acceptance blocked by reorg/version proof |
 | DXY | Previously captured Yahoo Finance `DX-Y.NYB` daily close `101.84` for session date 2026-10-16 | Within 48 hours as of this recheck, but not approved by the current canonical source allowlist; optional context only in offline rehearsal |
 | US BTC spot ETF flows | Farside page checked 2026-10-17: page date 2026-10-17, latest completed session row 2026-10-16; all 12 fund values present and fund sum reconciles to displayed -82.4 USD million. Exact observation/publication time and revision/finality are not supplied | **Session-date freshness is current**, but canonical acceptance remains blocked pending a second snapshot ≥24 hours later, revision/retention review, and approved session-aware freshness contract. TFTC/SoSoValue remain cross-checks only |
-| Circulating supply | Blockchain.com chart latest point dated 2026-10-13 | **Stale** (>48h), source-priority mismatch and semantics need review |
+| Circulating supply | Mempool tip height 971896, hash `0000000000000000000142a5ac84bd7c3f866ac84b97d56b1ec23a2267258cf5`; block timestamp `2026-10-17T18:03:12Z`; protocol-scheduled total issuance `20,099,678.125 BTC`; retrieval `18:05:22Z`; payload SHA-256 `c62b776119cb8177804135945e4d620eb1db4b8fe0df40b8bfa1bbdb5ea75cab` | Fresh candidate under 48h and source ID matches `network.primary`; **review-only** until the metric is explicitly defined as protocol-issued supply rather than economically spendable supply. Blockchain.com chart remains a stale cross-check dated 2026-10-13 |
 
 Consequently, the current BTC scenario is still **`not_evaluable`**. A fresh spot trade and fresh hashrate do not compensate for the ETF gate or the unapproved DXY source. No database was read or changed in this staging run.
 
@@ -64,5 +64,5 @@ This is a historical deterministic rehearsal, **not a current market evaluation*
 
 - No production DB access/writes, observation ingestion, scenario-state writes, monitoring-event writes, or probability updates.
 - Fee/subsidy is now explicitly blocked rather than implicitly accepted from a numeric aggregate.
-- Supply candidate is recorded but not promoted.
+- Protocol-issued supply now has a fresh, reorg-checked Mempool tip candidate; it remains review-only until metric semantics are approved. The older Blockchain.com chart remains a stale cross-check and is not used as the current observation.
 - BTC stays `not_evaluable` until the canonical ETF latest-row freshness/provenance gate and the approved-source gate for DXY are resolved. The offline fixture does not override those gates.
