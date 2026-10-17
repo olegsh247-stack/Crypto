@@ -328,3 +328,8 @@ This closes the identified type-declaration gap, not the wider metric-freshness 
 The API detail handler returns each observation's persisted `freshness` classification without translating it. PostgreSQL constrains this value to `CURRENT`, `STALE`, `EXPIRED`, or `UNCLASSIFIED`. The Web shared `MetricObservation` type was corrected to use the same enum, and a compile-time fixture now exercises all four allowed values.
 
 Verification: [Web Build #39021673480](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673480) and [VPS Build Rehearsal #39021673493](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673493) passed. This closes the type-level enum mismatch only. Live endpoint checks and proof of actual observation freshness/provenance remain open; no production data or runtime was changed.
+
+
+## Follow-up — ETF source-row identity guard, 2026-10-17
+
+The offline readiness gate now rejects a source-row key reused across distinct ETF reporting dates (`duplicate_source_row_key_across_reporting_days`). This supplements the existing requirements for five distinct reporting dates, complete fund coverage, source provenance, payload hash, revision/finality evidence and freshness. Regression test passed in BTC Scenario Readiness Gate [#39022454551](https://github.com/olegsh247-stack/Crypto/actions/runs/39022454551). VPS rehearsal result was pending at the time of this note. No live capture or scenario persistence occurred.
