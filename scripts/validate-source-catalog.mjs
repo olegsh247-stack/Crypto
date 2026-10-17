@@ -150,8 +150,8 @@ for (const family of candidatePreparationFamilies) {
   }
 }
 
-function assertCatalogContract({ catalogId, sourceId, host, path, pair, unit, role }) {
-  const entry = catalog.endpoints.find((candidate) => candidate.catalog_id === catalogId);
+function assertCatalogContract({ catalogId, sourceId, host, path, pair, unit, role }, entries = catalog.endpoints) {
+  const entry = entries.find((candidate) => candidate.catalog_id === catalogId);
   assert.ok(entry, `missing expected catalog contract ${catalogId}`);
   assert.equal(entry.source_id, sourceId, `${catalogId}: source_id mismatch`);
   assert.equal(entry.data_role, role, `${catalogId}: data_role mismatch`);
@@ -190,6 +190,42 @@ const semanticEndpointContracts = [
   { catalogId: "institutional.sosovalue.etf-candidate-output", sourceId: "institutional.sosovalue.candidate", host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", pair: "US spot BTC ETFs", unit: "USD million/day after normalization", role: "cross_check" }
 ];
 for (const contract of semanticEndpointContracts) assertCatalogContract(contract);
+
+// Negative contract tests prove that the parity gate rejects plausible semantic drift,
+// not just missing endpoint text. These operate on in-memory copies only.
+const krakenContract = semanticEndpointContracts.find((contract) => contract.catalogId === "market.kraken.trades.xbtusd");
+assert.ok(krakenContract, "negative-test baseline Kraken contract is required");
+const cloneCatalog = () => catalog.endpoints.map((entry) => ({
+  ...entry,
+  data_contract: entry.data_contract ? { ...entry.data_contract } : entry.data_contract
+}));
+const wrongSourceCatalog = cloneCatalog();
+wrongSourceCatalog.find((entry) => entry.catalog_id === krakenContract.catalogId).source_id = "market.binance";
+assert.throws(
+  () => assertCatalogContract(krakenContract, wrongSourceCatalog),
+  /source_id mismatch/,
+  "contract gate must reject a mismatched source_id"
+);
+const wrongUnitCatalog = cloneCatalog();
+wrongUnitCatalog.find((entry) => entry.catalog_id === krakenContract.catalogId).data_contract.unit = "USDT/BTC";
+assert.throws(
+  () => assertCatalogContract(krakenContract, wrongUnitCatalog),
+  /unit mismatch/,
+  "contract gate must reject a mismatched quote unit"
+);
+const wrongPairCatalog = cloneCatalog();
+wrongPairCatalog.find((entry) => entry.catalog_id === krakenContract.catalogId).data_contract.asset_pair = "BTC/USDT";
+assert.throws(
+  () => assertCatalogContract(krakenContract, wrongPairCatalog),
+  /asset_pair mismatch/,
+  "contract gate must reject a mismatched quote pair"
+);
+const unlistedEndpointCatalog = cloneCatalog().filter((entry) => entry.catalog_id !== krakenContract.catalogId);
+assert.throws(
+  () => assertCatalogContract(krakenContract, unlistedEndpointCatalog),
+  /missing expected catalog contract/,
+  "contract gate must reject an endpoint absent from the catalog"
+);
 
 const sourceSeedStart = seedSql.toLowerCase().indexOf("insert into sources");
 assert.ok(sourceSeedStart >= 0, "seed-v1.sql must contain a sources seed block");
