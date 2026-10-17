@@ -2,19 +2,21 @@
 
 **Mode:** public-source staging and offline-only deterministic calculation. No production database access, ingestion, scenario-state persistence, monitoring-event writes or baseline probability changes.
 
-## 1. Fee/subsidy: final acceptance decision
+## 1. Fee/subsidy: per-block window verified, acceptance still gated
 
-The Mempool.space `/api/v1/mining/reward-stats/144` endpoint returns aggregate totals, not individual block hashes. The upstream implementation reviewed in the repository sums `reward` and `fees` for the latest N rows with `stale = 0`; the public response does not prove the deployed backend version or expose every block identity.
+The aggregate endpoint alone was insufficient, so a read-only per-block audit was added in `scripts/capture-btc-fee-subsidy-window.mjs`, with pure validation tests in `scripts/validate-btc-fee-window.mjs`.
 
-Latest review capture at 2026-10-17 14:30:36 UTC:
-- HTTP 200; blocks `971730–971873`, inclusive count 144.
-- `totalReward = 45,230,958,590 sats`.
-- `totalFee = 230,958,590 sats`.
-- `totalReward - totalFee = 45,000,000,000 sats = 450 BTC`, matching 144 × 3.125 BTC.
-- Candidate ratio: `230,958,590 / 45,000,000,000 = 0.0051324131111`, or `0.5132413111%` of subsidy.
-- Raw response SHA-256: `285d16d799a9ad3f51f23178e8bb9bea3d2048103b77e34f2aff17e9656ad71f`.
+Latest staging run [#39056926908](https://github.com/olegsh247-stack/Crypto/actions/runs/39056926908) succeeded. It captured the 144-block window from height `971753` through `971896` inclusive:
 
-**Decision: BLOCKED for production acceptance.** The numeric calculation and height range are internally consistent, but this aggregate cannot prove the canonical hash identity of each included block or exclude an in-window reorganization. The deployed API version is also not pinned by response metadata. The capture parser now reports `BLOCKED_REORG_AND_DEPLOYED_VERSION_UNVERIFIED` even when the arithmetic succeeds. Do not ingest this value as an accepted observation. To reopen acceptance, use a source/method that preserves block identities and fee/subsidy components for a fixed 144-block window, or establish equivalent independently verifiable chain evidence; pin the deployed source version and test a reorg/re-capture fixture. No production registry or runtime adapter was changed.
+- Aggregate `totalFee`: `219,667,947 sats`; per-block sum reconciles exactly.
+- Aggregate `totalReward`: `45,219,667,947 sats`; reward minus fees is `45,000,000,000 sats = 450 BTC`.
+- Protocol subsidy independently calculated over those same 144 heights: `450 BTC`.
+- Per-block fee total: `2.19667947 BTC`.
+- Research candidate ratio: `219,667,947 / 45,000,000,000 = 0.0048815099333`, approximately `0.488151%` of subsidy.
+- All 144 block heights are distinct and contiguous; every parent hash links to the preceding block; the canonical hashes at both window boundaries and the chain tip height/hash were identical before and after capture.
+- Evidence JSON SHA-256: `6895f032f24b2e0063b995b0b5331ae23ed8838cec8ab8d11e69947f3b13bb34`.
+
+**Decision: review-only, not yet production-accepted.** This is materially stronger than the prior aggregate-only candidate, but the window ends at the captured tip. Re-capture after at least six additional blocks and compare every overlapping height/hash/fee to identify any reorganization. The deployed API implementation/version is not independently pinned by response metadata; keep that as a separate acceptance gate. No registry/runtime changes or ingestion.
 
 ## 2. Circulating supply source review
 
@@ -29,16 +31,16 @@ Candidate capture: Blockchain.com chart `https://api.blockchain.info/charts/tota
 
 ## 3. Mandatory-input freshness recheck
 
-Latest read-only staging run: [BTC Public Source Staging #39041045356](https://github.com/olegsh247-stack/Crypto/actions/runs/39041045356). Artifact digest: `sha256:d36abc2acd66d1a3f31ffa2d078c45eb6cef56da2011460032175ba50b0aac62`; temporary artifact expires 2026-10-24. The run passed after the parser was changed to explicitly block fee/subsidy production acceptance pending reorg/version proof.
+Latest read-only staging run: [BTC Public Source Staging #39056926908](https://github.com/olegsh247-stack/Crypto/actions/runs/39056926908). It passed the new per-block fee-window tests and uploaded the full review artifact; temporary artifact retention is seven days.
 
 | Input | Latest reviewed evidence | Freshness / acceptance |
 |---|---|---|
 | BTC/USD spot | Kraken `81,451.00 USD/BTC`; trade at `2026-10-17T14:30:34.877Z`; retrieval `14:30:36Z` | Fresh under 1 hour; candidate only, not ingested |
 | Hashrate | `1009.5138912218121 EH/s`; daily bucket `[2026-10-16T00:00Z, 2026-10-17T00:00Z)` | Fresh under 48 hours; daily estimate; candidate only |
-| Fee/subsidy | 144-block candidate ratio `0.0051324131111` | Arithmetic valid; production acceptance blocked by reorg/version proof |
+| Fee/subsidy | 144-block per-height audit: `0.0048815099333` (2.19667947 BTC fees / 450 BTC subsidy) | 144 heights, parent links, aggregate fees/subsidy, boundary hashes and stable tip verified; review-only pending ≥6-block recapture comparison and deployed-version parity |
 | DXY | Previously captured Yahoo Finance `DX-Y.NYB` daily close `101.84` for session date 2026-10-16 | Within 48 hours as of this recheck, but not approved by the current canonical source allowlist; optional context only in offline rehearsal |
 | US BTC spot ETF flows | Farside page checked 2026-10-17: page date 2026-10-17, latest completed session row 2026-10-16; all 12 fund values present and fund sum reconciles to displayed -82.4 USD million. Exact observation/publication time and revision/finality are not supplied | **Session-date freshness is current**, but canonical acceptance remains blocked pending a second snapshot ≥24 hours later, revision/retention review, and approved session-aware freshness contract. TFTC/SoSoValue remain cross-checks only |
-| Circulating supply | Mempool tip height 971896, hash `0000000000000000000142a5ac84bd7c3f866ac84b97d56b1ec23a2267258cf5`; block timestamp `2026-10-17T18:03:12Z`; protocol-scheduled total issuance `20,099,678.125 BTC`; retrieval `18:05:22Z`; payload SHA-256 `c62b776119cb8177804135945e4d620eb1db4b8fe0df40b8bfa1bbdb5ea75cab` | Fresh candidate under 48h and source ID matches `network.primary`; **review-only** until the metric is explicitly defined as protocol-issued supply rather than economically spendable supply. Blockchain.com chart remains a stale cross-check dated 2026-10-13 |
+| Circulating supply | Mempool tip height 971896, hash `0000000000000000000142a5ac84bd7c3f866ac84b97d56b1ec23a2267258cf5`; block timestamp `2026-10-17T18:03:12Z`; protocol-scheduled total issuance `20,099,678.125 BTC`; retrieval `18:10:40Z`; payload SHA-256 `34aa5237f233a6de7d5db91a9738237d509ed0f3e89fad20157f17e2fb11da96` | Fresh candidate under 48h and source ID matches `network.primary`; **review-only** until the metric is explicitly defined as protocol-issued supply rather than economically spendable supply. Blockchain.com chart remains a stale cross-check dated 2026-10-13 |
 
 Consequently, the current BTC scenario is still **`not_evaluable`**. Fresh spot and hashrate do not compensate for the unresolved ETF acceptance, fee/subsidy reorg/version proof, and supply metric-semantics gates. DXY remains optional macro context and is excluded from canonical scenario inputs until its source access and daily-close freshness contract are approved; it is not used as a silent substitute for a mandatory BTC input. No database was read or changed in this staging run.
 
