@@ -1215,3 +1215,13 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 **Вывод:** rehearsal подтверждает прохождение CI/E2E, но не означает готовность BTC-сценария. BTC остаётся `not_evaluable`; DXY/ETF/spot и строгая связка «запрос → source ID → metric ID → единицы» должны проходить собственные readiness-контракты.
 
 **Граница безопасности:** проверка была rehearsal/read-only в отношении production. Не выполнялись production-записи, live BTC capture, изменения приоритетов источников или runtime registry, оценка/изменение состояния сценария, merge либо deploy.
+
+## 2026-10-17 — строгая связка BTC metric/source/unit прошла полный VPS rehearsal
+
+**Действие:** для commit `11d2561a40a0fbb53fde455685caf78e9b72eeca` усилен `scripts/validate-source-catalog.mjs`: обязательная метрика связывается с разрешённым `source_id`, допустимым URL prefix, зарегистрированным endpoint и единицей `data_contract.unit`. Добавлены проверки spot `market.spot_price → market.kraken → USD/BTC` и ETF `institutional.etf_net_flow → institutional.primary → USD million/day`, а также отрицательные случаи для неразрешённого источника, mismatch units и отсутствующего endpoint.
+
+**Результат:** полный VPS API Build Rehearsal [#39019979461](https://github.com/olegsh247-stack/Crypto/actions/runs/39019979461) завершился `success`. Все 27 основных шагов успешны: Source Catalog, canonical metric registry, сборки API/Worker, PostgreSQL bootstrap, BTC provenance, идемпотентность/дубликаты, backup/restore и API/Worker E2E.
+
+**Вывод:** каталог теперь проверяет связность контракта метрики с источником и единицами на этапе CI; это не подтверждает, что ETF/DXY/spot уже проходят freshness, revision/finality и полную provenance-проверку. BTC остаётся `not_evaluable`.
+
+**Граница безопасности:** изменения ограничены тестами и CI rehearsal. Production DB, live capture, runtime source priority/registry, сценарные оценки/состояния, merge и deploy не затрагивались.
