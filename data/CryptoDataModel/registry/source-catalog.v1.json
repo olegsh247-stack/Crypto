@@ -147,8 +147,8 @@
       "catalog_id": "network.mempool.hashrate",
       "source_id": "network.primary",
       "provider": "Mempool.space",
-      "name": "Hashrate endpoint",
-      "url": "https://mempool.space/api/v1/mining/hashrate/3d",
+      "name": "Hashrate endpoint — 1-week series",
+      "url": "https://mempool.space/api/v1/mining/hashrate/1w",
       "access_mode": "public",
       "operational_status": "candidate",
       "data_role": "review_only",
@@ -163,7 +163,7 @@
         "asset_pair": "BTC network",
         "unit": "EH/s after verified normalization",
         "observation_time": "endpoint bucket timestamp to be confirmed",
-        "period_semantics": "3-day hashrate series",
+        "period_semantics": "1-week hashrate series; bucket/window semantics still require validation",
         "revision_finality": "aggregated estimate; methodology/window validation required"
       },
       "terms_status": "public_api_docs_reviewed",
@@ -174,8 +174,8 @@
       "catalog_id": "network.mempool.block-fees",
       "source_id": "network.primary",
       "provider": "Mempool.space",
-      "name": "Block fees endpoint",
-      "url": "https://mempool.space/api/v1/fees/mempool-blocks",
+      "name": "Block fees endpoint — 1-week series",
+      "url": "https://mempool.space/api/v1/mining/blocks/fees/1w",
       "access_mode": "public",
       "operational_status": "candidate",
       "data_role": "review_only",
@@ -190,7 +190,7 @@
         "asset_pair": "BTC network",
         "unit": "endpoint-defined fee rate; not yet mapped to a registry metric",
         "observation_time": "retrieval time only unless provider timestamp is present",
-        "period_semantics": "current projected mempool blocks",
+        "period_semantics": "1-week mining block fee series; do not confuse projected mempool estimates with realized block fees",
         "revision_finality": "projections change as mempool changes"
       },
       "terms_status": "public_api_docs_reviewed",
@@ -816,6 +816,60 @@
       },
       "terms_status": "public_api_docs_reviewed",
       "notes": "Binance runtime UI candle fallback primary host; HTTP 451 was observed in staging",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "institutional.farside.etf-landing",
+      "source_id": "institutional.primary",
+      "provider": "Farside Investors",
+      "name": "Bitcoin ETF flow landing page",
+      "url": "https://farside.co.uk/btc/",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Access/reconciliation diagnostic only; landing page returned HTTP 403 in staging."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day",
+        "observation_time": "Publication time not established",
+        "period_semantics": "Daily ETF flow page; exact row semantics need confirmation",
+        "revision_finality": "Revision/finality semantics unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Capture-only diagnostic; the all-data page is a separate endpoint. Do not infer a value or freshness from the landing-page response.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "institutional.tftc.etf-json",
+      "source_id": "institutional.tftc",
+      "provider": "TFTC",
+      "name": "Public Bitcoin ETF flows JSON data endpoint",
+      "url": "https://www.tftc.io/bitcoin-etf-flows/data.json",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; do not poll every 15 minutes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day after parser confirmation",
+        "observation_time": "Publication time not established",
+        "period_semantics": "Daily ETF flow rows",
+        "revision_finality": "Lineage and revision semantics require confirmation"
+      },
+      "terms_status": "cc-by-4.0-advertised_review_required",
+      "notes": "Exact JSON endpoint used by public source capture; mirror/cross-check only.",
       "registry_status": "registered"
     }
   ]
