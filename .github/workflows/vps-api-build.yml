@@ -19,6 +19,8 @@ jobs:
           node-version: 22
       - name: Verify repository is VPS-only
         run: node scripts/check-vps-only-repository.mjs
+      - name: Validate source catalog inventory (read-only)
+        run: node scripts/validate-source-catalog.mjs
       - name: Build VPS shared runtime
         working-directory: vps/shared
         run: npm install && npm run build
