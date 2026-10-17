@@ -547,6 +547,168 @@
       "terms_status": "series_semantics_review_required",
       "notes": "Not a substitute for ICE DXY and must not be assigned to metric macro.dxy.",
       "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback — BTC/USDT sample",
+      "url": "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI path uses shared 15-minute cache on the working branch; endpoint fallback order is not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code currently stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker price",
+        "revision_finality": "Current quote; provider timestamp not exposed by this endpoint"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime UI ticker fallback only; BTC/USDT is not BTC/USD and must not be blended into research spot price.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle history — sample BTC/USDT",
+      "url": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven with provider fallback across data-api.binance.vision, api-gcp.binance.com and api.binance.com; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps from provider; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; consumers must respect candle close/finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime chart history only. USD candle path can also call Binance USDT candles and is not a canonical USD candle source.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.kraken.ticker.ui",
+      "source_id": "market.kraken",
+      "provider": "Kraken",
+      "name": "Runtime UI ticker fallback — BTC/USD sample",
+      "url": "https://api.kraken.com/0/public/Ticker?pair=XBTUSD&assetVersion=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "Fallback after Binance; shared UI cache is 15 minutes on the working branch."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "Runtime code currently stamps retrieval time; Ticker response time semantics need contract review",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime UI ticker fallback only; research staging separately uses Kraken Trades to preserve individual trade timestamps.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.kraken.ohlc.ui",
+      "source_id": "market.kraken",
+      "provider": "Kraken",
+      "name": "Runtime UI daily OHLC — sample XBT/USD",
+      "url": "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history path; interval is 1440 minutes for this fallback."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC OHLC",
+        "observation_time": "Candle open/close timestamps from provider; preserve both",
+        "period_semantics": "Daily candle",
+        "revision_finality": "Current daily candle may be unfinished"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime chart fallback only; separate from research spot trade observations.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.coingecko.simple-price.ui",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "Runtime UI ticker fallback — simple price sample",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "Only called as last fallback after Binance and Kraken; shared ticker cache is 15 minutes on the working branch. Verify current free-tier rate limits before increasing use."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "Endpoint response has no trade-level timestamp in the tested contract; runtime stamps retrieval time",
+        "period_semantics": "Latest aggregated quote",
+        "revision_finality": "Provider aggregate; not a trade observation"
+      },
+      "terms_status": "public_api_docs_review_required",
+      "notes": "Runtime UI fallback only; not an approved canonical research market.spot_price source.",
+      "registry_status": "candidate_unregistered"
+    },
+    {
+      "catalog_id": "market.coingecko.market-chart.ui",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "Runtime UI chart history — market chart sample",
+      "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history fallback; no scheduled polling is implied."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD price series",
+        "observation_time": "Provider point timestamps; verify bucket granularity and timezone",
+        "period_semantics": "Historical market chart over requested days",
+        "revision_finality": "Provider aggregation and revision semantics require review"
+      },
+      "terms_status": "public_api_docs_review_required",
+      "notes": "Runtime UI chart fallback only; not a canonical research data source.",
+      "registry_status": "candidate_unregistered"
     }
   ]
 }
