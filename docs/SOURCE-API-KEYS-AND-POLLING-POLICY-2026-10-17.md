@@ -83,3 +83,17 @@
 - Сейчас не требуется создавать другие ключи.
 - Следующие ключи могут понадобиться после отдельного решения: Glassnode, выбранный derivatives provider, выбранный официальный macro source. DXY пока заблокирован; ключ не создавать.
 - Следующий безопасный шаг — проверить реальные runtime call sites, согласовать polling interval с фактическими consumers, а затем вынести endpoint details/interval/rate-limit/secret reference в централизованный Source Catalog с тестами. Не менять canonical source priorities и не включать ingestion в рамках этого документационного шага.
+
+
+## 6. Дополнение после трассировки runtime API (2026-10-17)
+
+Фактический runtime path найден в `vps/api/src/app.ts`:
+
+- GET pair ticker использует fallback в порядке **Binance → Kraken → CoinGecko**. В отличие от research metric registry (`market.spot_price` → `market.kraken`), runtime API не фиксирует Kraken как единственный источник. Это отдельный интерфейсный контур; не переносить его fallback в BTC research canonical contract автоматически.
+- Binance ticker пробует три endpoint: `data-api.binance.vision`, `api-gcp.binance.com`, `api.binance.com`. Runtime candles также используют эти Binance endpoints; `usdKlines` получает Binance BTC/USDT candles, а `krakenUsdKlines` использует Kraken OHLC 1440 для перечисленных пар.
+- CoinGecko `/api/v3/simple/price` вызывается без API key в текущем коде; ключ сейчас не требуется для этой реализации. Не создавать его заранее; если появятся 429/плановые ограничения, сначала оценить частоту/кэш и условия бесплатного доступа.
+- Текущий runtime ticker cache: `TICKER_CACHE_TTL_MS = 60_000` (60 секунд); HTTP cache headers `max-age=30, s-maxage=60`. Upstream-запрос запускается по запросу клиента после истечения in-memory cache, а не по централизованному расписанию. Это заметно чаще целевого диапазона 15–60 минут и потенциально создаёт лишнюю нагрузку при множестве инстансов/пар.
+- Текущий ticker `timestamp` формируется как `new Date().toISOString()` после получения ответа, то есть это время обработки/получения в приложении, а не доказанное provider observation timestamp. Не интерпретировать его как timestamp самой сделки.
+- В `vps/.env.production.example` нет ключей внешних рыночных провайдеров; указаны только настройки VPS/DB/admin. Для публичных runtime endpoints в коде нет настроенной provider auth.
+
+**Решение:** зафиксировать как implementation finding; в этом documentation step runtime code/cache TTL/API response не изменялись. Перед изменением TTL требуется проверить consumers/UI ожидания, response timestamp semantics и тесты, затем выбрать 15/30/60 минут по конкретной метрике. Это не основание автоматически заменить provider fallback или объявить runtime price canonical для BTC research.
