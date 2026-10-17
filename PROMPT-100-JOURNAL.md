@@ -112,3 +112,12 @@
 - Final successful read-only source-staging run for this code batch: [#39057058042](https://github.com/olegsh247-stack/Crypto/actions/runs/39057058042). The new confirmed-window comparator tests and per-block validation tests passed; the 144-block fee audit reproduced the same verified window and ratio. Because the tip had not advanced by six blocks, this second capture does **not** satisfy the confirmation-interval comparison gate.
 - Pin this run's Farside capture as the ETF 24-hour baseline: retrieved `2026-10-17T18:12:27.119Z`, latest session `2026-10-16`, payload SHA-256 `43ad1085683871d8a3bea755f1d700d843965487bb2298155bcea1a443a163a1`. Next ETF snapshot must be no earlier than `2026-10-18T18:12:27.119Z`.
 - VPS API Build Rehearsal for the code commit `34e7f38a` passed: [#39057058047](https://github.com/olegsh247-stack/Crypto/actions/runs/39057058047). No production effects; BTC remains `not_evaluable`.
+
+
+### Confirmed build-rehearsal results and API parity blocker — 2026-10-17
+
+- Both documentation-only VPS API Build Rehearsal runs completed successfully: [#39057124564](https://github.com/olegsh247-stack/Crypto/actions/runs/39057124564) and [#39057135241](https://github.com/olegsh247-stack/Crypto/actions/runs/39057135241). These prove the repository build rehearsal passes; they do not prove that a live deployment runs the same commit.
+- Added `docs/BTC-API-DEPLOYED-VERSION-PARITY-2026-10-17.md`. Inspection of `vps/api/src/app.ts` confirms the health response exposes only status/service, with no build identity or commit SHA. The database-health and BTC detail routes are not needed for version identification and were not called.
+- **Decision:** deployed API version parity remains blocked until provider-side deployment metadata ties the actual target to the reviewed commit or immutable artifact. Do not infer parity from a health response, sample `api_version`, or successful build rehearsal.
+- BTC protocol-supply semantics remain review-only: the reproducible integer-satoshi calculation measures total protocol-scheduled issuance, not economically spendable circulating supply. Do not map it to `monetary.circulating_supply` or alter registry/runtime without an explicit metric-contract decision.
+- No production API/database queries, ingestion, registry/runtime changes, deployment, scenario evaluation/state changes, or probability changes occurred. BTC remains `not_evaluable`.
