@@ -55,3 +55,33 @@ SoSoValue remains a cross-check candidate until authenticated history, dates, un
 ## Result
 
 **Documentation-first stage complete; authenticated data validation remains pending.** The next action is to run a bounded, read-only test with the key supplied securely through an environment secret, then record measured history depth and response semantics.
+
+## Authenticated read-only check — completed 2026-10-17
+
+GitHub Actions [SoSoValue BTC ETF API Check #39019097937](https://github.com/olegsh247-stack/Crypto/actions/runs/39019097937) completed successfully on commit `33220fdf3580546c7efe7e1c06507ed298ffabcd`. The `SOSOVALUE_API_KEY` secret was present (the value was not printed); one GET request to the documented endpoint returned HTTP 200. No database access, production writes, or scenario changes occurred.
+
+Request window: `2026-09-18` through `2026-10-17`, `symbol=BTC`, `country_code=US`, `limit=300`. The endpoint returned 21 rows, earliest `2026-09-18`, latest `2026-10-16`; all 21 reporting dates were unique, and all 21 `total_net_inflow` values were numeric. The response contained `date`, `total_net_inflow`, `total_value_traded`, `total_net_assets`, and `cum_net_inflow`. The observed response SHA-256 was `6fe2f5e5c57b6d9a30ca28ccd698c2011d593ea8c496c0df9d2c413ef9b2cfb5`. Raw response and manifest are held only in a 3-day Actions review artifact, not committed to the repository.
+
+Official endpoint documentation confirms that `total_net_inflow` is USD, negative values indicate net outflow, `date` is the trading date (`yyyy-MM-dd`), newest rows come first, non-trading days are excluded, and the endpoint only supports the most recent one month. Therefore this endpoint does **not** satisfy the full-history requirement for all ETF holdings; it is a short rolling summary-history feed.
+
+Latest five returned sessions (USD million/day, converted from documented USD values):
+
+| Trading date | SoSoValue net flow |
+|---|---:|
+| 2026-10-16 | -82.389 |
+| 2026-10-15 | +5.055 |
+| 2026-10-14 | -261.462 |
+| 2026-10-13 | +175.617 |
+| 2026-10-12 | -65.401 |
+| **Five-session sum** | **-228.580** |
+
+Cross-check: for 2026-10-07 SoSoValue returned `-487.0674115` USD million, which rounds to `-487.1m` and matches the previously observed TFTC total at displayed precision; the previously observed Farside total was `-484.9m`. This supports keeping both source observations and the discrepancy visible; it does not establish which source is authoritative.
+
+## Remaining acceptance blockers
+
+- Only a one-month rolling history is documented; no full historical archive was demonstrated.
+- The endpoint response has no publication timestamp or revision/finality indicator. The response hash is a baseline only; a later repeated capture is needed to detect corrections, and a changed hash alone does not identify which row changed.
+- Five recent trading sessions are present, but freshness should be checked again after the next US trading-session publication.
+- The API endpoint documentation establishes the data schema and programmatic access; it does not, by itself, settle long-term archival or redistribution rights. Keep raw captures short-lived and internal until applicable API terms are reviewed.
+
+**Decision:** authenticated access and the one-month summary schema are verified. SoSoValue remains a daily **cross-check candidate only**, not canonical ingestion and not an ETF-holdings archive. No registry or metric priority was changed.
