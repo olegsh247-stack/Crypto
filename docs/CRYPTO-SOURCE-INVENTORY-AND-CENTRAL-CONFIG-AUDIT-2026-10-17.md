@@ -160,3 +160,12 @@ Ticker cache в runtime — 60 секунд, response Cache-Control — max-age 
 - CoinGecko simple/price и market_chart (CoinGecko добавлен только как `candidate_unregistered`, потому что отдельного source ID пока нет в source registry).
 
 Эти endpoints помечены `review_only`, а не canonical research ingestion. UI ticker currently stamps `timestamp` at retrieval time for Binance/Kraken/CoinGecko; this must not be mistaken for a provider trade observation timestamp. Binance candle route uses BTC/USDT series, and some USD candle paths derive from USDT candles, so they must not be represented as canonical USD spot observations. Runtime cache remains 15 minutes only on this branch; source fallback order and response contract were not changed by the catalog inventory.
+
+
+## Итог read-only parity baseline — 2026-10-17
+
+Catalog contains 33 endpoint records. Programmatic comparison against the current branch reports 16/16 source-registry IDs covered, all metric source IDs covered, no duplicate catalog IDs, and four unregistered/provisional source IDs kept out of metric `source_priority`: `macro.yahoo_finance_candidate`, `institutional.cryptoetf_today`, `market.coingecko`, and `institutional.sosovalue.candidate`.
+
+The read-only validator now checks 10 runtime endpoint families, 10 public-capture endpoint families and 4 candidate-preparation endpoint families. Full VPS API Build Rehearsal/E2E for this validator/catalog state passed: [run #39015830480](https://github.com/olegsh247-stack/Crypto/actions/runs/39015830480). It validates catalog/source-reference parity; it does not claim all providers are operationally accepted, nor does it make the catalog a runtime source of truth.
+
+Known limitation: this baseline traces the explicit endpoint families above, not every future dynamic URL or every SQL-seed consumer. Next step is a broader read-only drift report over candidate-preparation/capture call sites and SQL seed semantics; only after review should any adapter be refactored to consume the catalog.
