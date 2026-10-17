@@ -53,3 +53,11 @@
 - Latest Kraken trade in that artifact: `81,451.00 USD/BTC` at `2026-10-17T14:30:34.877Z`; hashrate remained `1009.5138912218121 EH/s` for the prior UTC day bucket.
 - The captured Blockchain.com supply candidate remains dated 2026-10-13 and stale (>48 hours); it is not promoted. Farside remains stale for the latest-row gate. The scenario remains `not_evaluable`.
 - Offline fixture runner passed in [BTC Scenario Readiness Gate #39040985262](https://github.com/olegsh247-stack/Crypto/actions/runs/39040985262). Detailed current results are in `docs/BTC-INPUT-RECHECK-AND-OFFLINE-REHEARSAL-2026-10-17.md`.
+
+
+## 2026-10-17 — ETF primary-source freshness evidence and parser metadata
+
+- Rechecked the live Farside Bitcoin ETF table on 2026-10-17. The page displays date 2026-10-17 and the latest completed trading-session row is 2026-10-16; all 12 fund values are present, with a displayed aggregate of -82.4 USD million and the fund-value sum also -82.4 USD million.
+- Updated the read-only parser to preserve the page-generated date separately from the reporting/session date, expose the latest reported row and per-fund completeness, and retain reconciliation status. It deliberately does not invent an exact observation/publication timestamp from a date-only row or page footer.
+- Added parser tests for page-date extraction, latest-session identification, complete fund coverage, aggregate reconciliation, and absent-footer behavior. The current live row is fresh relative to the latest completed U.S. trading session, but canonical ETF acceptance remains blocked pending two snapshots at least 24 hours apart, row-change/revision evidence, retention-rights review, and an approved session-aware freshness contract.
+- Corrected the prior recheck document so the ETF status reflects this fresh live evidence. No registry/runtime changes, production DB access/writes, ingestion, or live scenario evaluation. BTC remains `not_evaluable`.
