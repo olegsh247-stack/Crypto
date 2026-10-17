@@ -1244,3 +1244,8 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 **Решение Plan 100:** разработка не блокируется отсутствием купленного VPS/постоянного хранилища. Эти вопросы остаются частью pre-production operational acceptance для реальных данных, а не препятствием для офлайн-разработки и тестирования. См. обновление `docs/PLAN-100.md`.
 
 **Безопасность:** не запрашивались провайдеры, реальные payloads не архивировались, production DB, runtime registry/source priorities, scenario evaluation/state/probabilities, merge и deploy не затрагивались.
+
+
+## 2026-10-17 — ETF test storage test now runs in CI and passes
+
+Added the disposable archive/backup/restore/tamper test to the existing VPS API test command. Full VPS Build Rehearsal [#39021289109](https://github.com/olegsh247-stack/Crypto/actions/runs/39021289109) completed **success**. The new test is no longer merely present in the repository; it is executed by CI. Scope remains synthetic/offline only and does not certify real provider rights, real snapshots, permanent archive operations, or BTC evaluability. No live provider capture, production writes, runtime source-priority changes, scenario evaluation, merge, or deployment.
