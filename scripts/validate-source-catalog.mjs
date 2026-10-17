@@ -141,9 +141,9 @@ for (const family of candidatePreparationFamilies) {
     assert.equal(entry.data_role, "cross_check", "SoSoValue candidate endpoint must remain cross_check");
   }
 }
-const sourceSeedBlock = seedSql.split(/insert into sources\\s*\\(/i)[1]?.split(/on conflict \\(source_id\\)/i)[0];
+const sourceSeedBlock = seedSql.split(/insert into sources\s*\(/i)[1]?.split(/on conflict \(source_id\)/i)[0];
 assert.ok(sourceSeedBlock, "seed-v1.sql must contain a sources seed block");
-const seededSourceIds = [...sourceSeedBlock.matchAll(/^\\s*\\('([^']+)'/gm)].map((match) => match[1]);
+const seededSourceIds = [...sourceSeedBlock.matchAll(/^\s*\('([^']+)'/gm)].map((match) => match[1]);
 assert.equal(new Set(seededSourceIds).size, seededSourceIds.length, "seed-v1.sql contains duplicate source IDs");
 const seededSourceSet = new Set(seededSourceIds);
 const sourceRegistryIdsMissingFromSeed = [...registrySourceIds].filter((sourceId) => !seededSourceSet.has(sourceId)).sort();
@@ -151,9 +151,9 @@ assert.deepEqual(sourceRegistryIdsMissingFromSeed, [], "source registry IDs miss
 
 const catalogAllSourceIds = new Set(catalog.endpoints.map((entry) => entry.source_id));
 const explicitSourceReferences = [
-  ...[...captureScript.matchAll(/sourceId:\\s*"([^"]+)"/g)].map((match) => match[1]),
-  ...[...candidatePreparation.matchAll(/source_id:\\s*"([^"]+)"/g)].map((match) => match[1]),
-  ...[...sosovaluePreparation.matchAll(/source_id:\\s*"([^"]+)"/g)].map((match) => match[1])
+  ...[...captureScript.matchAll(/sourceId:\s*"([^"]+)"/g)].map((match) => match[1]),
+  ...[...candidatePreparation.matchAll(/source_id:\s*"([^"]+)"/g)].map((match) => match[1]),
+  ...[...sosovaluePreparation.matchAll(/source_id:\s*"([^"]+)"/g)].map((match) => match[1])
 ];
 const uniqueExplicitSourceReferences = [...new Set(explicitSourceReferences)].sort();
 const explicitSourceReferencesMissingFromCatalog = uniqueExplicitSourceReferences.filter((sourceId) => !catalogAllSourceIds.has(sourceId));
