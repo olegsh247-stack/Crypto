@@ -136,3 +136,8 @@ Workflow: [BTC Public Source Staging run #168](https://github.com/olegsh247-stac
 Ticker cache в runtime — 60 секунд, response Cache-Control — max-age 30 / s-maxage 60; upstream polling request-driven, не расписание. Это потенциально чаще требуемого интервала 15–60 минут. Поле `timestamp` runtime ticker присваивается временем приложения после fetch, а не подтверждённым timestamp источника. Эти два пункта требуют отдельного исправления/контрактного решения, но код не менялся в этом аудиторском шаге.
 
 См. [политику ключей и частоты опроса](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md) для текущего списка ключей и целевого cadence.
+
+
+## Дополнение — cache TTL исправлен на рабочей ветке, не в main
+
+В commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78` на `fix/btc-readiness-registry-runtime-source` TTL in-process ticker cache увеличен с 60 секунд до 15 минут; HTTP Cache-Control — с `max-age=30, s-maxage=60` до `max-age=900, s-maxage=900`. Это уменьшает частоту повторных запросов upstream при частом обновлении интерфейса. Изменение пока не в main и не развернуто; дождаться CI build/E2E. Fallback Binance → Kraken → CoinGecko не менялся. Timestamp по-прежнему является временем приложения после fetch, а не подтверждённым trade timestamp.
