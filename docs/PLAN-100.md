@@ -2543,3 +2543,11 @@ The project must not wait for a purchased VPS or permanent storage to finish imp
 ## 2026-10-17 — ETF disposable test storage CI verified
 
 The test-storage path is now included in `vps/api`'s test command, so the VPS Build Rehearsal executes it instead of merely building the repository. Run [#39021289109](https://github.com/olegsh247-stack/Crypto/actions/runs/39021289109) completed **success** after the test command was wired in. The suite passed with the rest of the target-stack rehearsal. This validates disposable synthetic archive/backup/restore and tamper detection only; it does not certify real ETF input acceptance or permanent storage. No production writes, provider capture, source-priority changes, scenario evaluation, merge, or deployment.
+
+
+## 2026-10-17 — Combined BTC freshness, ETF duplicate/revision guard
+
+- Tightened the shared read-only readiness gate so a source observation/publication timestamp cannot be later than the capture/retrieval timestamp. Applied to spot price and historical ETF rows; future and stale observations remain fail-closed.
+- Added explicit duplicate/conflicting ETF reporting-date detection. Previously a duplicate date could be silently collapsed by a map when five other distinct dates were present; now any multiple eligible rows for the same reporting date create a blocker, and that date is excluded from selected inputs until a reviewed revision/snapshot resolves it.
+- Added regression tests for capture-before-observation timestamps, duplicate/conflicting same-day ETF rows despite five other dates, and historical ETF capture chronology.
+- These checks harden the software contract but do not manufacture live evidence: the real source payloads, 24-hour repeat capture, source-specific retention rights, and independent archive restore still require actual evidence. BTC remains `not_evaluable` until all input gates pass.

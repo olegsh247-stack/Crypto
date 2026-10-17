@@ -1270,3 +1270,12 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 ## 2026-10-17 — ETF test storage test now runs in CI and passes
 
 Added the disposable archive/backup/restore/tamper test to the existing VPS API test command. Full VPS Build Rehearsal [#39021289109](https://github.com/olegsh247-stack/Crypto/actions/runs/39021289109) completed **success**. The new test is no longer merely present in the repository; it is executed by CI. Scope remains synthetic/offline only and does not certify real provider rights, real snapshots, permanent archive operations, or BTC evaluability. No live provider capture, production writes, runtime source-priority changes, scenario evaluation, merge, or deployment.
+
+
+## 2026-10-17 — Combined BTC readiness guard hardening
+
+**Change:** In one combined change, the shared BTC readiness gate now rejects any observation whose source observation/publication timestamp is later than retrieval time. It also explicitly blocks duplicate/conflicting ETF rows for the same reporting date and excludes those dates from the selected ETF series rather than silently taking the first row. Regression coverage includes both the spot and ETF timestamp ordering plus a conflicting ETF revision when five other reporting dates exist.
+
+**Why:** A capture timestamp is provenance, not an observation timestamp; chronology must be coherent. Likewise, an ETF reporting date with multiple eligible rows is a revision/conflict requiring review, not a safe deduplication opportunity.
+
+**Boundary:** This is offline/read-only contract hardening. It does not claim a provider-final revision, invent an observation/publication timestamp, grant retention rights, create a durable independent archive, or certify two real captures 24 hours apart. No live capture, production write, source-priority change, scenario evaluation/state change, deployment, or merge was performed. BTC remains `not_evaluable` until the real evidence gates pass.

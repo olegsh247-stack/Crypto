@@ -71,6 +71,7 @@ function validObservation(row: any, nowMs: number, maxAgeHours: number, expected
     && observedMs <= nowMs
     && Number.isFinite(retrievedMs)
     && retrievedMs <= nowMs
+    && retrievedMs >= observedMs
     && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
     && typeof row?.source_payload_sha256 === "string"
     && /^[0-9a-f]{64}$/i.test(row.source_payload_sha256)
@@ -198,6 +199,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && observedMs <= nowMs
       && Number.isFinite(dateMs(row?.retrieved_at))
       && dateMs(row.retrieved_at) <= nowMs
+      && dateMs(row.retrieved_at) >= observedMs
       && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
       && validEtfAcceptance(row)
       && value !== null && value !== undefined && Number.isFinite(Number(value))
@@ -209,10 +211,29 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && row?.unit === etfMetric?.unit
       && row?.expected_unit === etfMetric?.unit;
   });
-  const uniqueByDay = new Map<string, any>();
+  const rowsByDay = new Map<string, any[]>();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.period_start)).toISOString().slice(0, 10);
-    if (!uniqueByDay.has(day)) uniqueByDay.set(day, row);
+    const sameDay = rowsByDay.get(day) ?? [];
+    sameDay.push(row);
+    rowsByDay.set(day, sameDay);
+  }
+  const duplicateReportingDays = [...rowsByDay.entries()]
+    .filter(([, sameDay]) => sameDay.length > 1)
+    .map(([day]) => day)
+    .sort();
+  if (duplicateReportingDays.length) {
+    blockers.push({
+      metric_id: "institutional.etf_net_flow",
+      reason: "duplicate_or_conflicting_rows_for_reporting_date:" + duplicateReportingDays.join(","),
+    });
+  }
+  // Never silently select one row when a reporting date has multiple eligible
+  // candidates. A revision must be resolved by the separate snapshot/revision
+  // review policy before that date can be used in a scenario.
+  const uniqueByDay = new Map<string, any>();
+  for (const [day, sameDay] of rowsByDay) {
+    if (sameDay.length === 1) uniqueByDay.set(day, sameDay[0]);
   }
   const distinctDayRows = [...uniqueByDay.entries()];
   const sourceRowKeys = distinctDayRows.map(([, row]) => String(row.source_row_key));
