@@ -1,5 +1,12 @@
 # ПЛАН 100 — главный план проекта Crypto
 
+## 2026-10-17 — ETF source-row identity gate strengthened
+
+- Offline review found the readiness gate required each ETF row to have a non-empty `source_row_key`, but did not reject one key reused across different reporting days. That could make distinct daily observations appear traceable when they refer to the same provider row.
+- Added a fail-closed check after selecting one canonical row per reporting date; reuse of the same source row key across distinct days now blocks readiness with `duplicate_source_row_key_across_reporting_days`. Same-day revisions are still collapsed by reporting day rather than treated as separate sessions.
+- Added a regression test with a reused ETF source-row key. BTC Scenario Readiness Gate [#39022454551](https://github.com/olegsh247-stack/Crypto/actions/runs/39022454551) passed on the test commit.
+- VPS Build Rehearsal is still running; do not record it as passed until completion. This is offline gate hardening only and does not change registry priorities, ingest data, or authorize scenario state persistence.
+
 
 ## 2026-10-17 — API/Web metric freshness contract parity
 
