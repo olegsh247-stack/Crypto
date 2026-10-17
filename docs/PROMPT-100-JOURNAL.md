@@ -1132,3 +1132,10 @@
 **Ключи:** `SOSOVALUE_API_KEY` уже настроен и проверен HTTP 200 в staging, только cross-check. Другие ключи пока не создавать. Glassnode, derivatives data, official macro source и DXY не имеют подтверждённого принятого endpoint/потребности; сначала документация, тариф/ToS, timestamp/revision semantics и право хранения, затем решение о ключе. Публичные Kraken/Mempool/Binance market-data/OKX/Farside/TFTC endpoints в текущем staging использовались без отдельного API key (Bybit заблокирован 403 — ключ не добавлять ради обхода отказа).
 
 Создан [SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md); polling/key requirements добавлены в source audit и отдельный audit prompt. В этом шаге расписания автоматических задач и runtime config не менялись.
+
+
+## 2026-10-17 — runtime API trace выявил короткий cache и различие источников
+
+Проверен `vps/api/src/app.ts`: runtime ticker использует fallback Binance → Kraken → CoinGecko; Binance пытается три host endpoint-а. Research metric `market.spot_price` при этом указывает `market.kraken` как единственный source priority. CoinGecko simple/price вызывается без ключа. Текущий ticker cache — 60 секунд, Cache-Control max-age=30/s-maxage=60; это может создавать лишние upstream calls относительно целевого poll interval 15–60 минут. В ответе `timestamp` — время приложения после получения, не гарантированный provider observation time. В `vps/.env.production.example` ключей внешних market data нет.
+
+Решение: оставить контуры раздельными; не менять provider fallback и canonical research source в рамках аудита. Зафиксировать необходимость отдельного решения по cache TTL и timestamp semantics после проверки UI consumers/тестов. Код не менялся.
