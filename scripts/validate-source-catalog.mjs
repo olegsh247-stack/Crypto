@@ -22,7 +22,12 @@ for (const endpoint of catalog.endpoints) {
   assert.ok(endpoint.source_id?.trim(), `${endpoint.catalog_id}: source_id must not be blank`);
   assert.ok(endpoint.provider?.trim(), `${endpoint.catalog_id}: provider is required`);
   assert.ok(endpoint.name?.trim(), `${endpoint.catalog_id}: name is required`);
-  assert.doesNotThrow(() => new URL(endpoint.url), `${endpoint.catalog_id}: invalid URL`);
+  if (endpoint.url == null) {
+    assert.ok(endpoint.operational_status === "unknown" && endpoint.data_role === "blocked" && endpoint.access_mode === "manual",
+      `${endpoint.catalog_id}: URL may be null only for an explicitly blocked unselected placeholder`);
+  } else {
+    assert.doesNotThrow(() => new URL(endpoint.url), `${endpoint.catalog_id}: invalid URL`);
+  }
   assert.ok(["public", "api_key", "licensed", "manual", "documentation"].includes(endpoint.access_mode),
     `${endpoint.catalog_id}: invalid access_mode`);
   assert.ok(["verified", "candidate", "blocked", "retired", "unknown"].includes(endpoint.operational_status),
@@ -42,10 +47,12 @@ for (const endpoint of catalog.endpoints) {
   assert.ok(endpoint.data_contract?.period_semantics, `${endpoint.catalog_id}: period semantics must be stated`);
   assert.ok(endpoint.terms_status?.trim(), `${endpoint.catalog_id}: terms status is required`);
 
-  const url = new URL(endpoint.url);
-  for (const key of url.searchParams.keys()) {
-    assert.ok(!/(api[_-]?key|token|secret|password|signature|authorization)/i.test(key),
-      `${endpoint.catalog_id}: credential-like query parameter must not be stored in catalog URL`);
+  if (endpoint.url != null) {
+    const url = new URL(endpoint.url);
+    for (const key of url.searchParams.keys()) {
+      assert.ok(!/(api[_-]?key|token|secret|password|signature|authorization)/i.test(key),
+        `${endpoint.catalog_id}: credential-like query parameter must not be stored in catalog URL`);
+    }
   }
   if (endpoint.credential_env != null) {
     assert.match(endpoint.credential_env, /^[A-Z][A-Z0-9_]*$/,
