@@ -320,19 +320,43 @@ await capture({
   url: "https://mempool.space/api/v1/mining/reward-stats/144",
   parse: body => {
     const data = JSON.parse(body);
-    const rows = Array.isArray(data) ? data
-      : Array.isArray(data.blocks) ? data.blocks
-      : Array.isArray(data.data) ? data.data
+    const startBlock = Number(data.startBlock);
+    const endBlock = Number(data.endBlock);
+    const totalRewardSats = Number(data.totalReward);
+    const totalFeeSats = Number(data.totalFee);
+    const requestedBlockCount = 144;
+    const observedBlockCount = Number.isInteger(startBlock) && Number.isInteger(endBlock)
+      ? endBlock - startBlock + 1
+      : null;
+    const protocolSubsidySats = requestedBlockCount * 312500000;
+    const inferredSubsidySats = totalRewardSats - totalFeeSats;
+    const validTotals = Number.isSafeInteger(totalRewardSats)
+      && Number.isSafeInteger(totalFeeSats)
+      && totalRewardSats >= totalFeeSats
+      && totalFeeSats >= 0;
+    const exactWindow = observedBlockCount === requestedBlockCount;
+    const subsidyMatchesProtocol = inferredSubsidySats === protocolSubsidySats;
+    const ratio = validTotals && exactWindow && subsidyMatchesProtocol
+      ? totalFeeSats / protocolSubsidySats
       : null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
-      row_count: rows ? rows.length : null,
-      first_row_keys: rows?.[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
-      last_row_keys: rows?.at(-1) && typeof rows.at(-1) === "object" ? Object.keys(rows.at(-1)) : [],
-      ratio_calculated: false,
-      acceptance_status: "SCHEMA_REVIEW_REQUIRED",
-      note: "Capture-only candidate. No fee/subsidy ratio is calculated until field semantics, units, exact block coverage, subsidy denominator and reorg/finality behavior are verified."
+      start_block: Number.isInteger(startBlock) ? startBlock : null,
+      end_block: Number.isInteger(endBlock) ? endBlock : null,
+      requested_block_count: requestedBlockCount,
+      observed_block_count_from_height_range: observedBlockCount,
+      total_reward_sats: validTotals ? totalRewardSats : null,
+      total_fee_sats: validTotals ? totalFeeSats : null,
+      inferred_subsidy_sats: validTotals ? inferredSubsidySats : null,
+      protocol_subsidy_sats_for_window: protocolSubsidySats,
+      fee_total_btc: validTotals ? totalFeeSats / 1e8 : null,
+      subsidy_total_btc: validTotals ? inferredSubsidySats / 1e8 : null,
+      fee_subsidy_ratio: ratio,
+      fee_share_of_subsidy_percent: ratio === null ? null : ratio * 100,
+      ratio_calculated: ratio !== null,
+      acceptance_status: ratio === null ? "BLOCKED_WINDOW_OR_UNIT_CHECK" : "RESEARCH_CANDIDATE_RATIO_COMPUTED",
+      note: "Mempool public backend implementation sums reward and fees over the latest N blocks where stale=0. The returned aggregate contains no block hashes; reorg/finality risk remains. Ratio is emitted only when the inclusive height range is exactly 144 blocks and totalReward-totalFee equals the protocol subsidy expected for 144 blocks at 3.125 BTC each. Candidate only, not approved for production ingestion."
     };
   }
 });
