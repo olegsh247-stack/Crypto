@@ -227,6 +227,46 @@ assert.throws(
   "contract gate must reject an endpoint absent from the catalog"
 );
 
+// Required BTC inputs must resolve end-to-end: metric -> approved source_id -> URL prefix -> catalog endpoint -> normalized unit.
+function assertMetricSourceContract(metricId, sourceId, expectedUnit, entries = catalog.endpoints, metricRows = metricRegistry.metrics) {
+  const metric = metricRows.find((candidate) => candidate.metric_id === metricId);
+  assert.ok(metric, `missing metric registry contract ${metricId}`);
+  assert.ok((metric.source_priority ?? []).includes(sourceId),
+    `${metricId}: source_id ${sourceId} is not approved in metric source_priority`);
+  assert.equal(metric.unit, expectedUnit, `${metricId}: metric registry unit mismatch`);
+  const prefixes = metric.scenario_readiness?.allowed_source_url_prefixes ?? [];
+  assert.ok(prefixes.length > 0, `${metricId}: scenario readiness URL prefixes are required`);
+  const matches = entries.filter((entry) =>
+    entry.source_id === sourceId
+    && entry.registry_status === "registered"
+    && typeof entry.url === "string"
+    && prefixes.some((prefix) => entry.url.startsWith(prefix))
+    && entry.data_contract?.unit === expectedUnit
+  );
+  assert.ok(matches.length > 0,
+    `${metricId}: no registered catalog endpoint links source_id ${sourceId}, an allowed URL prefix, and unit ${expectedUnit}`);
+}
+assertMetricSourceContract("market.spot_price", "market.kraken", "USD/BTC");
+assertMetricSourceContract("institutional.etf_net_flow", "institutional.primary", "USD million/day");
+
+// Negative linkage tests prove a catalog endpoint alone cannot authorize a source that the metric registry does not approve.
+assert.throws(
+  () => assertMetricSourceContract("market.spot_price", "market.binance", "USD/BTC"),
+  /not approved in metric source_priority/,
+  "metric-source linkage must reject a source not approved for the metric"
+);
+assert.throws(
+  () => assertMetricSourceContract("market.spot_price", "market.kraken", "USDT/BTC"),
+  /metric registry unit mismatch/,
+  "metric-source linkage must reject a quote-unit mismatch"
+);
+assert.throws(
+  () => assertMetricSourceContract("market.spot_price", "market.kraken", "USD/BTC",
+    catalog.endpoints.filter((entry) => entry.catalog_id !== "market.kraken.trades.xbtusd")),
+  /no registered catalog endpoint links/,
+  "metric-source linkage must reject an absent allowed endpoint"
+);
+
 const sourceSeedStart = seedSql.toLowerCase().indexOf("insert into sources");
 assert.ok(sourceSeedStart >= 0, "seed-v1.sql must contain a sources seed block");
 const sourceSeedEnd = seedSql.toLowerCase().indexOf("on conflict (source_id)", sourceSeedStart);
