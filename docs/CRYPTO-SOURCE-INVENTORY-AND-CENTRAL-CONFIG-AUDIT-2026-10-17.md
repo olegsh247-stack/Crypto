@@ -127,3 +127,12 @@ Workflow: [BTC Public Source Staging run #168](https://github.com/olegsh247-stac
 Для целевой частоты 15–60 минут применяется принцип по потребности, а не общий опрос всех провайдеров. Spot может опрашиваться каждые 15 минут только при обоснованной потребности; базовый вариант — 30–60 минут. Дневные ETF flows/holdings, macro daily series, corporate holdings и релизные/протокольные данные должны опрашиваться daily/event-driven или реже, с учётом публикации/ревизий. Poll interval не равен freshness window.
 
 Полный перечень ключей и предложенных интервалов вынесен в [SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md). На текущий момент единственный подтверждённо нужный ключ для проверенного staging — `SOSOVALUE_API_KEY`, уже настроенный в GitHub Actions; SoSoValue остаётся cross-check only. Другие ключи пока не создавать: сначала принять конкретные endpoints и проверить тарифы/ToS. В будущем Source Catalog для каждого endpoint обязателен `poll_interval`, `poll_mode`, `provider_min_interval`, rate limit/backoff и отдельная freshness policy.
+
+
+## Дополнение 2026-10-17 — фактический runtime source path
+
+Проверен `vps/api/src/app.ts`. Runtime ticker fallback — Binance → Kraken → CoinGecko, тогда как research `market.spot_price` имеет source priority `market.kraken`. Binance используется также для candles (несколько endpoint hosts); USD candle conversion использует Binance USDT candles и Kraken OHLC daily. CoinGecko simple/price endpoint вызывается без API key. Эти runtime endpoints не полностью представлены как отдельные endpoint entries в source registry/catalog.
+
+Ticker cache в runtime — 60 секунд, response Cache-Control — max-age 30 / s-maxage 60; upstream polling request-driven, не расписание. Это потенциально чаще требуемого интервала 15–60 минут. Поле `timestamp` runtime ticker присваивается временем приложения после fetch, а не подтверждённым timestamp источника. Эти два пункта требуют отдельного исправления/контрактного решения, но код не менялся в этом аудиторском шаге.
+
+См. [политику ключей и частоты опроса](SOURCE-API-KEYS-AND-POLLING-POLICY-2026-10-17.md) для текущего списка ключей и целевого cadence.
