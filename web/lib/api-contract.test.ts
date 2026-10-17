@@ -1,4 +1,5 @@
 import type { AssetDetailResponse, BtcScenarioReadiness, ResearchScenario } from "./api";
+import type { MetricObservation } from "../../shared/api-contract";
 
 // Compile-time contract fixture: the Web build must accept the response fields
 // emitted by the API, including BTC readiness and scenario snapshot lineage.
@@ -31,4 +32,12 @@ const detail: Pick<AssetDetailResponse, "research_progress" | "scenario_readines
   research_scenarios: [scenario],
 };
 
+const metricObservations: MetricObservation[] = [
+  { metric_id: "market.spot_price", value: 65000, unit: "USD/BTC", observed_at: "2026-10-17T10:00:00Z", source_id: "market_binance", source_url: "https://example.invalid/fixture", status: "NORMAL", freshness: "CURRENT", revision: 1 },
+  { metric_id: "institutional.etf_net_flow", value: null, unit: "USD million/day", observed_at: null, source_id: null, source_url: null, status: null, freshness: "STALE", revision: null },
+  { metric_id: "macro.dxy", value: null, unit: "index", observed_at: null, source_id: null, source_url: null, status: null, freshness: "EXPIRED", revision: null },
+  { metric_id: "security.hashrate", value: null, unit: "EH/s", observed_at: null, source_id: null, source_url: null, status: null, freshness: "UNCLASSIFIED", revision: null },
+];
+
 void detail;
+void metricObservations;
