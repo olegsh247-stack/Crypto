@@ -1139,3 +1139,8 @@
 Проверен `vps/api/src/app.ts`: runtime ticker использует fallback Binance → Kraken → CoinGecko; Binance пытается три host endpoint-а. Research metric `market.spot_price` при этом указывает `market.kraken` как единственный source priority. CoinGecko simple/price вызывается без ключа. Текущий ticker cache — 60 секунд, Cache-Control max-age=30/s-maxage=60; это может создавать лишние upstream calls относительно целевого poll interval 15–60 минут. В ответе `timestamp` — время приложения после получения, не гарантированный provider observation time. В `vps/.env.production.example` ключей внешних market data нет.
 
 Решение: оставить контуры раздельными; не менять provider fallback и canonical research source в рамках аудита. Зафиксировать необходимость отдельного решения по cache TTL и timestamp semantics после проверки UI consumers/тестов. Код не менялся.
+
+
+## 2026-10-17 — ticker cache TTL увеличен до 15 минут на рабочей ветке
+
+В `vps/api/src/app.ts`, commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78` на `fix/btc-readiness-registry-runtime-source`, изменён in-process cache TTL с 60 секунд на 15 минут и Cache-Control с max-age 30/s-maxage 60 на max-age 900/s-maxage 900. Цель — уменьшить повторные upstream calls при частых UI refresh. Изменение не merge/deploy; ожидается VPS API Build Rehearsal/E2E. Provider fallback не менялся; response timestamp по-прежнему является временем получения приложением, а не гарантированным observation timestamp.
