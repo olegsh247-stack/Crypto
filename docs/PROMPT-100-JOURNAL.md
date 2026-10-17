@@ -1233,3 +1233,14 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 **Operational acceptance is not falsely marked complete:** no qualifying real capture pair ≥24 hours apart has been evidenced; source-specific long-term retention/reuse rights for Farside and SoSoValue are not established; and the private ETF archive plus independent backup/restore are not operational. These are concrete external evidence prerequisites, not permission to repeat source discovery. If rights cannot be cleared, leave ETF blocked rather than promoting a fallback implicitly. BTC remains `not_evaluable`.
 
 **Safety:** no new capture/API request, raw-data retention, production DB writes, ingestion, source-priority/registry change, scenario evaluation/state change, merge, or deployment occurred in this closeout.
+
+
+## 2026-10-17 — создан воспроизводимый disposable ETF test store
+
+**Действие:** добавлен `scripts/btc-etf-test-storage.test.mjs` и документ `docs/BTC-ETF-TEST-STORAGE.md`. Тест создаёт синтетический ETF capture, проводит его через существующий offline archive writer, проверяет SHA-256, копирует архив в отдельный временный backup-каталог, восстанавливает в чистый каталог и повторно проверяет. Затем изменяет файл восстановленной копии и ожидает отказ проверки целостности.
+
+**Граница результата:** тест использует только синтетические данные и тестовую запись о правах, которая явно не является реальным подтверждением прав. Он доказывает работоспособность программного пути архивации/копирования/восстановления/обнаружения порчи, но не подтверждает постоянное хранилище или независимый production failure domain. Временные файлы удаляются после теста.
+
+**Решение Plan 100:** разработка не блокируется отсутствием купленного VPS/постоянного хранилища. Эти вопросы остаются частью pre-production operational acceptance для реальных данных, а не препятствием для офлайн-разработки и тестирования. См. обновление `docs/PLAN-100.md`.
+
+**Безопасность:** не запрашивались провайдеры, реальные payloads не архивировались, production DB, runtime registry/source priorities, scenario evaluation/state/probabilities, merge и deploy не затрагивались.
