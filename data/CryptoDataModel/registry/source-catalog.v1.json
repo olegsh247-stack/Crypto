@@ -358,6 +358,195 @@
       "terms_status": "license_and_endpoint_unconfirmed",
       "notes": "Product documentation only; not an approved quote endpoint.",
       "registry_status": "registered"
+    },
+    {
+      "catalog_id": "protocol.bitcoin-developer-reference",
+      "source_id": "protocol.primary",
+      "provider": "Bitcoin Developer Reference",
+      "name": "Protocol documentation reference",
+      "url": "https://developer.bitcoin.org/reference/",
+      "access_mode": "documentation",
+      "operational_status": "candidate",
+      "data_role": "documentation_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "event_driven",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Static protocol documentation; refresh on relevant release or documentation change."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin protocol",
+        "unit": "Metric-specific; not applicable to documentation",
+        "observation_time": "Document publication/update date when supplied",
+        "period_semantics": "Protocol constants and reference material",
+        "revision_finality": "Version/release identity must be preserved where applicable"
+      },
+      "terms_status": "documentation_reference",
+      "notes": "Not a live market-data endpoint; specific node/RPC integrations need separate endpoint contracts.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.provider.placeholder",
+      "source_id": "market.primary",
+      "provider": "Unselected provider",
+      "name": "Market data provider placeholder",
+      "url": null,
+      "access_mode": "manual",
+      "operational_status": "unknown",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "manual",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No provider selected; derivatives metrics are not source-ready."
+      },
+      "data_contract": {
+        "asset_pair": "Not selected",
+        "unit": "Metric-specific; no provider contract",
+        "observation_time": "Unavailable until a provider is selected",
+        "period_semantics": "Unconfigured",
+        "revision_finality": "Unconfigured"
+      },
+      "terms_status": "not_applicable_provider_unselected",
+      "notes": "Registry placeholder only; must not be treated as evidence that futures OI, funding, or options OI are available.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "analytics.glassnode",
+      "source_id": "analytics",
+      "provider": "Glassnode",
+      "name": "On-chain analytics provider",
+      "url": "https://glassnode.com/",
+      "access_mode": "api_key",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No API polling until plan, endpoint, terms, history coverage and methodology are reviewed."
+      },
+      "data_contract": {
+        "asset_pair": "Metric-specific on-chain/market analytics",
+        "unit": "Provider metric-specific",
+        "observation_time": "Provider timestamp semantics not yet contracted",
+        "period_semantics": "Metric-specific time series",
+        "revision_finality": "Methodology and revision behavior need review"
+      },
+      "terms_status": "plan_and_terms_review_required",
+      "notes": "No credential configured or requested; candidate only.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "lightning.mempool.documentation",
+      "source_id": "lightning.primary",
+      "provider": "Mempool.space",
+      "name": "Lightning REST API documentation",
+      "url": "https://mempool.space/docs/api/rest",
+      "access_mode": "documentation",
+      "operational_status": "candidate",
+      "data_role": "documentation_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Capacity is an aggregate; daily refresh is sufficient unless the metric contract says otherwise."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin Lightning Network",
+        "unit": "BTC for capacity after endpoint verification",
+        "observation_time": "Endpoint timestamp semantics not yet verified",
+        "period_semantics": "Network capacity snapshot/aggregate",
+        "revision_finality": "Snapshot can change; preserve retrieval and source time separately"
+      },
+      "terms_status": "documentation_reference",
+      "notes": "Registry source identity exists, but a concrete capture call site must be verified before claiming runtime ingestion.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "macro.official-agencies.placeholder",
+      "source_id": "macro.primary",
+      "provider": "US official agencies",
+      "name": "Macro data provider placeholder",
+      "url": "https://home.treasury.gov/",
+      "access_mode": "documentation",
+      "operational_status": "unknown",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Select an authoritative agency and exact series per metric before automated access."
+      },
+      "data_contract": {
+        "asset_pair": "Metric-specific macro series",
+        "unit": "Metric-specific",
+        "observation_time": "Agency publication/release time required",
+        "period_semantics": "Series-specific observation period",
+        "revision_finality": "Revisions and release calendar must be modeled"
+      },
+      "terms_status": "series_and_endpoint_unselected",
+      "notes": "Generic registry entry; does not establish that DXY, US 10Y yield or other macro metrics are supplied.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "market.mexc.spot-api",
+      "source_id": "market.mexc",
+      "provider": "MEXC",
+      "name": "Spot market API documentation",
+      "url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "No live use confirmed; only poll after endpoint and terms review."
+      },
+      "data_contract": {
+        "asset_pair": "Pair-specific; not selected",
+        "unit": "Pair-specific",
+        "observation_time": "Provider timestamp required",
+        "period_semantics": "Endpoint-specific",
+        "revision_finality": "Endpoint-specific; unverified"
+      },
+      "terms_status": "endpoint_and_terms_review_required",
+      "notes": "Registry candidate; no call site was confirmed in this audit.",
+      "registry_status": "registered"
+    },
+    {
+      "catalog_id": "macro.fred.dtwexbgs",
+      "source_id": "macro.fred_broad_usd_candidate",
+      "provider": "Federal Reserve Bank of St. Louis FRED",
+      "name": "Trade Weighted U.S. Dollar Index: Broad, Goods and Services",
+      "url": "https://fred.stlouisfed.org/series/DTWEXBGS",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily release/update cadence; no 15-minute polling."
+      },
+      "data_contract": {
+        "asset_pair": "Broad USD index (not ICE DXY)",
+        "unit": "Index points",
+        "observation_time": "FRED observation date; release/retrieval timestamps kept separately",
+        "period_semantics": "Daily broad trade-weighted USD series",
+        "revision_finality": "Series-specific revisions should be checked"
+      },
+      "terms_status": "series_semantics_review_required",
+      "notes": "Not a substitute for ICE DXY and must not be assigned to metric macro.dxy.",
+      "registry_status": "registered"
     }
   ]
 }
