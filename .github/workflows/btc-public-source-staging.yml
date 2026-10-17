@@ -11,6 +11,8 @@ on:
       - "scripts/parse-farside-etf-table.test.mjs"
       - "scripts/compare-btc-etf-snapshots.mjs"
       - "scripts/compare-btc-etf-snapshots.test.mjs"
+      - "scripts/btc-protocol-supply.mjs"
+      - "scripts/btc-protocol-supply.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -33,6 +35,8 @@ jobs:
           node-version: 22
       - name: Test Farside ETF table parsing and placeholder handling
         run: node --test scripts/parse-farside-etf-table.test.mjs
+      - name: Test Bitcoin protocol-issued supply calculation
+        run: node --test scripts/btc-protocol-supply.test.mjs
       - name: Test Farside two-snapshot revision comparison
         run: node --test scripts/compare-btc-etf-snapshots.test.mjs
       - name: Test BTC observation candidate normalization
