@@ -17,3 +17,13 @@
 - Added `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md` defining units, windows, provenance, freshness, the fee/subsidy formula and acceptance gates.
 - Fee/subsidy proposed formula is `sum(transaction fees) / sum(protocol subsidy)` across the exact same verified block-height window; total miner reward must not be used as the numerator. Calculation remains blocked until the real endpoint schema, units, contiguous block coverage and reorg/finality semantics are confirmed.
 - **Status:** repository changes committed; staging workflow result and real captured payload still need inspection. No production DB access/writes, ingestion, scenario evaluation, scenario-state writes or monitoring-event writes were performed by these changes.
+
+
+## 2026-10-17 — Real Mempool capture confirms hash-rate schema and fee/subsidy candidate
+
+- BTC Public Source Staging run [#39039830874](https://github.com/olegsh247-stack/Crypto/actions/runs/39039830874) passed the parser/normalization tests and captured the real public payloads; artifact SHA-256 `5d2d0537a883bc65c69caea9d443c1980dc297367373ef9acfefd6903cdd1971` (temporary artifact, expires 2026-10-24).
+- Hashrate payload returned HTTP 200 with seven daily points. Latest captured daily UTC bucket was `[2026-10-16T00:00:00Z, 2026-10-17T00:00:00Z)`, estimated value `1009.5138912218121 EH/s`, raw SHA-256 `7554dafd3425d7d52ee717dd446d76ccfd68146a5b70f90705f325b0b8cf9856`. The code now emits explicit period boundaries and does not conflate this with `currentHashrate`.
+- The real `reward-stats/144` payload returned HTTP 200 for blocks 971728–971871, with `totalReward=45,231,274,297` and `totalFee=231,274,297` (raw SHA-256 `92dfedfd15be72e738a7b628a31a7e3cd32b9071cbf0c6352f0f78000e922fe6`). Reviewed public backend code sums reward and fees across latest N non-stale blocks. The inclusive range is 144 blocks; total reward less fees is 45,000,000,000 sats = 450 BTC, matching 144 × 3.125 BTC.
+- Research candidate formula: `sum(fees)/sum(subsidy) = 231274297/45000000000 = 0.0051394288222` (approximately 0.513943%). The capture parser now calculates this only if the inclusive height window is exactly 144 and the inferred subsidy matches the protocol schedule.
+- **Boundary:** aggregate endpoint does not provide block hashes, so chain-reorg/finality handling and deployed-version parity remain open before production acceptance. No database writes, ingestion, scenario evaluation or scenario-state/monitoring writes were performed.
+- Contract and evidence are documented in `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md`. The next staging run must verify the new ratio parser against this real response and preserve the acceptance boundary.
