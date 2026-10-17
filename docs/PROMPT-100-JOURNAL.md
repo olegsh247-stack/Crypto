@@ -1288,3 +1288,18 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Combined code verification:** [BTC Public Source Staging #39022606383](https://github.com/olegsh247-stack/Crypto/actions/runs/39022606383), [Web Build #39022606410](https://github.com/olegsh247-stack/Crypto/actions/runs/39022606410), [BTC Scenario Readiness Gate #39022659932](https://github.com/olegsh247-stack/Crypto/actions/runs/39022659932), and [VPS Build Rehearsal #39022659927](https://github.com/olegsh247-stack/Crypto/actions/runs/39022659927) passed. Readiness regression coverage now rejects capture-before-observation chronology and duplicate/conflicting ETF rows even when five other sessions exist.
 
 **Still not attested:** The SoSoValue response artifact has 7-day retention only and does not qualify as durable archive evidence. This run does not prove a fresh Kraken capture, two qualifying Farside/TFTC captures at least 24 hours apart, source-specific raw-retention rights, or independent archive restore. It does not certify provider finality or make BTC evaluable. No production DB writes, source-priority changes, scenario evaluation/state/probability changes, deployment, or merge.
+
+
+## 2026-10-17 — first live BTC spot and ETF capture completed
+
+**Action:** Enabled an explicit one-off read-only capture trigger on the BTC public-source staging workflow and ran [BTC Public Source Staging #39023003456](https://github.com/olegsh247-stack/Crypto/actions/runs/39023003456) on commit `3803d624c3f6e767b3f665a8ec18e8d10d53dc76`. Both validation and capture jobs passed. Full evidence: [BTC-LIVE-SOURCE-CAPTURE-2026-10-17.md](BTC-LIVE-SOURCE-CAPTURE-2026-10-17.md).
+
+**BTC spot:** Kraken XBTUSD returned **81,612.50 USD/BTC**; source trade time `2026-10-17T09:56:37.159Z`, retrieval `09:56:42.077Z`, age 4.918s, HTTP 200, SHA-256 `74e6b6414f9f27861312c69b69b54735d47aeb3f657ea88dfac74a556327ea9d`. Candidate freshness is CURRENT under the 1-hour policy, but remains `REVIEW_ONLY` and non-persistable.
+
+**ETF:** Farside all-data HTTP 200, 14 parsed rows (2026-09-29–2026-10-16); TFTC JSON HTTP 200, 709 rows, updated through 2026-10-15, CC BY 4.0 attribution returned. Response hashes are recorded in the evidence report. Five latest overlapping trading dates (Oct 9, 12–15) fall within the $0.65m diagnostic band. Oct 7 still differs materially: Farside −$484.9m vs TFTC −$487.067m (−$2.167m), primarily BRRR; values are preserved separately. No canonical averaging/ingestion is approved.
+
+**Artifacts:** Raw source responses, manifest, and review-only normalized candidates were uploaded as temporary artifact `btc-public-source-review` (ZIP SHA-256 `aa749adb9341e7f2037775c5dceb952da2ade10954cf8fca2d45f0727b737710`, expires 2026-10-24 09:56:45 UTC). Raw responses were not committed to Git or written to a database.
+
+**Remaining real blockers:** second qualifying pair capture ≥24h later and row-level diff; provider publication/revision/finality semantics; Farside long-term retention/reuse rights; real durable private archive plus independent restore; human snapshot review. BTC remains `not_evaluable`.
+
+**Safety:** no production DB access/writes, ingestion, registry/source-priority change, scenario evaluation/state/probability changes, deployment, or merge.
