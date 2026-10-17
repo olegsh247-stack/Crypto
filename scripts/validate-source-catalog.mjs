@@ -47,6 +47,14 @@ for (const endpoint of catalog.endpoints) {
   assert.ok(endpoint.data_contract?.observation_time, `${endpoint.catalog_id}: observation_time semantics must be stated, including if unresolved`);
   assert.ok(endpoint.data_contract?.period_semantics, `${endpoint.catalog_id}: period semantics must be stated`);
   assert.ok(endpoint.terms_status?.trim(), `${endpoint.catalog_id}: terms status is required`);
+  if (endpoint.documentation_url == null) {
+    assert.ok(endpoint.operational_status === "unknown" && endpoint.data_role === "blocked",
+      `${endpoint.catalog_id}: missing documentation_url is allowed only for an explicitly blocked unknown placeholder`);
+  } else {
+    const documentationUrl = new URL(endpoint.documentation_url);
+    assert.ok(["http:", "https:"].includes(documentationUrl.protocol),
+      `${endpoint.catalog_id}: documentation_url must use HTTP(S)`);
+  }
 
   if (endpoint.url != null) {
     const url = new URL(endpoint.url);
