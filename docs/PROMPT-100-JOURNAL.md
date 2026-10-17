@@ -1097,3 +1097,16 @@
 **Статус:** новый ответ SoSoValue пока не подтверждён доступным результатом запуска. До получения свежего артефакта нельзя утверждать, что ключ работает, API возвращает ожидаемую схему или история сверена по датам. SoSoValue остаётся кандидатом только для cross-check; CryptoETF.today — только cross-check, Farside/TFTC — review-only из-за незакрытых временных и финальных семантик. Yahoo DXY остаётся заблокированным. BTC остаётся `not_evaluable`.
 
 **Граница безопасности:** только конфигурация CI для read-only staging; production DB, ingestion, scenario evaluation/state/probability, deployment и merge не затрагивались.
+
+
+## 2026-10-17 — Первичная документальная проверка альтернатив DXY
+
+**FXMacroData:** документация подтверждает бесплатный доступ без ключа к части USD macro announcements/calendar/catalogue за последние 90 дней; документированные FX pair history endpoints требуют ключ. В изученном каталоге нет подтверждённого endpoint именно ICE DXY. Статус: пока не источник DXY; нужен явный DXY instrument в официальном каталоге. Источник: https://fxmacrodata.com/documentation/reference
+
+**Alpha Vantage:** есть INDEX_DATA и INDEX_CATALOG для поддерживаемых индексов, но INDEX_DATA помечен как premium endpoint и требует API key. Наличие именно ICE DXY в каталоге и entitlement бесплатного тарифа не подтверждены. Статус: blocked pending proof; не считать бесплатным DXY источником. Источник: https://www.alphavantage.co/documentation/
+
+**Live-Rates.com:** документация заявляет 170+ инструментов, включая индексы, но без ключа /rates ограничен 3 запросами/час/IP; исторические endpoints требуют ключ. В terms указано, что данные лицензируются для использования по активной подписке, а redistribution требует письменного согласия. Присутствие именно DXY в бесплатном списке и права использования не подтверждены. Статус: candidate only. Источник: https://github.com/Live-Rates/live-rates.com
+
+**Разграничение метрики:** FRED DTWEXBGS — Nominal Broad U.S. Dollar Index, не ICE DXY. Подмена запрещена. Источник: https://alfred.stlouisfed.org/series?seid=DTWEXBGS
+
+**Решение:** source_priority/registry/runtime не менялись; ни один из этих кандидатов не допущен в macro.dxy. Следующий этап — получить точное подтверждение символа DXY из каталога/ответа провайдера и проверить права на автоматический сбор, архивирование и использование в проекте.
