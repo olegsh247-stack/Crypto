@@ -386,7 +386,9 @@ await capture({
       fee_subsidy_ratio: ratio,
       fee_share_of_subsidy_percent: ratio === null ? null : ratio * 100,
       ratio_calculated: ratio !== null,
-      acceptance_status: ratio === null ? "BLOCKED_WINDOW_OR_UNIT_CHECK" : "RESEARCH_CANDIDATE_RATIO_COMPUTED",
+      acceptance_status: ratio === null
+        ? "BLOCKED_WINDOW_OR_UNIT_CHECK"
+        : "BLOCKED_REORG_AND_DEPLOYED_VERSION_UNVERIFIED",
       note: "Mempool public backend implementation sums reward and fees over the latest N blocks where stale=0. The returned aggregate contains no block hashes; reorg/finality risk remains. Ratio is emitted only when the inclusive height range is exactly 144 blocks and totalReward-totalFee equals the protocol subsidy expected for 144 blocks at 3.125 BTC each. Candidate only, not approved for production ingestion."
     };
   }
