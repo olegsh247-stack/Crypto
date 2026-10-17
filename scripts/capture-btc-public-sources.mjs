@@ -285,8 +285,12 @@ await capture({
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
       row_count: rows.length,
       latest_series_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
+      latest_period_start: Number.isFinite(epochSeconds) ? new Date((epochSeconds - 86400) * 1000).toISOString() : null,
+      latest_period_end: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
       latest_series_value_eh_s: Number.isFinite(hashrate) ? hashrate / 1e18 : null,
-      note: "Raw response retained. Confirm bucket/window semantics and units before treating the latest point as an observation; do not label a rolling estimate as instantaneous hashrate."
+      aggregation_window_seconds: 86400,
+      aggregation_method: "mempool-daily-hashrate-series-point; interval [timestamp-86400s, timestamp)",
+      note: "Raw response retained. This is a daily estimated hashrate bucket, not instantaneous currentHashrate or a weekly rolling average. Period boundaries are recorded explicitly; verify endpoint parity and freshness before acceptance."
     };
   }
 });
@@ -302,6 +306,33 @@ await capture({
       response_shape: Array.isArray(data) ? "array" : typeof data,
       row_count: Array.isArray(data) ? data.length : null,
       note: "Raw response retained. Fee/subsidy values are not calculated until fee units, block window, and subsidy denominator are verified."
+    };
+  }
+});
+
+// Reward stats for the most recent 144 blocks are a fee/subsidy methodology candidate.
+// Capture the actual payload and schema evidence, but do not calculate a ratio until
+// the deployed response semantics, fee units, subsidy denominator and reorg behavior pass review.
+await capture({
+  name: "mempool-mining-reward-stats-144",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/reward-stats/144",
+  parse: body => {
+    const data = JSON.parse(body);
+    const rows = Array.isArray(data) ? data
+      : Array.isArray(data.blocks) ? data.blocks
+      : Array.isArray(data.data) ? data.data
+      : null;
+    return {
+      response_shape: Array.isArray(data) ? "array" : typeof data,
+      top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
+      row_count: rows ? rows.length : null,
+      first_row_keys: rows?.[0] && typeof rows[0] === "object" ? Object.keys(rows[0]) : [],
+      last_row_keys: rows?.at(-1) && typeof rows.at(-1) === "object" ? Object.keys(rows.at(-1)) : [],
+      ratio_calculated: false,
+      acceptance_status: "SCHEMA_REVIEW_REQUIRED",
+      note: "Capture-only candidate. No fee/subsidy ratio is calculated until field semantics, units, exact block coverage, subsidy denominator and reorg/finality behavior are verified."
     };
   }
 });
