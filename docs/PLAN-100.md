@@ -1690,3 +1690,12 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 - The staging artifact/log confirms DXY status `BLOCKED_ACCESS_TERMS` and SoSoValue status `BLOCKED_NO_API_KEY`; no Yahoo HTTP request was made by the updated script and no SoSoValue request was made without a key.
 - The later VPS API build rehearsals and Crypto VPS Release Gate were still running at the time of this entry; do not label them green until completed.
 - DXY is now present in normalized BTC input review as a blocked row with unverified observation time and uncomputable freshness. This does **not** make it an accepted input and does not change the BTC scenario state/probability.
+
+
+### Read-only BTC source staging re-triggered after SoSoValue secret setup — 2026-10-17
+
+- User confirmed repository permissions are in place and that `SOSOVALUE_API_KEY` has been added as a GitHub Actions secret. The secret value was not read or exposed in this session.
+- Reviewed the current staging workflow and confirmed it passes the secret only through the capture step's environment. The previously available artifact predates the secret setup and cannot validate SoSoValue authentication.
+- Added a workflow concurrency group (`btc-public-source-staging`, no cancellation of an in-progress capture) to avoid overlapping read-only captures and ambiguous artifact ownership. Commit: `7d29e5ff3e91099b7eae58ccd8949b16089e556e`. The workflow file is included in its push path filter, so this change should initiate a fresh read-only capture.
+- **Verification pending:** the resulting run/artifact has not yet been retrieved in this session. SoSoValue HTTP status, response shape, historical row count and date-by-date reconciliation remain unconfirmed. Do not mark the source accepted just because the secret is configured.
+- Safety unchanged: no production database, ingestion, scenario state/probability, deployment or merge was touched. BTC remains `not_evaluable`; Yahoo DXY remains blocked by access terms.
