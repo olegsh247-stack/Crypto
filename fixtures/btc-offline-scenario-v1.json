@@ -24,10 +24,10 @@
   },
   "derived_inputs": {
     "readiness_status": "ready_for_rule_evaluation",
-    "price_return_7d_pct": -3.239997,
+    "price_return_7d_pct": -3.238702918468128,
     "etf_net_flow_5d_usd_millions": -678.9,
     "hashrate_change_7d_pct": 1,
-    "dxy_change_5d_pct": 0.146712,
+    "dxy_change_5d_pct": 0.1467136150234749,
     "fee_subsidy_ratio": 0.004128
   },
   "expected": {
