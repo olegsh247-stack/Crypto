@@ -1,5 +1,16 @@
 # Промт 100 — журнал существенных работ проекта Crypto
 
+
+## 2026-10-17 — API/Web metric freshness enum aligned and CI verified
+
+**Finding:** The Asset Detail API passes observation freshness through from PostgreSQL. The schema and migration permit exactly `CURRENT`, `STALE`, `EXPIRED`, and `UNCLASSIFIED`, while the new Web shared contract initially described lowercase `fresh/stale/unknown`. This was a real API/Web contract mismatch, not merely a documentation difference.
+
+**Change:** Updated `shared/api-contract.ts` to use the persisted enum and extended `web/lib/api-contract.test.ts` with compile-time fixtures for all four states. Updated `.github/workflows/web-build.yml` so feature-branch pushes touching Web/shared contracts also run the Web build.
+
+**Verification:** [Web Build #39021673480](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673480) and [VPS Build Rehearsal #39021673493](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673493) both completed successfully. The VPS rehearsal included API/Worker builds, PostgreSQL migration bootstrap, registry/provenance checks, backup/restore and API/Worker E2E. These are isolated CI checks, not live endpoint or production data validation.
+
+**Boundary:** No live capture, production DB write, source/runtime registry change, scenario evaluation/state/probability change, deployment, or merge. BTC remains `not_evaluable`; freshness contract parity does not remove the actual input freshness/provenance blockers.
+
 ## 2026-10-16 — структурный аудит ежедневного ETF-кандидата выявил подозрительные серии
 
 **Действие:** проверены даты, типы и значения всех 162 строк публичного `akpasz/btc-data/data/etf_holdings.json` по IBIT, ARKB, BITB, HODL и OBTC.

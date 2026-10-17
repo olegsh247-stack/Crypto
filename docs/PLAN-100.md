@@ -1,5 +1,13 @@
 # ПЛАН 100 — главный план проекта Crypto
 
+
+## 2026-10-17 — API/Web metric freshness contract parity
+
+- The Asset Detail API returns observation freshness using the persisted PostgreSQL enum: `CURRENT`, `STALE`, `EXPIRED`, `UNCLASSIFIED`. The previous Web shared type incorrectly described lowercase `fresh/stale/unknown`, so the client contract did not reflect actual API values.
+- Corrected `shared/api-contract.ts` to the database/API enum and added a compile-time fixture covering all four values in `web/lib/api-contract.test.ts`.
+- Web Build [#39021673480](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673480) and VPS Build Rehearsal [#39021673493](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673493) passed for commit `d8af7fb0ea0a0d5ac35aae234ec06b59ec254530` and its included contract change. The Web workflow now runs for feature-branch changes to `web/**` and `shared/**`.
+- This closes a type-level freshness enum mismatch only. It does not prove that live metric observations are fresh, sourced correctly, or available on a provisioned VPS. BTC remains `not_evaluable`; no production writes, source-priority changes, scenario evaluation, deployment, or merge were performed.
+
 ## Критическая корректировка статуса ETF-истории — 2026-10-16 (решение пользователя)
 
 Полная ежедневная история BTC ETF holdings по 13 фондам **НЕ ЗАВЕРШЕНА**. Это ограничение данных, но больше не блокирует переход к следующим этапам Плана 100: пользователь прямо распорядился «бери тот сбор, который есть, и заканчивай уже этот раздел; что есть, то и считай». Поэтому доступный набор посчитан и его расчётный подраздел закрыт без заявления о полноте.

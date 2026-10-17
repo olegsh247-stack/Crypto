@@ -321,3 +321,10 @@ The remaining source-level Web response type gaps from the previous section have
 - VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
 
 This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
+
+
+## Follow-up — metric freshness enum parity, 2026-10-17
+
+The API detail handler returns each observation's persisted `freshness` classification without translating it. PostgreSQL constrains this value to `CURRENT`, `STALE`, `EXPIRED`, or `UNCLASSIFIED`. The Web shared `MetricObservation` type was corrected to use the same enum, and a compile-time fixture now exercises all four allowed values.
+
+Verification: [Web Build #39021673480](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673480) and [VPS Build Rehearsal #39021673493](https://github.com/olegsh247-stack/Crypto/actions/runs/39021673493) passed. This closes the type-level enum mismatch only. Live endpoint checks and proof of actual observation freshness/provenance remain open; no production data or runtime was changed.
