@@ -99,3 +99,9 @@
 - **Not promoted:** current window ends at tip. Re-capture after at least six additional blocks and compare all overlapping block heights/hashes/fees for reorganization; independently pin deployed API implementation/version before production acceptance. No registry/runtime changes, production DB access/writes, ingestion, scenario-state changes or probability changes.
 - Updated `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md` and the BTC input recheck. The latest successful Farside snapshot in [run #39056926908](https://github.com/olegsh247-stack/Crypto/actions/runs/39056926908) is now the ETF comparison baseline: captured `2026-10-17T18:10:41.812Z`, session `2026-10-16`, payload SHA-256 `a225f1b11ac1fa9d8a3ab0abe3108d26f27e41f3d58b9aa61f12c4c5a80a96cf`. Next qualifying ETF snapshot must be no earlier than `2026-10-18T18:10:41.812Z`.
 - BTC remains `not_evaluable`.
+
+
+### Reorg comparison gate added — 2026-10-17
+
+- Added `scripts/compare-btc-fee-windows.mjs` and tests. The comparator requires the newer 144-block window to advance at least six heights, compares every overlapping height's block hash, parent hash and fee total, and reports any changed overlap as a reorg/revision review failure. It does not silently accept or normalize changed data.
+- Added comparator tests to the read-only source-staging workflow. The first per-block capture is the baseline; the acceptance comparison must use a later capture at least six blocks ahead. This remains separate from the ETF 24-hour snapshot gate.
