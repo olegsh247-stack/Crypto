@@ -16,6 +16,8 @@ on:
       - "scripts/validate-btc-fee-window.mjs"
       - "scripts/validate-btc-fee-window.test.mjs"
       - "scripts/capture-btc-fee-subsidy-window.mjs"
+      - "scripts/compare-btc-fee-windows.mjs"
+      - "scripts/compare-btc-fee-windows.test.mjs"
       - ".github/workflows/btc-public-source-staging.yml"
   workflow_dispatch:
 
@@ -36,6 +38,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test BTC confirmed-window reorg comparison
+        run: node --test scripts/compare-btc-fee-windows.test.mjs
       - name: Test BTC per-block fee window validation
         run: node --test scripts/validate-btc-fee-window.test.mjs
       - name: Test Farside ETF table parsing and placeholder handling
