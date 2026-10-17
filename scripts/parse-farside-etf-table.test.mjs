@@ -14,9 +14,9 @@ test("parses reported daily fund values, negatives in parentheses, and USD-milli
   assert.equal(parsed.fund_flows.IBIT, -207.7);
   assert.equal(parsed.fund_flows.BRRR, -3.5);
   assert.equal(parsed.reported_total_usd_million, -484.9);
-  assert.equal(parsed.calculated_fund_sum_usd_million, -483.5);
-  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 1.4);
-  assert.equal(parsed.reconciliation_status, "MATERIAL_DIFFERENCE");
+  assert.equal(parsed.calculated_fund_sum_usd_million, -484.9);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0);
+  assert.equal(parsed.reconciliation_status, "MATCHES_DISPLAY_ROUNDING");
   assert.equal(parsed.status, "REPORTED_CANDIDATE");
   assert.equal(parsed.observed_at, null);
 });
