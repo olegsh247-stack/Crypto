@@ -1274,8 +1274,8 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 
 ## 2026-10-17 — Combined BTC readiness guard hardening
 
-**Change:** In one combined change, the shared BTC readiness gate now rejects any observation whose source observation/publication timestamp is later than retrieval time. It also explicitly blocks duplicate/conflicting ETF rows for the same reporting date and excludes those dates from the selected ETF series rather than silently taking the first row. Regression coverage includes both the spot and ETF timestamp ordering plus a conflicting ETF revision when five other reporting dates exist.
+**Change:** The shared BTC readiness gate now rejects observations where source observation/publication time is later than retrieval time. It also blocks duplicate/conflicting ETF rows for one reporting date and excludes the date from selected inputs rather than silently taking the first row. Added regression tests for spot/ETF timestamp chronology and a conflicting ETF revision when five other dates exist.
 
-**Why:** A capture timestamp is provenance, not an observation timestamp; chronology must be coherent. Likewise, an ETF reporting date with multiple eligible rows is a revision/conflict requiring review, not a safe deduplication opportunity.
+**Why:** Retrieval time is provenance, not observation time; chronology must be coherent. Multiple eligible rows for a date require explicit revision review rather than automatic deduplication.
 
-**Boundary:** This is offline/read-only contract hardening. It does not claim a provider-final revision, invent an observation/publication timestamp, grant retention rights, create a durable independent archive, or certify two real captures 24 hours apart. No live capture, production write, source-priority change, scenario evaluation/state change, deployment, or merge was performed. BTC remains `not_evaluable` until the real evidence gates pass.
+**Boundary:** Offline/read-only contract hardening only. No provider finality is inferred, no timestamps/rights/archive attestations are fabricated, and no live capture, production write, source-priority change, scenario evaluation/state change, deployment, or merge occurred. BTC remains `not_evaluable` pending real evidence gates.

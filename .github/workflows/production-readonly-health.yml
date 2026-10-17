@@ -1,0 +1,33 @@
+name: Crypto Host Read-only Health
+
+# Manual, GET-only check against the URL supplied for the purchased VPS.
+# No deployment, database writes, migrations, or ingestion.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Base URL of the VPS API, e.g. https://api.example.com"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crypto-host-readonly-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    name: Public API and database health (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check VPS API read-only
+        env:
+          CRYPTO_API_URL: ${{ inputs.api_url }}
+        run: node scripts/production-readonly-health.mjs

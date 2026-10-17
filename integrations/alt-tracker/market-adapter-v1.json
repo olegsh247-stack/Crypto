@@ -1,0 +1,67 @@
+{
+  "adapter_version": "1.0.0",
+  "status": "DESIGN_READY",
+  "input_repository": "olegsh247-stack/alt-tracker",
+  "supported_exchanges": [
+    {
+      "exchange_id": "binance",
+      "source_id": "market.binance",
+      "current_price_endpoint": "https://api.binance.com/api/v3/ticker/price",
+      "kline_endpoint": "https://api.binance.com/api/v3/klines"
+    },
+    {
+      "exchange_id": "bybit",
+      "source_id": "market.bybit",
+      "current_price_endpoint": "https://api.bybit.com/v5/market/tickers",
+      "kline_endpoint": "https://api.bybit.com/v5/market/kline"
+    },
+    {
+      "exchange_id": "okx",
+      "source_id": "market.okx",
+      "current_price_endpoint": "https://www.okx.com/api/v5/market/ticker",
+      "kline_endpoint": "https://www.okx.com/api/v5/market/history-candles"
+    },
+    {
+      "exchange_id": "mexc",
+      "source_id": "market.mexc",
+      "current_price_endpoint": "https://api.mexc.com/api/v3/ticker/price",
+      "kline_endpoint": "https://api.mexc.com/api/v3/klines"
+    }
+  ],
+  "normalization": {
+    "input": "exchange + asset + raw market response",
+    "output": {
+      "asset_id": "canonical asset identifier",
+      "metric_id": "market.spot_price",
+      "value": "number",
+      "unit": "USD/BTC or quote-asset per base asset",
+      "observed_at": "ISO-8601 timestamp",
+      "source_id": "market.<exchange>",
+      "methodology": "exchange spot ticker",
+      "status": "NORMAL|WATCH|REVIEW",
+      "freshness": "fresh|aging|stale|unknown",
+      "revision": 1
+    }
+  },
+  "btc_symbol_mapping": {
+    "binance": "BTCUSDT",
+    "bybit": "BTCUSDT",
+    "okx": "BTC-USDT",
+    "mexc": "BTCUSDT"
+  },
+  "rules": [
+    "Do not use the application cache as canonical history.",
+    "Every accepted observation receives observed_at and source_id.",
+    "Exchange-specific quotes remain distinguishable by source_id.",
+    "Cross-exchange aggregation must be a separate derived metric.",
+    "Invalid, zero or missing prices are rejected.",
+    "A failed primary exchange may be retried or replaced by another source, but source_id must reflect the actual source."
+  ],
+  "next_implementation": [
+    "Add market source definitions to source-registry.json.",
+    "Add exchange-specific metric/source mapping.",
+    "Implement ingestion job outside the website request path.",
+    "Persist immutable observations.",
+    "Expose latest observations through crypto-data-api-v1."
+  ]
+}

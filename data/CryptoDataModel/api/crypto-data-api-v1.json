@@ -1,0 +1,75 @@
+{
+  "api_version": "1.0.0",
+  "purpose": "Stable read contract between Crypto data layer and website",
+  "endpoint_pattern": "/api/assets/{asset_id}",
+  "response": {
+    "asset": {
+      "asset_id": "btc",
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "network": "Bitcoin",
+      "consensus": "PoW",
+      "status": "active"
+    },
+    "metrics": [
+      {
+        "metric_id": "market.spot_price",
+        "value": 81043,
+        "unit": "USD/BTC",
+        "observed_at": "2026-09-19T06:38:00Z",
+        "source_id": "market.primary",
+        "status": "NORMAL",
+        "freshness": "fresh",
+        "revision": 1
+      }
+    ],
+    "history": [],
+    "research_snapshot": {
+      "snapshot_id": "btc-research-2026-09-19",
+      "research_version": "1.0.0",
+      "methodology_version": "CryptoResearch v2",
+      "research_date": "2026-09-19",
+      "blocks_completed": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
+      ]
+    },
+    "scenario_states": [],
+    "monitoring_events": [],
+    "sources": []
+  },
+  "rules": {
+    "read_only": true,
+    "metric_ids_are_stable": true,
+    "observations_are_immutable": true,
+    "revisions_create_new_observations": true,
+    "website_must_display_observed_at": true,
+    "website_must_display_source": true,
+    "website_must_not_change_research_conclusions": true,
+    "website_must_not_treat_scenarios_as_facts": true
+  },
+  "freshness_states": [
+    "fresh",
+    "aging",
+    "stale",
+    "unknown"
+  ],
+  "event_severities": [
+    "NORMAL",
+    "WATCH",
+    "REVIEW"
+  ]
+}

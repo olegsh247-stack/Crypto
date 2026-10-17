@@ -1,0 +1,166 @@
+{
+  "registry_version": "1.0.2",
+  "sources": [
+    {
+      "source_id": "protocol.primary",
+      "name": "Bitcoin Developer Reference",
+      "type": "primary",
+      "url": "https://developer.bitcoin.org/reference/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "documentation/RPC",
+      "notes": "Protocol and node-level facts."
+    },
+    {
+      "source_id": "network.primary",
+      "name": "Mempool.space",
+      "type": "primary",
+      "url": "https://mempool.space/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket API",
+      "notes": "Public Bitcoin network, mempool and Lightning data. API documentation confirms REST and WebSocket endpoints.",
+      "evidence": "citeturn0search0turn0search6"
+    },
+    {
+      "source_id": "market.kraken",
+      "name": "Kraken Spot public market-data API",
+      "type": "market",
+      "url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "public REST API",
+      "notes": "Canonical BTC/USD spot source candidate. Use the public Trades endpoint for actual trade timestamps and price; normalize Kraken's XBT symbol to BTC and retain raw pair/response. No credentials required for public market data."
+    },
+    {
+      "source_id": "market.primary",
+      "name": "Market data provider",
+      "type": "market",
+      "url": null,
+      "priority": 2,
+      "reliability": "to_validate",
+      "access_method": "adapter",
+      "notes": "Production provider to be selected and normalized before automated deployment."
+    },
+    {
+      "source_id": "institutional.primary",
+      "name": "Farside Investors — Bitcoin ETF flows",
+      "type": "institutional",
+      "url": "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+      "priority": 2,
+      "reliability": "high",
+      "access_method": "web/table",
+      "notes": "Official Farside Investors all-data page for US spot BTC ETF flows. Confirmed accessible from the GitHub capture runner (HTTP 200) and linked from the official BTC landing page. Canonical source identity remains institutional.primary; row publication timestamp, finalization/revision semantics and exact parser reconciliation still require review. The /btc/ landing URL remains accepted for existing historical provenance. Do not infer observed_at from retrieval time."
+    },
+    {
+      "source_id": "institutional.tftc",
+      "name": "TFTC Bitcoin ETF Flows — public JSON candidate",
+      "type": "institutional",
+      "url": "https://www.tftc.io/bitcoin-etf-flows",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "public JSON endpoint",
+      "notes": "Candidate public mirror of US spot BTC ETF daily flows. Landing page advertises a JSON data endpoint and CC BY 4.0 reuse; verify schema, exact source lineage, dates and revisions before canonical ingestion. Not yet in metric source_priority."
+    },
+    {
+      "source_id": "analytics",
+      "name": "Glassnode",
+      "type": "analytics",
+      "url": "https://glassnode.com/",
+      "priority": 3,
+      "reliability": "high",
+      "access_method": "API/dashboard",
+      "notes": "On-chain and market analytics; methodology must be preserved with observations."
+    },
+    {
+      "source_id": "lightning.primary",
+      "name": "Mempool.space Lightning",
+      "type": "primary",
+      "url": "https://mempool.space/docs/api/rest",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST API",
+      "notes": "Lightning network stats including nodes, channels and capacity.",
+      "evidence": "citeturn0search0"
+    },
+    {
+      "source_id": "macro.primary",
+      "name": "US Treasury / Federal Reserve / BLS",
+      "type": "official",
+      "url": "https://home.treasury.gov/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "official releases/API",
+      "notes": "US macroeconomic series; individual metric adapters should map to the authoritative agency."
+    },
+    {
+      "source_id": "market.binance",
+      "name": "Binance Spot Market API",
+      "type": "primary",
+      "url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST",
+      "notes": "Independent BTC/USDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
+    },
+    {
+      "source_id": "market.bybit",
+      "name": "Bybit V5 Market API",
+      "type": "primary",
+      "url": "https://bybit-exchange.github.io/docs/v5/market/tickers",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket",
+      "notes": "Independent BTCUSDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
+    },
+    {
+      "source_id": "market.okx",
+      "name": "OKX V5 Market API",
+      "type": "primary",
+      "url": "https://www.okx.com/docs-v5/en/",
+      "priority": 1,
+      "reliability": "high",
+      "access_method": "REST/WebSocket",
+      "notes": "Independent BTC-USDT spot-trade cross-check candidate. Preserve the USDT/BTC unit and source trade timestamp; USDT is not USD. Not approved as canonical market.spot_price source, and must not be blended into Kraken XBT/USD."
+    },
+    {
+      "source_id": "market.mexc",
+      "name": "MEXC Spot Market API",
+      "type": "primary",
+      "url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/",
+      "priority": 1,
+      "reliability": "to_validate",
+      "access_method": "REST"
+    },
+    {
+      "source_id": "macro.ice_dxy_candidate",
+      "name": "ICE U.S. Dollar Index (DXY) — source candidate",
+      "type": "official_index_administrator",
+      "url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices",
+      "priority": 2,
+      "reliability": "to_validate",
+      "access_method": "ICE Data API / ICE Connect / licensed data delivery; access unconfirmed",
+      "notes": "ICE is the administrator of DXY and documents intraday and daily products delivered through ICE Connect, ICE Data API, ICE Consolidated Feed/History and data files. The cited URL is product documentation, not a public quote endpoint. Access, license/redistribution terms, actual project-accessible feed, response schema, daily-close field and source timestamp semantics are unverified. Candidate only; not in macro.dxy source_priority and must fail readiness. Required candidate convention: store the actual source timestamp of the last DXY index level disseminated for that ICE index business day as observed_at; retain the index business date separately as period_start; store retrieval time independently as retrieved_at. Do not infer a timestamp from the retrieval time or from the date label."
+    },
+    {
+      "source_id": "institutional.sosovalue",
+      "name": "SoSoValue ETF Summary History — public API candidate",
+      "type": "institutional",
+      "url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "REST API with x-soso-api-key",
+      "notes": "Official API candidate: GET https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US (date-range/limit parameters documented). Returns daily aggregate total_net_inflow in USD and trading date only; supports only the most recent month and excludes non-trading days. API key required. Documentation does not establish an exact publication timestamp or revision/finalization guarantee. Candidate only; not in institutional.etf_net_flow source_priority and not allowed by readiness until access, response schema, timestamp semantics, revision policy and reconciliation are verified."
+    },
+    {
+      "source_id": "macro.fred_broad_usd_candidate",
+      "name": "Federal Reserve Nominal Broad U.S. Dollar Index (DTWEXBGS) — alternative metric candidate",
+      "type": "official_macro_series",
+      "url": "https://fred.stlouisfed.org/series/DTWEXBGS",
+      "priority": 3,
+      "reliability": "official_series_but_metric_not_equivalent",
+      "access_method": "FRED series page / downloadable observations; FRED API access requires an API key",
+      "notes": "Verified public daily series published by the Federal Reserve Board through H.10 and distributed by FRED. DTWEXBGS is the Nominal Broad U.S. Dollar Index, indexed to Jan 2006=100; it is not the ICE U.S. Dollar Index (DXY), whose fixed six-currency basket and methodology differ. Candidate only for a separately named metric (for example macro.usd_broad_index) after a deliberate scenario-contract review. Must not be registered as a source for macro.dxy or substituted into the existing BTC scenario silently. The series has daily observation dates but the Federal Reserve H.10 distribution is updated weekly to capture the previous week's daily data; therefore it must not be assumed to satisfy a 48-hour freshness contract. FRED/ALFRED records show revisions across release vintages. Retain observation date, release/vintage date when available, retrieval timestamp, source URL and immutable payload hash, and define revision/vintage handling before production ingestion. This cadence further prevents silently substituting DTWEXBGS for ICE DXY or using it as a fresh daily directional input without a deliberate metric-contract review."
+    }
+  ]
+}

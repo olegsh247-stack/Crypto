@@ -125,31 +125,17 @@ test("blocks missing ETF revision/finality evidence", () => {
 
 
 test("blocks a spot observation retrieved before its source event time", () => {
-  const result = assessBtcScenarioReadiness([
-    price({ observed_at: iso(0.1), retrieved_at: iso(0.5) }),
-    ...completeInputs().slice(1),
-  ], NOW);
+  const result = assessBtcScenarioReadiness([price({ observed_at: iso(0.1), retrieved_at: iso(0.5) }), ...completeInputs().slice(1)], NOW);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some((b) => b.metric_id === "market.spot_price"));
 });
 
 test("blocks conflicting ETF rows for a reporting date even when five other dates exist", () => {
-  const inputs = [
-    price(),
-    etf(0.5),
-    etf(0.5, { value_numeric: -45, provider_revision: "published-final-2", revision: 2 }),
-    etf(1.5),
-    etf(2.5),
-    etf(3.5),
-    etf(4.5),
-  ];
+  const inputs = [price(), etf(0.5), etf(0.5, { value_numeric: -45, provider_revision: "published-final-2", revision: 2 }), etf(1.5), etf(2.5), etf(3.5), etf(4.5)];
   const result = assessBtcScenarioReadiness(inputs, NOW);
   assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some((b) =>
-    b.metric_id === "institutional.etf_net_flow"
-    && b.reason.startsWith("duplicate_or_conflicting_rows_for_reporting_date:")
-  ));
-  assert.equal(result.selected_inputs["institutional.etf_net_flow"].some((x) => x.day === etf(0.5).period_start?.slice(0, 10)), false);
+  assert.ok(result.blockers.some((b) => b.metric_id === "institutional.etf_net_flow" && b.reason.startsWith("duplicate_or_conflicting_rows_for_reporting_date:")));
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"].some((x) => x.day === new Date(NOW.getTime() - 0.5 * 24 * 3600000).toISOString().slice(0,10)), false);
 });
 
 test("blocks historical ETF rows retrieved before the observation/publication timestamp", () => {

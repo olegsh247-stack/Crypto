@@ -1,0 +1,58 @@
+name: BTC Scenario Readiness Gate
+
+on:
+  push:
+    branches: [main, "fix/**"]
+    paths:
+      - "scripts/btc-scenario-readiness.mjs"
+      - "scripts/btc-scenario-readiness.test.mjs"
+      - "scripts/btc-scenario-direction.mjs"
+      - "scripts/btc-scenario-direction.test.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
+      - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/validate-crypto-registries.mjs"
+      - "infrastructure/postgres/seed-v1.sql"
+      - "vps/shared/src/btc-scenario-readiness.ts"
+      - "vps/shared/test/btc-scenario-readiness.test.mjs"
+      - "vps/shared/package.json"
+      - "vps/shared/tsconfig.json"
+      - "data/CryptoDataModel/registry/metric-registry.json"
+      - "data/CryptoDataModel/registry/source-registry.json"
+      - ".github/workflows/btc-scenario-readiness.yml"
+      - "docs/BTC-SCENARIO-V1.md"
+  pull_request:
+    paths:
+      - "scripts/btc-scenario-readiness.mjs"
+      - "scripts/btc-scenario-readiness.test.mjs"
+      - "scripts/btc-scenario-direction.mjs"
+      - "scripts/btc-scenario-direction.test.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
+      - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/validate-crypto-registries.mjs"
+      - "vps/shared/src/btc-scenario-readiness.ts"
+      - "vps/shared/test/btc-scenario-readiness.test.mjs"
+      - "vps/shared/package.json"
+      - "vps/shared/tsconfig.json"
+      - "data/CryptoDataModel/registry/metric-registry.json"
+      - "data/CryptoDataModel/registry/source-registry.json"
+      - ".github/workflows/btc-scenario-readiness.yml"
+      - "docs/BTC-SCENARIO-V1.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build and test canonical shared BTC readiness implementation
+        working-directory: vps/shared
+        run: npm install && npm test
+      - name: Test scenario input-quality and directional rules
+        run: node scripts/validate-crypto-registries.mjs && node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs scripts/prepare-btc-observation-candidates.test.mjs

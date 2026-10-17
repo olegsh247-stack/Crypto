@@ -1,0 +1,74 @@
+{
+  "artifact_type": "btc_input_staging_review",
+  "schema_version": "1.0.0",
+  "asset_id": "btc",
+  "metric_id": "institutional.etf_net_flow",
+  "source_id": "institutional.primary",
+  "source_url": "https://farside.co.uk/btc/",
+  "retrieved_at": "2026-10-12",
+  "retrieved_at_precision": "date_only",
+  "unit": "USD million/day",
+  "status": "HOLD_NOT_READY_FOR_INGESTION",
+  "reason": "The source page provides completed-session totals, but this review artifact does not establish the source publication timestamp or a canonical observed_at timestamp. Do not manufacture one from retrieval time. The latest confirmed session is 2026-10-09 and does not currently satisfy the 36-hour latest-observation gate.",
+  "observations": [
+    {
+      "period_start": "2026-10-05",
+      "period_end": "2026-10-05",
+      "value": -89.8,
+      "observed_at": null,
+      "status": "HISTORICAL_CANDIDATE_TIMESTAMP_UNVERIFIED"
+    },
+    {
+      "period_start": "2026-10-06",
+      "period_end": "2026-10-06",
+      "value": 118.8,
+      "observed_at": null,
+      "status": "HISTORICAL_CANDIDATE_TIMESTAMP_UNVERIFIED"
+    },
+    {
+      "period_start": "2026-10-07",
+      "period_end": "2026-10-07",
+      "value": -484.9,
+      "observed_at": null,
+      "status": "HISTORICAL_CANDIDATE_TIMESTAMP_UNVERIFIED"
+    },
+    {
+      "period_start": "2026-10-08",
+      "period_end": "2026-10-08",
+      "value": -244.1,
+      "observed_at": null,
+      "status": "HISTORICAL_CANDIDATE_TIMESTAMP_UNVERIFIED"
+    },
+    {
+      "period_start": "2026-10-09",
+      "period_end": "2026-10-09",
+      "value": 21.1,
+      "observed_at": null,
+      "status": "LATEST_CONFIRMED_SESSION_TIMESTAMP_UNVERIFIED"
+    }
+  ],
+  "candidate_sum_usd_million": -678.9,
+  "excluded_rows": [
+    {
+      "period_start": "2026-10-12",
+      "reason": "Farside page shows dashes for individual fund values and a displayed total of 0.0; this is an unreported/placeholder row, not a confirmed zero-flow observation."
+    }
+  ],
+  "validation": {
+    "distinct_completed_sessions": 5,
+    "numeric_values_present": true,
+    "canonical_unit_present": true,
+    "source_url_https": true,
+    "source_registry_id_exists_in_repository": true,
+    "observed_at_verified": false,
+    "latest_row_within_36h": false,
+    "ready_for_production_ingestion": false
+  },
+  "safety": {
+    "database_written": false,
+    "historical_rows_modified": false,
+    "scenario_state_written": false,
+    "monitoring_events_written": false,
+    "probabilities_changed": false
+  }
+}

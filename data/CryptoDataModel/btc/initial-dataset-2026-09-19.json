@@ -1,0 +1,124 @@
+{
+  "dataset_id": "btc-initial-2026-09-19",
+  "asset_id": "btc",
+  "research_date": "2026-09-19",
+  "data_model_version": "CryptoDataModel v1",
+  "methodology_version": "CryptoResearch v2",
+  "observations": [
+    {
+      "metric_id": "market.spot_price",
+      "value": 81043,
+      "unit": "USD/BTC",
+      "observed_at": "2026-09-19T06:38:00Z",
+      "source_id": "coingecko-via-financefeeds",
+      "source_url": "https://financefeeds.com/bitcoin-btc-price-81043-cftc-crypto-rules-white-house-bull-88000-bear-74000/",
+      "update_mode": "AUTO",
+      "status": "NORMAL",
+      "note": "Point-in-time market quote; use a dedicated market-data feed for production."
+    },
+    {
+      "metric_id": "security.hashrate",
+      "value": 1001,
+      "unit": "EH/s",
+      "observed_at": "2026-09-19",
+      "source_id": "shattered-hashrate-report",
+      "source_url": "https://shattered.io/bitcoin-hashrate-zettahash-difficulty-2026/",
+      "update_mode": "SEMI_AUTO",
+      "status": "NORMAL",
+      "note": "Approximate network hashrate; source methodology should be normalized before production."
+    },
+    {
+      "metric_id": "monetary.block_subsidy",
+      "value": 3.125,
+      "unit": "BTC/block",
+      "observed_at": "2026-09-19",
+      "source_id": "bitcoin-protocol",
+      "source_url": "https://bitcoin.org/en/bitcoin-paper",
+      "update_mode": "AUTO",
+      "status": "NORMAL",
+      "note": "Current subsidy after 2024 halving."
+    },
+    {
+      "metric_id": "monetary.max_supply",
+      "value": 21000000,
+      "unit": "BTC",
+      "observed_at": "2026-09-19",
+      "source_id": "bitcoin-protocol",
+      "source_url": "https://bitcoin.org/en/faq",
+      "update_mode": "AUTO",
+      "status": "NORMAL"
+    },
+    {
+      "metric_id": "monetary.circulating_supply",
+      "value": 20086198.00419505,
+      "unit": "BTC",
+      "observed_at": "2026-09-19",
+      "source_id": "bitcoin-core-txoutset",
+      "update_mode": "AUTO",
+      "status": "NORMAL",
+      "note": "Snapshot from Bitcoin Core gettxoutsetinfo; source observation from research run."
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "value": 324.6,
+      "unit": "USD million",
+      "observed_at": "2026-09-18",
+      "source_id": "farside-btc-etf",
+      "source_url": "https://farside.co.uk/btc/",
+      "update_mode": "SEMI_AUTO",
+      "status": "WATCH",
+      "note": "Daily US spot Bitcoin ETF net flow. Farside marks table as automatically generated."
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "value": -295.9,
+      "unit": "USD million",
+      "observed_at": "2026-09-16",
+      "source_id": "farside-btc-etf",
+      "source_url": "https://farside.co.uk/btc/",
+      "update_mode": "SEMI_AUTO",
+      "status": "WATCH"
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "value": 159.5,
+      "unit": "USD million",
+      "observed_at": "2026-09-17",
+      "source_id": "farside-btc-etf",
+      "source_url": "https://farside.co.uk/btc/",
+      "update_mode": "SEMI_AUTO",
+      "status": "WATCH"
+    },
+    {
+      "metric_id": "institutional.etf_net_flow",
+      "value": -450.4,
+      "unit": "USD million",
+      "observed_at": "2026-09-15",
+      "source_id": "farside-btc-etf",
+      "source_url": "https://farside.co.uk/btc/",
+      "update_mode": "SEMI_AUTO",
+      "status": "WATCH"
+    }
+  ],
+  "derived": [
+    {
+      "metric_id": "monetary.remaining_to_max_supply",
+      "value": 913801.99580495,
+      "unit": "BTC",
+      "formula": "max_supply - circulating_supply",
+      "status": "NORMAL"
+    },
+    {
+      "metric_id": "monetary.issued_supply_ratio",
+      "value": 95.64856192473833,
+      "unit": "%",
+      "formula": "circulating_supply / max_supply * 100",
+      "status": "NORMAL"
+    }
+  ],
+  "data_quality": {
+    "status": "PARTIAL_INITIAL_DATASET",
+    "production_ready": false,
+    "reason": "This is the first reference dataset. Several metrics from the registry still require dedicated primary/structured sources and ingestion adapters."
+  }
+}

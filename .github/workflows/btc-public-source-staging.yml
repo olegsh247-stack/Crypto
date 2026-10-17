@@ -1,0 +1,82 @@
+name: BTC Public Source Staging (Read Only)
+
+on:
+  push:
+    paths:
+      - "scripts/capture-btc-public-sources.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
+      - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/diff-btc-etf-snapshots.mjs"
+      - "scripts/diff-btc-etf-snapshots.test.mjs"
+      - "scripts/parse-farside-etf-table.mjs"
+      - "scripts/parse-farside-etf-table.test.mjs"
+      - "scripts/evaluate-btc-etf-research-eligibility.mjs"
+      - "scripts/evaluate-btc-etf-research-eligibility.test.mjs"
+      - "scripts/prepare-btc-sosovalue-etf-candidates.mjs"
+      - "scripts/prepare-btc-sosovalue-etf-candidates.test.mjs"
+      - "scripts/archive-btc-etf-evidence.mjs"
+      - "scripts/archive-btc-etf-evidence.test.mjs"
+      - "scripts/verify-btc-etf-evidence-archive.mjs"
+      - "scripts/verify-btc-etf-evidence-archive.test.mjs"
+      - "scripts/inspect-tftc-etf-json.mjs"
+      - "scripts/inspect-tftc-etf-json.test.mjs"
+      - ".github/workflows/btc-public-source-staging.yml"
+  workflow_dispatch:
+    inputs:
+      capture_sources:
+        description: "Fetch live public sources and upload a temporary review artifact (default: validation only)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test Farside ETF table parsing and placeholder handling
+        run: node --test scripts/parse-farside-etf-table.test.mjs
+      - name: Test BTC observation candidate normalization
+        run: node --test scripts/prepare-btc-observation-candidates.test.mjs
+      - name: Test offline BTC ETF snapshot diff
+        run: node --test scripts/diff-btc-etf-snapshots.test.mjs
+      - name: Test BTC ETF research eligibility policy
+        run: node --test scripts/evaluate-btc-etf-research-eligibility.test.mjs
+      - name: Test offline SoSoValue ETF candidate normalizer
+        run: node --test scripts/prepare-btc-sosovalue-etf-candidates.test.mjs
+      - name: Test offline BTC ETF evidence archive safety gates
+        run: node --test scripts/archive-btc-etf-evidence.test.mjs
+      - name: Test offline BTC ETF archive integrity and recovery verification
+        run: node --test scripts/verify-btc-etf-evidence-archive.test.mjs
+      - name: Test offline TFTC JSON inspection
+        run: node --test scripts/inspect-tftc-etf-json.test.mjs
+
+  capture:
+    if: github.event_name == 'workflow_dispatch' && inputs.capture_sources == true
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture public source responses for review only
+        run: node scripts/capture-btc-public-sources.mjs
+      - name: Prepare normalized observation candidates (review only)
+        run: node scripts/prepare-btc-observation-candidates.mjs
+      - name: Upload raw responses, provenance manifest, and review-only candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-public-source-review
+          path: tmp/btc-source-review/
+          if-no-files-found: error
+          retention-days: 7

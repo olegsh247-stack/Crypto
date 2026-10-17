@@ -223,14 +223,9 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .map(([day]) => day)
     .sort();
   if (duplicateReportingDays.length) {
-    blockers.push({
-      metric_id: "institutional.etf_net_flow",
-      reason: "duplicate_or_conflicting_rows_for_reporting_date:" + duplicateReportingDays.join(","),
-    });
+    blockers.push({ metric_id: "institutional.etf_net_flow", reason: "duplicate_or_conflicting_rows_for_reporting_date:" + duplicateReportingDays.join(",") });
   }
-  // Never silently select one row when a reporting date has multiple eligible
-  // candidates. A revision must be resolved by the separate snapshot/revision
-  // review policy before that date can be used in a scenario.
+  // Do not silently select one row when multiple eligible candidates exist for a date.
   const uniqueByDay = new Map<string, any>();
   for (const [day, sameDay] of rowsByDay) {
     if (sameDay.length === 1) uniqueByDay.set(day, sameDay[0]);

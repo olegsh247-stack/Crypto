@@ -1,0 +1,19 @@
+{
+  "name": "crypto-api-vps",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "start": "node --enable-source-maps dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/research-status.test.js && node --test ../../scripts/btc-etf-test-storage.test.mjs"
+  },
+  "dependencies": {
+    "@crypto/vps-runtime": "file:../shared"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}

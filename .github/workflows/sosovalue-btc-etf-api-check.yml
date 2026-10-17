@@ -1,0 +1,41 @@
+name: SoSoValue BTC ETF API Check (Read Only)
+
+on:
+  push:
+    paths:
+      - "scripts/check-sosovalue-btc-etf-api.mjs"
+      - ".github/workflows/sosovalue-btc-etf-api-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate secret is configured without revealing it
+        shell: bash
+        run: |
+          if [ -z "$SOSOVALUE_API_KEY" ]; then
+            echo "::error::SOSOVALUE_API_KEY is not configured in repository Actions secrets."
+            exit 2
+          fi
+          echo "API key secret is configured."
+      - name: Run one bounded, read-only SoSoValue BTC ETF request
+        run: node scripts/check-sosovalue-btc-etf-api.mjs
+      - name: Upload temporary raw response for controlled review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sosovalue-btc-etf-api-review
+          path: tmp/sosovalue-etf-review/
+          if-no-files-found: ignore
+          retention-days: 3
