@@ -1144,3 +1144,12 @@
 ## 2026-10-17 — ticker cache TTL увеличен до 15 минут на рабочей ветке
 
 В `vps/api/src/app.ts`, commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78` на `fix/btc-readiness-registry-runtime-source`, изменён in-process cache TTL с 60 секунд на 15 минут и Cache-Control с max-age 30/s-maxage 60 на max-age 900/s-maxage 900. Цель — уменьшить повторные upstream calls при частых UI refresh. Изменение не merge/deploy; ожидается VPS API Build Rehearsal/E2E. Provider fallback не менялся; response timestamp по-прежнему является временем получения приложением, а не гарантированным observation timestamp.
+
+
+## 2026-10-17 — Source Catalog v1: проектирование и первая read-only проверка
+
+Создан [SOURCE-CATALOG-V1-DESIGN-AND-MIGRATION-PLAN-2026-10-17.md](SOURCE-CATALOG-V1-DESIGN-AND-MIGRATION-PLAN-2026-10-17.md) и первоначальный [source-catalog.v1.json](../data/CryptoDataModel/registry/source-catalog.v1.json). Каталог описывает endpoint-level идентичность, доступ, статус, роль данных, интервалы опроса, семантику observation/period timestamps, единицы, finality/revision и имя env-переменной без секретного значения. Включены фактически проверенные кандидаты и явно заблокированные/непринятые DXY/ETF источники; SoSoValue остаётся cross-check only. Два кандидата, отсутствующих в существующем source registry (Yahoo Finance DXY и CryptoETF.today), помечены как `candidate_unregistered`, не как принятые registry IDs.
+
+Добавлен `scripts/validate-source-catalog.mjs` и шаг в VPS API Build Rehearsal. Проверка read-only: уникальность catalog IDs, формат URL, допустимые статусы/роли/режимы опроса, отсутствие credential-like query parameters, использование только имён env vars, проверка зарегистрированных source IDs и вывод legacy gaps как отчёта без автоматического продвижения источников. Это начальный baseline, не полная трассировка всех runtime consumers. CI run для интеграции проверки: [#39015488714](https://github.com/olegsh247-stack/Crypto/actions/runs/39015488714) — на момент записи queued; более ранние runs на промежуточных commits ещё выполняются, итог проверки нужно подтвердить по последнему run.
+
+**Границы изменений:** не менялись metric source priorities, SQL seed, production DB, runtime provider fallback, ingestion, scenario evaluator/state/score/probability и deployment. Catalog пока инвентаризация и не является runtime source of truth; BTC остаётся `not_evaluable`. Следующий шаг — получить CI result, исправить только структурные/валидационные проблемы и оценить отчёт о непокрытых source IDs перед любым refactor runtime/capture scripts.
