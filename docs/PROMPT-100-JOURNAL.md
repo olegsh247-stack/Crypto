@@ -1205,3 +1205,13 @@ Full VPS API Build Rehearsal с проверками source ID ↔ catalog ↔ S
 Добавлен отчёт [SOSOVALUE-BTC-ETF-API-CANDIDATE-CHECK-2026-10-17.md](SOSOVALUE-BTC-ETF-API-CANDIDATE-CHECK-2026-10-17.md) с диапазоном, полями, хешем ответа и ограничениями. Сырой ответ сохранён только во временном Actions artifact с retention 3 дня; в Git он не добавлялся.
 
 **Решение:** доступ, схема краткосрочной истории и единицы подтверждены; SoSoValue остаётся daily cross-check candidate. Полный исторический архив, timestamp публикации, revision/finality и условия долговременного хранения/перераспространения не подтверждены. Нужен повторный снимок в следующий торговый день для проверки изменений истории. Registry, metric `source_priority`, runtime и сценарии не менялись; BTC остаётся `not_evaluable`.
+
+## 2026-10-17 — VPS API Build Rehearsal и отрицательные тесты семантики Source Catalog
+
+**Действие:** проверен полный GitHub Actions run [#39019423207](https://github.com/olegsh247-stack/Crypto/actions/runs/39019423207) для commit `c25c4fc58d8302d37f9c52f92aae22a16a37eb61` в ветке `fix/btc-readiness-registry-runtime-source`. В `scripts/validate-source-catalog.mjs` добавлены in-memory отрицательные тесты на несовпадающий `source_id`, неверные единицы котировки, неверную торговую пару и отсутствующий endpoint.
+
+**Результат:** полный job `build-and-e2e` завершился `success`. Успешно прошли проверка Source Catalog, сборки VPS shared runtime/API/Worker, response contracts, сетевые границы, PostgreSQL bootstrap, аудит provenance BTC, проверка идемпотентности/дубликатов, PostgreSQL backup/restore и API/Worker E2E, включая историю и финализацию свечей и административные границы.
+
+**Вывод:** rehearsal подтверждает прохождение CI/E2E, но не означает готовность BTC-сценария. BTC остаётся `not_evaluable`; DXY/ETF/spot и строгая связка «запрос → source ID → metric ID → единицы» должны проходить собственные readiness-контракты.
+
+**Граница безопасности:** проверка была rehearsal/read-only в отношении production. Не выполнялись production-записи, live BTC capture, изменения приоритетов источников или runtime registry, оценка/изменение состояния сценария, merge либо deploy.
