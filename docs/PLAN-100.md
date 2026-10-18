@@ -1740,3 +1740,26 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 
 - На `fix/btc-readiness-registry-runtime-source` (commit `3da2ffba02a1aa3307066038bb6da2eda5dc6c78`) изменён ticker cache TTL 60 секунд → 15 минут; Cache-Control max-age/s-maxage 900 секунд. Это согласует нижнюю границу кэширования с целью не создавать upstream запрос на каждый refresh UI.
 - Изменение только в рабочей ветке; не merge/deploy. Требуется успешный VPS API Build Rehearsal/E2E до рассмотрения дальнейшего шага. Источники/fallback, source priority, SQL seed и scenario state не менялись. Runtime `timestamp` всё ещё означает время получения приложением, не source trade time.
+
+## 2026-10-18 — актуальная контрольная точка Plan 100
+
+Дата этого блока — контрольная точка после повторной read-only проверки; исторические снимки и прежние статусы выше не переписываются задним числом.
+
+### Подтверждено
+
+- **BTC fee/subsidy:** staging run [#39160316890](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316890) прошёл. Проверено 144 последовательных блока `971906–972049`; сумма комиссий по блокам совпала с aggregate endpoint: `197,402,505 sats` (`1.97402505 BTC`), субсидия `450 BTC`, отношение `0.438672%`. Предыдущее окно не перекрывается с новым, поэтому reorg/revision comparison не заявляется. Новое окно закреплено как baseline; следующее сравнимое окно должно перекрываться с ним и пройти stable-tip проверки, ориентир по конечной высоте — `972055` или выше.
+- **ETF:** второй Farside snapshot снят более чем через 24 часа после baseline. Сравнены 14 пересекающихся датированных строк: изменений значений, добавления или удаления строк не обнаружено. Это закрывает только сравнение данной пары снимков, но не права на архивирование/хранение и не контракт session-aware freshness/publication time.
+- **Supply semantics:** документированно разделены протокольная эмиссия и экономический circulating supply. Кандидат `20,100,159.375 BTC` через высоту `972050` остаётся `REVIEW_ONLY_PROTOCOL_DERIVED_SUPPLY`; в реестр и runtime не добавлялся.
+- **Registry/seed audit:** отдельного `monetary.protocol_issued_supply` нет. `monetary.circulating_supply` в реестре ссылается на `network.primary`, однако исторический seed содержит значение `20,086,198.00419505 BTC` от `2026-09-19`, `source_url = NULL`, а методология называет Bitcoin Core `gettxoutsetinfo`. Это установленное несоответствие source ID и описания происхождения; строка stale и не считается подтверждённым источником.
+- **DXY:** Yahoo Finance `DX-Y.NYB` ранее удалось прочитать как review-кандидат (`Close 101.84`, сессия `2026-10-16`), но это не доказывает время фактического закрытия/публикации или разрешение на автоматизированный сбор. Источник остаётся заблокированным для canonical ingestion; не подменять DXY широким trade-weighted USD индексом.
+- **CI:** [BTC Public Source Staging #39160316890](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316890) и [VPS API Build Rehearsal #39160316806](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316806) прошли для соответствующего кода. Это CI/staging, не production verification.
+
+### Открытые блокеры
+
+1. Закрыть контракт `monetary.circulating_supply`: выбрать и доказать точную семантику (UTXO-set amount, protocol-issued supply или provider-defined economic circulating supply), затем устранить source/provenance mismatch только после согласования.
+2. Доказать source timestamp/session freshness и допустимое хранение для ETF, а не повторять уже успешное сравнение той же пары снимков.
+3. DXY: получить разрешённый для автоматизированного использования источник с подтверждённой идентичностью инструмента и timestamp convention; Yahoo остаётся review-only.
+4. API deployed-version parity: нет подтверждённого deployment-side commit SHA или immutable image/artifact digest. VPS deployment skeleton документирован как prepared/not deployed; production routes/DB не проверялись.
+5. Получить следующее перекрывающееся 144-блочное fee window после достаточного продвижения tip; не запускать повторные captures до подходящего окна.
+
+**Статус сценария BTC:** `not_evaluable`. Не выполнялись production API/DB запросы, ingestion, production writes, registry/runtime changes, scenario evaluation/state changes, monitoring-event writes, deploy, merge или traffic cutover. Следующие активы не расширяем до закрытия полного BTC пути.
