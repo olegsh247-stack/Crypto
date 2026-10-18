@@ -144,3 +144,8 @@
 - The registry describes circulating supply with source priority `network.primary` (Mempool.space), but the historical seed row (`20,086,198.00419505 BTC`, observed `2026-09-19`) has `source_url = NULL` and methodology naming Bitcoin Core `gettxoutsetinfo`. This is a source-ID/methodology provenance mismatch, and the row is stale; it is not accepted as source evidence.
 - Updated `docs/BTC-SUPPLY-METRIC-SEMANTICS-2026-10-18.md` with this audit. No registry, SQL seed, runtime mapping, observation, production DB, ingestion, scenario state, monitoring event or deployment was changed.
 - Next decision gate: establish whether Product Contour needs protocol issuance, UTXO-set amount, or provider-defined economic circulating supply, then define the matching source and contract before any registry changes. BTC remains `not_evaluable`.
+
+## 2026-10-18 — Plan 100 checkpoint refreshed
+
+- Updated `docs/PLAN-100.md` with a dated current checkpoint covering the verified 144-block fee window, completed Farside two-snapshot comparison, protocol-issued-supply semantic boundary, confirmed registry/seed provenance mismatch, DXY access/timestamp blocker, and deployed API version-parity blocker.
+- The checkpoint distinguishes successful CI/staging from production verification and records that BTC remains `not_evaluable`. No production API/DB, ingestion, registry/runtime, scenario state, deployment, merge or traffic cutover was touched.
