@@ -130,3 +130,10 @@
 - Farside second snapshot in #39160316890 was retrieved at `2026-10-18T19:47:28.610Z`, more than 24 hours after baseline. All 14 overlapping dated rows were unchanged; no added/removed rows. Payload hash changed from `43ad1085683871d8a3bea755f1d700d843965487bb2298155bcea1a443a163a1` to `a8faace817cac24ab5a2cf98ee679608a1dbfe84cbaa46cfaa861fb8dfd60828`. Two-snapshot row-revision check is complete for this pair; source archival rights and session/publication-time freshness semantics remain blockers.
 - Current protocol-derived total-issued supply candidate is `20,100,159.375 BTC` through height 972050, observed block timestamp `2026-10-18T19:47:01Z`, retrieved `2026-10-18T19:47:27.483Z`. This remains total scheduled issuance, not approved economically circulating supply; no registry change.
 - API version parity remains unproven pending deployment-side commit/artifact identity. No production API/DB calls, ingestion, registry/runtime changes, deployment, scenario evaluation/state changes, or probability changes. BTC remains `not_evaluable`.
+
+## 2026-10-18 — Supply metric semantic boundary
+
+- Added `docs/BTC-SUPPLY-METRIC-SEMANTICS-2026-10-18.md` to separate protocol-scheduled cumulative issuance from economically defined circulating supply.
+- Candidate `20,100,159.375 BTC` through height `972050` remains `REVIEW_ONLY_PROTOCOL_DERIVED_SUPPLY`; it must not be mapped to `monetary.circulating_supply` or used for BTC scenario evaluation.
+- Documented provenance, reference height/block identity, methodology, reorg/finality, freshness and duplicate identity requirements. No metric registry, SQL seed, runtime mapping, production DB, ingestion, scenario state, monitoring event or deployment was changed.
+- Registry/seed audit and metric-contract approval remain open. BTC remains `not_evaluable`.
