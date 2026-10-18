@@ -137,3 +137,10 @@
 - Candidate `20,100,159.375 BTC` through height `972050` remains `REVIEW_ONLY_PROTOCOL_DERIVED_SUPPLY`; it must not be mapped to `monetary.circulating_supply` or used for BTC scenario evaluation.
 - Documented provenance, reference height/block identity, methodology, reorg/finality, freshness and duplicate identity requirements. No metric registry, SQL seed, runtime mapping, production DB, ingestion, scenario state, monitoring event or deployment was changed.
 - Registry/seed audit and metric-contract approval remain open. BTC remains `not_evaluable`.
+
+## 2026-10-18 — BTC supply registry and seed audit
+
+- Read-only inspection of `data/CryptoDataModel/registry/metric-registry.json` and `infrastructure/postgres/seed-v1.sql` found no separate `monetary.protocol_issued_supply` metric; only `monetary.circulating_supply` is registered/seeded.
+- The registry describes circulating supply with source priority `network.primary` (Mempool.space), but the historical seed row (`20,086,198.00419505 BTC`, observed `2026-09-19`) has `source_url = NULL` and methodology naming Bitcoin Core `gettxoutsetinfo`. This is a source-ID/methodology provenance mismatch, and the row is stale; it is not accepted as source evidence.
+- Updated `docs/BTC-SUPPLY-METRIC-SEMANTICS-2026-10-18.md` with this audit. No registry, SQL seed, runtime mapping, observation, production DB, ingestion, scenario state, monitoring event or deployment was changed.
+- Next decision gate: establish whether Product Contour needs protocol issuance, UTXO-set amount, or provider-defined economic circulating supply, then define the matching source and contract before any registry changes. BTC remains `not_evaluable`.
