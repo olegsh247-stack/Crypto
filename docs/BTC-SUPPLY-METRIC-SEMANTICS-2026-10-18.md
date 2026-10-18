@@ -47,7 +47,7 @@ This proposal does not assert that a new metric ID already exists. Do not add a 
 
 ## Evidence gates
 
-- [ ] Inspect the current metric registry and SQL seed to confirm whether a protocol-issuance metric already exists and avoid duplicate IDs.
+- [x] Inspected `data/CryptoDataModel/registry/metric-registry.json` and `infrastructure/postgres/seed-v1.sql`: no `monetary.protocol_issued_supply` metric exists in either registry or seed; only `monetary.circulating_supply` is defined.
 - [ ] Confirm the implementation counts the subsidy schedule correctly from genesis through the stated height, with explicit handling for chain reorganizations.
 - [ ] Preserve a reproducible fixture and raw artifact/checksum.
 - [ ] Decide whether Product Contour actually needs protocol issuance, provider-defined circulating supply, or both; do not conflate them.
@@ -58,9 +58,19 @@ This proposal does not assert that a new metric ID already exists. Do not add a 
 
 This document does not authorize production API or database queries, database writes, ingestion, registry/runtime changes, scenario evaluation, scenario-state or monitoring-event writes, or deployment.
 
+## Registry and seed audit — 2026-10-18
+
+Read-only inspection of the current repository files found:
+
+- `data/CryptoDataModel/registry/metric-registry.json` defines `monetary.circulating_supply` as `Circulating supply`, unit `BTC`, daily update, 48-hour freshness, source priority `[network.primary]`, and validation `value > 0 && value <= 21000000`. There is no separate protocol-issuance metric ID.
+- `infrastructure/postgres/seed-v1.sql` seeds `monetary.circulating_supply` as an estimated circulating-supply metric. Its historical row is `20,086,198.00419505 BTC`, observation time `2026-09-19T00:00:00Z`, source ID `network.primary`, **source URL `NULL`**, and methodology text says the initial snapshot came from Bitcoin Core `gettxoutsetinfo`.
+- This is a provenance inconsistency: the registry maps `network.primary` to Mempool.space, while the seed methodology names Bitcoin Core and does not supply a source URL. The row is also stale. It must not be used as evidence that the current circulating-supply source contract is satisfied.
+- The source does not establish whether the product intends a UTXO-set total, total protocol issuance, or a provider-defined economic circulating-supply figure. Those definitions are not interchangeable.
+
 ## Current result
 
 - Protocol-derived candidate: captured and checksummed; review-only.
-- Economic circulating-supply definition: not selected/verified.
-- Canonical metric ID/registry mapping: not approved by this document.
+- Registry/seed audit: completed; no dedicated protocol-issued-supply metric exists. Existing circulating-supply seed has a source-ID/methodology mismatch and missing source URL.
+- Economic circulating-supply definition and canonical source: not selected/verified.
+- No registry, SQL seed, runtime or observation changes made.
 - BTC scenario eligibility: unchanged; remains `not_evaluable`.
