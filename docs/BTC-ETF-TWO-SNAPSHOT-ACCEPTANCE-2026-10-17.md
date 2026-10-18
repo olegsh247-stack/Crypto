@@ -40,3 +40,17 @@ A changed page hash without row changes is not a row revision. An unchanged row 
 5. Keep TFTC as a control source only. No silent fallback or averaging.
 
 **Status:** latest-session freshness evidence is now present, but canonical ETF acceptance remains blocked until the two-snapshot/revision/retention gates pass. BTC remains `not_evaluable`. No production DB access/writes, ingestion, scenario-state changes, or runtime registry changes occurred.
+
+
+## Second snapshot result — 2026-10-18
+
+The second successful snapshot was captured by [BTC Public Source Staging #39160316890](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316890).
+
+- Retrieval time: `2026-10-18T19:47:28.610Z`; interval from baseline: `25.5837 hours`, so the 24-hour gate passes.
+- Latest reported session remains `2026-10-16`; 14 parsed rows overlap with the baseline.
+- Baseline payload SHA-256: `43ad1085683871d8a3bea755f1d700d843965487bb2298155bcea1a443a163a1`.
+- Second payload SHA-256: `a8faace817cac24ab5a2cf98ee679608a1dbfe84cbaa46cfaa861fb8dfd60828`.
+- All 14 overlapping dated rows are unchanged; no dated rows were added or removed. The latest complete row remains `2026-10-16`, total `-82.4 USD million/day`, with fund sum matching the displayed total. Page payload changed, but no row revision was detected in the compared fields.
+- Review-only comparison result: `TWO_SNAPSHOT_COMPARISON_COMPLETE_NO_ROW_REVISIONS_DETECTED`. This establishes only that these two captures match; it does not prove the provider never revises data or settle archival rights/publication-time semantics.
+
+The two-snapshot/row-revision gate is complete for this pair. Remaining blockers for canonical ETF acceptance are archival/retention permissions and an approved U.S.-session-aware freshness/publication-time contract. TFTC remains a control source only; no fallback or averaging.
