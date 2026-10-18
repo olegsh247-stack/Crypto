@@ -149,3 +149,10 @@
 
 - Updated `docs/PLAN-100.md` with a dated current checkpoint covering the verified 144-block fee window, completed Farside two-snapshot comparison, protocol-issued-supply semantic boundary, confirmed registry/seed provenance mismatch, DXY access/timestamp blocker, and deployed API version-parity blocker.
 - The checkpoint distinguishes successful CI/staging from production verification and records that BTC remains `not_evaluable`. No production API/DB, ingestion, registry/runtime, scenario state, deployment, merge or traffic cutover was touched.
+
+## 2026-10-18 — DXY optional-context and readiness implementation mismatch
+
+- Reconciled the product decision: DXY is optional macro context for the first BTC scenario, not a mandatory readiness input. If a permitted, timestamp-verifiable DXY close is unavailable, omit it; do not substitute the Federal Reserve broad-dollar series or carry a stale value forward.
+- Read-only inspection found that `main` still hard-codes `macro.dxy` in `vps/shared/src/btc-scenario-readiness.ts` as a required metric. Draft PR #83 contains the intended registry-driven approach marking DXY optional, but remains open/unmerged. This mismatch means the current main readiness gate can still block on DXY even though the product contract says it should not.
+- Updated [Plan 100](https://github.com/olegsh247-stack/Crypto/commit/7f43b6c2ac1e467b596d65aeff408beb89ddd7c0) and the [DXY source contract](https://github.com/olegsh247-stack/Crypto/commit/b53889303f6c2b2bf62ae834633b6230d9488832) to distinguish optional source research from mandatory scenario readiness and record the implementation discrepancy.
+- Next: review PR #83's registry-driven readiness changes and tests against current `main`; do not merge automatically. BTC remains `not_evaluable` because mandatory spot/ETF gates and other evidence requirements remain open. No runtime/registry/SQL/production changes, scenario evaluation/state changes, deployment or merge. Documentation-only commits; CI was not run.
