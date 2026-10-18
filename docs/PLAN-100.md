@@ -1758,7 +1758,7 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 
 1. Закрыть контракт `monetary.circulating_supply`: выбрать и доказать точную семантику (UTXO-set amount, protocol-issued supply или provider-defined economic circulating supply), затем устранить source/provenance mismatch только после согласования.
 2. Доказать source timestamp/session freshness и допустимое хранение для ETF, а не повторять уже успешное сравнение той же пары снимков.
-3. DXY: получить разрешённый для автоматизированного использования источник с подтверждённой идентичностью инструмента и timestamp convention; Yahoo остаётся review-only.
+3. DXY: это необязательный контекст первого BTC-сценария, поэтому поиск автоматического источника не является блокером сценария. Отдельно закрыть обнаруженное несоответствие реализации: текущий `main` всё ещё считает DXY обязательным, тогда как контракт и Draft PR #83 задают его как optional; сверить тесты/изменения PR #83 с `main`, без автоматического merge.
 4. API deployed-version parity: нет подтверждённого deployment-side commit SHA или immutable image/artifact digest. VPS deployment skeleton документирован как prepared/not deployed; production routes/DB не проверялись.
 5. Получить следующее перекрывающееся 144-блочное fee window после достаточного продвижения tip; не запускать повторные captures до подходящего окна.
 
