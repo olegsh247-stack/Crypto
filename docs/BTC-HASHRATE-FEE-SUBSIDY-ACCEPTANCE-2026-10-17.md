@@ -51,3 +51,13 @@
 ## 3. Safety boundary and next step
 
 The source-staging workflow is read-only with respect to production: it captures into a temporary review directory and uploads a short-lived CI artifact. No observation is ingested and no scenario state or monitoring event is created. The per-block audit and validation tests are now implemented; inspect its result after a ≥6-block confirmation interval and compare overlapping block identities before considering admission. Do not claim production acceptance merely because capture and arithmetic pass.
+
+
+### Follow-up confirmed window — 2026-10-18
+
+- Successful read-only capture: [BTC Public Source Staging #39160316890](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316890), artifact `btc-public-source-review`, artifact ID `12148192845`.
+- Verified window: heights `971906–972049`, 144 unique contiguous blocks. Aggregate endpoint `totalFee=197,402,505 sats`; independently summed per-block fees also equal `197,402,505 sats = 1.97402505 BTC`. Protocol subsidy for the same window is `45,000,000,000 sats = 450 BTC`; fee/subsidy ratio `0.0043867223333` (about `0.438672%`). The aggregate reward is `45,197,402,505 sats`; all fee/subsidy arithmetic reconciles.
+- Boundary hashes and tip height/hash were unchanged before/after capture; tip was height `972050`. Evidence JSON SHA-256: `c7832cc123ffbcdee4e3e007e37e75f13dda2a0e385c1e4d220a534746b16962`.
+- The prior accepted window ended at height `971896`; this window starts at `971906`, so the two windows have **no overlap**. Do not run the comparator on these two windows or claim reorg confirmation. Pin `971906–972049` as the new baseline; the next eligible window must end at or beyond height `972055` (tip approximately `972056+`) and overlap the baseline. The capture must also pass the stable-tip check; a racing/moving tip is a blocked capture, not evidence.
+- The first attempt in run [#39160312789](https://github.com/olegsh247-stack/Crypto/actions/runs/39160312789) failed the stable-window capture with `tip changed or behind window`; its source snapshot is not used as fee evidence. The retry in #39160316890 succeeded.
+- Status remains review-only; API version parity remains unproven. No production changes or ingestion.
