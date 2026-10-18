@@ -1763,3 +1763,11 @@ The first BTC Scenario Readiness Gate after registering `macro.yahoo_finance_can
 5. Получить следующее перекрывающееся 144-блочное fee window после достаточного продвижения tip; не запускать повторные captures до подходящего окна.
 
 **Статус сценария BTC:** `not_evaluable`. Не выполнялись production API/DB запросы, ingestion, production writes, registry/runtime changes, scenario evaluation/state changes, monitoring-event writes, deploy, merge или traffic cutover. Следующие активы не расширяем до закрытия полного BTC пути.
+
+## 2026-10-18 — DXY optional-context contract reconciliation
+
+Decision: DXY is optional macro context, not a mandatory readiness input for the first BTC scenario. If a permitted, correctly timestamped observation is unavailable, omit DXY; do not substitute FRED `DTWEXBGS` or carry forward a stale close.
+
+Read-only code check found a mismatch: current `main` still includes `macro.dxy` in the hard-coded `REQUIRED` list in `vps/shared/src/btc-scenario-readiness.ts`, so a missing DXY row can still force `not_evaluable`. Open Draft [PR #83](https://github.com/olegsh247-stack/Crypto/pull/83) contains the intended registry-driven approach with DXY marked optional, but remains unmerged. Resolve this contract/code mismatch through PR review; do not merge automatically or change runtime/registry on `main` in this documentation step.
+
+This does not make BTC evaluable: spot-price and ETF-flow readiness gates remain mandatory. No runtime, registry, database, scenario, deployment or merge changes were made. Documentation-only; CI not run.
