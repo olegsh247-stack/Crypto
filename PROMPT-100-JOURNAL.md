@@ -191,3 +191,12 @@
 - Review found that ordering ETF rows by `period_start` could hide a newer row with missing reporting date behind older dated rows. Added fail-closed blocker `latest_observation_missing_reporting_date` based on the newest `observed_at`, plus regression test.
 - Commits: implementation `a54b62a4fd9f33c36acdc9cd1680aafeb24fa1a5`; test/current PR head `392caf5dd219b29e231ae5bb51af73754726260a`.
 - Exact-head CI still unconfirmed. Normal readiness/validation workflows remain configured for automatic code-change triggers; only live external-source probes were changed to explicit manual opt-in. No live requests, dispatch, deployment or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-19 — ETF retention review and session-aware freshness proposal
+
+- Reviewed Farside Investors' official landing page and privacy policy. The landing page describes ETF data as updated in real time (typically evening/night US time) and displays a site-wide copyright notice; the privacy policy addresses personal-data processing and does not grant ETF-table archival/reuse rights.
+- No explicit public permission for long-term raw-page retention was located in the reviewed pages. This is an unresolved permission question, not a legal conclusion that retention is prohibited. Interim stance: retain the existing seven-day CI review artifact only, preserve capture/retrieval metadata and SHA-256 hashes, do not redistribute raw pages, and request written clarification before long-term raw HTML or normalized historical dataset retention is approved.
+- Proposed session-aware freshness contract: use an explicit US trading calendar (including holidays/weekends); the latest complete numeric Farside row must match the latest completed US session. Keep reporting/session date, `retrieved_at`, and any provider-supplied publication/observation timestamp separate; never synthesize observation time from the date-only row or HTTP `Date`. Missing/placeholder latest row, missing latest reporting date, or a session mismatch fails closed. Matching dates do not prove no future revisions.
+- ETF two-snapshot comparison gate passed for the captured pair (≥24h; 14 overlapping rows unchanged), but canonical ETF acceptance remains blocked pending source-rights clarification and approval of the session-calendar contract. No registry/runtime changes, production DB writes, ingestion, live evaluation, or source capture performed.
+- Pages reviewed: https://farside.co.uk/ and https://farside.co.uk/privacy-policy/.
