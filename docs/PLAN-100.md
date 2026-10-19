@@ -1784,3 +1784,12 @@ Read-only review of PR #83 at head `56f0096061652ed05a2ea39c05dad62a48ec6738` co
 4. The implementation remains fail-closed on ETF revision/finality and complete-fund evidence. This is intentional: current public data candidates do not automatically become accepted scenario inputs.
 
 No files in runtime, registry, SQL seed, database, scenario state or deployment were changed by this review. PR #83 was not merged and no workflow was dispatched. BTC remains `not_evaluable`; mandatory current spot-price and ETF-flow evidence is still not accepted. Next: fix deterministic ETF reporting-date selection on the PR branch, run/verify CI for the resulting exact head, then review mergeability and the full PR scope without auto-merging.
+
+
+## 2026-10-19 — ETF reporting-date selection hardened on PR #83
+
+On `fix/btc-readiness-registry-runtime-source`, changed `vps/shared/src/btc-scenario-readiness.ts` so ETF rows sort by valid logical reporting date (`period_start`) descending first; observation/publication time and revision are tie-breakers. The selected history is explicitly sorted by reporting date descending before the seven-row cap. Added a regression test with eight ETF sessions sharing the same `observed_at`, supplied in reverse order, to assert that the newest seven reporting dates are selected deterministically.
+
+Commits: implementation `68a46c4ce6453d27faf0c0e571d2337d545a4294`; regression test `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`. The current PR head is `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`.
+
+Verification boundary: GitHub combined status returned no checks and the available commit-workflow lookup returned no PR-triggered runs for this exact head. Therefore CI is **not yet confirmed**; do not treat the new test as passing until a completed run for this SHA is inspected. PR #83 remains Draft, open, unmerged, and `mergeable: false`. No workflow was manually dispatched. No production DB, ingestion, source registry, SQL seed, scenario state, deployment or merge changes. BTC remains `not_evaluable` pending accepted current spot and ETF-flow evidence and the remaining Plan 100 gates.
