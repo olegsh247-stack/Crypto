@@ -184,3 +184,10 @@
 - Changed DXY public-source probe to manual dispatch only with explicit `probe_public_sources=true`; false by default. Removed Yahoo Finance from the automated probe because access terms remain unresolved.
 - Commits: `529d2bdd26e259e9fea118355c7eb66079564675`, `77c0f1f1e81cda9c5b5061c6acafa6ed9a7becc5`.
 - No live requests or workflow dispatch. Current PR head has no reported combined checks and no PR-triggered runs through the available lookup; CI is unconfirmed. PR remains Draft/open/unmerged; no deployment/merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-19 — ETF latest publication without reporting date
+
+- Review found that ordering ETF rows by `period_start` could hide a newer row with missing reporting date behind older dated rows. Added fail-closed blocker `latest_observation_missing_reporting_date` based on the newest `observed_at`, plus regression test.
+- Commits: implementation `a54b62a4fd9f33c36acdc9cd1680aafeb24fa1a5`; test/current PR head `392caf5dd219b29e231ae5bb51af73754726260a`.
+- Exact-head CI still unconfirmed. Normal readiness/validation workflows remain configured for automatic code-change triggers; only live external-source probes were changed to explicit manual opt-in. No live requests, dispatch, deployment or merge. BTC remains `not_evaluable`.
