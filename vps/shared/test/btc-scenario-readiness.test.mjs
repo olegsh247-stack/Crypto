@@ -83,7 +83,7 @@ test("selects the newest ETF reporting dates deterministically when observation 
 });
 
 test("blocks a newer ETF publication that has no reporting date instead of falling back to older sessions", () => {
-  const malformedLatest = etf(0.1, { period_start: undefined, source_row_key: "farside:btc:unknown-date" });
+  const malformedLatest = etf(0.1, { observed_at: iso(0.1), period_start: undefined, source_row_key: "farside:btc:unknown-date" });
   const result = assessBtcScenarioReadiness([...completeInputs(), malformedLatest], NOW);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some((b) =>
