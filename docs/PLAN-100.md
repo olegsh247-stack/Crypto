@@ -1793,3 +1793,12 @@ On `fix/btc-readiness-registry-runtime-source`, changed `vps/shared/src/btc-scen
 Commits: implementation `68a46c4ce6453d27faf0c0e571d2337d545a4294`; regression test `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`. The current PR head is `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`.
 
 Verification boundary: GitHub combined status returned no checks and the available commit-workflow lookup returned no PR-triggered runs for this exact head. Therefore CI is **not yet confirmed**; do not treat the new test as passing until a completed run for this SHA is inspected. PR #83 remains Draft, open, unmerged, and `mergeable: false`. No workflow was manually dispatched. No production DB, ingestion, source registry, SQL seed, scenario state, deployment or merge changes. BTC remains `not_evaluable` pending accepted current spot and ETF-flow evidence and the remaining Plan 100 gates.
+
+
+## 2026-10-19 — PR #83 source-probe safety review
+
+- Continued the review of Draft PR #83. Found two external-request workflows whose triggers did not adequately express the required opt-in boundary: SoSoValue could make an authenticated API request on matching pushes, and the DXY probe included Yahoo Finance despite the unresolved automated-access terms.
+- Hardened `.github/workflows/sosovalue-btc-etf-api-check.yml`: it now runs only through manual dispatch with `run_request=true`; the default is false, and a normal push no longer makes an external API request.
+- Hardened `.github/workflows/dxy-public-source-probe.yml`: it now requires manual dispatch with `probe_public_sources=true`, defaults to no request, and no longer queries the blocked Yahoo Finance endpoint. This does not approve any DXY source or make DXY a required BTC input.
+- Commits on `fix/btc-readiness-registry-runtime-source`: SoSoValue opt-in `529d2bdd26e259e9fea118355c7eb66079564675`; DXY probe guard `77c0f1f1e81cda9c5b5061c6acafa6ed9a7becc5` (current PR head at review time).
+- No workflow was dispatched and no live source request was made. Exact-head CI remains unconfirmed: combined status has no checks and the available workflow-run lookup returned no PR-triggered runs. PR #83 remains Draft/open/unmerged with `mergeable: false`; no merge or deployment. BTC remains `not_evaluable`.
