@@ -176,3 +176,11 @@
 - Implementation commit: `68a46c4ce6453d27faf0c0e571d2337d545a4294`; test commit/current PR head: `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`.
 - Exact-head CI remains unconfirmed: combined status has no checks, and the available commit-workflow lookup returned no PR-triggered runs. Do not claim the test passed yet. PR #83 is still Draft/open/unmerged and `mergeable: false`.
 - No manual workflow dispatch, production API/DB access, ingestion, registry/SQL seed, scenario state, deployment or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-19 — PR #83 external-source workflow safety
+
+- Changed SoSoValue API check to manual dispatch only with explicit `run_request=true`; false by default. Removed automatic request-on-push behavior.
+- Changed DXY public-source probe to manual dispatch only with explicit `probe_public_sources=true`; false by default. Removed Yahoo Finance from the automated probe because access terms remain unresolved.
+- Commits: `529d2bdd26e259e9fea118355c7eb66079564675`, `77c0f1f1e81cda9c5b5061c6acafa6ed9a7becc5`.
+- No live requests or workflow dispatch. Current PR head has no reported combined checks and no PR-triggered runs through the available lookup; CI is unconfirmed. PR remains Draft/open/unmerged; no deployment/merge. BTC remains `not_evaluable`.
