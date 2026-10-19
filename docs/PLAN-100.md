@@ -1802,3 +1802,11 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Hardened `.github/workflows/dxy-public-source-probe.yml`: it now requires manual dispatch with `probe_public_sources=true`, defaults to no request, and no longer queries the blocked Yahoo Finance endpoint. This does not approve any DXY source or make DXY a required BTC input.
 - Commits on `fix/btc-readiness-registry-runtime-source`: SoSoValue opt-in `529d2bdd26e259e9fea118355c7eb66079564675`; DXY probe guard `77c0f1f1e81cda9c5b5061c6acafa6ed9a7becc5` (current PR head at review time).
 - No workflow was dispatched and no live source request was made. Exact-head CI remains unconfirmed: combined status has no checks and the available workflow-run lookup returned no PR-triggered runs. PR #83 remains Draft/open/unmerged with `mergeable: false`; no merge or deployment. BTC remains `not_evaluable`.
+
+
+## 2026-10-19 — ETF latest-publication date guard
+
+- Read-only review found a fail-open edge case: ETF rows were ordered by reporting date before choosing the latest row, so a newer publication missing `period_start` could be sorted behind older dated rows and escape the latest-row blocker.
+- Added a fail-closed guard: if the newest ETF publication by `observed_at` lacks a valid reporting date, readiness adds `latest_observation_missing_reporting_date`. Added a regression test with a malformed newer publication alongside otherwise complete history.
+- Commits on `fix/btc-readiness-registry-runtime-source`: implementation `a54b62a4fd9f33c36acdc9cd1680aafeb24fa1a5`; regression test/current head `392caf5dd219b29e231ae5bb51af73754726260a`.
+- CI for the exact head remains unconfirmed: combined status empty and available PR-run lookup returned no runs. The readiness workflow is still configured for automatic code-change validation; the two manually gated workflows are only live external-source probes, not the normal CI tests. No external request, workflow dispatch, deployment or merge. BTC remains `not_evaluable`.
