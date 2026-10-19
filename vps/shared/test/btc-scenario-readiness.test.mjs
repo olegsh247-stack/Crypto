@@ -65,6 +65,23 @@ test("accepts fresh, traceable spot price and complete five-day ETF history", ()
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
+
+test("selects the newest ETF reporting dates deterministically when observation timestamps tie", () => {
+  const history = Array.from({ length: 8 }, (_, index) => etf(index + 0.5));
+  // All fixture rows share observed_at. Reverse the order so stable sorting by
+  // observation time alone would select the wrong sessions.
+  const result = assessBtcScenarioReadiness([price(), ...history.reverse()], NOW);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  const selectedDays = result.selected_inputs["institutional.etf_net_flow"].map((row) => row.day);
+  const expectedDays = history
+    .map((row) => row.period_start.slice(0, 10))
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 7);
+  assert.deepEqual(selectedDays, expectedDays);
+  assert.equal(selectedDays.length, 7);
+  assert.ok(selectedDays[0] > selectedDays[6]);
+});
+
 test("blocks stale spot price", () => {
   const result = assessBtcScenarioReadiness([price({ observed_at: iso(2) }), ...completeInputs().slice(1)], NOW);
   assert.equal(result.status, "not_evaluable");
