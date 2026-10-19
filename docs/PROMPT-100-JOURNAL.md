@@ -1332,3 +1332,14 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **DXY decision:** User selected Yahoo Finance `DX-Y.NYB` as the available DXY reference. The actual read-only probe returned HTTP 200, regular-market quote 101.779 at `2026-10-16T20:59:59Z`, and daily close about 101.84 for 2026-10-16. This authorizes using the retrieved value for manual/offline research, not assuming permission for automated collection or durable raw retention. No collector, registry/source-priority change, DB write, scenario evaluation/state change, deployment, or merge was performed. DXY remains optional for BTC readiness; do not substitute FRED `DTWEXBGS`.
 
 **Next:** close real evidence gates for BTC spot/ETF, confirm hashrate aggregation and fee/subsidy calculation contracts, then perform offline/read-only scenario replay. Do not wait for a full 13-fund daily ETF holdings panel if the available dataset is used with explicit coverage and limitations.
+
+
+## 2026-10-19 — Metric-to-endpoint semantic parity audit
+
+**Finding:** The source registry, metric registry, catalog, and SQL seed have set-level ID coverage, and the SQL source-ID parity assertion already checks both directions. That does not establish endpoint-level semantic compatibility.
+
+**Confirmed gaps:** (1) ETF BTC holdings and corporate BTC holdings metrics declare BTC, while the catalog's concrete `institutional.primary` endpoint is a Farside daily flow endpoint declared as USD million/day; (2) multiple network metrics rely on `network.primary` without a metric-specific endpoint/field/normalization contract in the catalog; (3) several `protocol.primary` metrics reference a documentation-only catalog entry; (4) futures/funding/options and US 10-year yield use blocked placeholder source contracts.
+
+**Artifact:** Added [Metric-to-Endpoint Semantic Parity Audit](METRIC-ENDPOINT-SEMANTIC-PARITY-AUDIT-2026-10-19.md), separating confirmed structural parity from semantic-contract gaps and defining the next controlled actions.
+
+**Decision/boundary:** No source-priority or metric-registry change was made; changing ETF holdings eligibility requires explicit approval. No live source capture, production DB read/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`. The latest readiness and VPS build runs were still queued when checked; no pass is claimed.
