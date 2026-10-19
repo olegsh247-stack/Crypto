@@ -1,17 +1,20 @@
 name: SoSoValue BTC ETF API Check (Read Only)
 
 on:
-  push:
-    paths:
-      - "scripts/check-sosovalue-btc-etf-api.mjs"
-      - ".github/workflows/sosovalue-btc-etf-api-check.yml"
   workflow_dispatch:
+    inputs:
+      run_request:
+        description: "Send one bounded read-only API request (default: no external request)"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
   check-api:
+    if: inputs.run_request == true
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
