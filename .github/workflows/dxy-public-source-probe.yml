@@ -1,17 +1,20 @@
 name: DXY Public Source Probe (Read Only)
 
 on:
-  push:
-    branches:
-      - fix/btc-readiness-registry-runtime-source
   workflow_dispatch:
+    inputs:
+      probe_public_sources:
+        description: "Query public endpoints for read-only source review (default: no external requests)"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
   probe:
-    if: contains(github.event.head_commit.message, '[probe-dxy]') || github.event_name == 'workflow_dispatch'
+    if: inputs.probe_public_sources == true
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -33,7 +36,6 @@ jobs:
           }
 
           targets = {
-              "yahoo_dxy_chart": "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=5d&interval=1d",
               "alphavantage_dxy_demo": "https://www.alphavantage.co/query?function=INDEX_DATA&symbol=DXY&interval=daily&apikey=demo",
               "alphavantage_index_catalog_demo": "https://www.alphavantage.co/query?function=INDEX_CATALOG&apikey=demo",
               "fxmacrodata_usd_catalog": "https://api.fxmacrodata.com/v1/data_catalogue/usd",
@@ -57,26 +59,7 @@ jobs:
                   except Exception:
                       payload = None
 
-                  if name == "yahoo_dxy_chart" and isinstance(payload, dict):
-                      result = (payload.get("chart") or {}).get("result") or []
-                      error = (payload.get("chart") or {}).get("error")
-                      if result:
-                          r = result[0]
-                          meta = r.get("meta", {})
-                          quote = ((r.get("indicators") or {}).get("quote") or [{}])[0]
-                          closes = quote.get("close") or []
-                          ts = r.get("timestamp") or []
-                          entry["parsed"] = {
-                              "instrument": meta.get("symbol"),
-                              "currency": meta.get("currency"),
-                              "regular_market_price": meta.get("regularMarketPrice"),
-                              "regular_market_time_epoch": meta.get("regularMarketTime"),
-                              "last_candle_epoch": ts[-1] if ts else None,
-                              "last_candle_close": closes[-1] if closes else None
-                          }
-                      else:
-                          entry["parsed"] = {"error": error, "response_preview": text[:500]}
-                  elif name.startswith("alphavantage") and isinstance(payload, dict):
+                  if name.startswith("alphavantage") and isinstance(payload, dict):
                       entry["parsed"] = {k: payload.get(k) for k in list(payload.keys())[:8]}
                       entry["dxy_or_index_matches"] = [str(x)[:300] for x in (payload.get("data") or []) if "dxy" in str(x).lower() or "dollar" in str(x).lower()][:10] if isinstance(payload.get("data"), list) else []
                   elif name == "fxmacrodata_usd_catalog" and isinstance(payload, dict):
