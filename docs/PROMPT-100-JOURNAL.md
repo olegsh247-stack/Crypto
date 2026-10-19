@@ -1352,3 +1352,14 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Verification status:** The updated file is present on the branch at commit `35ccee491a6f6d901ff5093ae8ab148e96b1734f`. VPS API Build Rehearsal [#39284356487](https://github.com/olegsh247-stack/Crypto/actions/runs/39284356487) was queued at the last check; no CI pass is claimed until it completes.
 
 **Boundary:** No registry/source-priority edits, live capture, production DB access/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-19 — Metric-to-endpoint contract detail
+
+**Change:** Added [Metric-to-Endpoint Contract Detail](METRIC-ENDPOINT-CONTRACT-DETAIL-2026-10-19.md), the next read-only pass after the semantic parity audit. It records per-metric units/freshness, current source mapping, what the catalog concretely proves, and the remaining endpoint/field/methodology gaps.
+
+**Key finding:** The BTC spot metric registry approves Kraken Trades with provider trade timestamps, but the API's separate display ticker helper uses a Ticker endpoint and stamps retrieval time as its timestamp. This may be acceptable for display, but it must not be silently reused as a canonical readiness observation. The report also specifies the reproducible realized-fees/subsidy ratio contract and keeps the cumulative-issuance candidate separate from circulating supply.
+
+**Verification:** VPS API Build Rehearsal [#39284388890](https://github.com/olegsh247-stack/Crypto/actions/runs/39284388890) completed successfully for the preceding semantic-validator journal commit. The new report is documentation-only; no code/runtime contract changed in this commit.
+
+**Boundary:** No source-priority/registry change, live provider capture, production DB access/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`. Next work should align the BTC spot readiness contract with actual provider trade timestamps and separately document the display ticker, then continue the ETF and network-metric contract gaps.
