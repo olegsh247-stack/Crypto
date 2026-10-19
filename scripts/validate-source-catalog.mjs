@@ -280,6 +280,50 @@ const seededSourceIdsMissingFromRegistry = [...seededSourceSet].filter((sourceId
 assert.deepEqual(sourceRegistryIdsMissingFromSeed, [], "source registry IDs missing from SQL seed");
 assert.deepEqual(seededSourceIdsMissingFromRegistry, [], "SQL seed contains source IDs absent from source-registry.json");
 
+// Semantic coverage audit: source-ID presence is weaker than an endpoint contract for the metric's declared unit.
+function findSemanticContractFindings(metricRows, entries) {
+  const findings = [];
+  for (const metric of metricRows) {
+    for (const sourceId of metric.source_priority ?? []) {
+      const sourceEntries = entries.filter((entry) =>
+        entry.source_id === sourceId && entry.registry_status === "registered"
+      );
+      const concreteEntries = sourceEntries.filter((entry) => typeof entry.url === "string");
+      const exactUnitEntries = concreteEntries.filter((entry) => entry.data_contract?.unit === metric.unit);
+      if (exactUnitEntries.length === 0) {
+        findings.push({
+          metric_id: metric.metric_id,
+          metric_unit: metric.unit,
+          source_id: sourceId,
+          catalog_endpoint_ids: sourceEntries.map((entry) => entry.catalog_id).sort(),
+          concrete_endpoint_ids: concreteEntries.map((entry) => entry.catalog_id).sort(),
+          declared_endpoint_units: [...new Set(concreteEntries.map((entry) => entry.data_contract?.unit ?? null))],
+          finding: concreteEntries.length === 0
+            ? "no_concrete_registered_endpoint"
+            : "no_endpoint_declares_exact_metric_unit",
+        });
+      }
+    }
+  }
+  return findings;
+}
+const semanticContractFindings = findSemanticContractFindings(metricRegistry.metrics, catalog.endpoints);
+assert.ok(
+  semanticContractFindings.some((finding) =>
+    finding.metric_id === "institutional.etf_btc_holdings"
+    && finding.source_id === "institutional.primary"
+    && finding.finding === "no_endpoint_declares_exact_metric_unit"
+  ),
+  "semantic audit must flag ETF BTC holdings linked only to a flow-unit Farside endpoint"
+);
+assert.ok(
+  semanticContractFindings.some((finding) =>
+    finding.metric_id === "institutional.corporate_btc_holdings"
+    && finding.source_id === "institutional.primary"
+  ),
+  "semantic audit must flag corporate BTC holdings linked to the Farside flow endpoint"
+);
+
 const catalogAllSourceIds = new Set(catalog.endpoints.map((entry) => entry.source_id));
 const explicitSourceReferences = [
   ...[...captureScript.matchAll(/sourceId: "([^"]+)"/g)].map((match) => match[1]),
@@ -306,7 +350,10 @@ const result = {
   registered_source_ids_covered: catalogSourceIds.size,
   metric_source_ids_missing_catalog_entries: metricSourcesMissingFromCatalog,
   registry_source_ids_missing_catalog_entries: registrySourcesMissingFromCatalog,
+  semantic_contract_findings_count: semanticContractFindings.length,
+  semantic_contract_findings: semanticContractFindings,
   notes: [
+    "Semantic findings are non-blocking audit results: exact unit strings are a conservative contract check and require review before changing metric source priorities.",
     "Missing catalog coverage is reported as a baseline finding, not failed yet, so legacy providers can be migrated without silently changing runtime behavior.",
     "This check validates catalog structure and references only; it does not approve sources for ingestion or scenario evaluation."
   ]
