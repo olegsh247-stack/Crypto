@@ -167,3 +167,12 @@
 - GitHub reports PR open/Draft/unmerged and `mergeable: false`; current head has no combined status checks and the workflow-run lookup returns no PR-triggered runs. Do not claim CI passed for this exact head. The PR also has a broad multi-area diff (readiness, source catalog, API/Worker/web build, DXY/SoSoValue probes, ETF archive and docs), so the full scope needs review.
 - No code, registry, SQL seed, database, scenario, deployment or merge changes made in this review. No workflow dispatched. BTC remains `not_evaluable`; mandatory spot-price and ETF-flow acceptance gates remain open.
 - Next step: correct deterministic ETF history ordering on the PR branch, add a regression test, verify CI for the exact new SHA, then re-review mergeability. No automatic merge.
+
+
+## 2026-10-19 — Deterministic ETF reporting-date selection fix
+
+- Updated PR #83 branch `fix/btc-readiness-registry-runtime-source`: ETF readiness now orders valid `period_start` reporting dates descending before using observation timestamp/revision as tie-breakers; selected daily history is explicitly re-sorted by reporting date before truncation to seven rows.
+- Added regression coverage with eight sessions sharing one `observed_at` and reverse input order; expected selected dates are the newest seven in descending order.
+- Implementation commit: `68a46c4ce6453d27faf0c0e571d2337d545a4294`; test commit/current PR head: `9621ad9f8642de0e2e2f78b5e758f33ffd3c11fd`.
+- Exact-head CI remains unconfirmed: combined status has no checks, and the available commit-workflow lookup returned no PR-triggered runs. Do not claim the test passed yet. PR #83 is still Draft/open/unmerged and `mergeable: false`.
+- No manual workflow dispatch, production API/DB access, ingestion, registry/SQL seed, scenario state, deployment or merge. BTC remains `not_evaluable`.
