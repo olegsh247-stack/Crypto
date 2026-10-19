@@ -1343,3 +1343,12 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Artifact:** Added [Metric-to-Endpoint Semantic Parity Audit](METRIC-ENDPOINT-SEMANTIC-PARITY-AUDIT-2026-10-19.md), separating confirmed structural parity from semantic-contract gaps and defining the next controlled actions.
 
 **Decision/boundary:** No source-priority or metric-registry change was made; changing ETF holdings eligibility requires explicit approval. No live source capture, production DB read/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`. The latest readiness and VPS build runs were still queued when checked; no pass is claimed.
+
+
+## 2026-10-19 — Non-blocking semantic-contract audit added to source-catalog validator
+
+**Change:** Extended `scripts/validate-source-catalog.mjs` to report metric/source pairs whose registered catalog endpoints do not declare an exact unit match, including pairs with no concrete endpoint. Added regression assertions requiring the audit to flag ETF BTC holdings and corporate BTC holdings when only the Farside flow endpoint is registered for `institutional.primary`. Findings are deliberately non-blocking and do not alter source priorities.
+
+**Verification status:** The updated file is present on the branch at commit `35ccee491a6f6d901ff5093ae8ab148e96b1734f`. VPS API Build Rehearsal [#39284356487](https://github.com/olegsh247-stack/Crypto/actions/runs/39284356487) was queued at the last check; no CI pass is claimed until it completes.
+
+**Boundary:** No registry/source-priority edits, live capture, production DB access/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`.
