@@ -156,8 +156,18 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
 
   const allEtfRows = rows
     .filter(row => row?.metric_id === "institutional.etf_net_flow")
-    .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
-      || Number(b.revision ?? 0) - Number(a.revision ?? 0));
+    // Reporting date defines session recency; publication/observation time and
+    // revision only break ties for the same reporting date.
+    .sort((a, b) => {
+      const aPeriod = dateMs(a.period_start);
+      const bPeriod = dateMs(b.period_start);
+      const aHasPeriod = Number.isFinite(aPeriod);
+      const bHasPeriod = Number.isFinite(bPeriod);
+      if (aHasPeriod !== bHasPeriod) return aHasPeriod ? -1 : 1;
+      if (aHasPeriod && bPeriod !== aPeriod) return bPeriod - aPeriod;
+      return dateMs(b.observed_at) - dateMs(a.observed_at)
+        || Number(b.revision ?? 0) - Number(a.revision ?? 0);
+    });
   const latestEtf = allEtfRows[0];
   const etfMetric = metricsById.get("institutional.etf_net_flow");
   const etfReadiness = etfMetric?.scenario_readiness;
@@ -247,6 +257,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     });
   } else {
     selected["institutional.etf_net_flow"] = distinctDayRows
+      .sort(([dayA], [dayB]) => dayB.localeCompare(dayA))
       .slice(0, 7)
       .map(([day, row]) => ({
         day,
