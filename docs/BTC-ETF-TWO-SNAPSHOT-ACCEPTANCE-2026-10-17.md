@@ -54,3 +54,23 @@ The second successful snapshot was captured by [BTC Public Source Staging #39160
 - Review-only comparison result: `TWO_SNAPSHOT_COMPARISON_COMPLETE_NO_ROW_REVISIONS_DETECTED`. This establishes only that these two captures match; it does not prove the provider never revises data or settle archival rights/publication-time semantics.
 
 The two-snapshot/row-revision gate is complete for this pair. Remaining blockers for canonical ETF acceptance are archival/retention permissions and an approved U.S.-session-aware freshness/publication-time contract. TFTC remains a control source only; no fallback or averaging.
+
+
+## 2026-10-19 — ETF retention review and session-aware freshness proposal
+
+### Public-page review
+
+- Reviewed the official Farside Investors landing page and its linked privacy-policy page. The landing page describes ETF flow data as updated in real time, typically during the evening/night US time, and displays a site-wide copyright notice. The privacy policy concerns personal-data processing; it does not grant a data-archiving or redistribution license for ETF tables.
+- No explicit public permission for retaining full historical page payloads in this project was located in the pages reviewed. This is **not** a legal conclusion that retention is prohibited; it means permission remains unconfirmed.
+- Until permission is confirmed, do not promote long-term retention of full raw Farside HTML as an accepted production requirement. Keep the existing CI review artifact on its configured seven-day expiry, retain capture timestamps and SHA-256 evidence, and do not redistribute source pages. Obtain written clarification from Farside before enabling long-term raw-page archiving. Any long-term retention of normalized row data should also be covered by the same source-rights review.
+
+### Proposed session-aware freshness contract (review required)
+
+- Keep three distinct fields: Farside reporting/session date, local retrieval timestamp (`retrieved_at`), and any provider-supplied publication/observation timestamp. Never synthesize the third from the page date, HTTP `Date`, or retrieval time.
+- Determine the latest completed US trading session using an explicit US market calendar, including holidays and weekends. A snapshot is session-current only when its latest complete, numeric ETF row matches that session. An older row is stale; a missing/placeholder row or an absent reporting date for the newest observation fails closed.
+- Preserve per-fund completeness and the displayed-total reconciliation check. A matching session date does not establish an exact publication time or prove that the provider will never revise older rows.
+- This is a proposal for approval, not a runtime/registry change. The current pair of snapshots passed the ≥24-hour and overlapping-row comparison gates, but the full canonical ETF gate remains blocked pending source-rights clarification and acceptance of the session-calendar contract.
+
+Official pages reviewed:
+- https://farside.co.uk/
+- https://farside.co.uk/privacy-policy/
