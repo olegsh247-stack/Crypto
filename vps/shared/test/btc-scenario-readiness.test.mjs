@@ -82,6 +82,16 @@ test("selects the newest ETF reporting dates deterministically when observation 
   assert.ok(selectedDays[0] > selectedDays[6]);
 });
 
+test("blocks a newer ETF publication that has no reporting date instead of falling back to older sessions", () => {
+  const malformedLatest = etf(0.1, { period_start: undefined, source_row_key: "farside:btc:unknown-date" });
+  const result = assessBtcScenarioReadiness([...completeInputs(), malformedLatest], NOW);
+  assert.equal(result.status, "not_evaluable");
+  assert.ok(result.blockers.some((b) =>
+    b.metric_id === "institutional.etf_net_flow"
+    && b.reason === "latest_observation_missing_reporting_date"
+  ));
+});
+
 test("blocks stale spot price", () => {
   const result = assessBtcScenarioReadiness([price({ observed_at: iso(2) }), ...completeInputs().slice(1)], NOW);
   assert.equal(result.status, "not_evaluable");
