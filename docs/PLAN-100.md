@@ -1771,3 +1771,16 @@ Decision: DXY is optional macro context, not a mandatory readiness input for the
 Read-only code check found a mismatch: current `main` still includes `macro.dxy` in the hard-coded `REQUIRED` list in `vps/shared/src/btc-scenario-readiness.ts`, so a missing DXY row can still force `not_evaluable`. Open Draft [PR #83](https://github.com/olegsh247-stack/Crypto/pull/83) contains the intended registry-driven approach with DXY marked optional, but remains unmerged. Resolve this contract/code mismatch through PR review; do not merge automatically or change runtime/registry on `main` in this documentation step.
 
 This does not make BTC evaluable: spot-price and ETF-flow readiness gates remain mandatory. No runtime, registry, database, scenario, deployment or merge changes were made. Documentation-only; CI not run.
+
+
+## 2026-10-19 — Draft PR #83 readiness review
+
+Read-only review of PR #83 at head `56f0096061652ed05a2ea39c05dad62a48ec6738` confirms the intended registry contract: only `market.spot_price` and `institutional.etf_net_flow` are marked required; DXY is optional; hashrate and fee/subsidy remain optional context. The branch includes explicit DXY-optional tests and ETF fail-closed checks for fund completeness, revision/finality, duplicate reporting dates/row keys, timestamps and five distinct recent reporting days.
+
+**Review findings / merge blockers:**
+1. GitHub reports the PR open, Draft, unmerged, and `mergeable: false`. The combined commit status has no status checks and the workflow-run lookup returns no PR-triggered runs for the current head. Tests in the branch are therefore not confirmed passing at this head.
+2. In `vps/shared/src/btc-scenario-readiness.ts`, ETF history is filtered and initially ordered by `observed_at`/revision, but selected history is then truncated with `.slice(0, 7)` without explicitly sorting by the logical reporting date (`period_start`) descending. When multiple rows share publication/observation timestamps, the chosen five-to-seven sessions can depend on input order rather than the newest reporting dates. Add a deterministic reporting-date sort and a regression test before approval.
+3. The PR combines the readiness contract with a broad set of source catalog, API/Worker image, web-build, DXY-probe, SoSoValue, ETF archive and documentation changes. Review and CI need to validate the complete changed-file set; passing older runs on earlier SHAs is not evidence for the current head.
+4. The implementation remains fail-closed on ETF revision/finality and complete-fund evidence. This is intentional: current public data candidates do not automatically become accepted scenario inputs.
+
+No files in runtime, registry, SQL seed, database, scenario state or deployment were changed by this review. PR #83 was not merged and no workflow was dispatched. BTC remains `not_evaluable`; mandatory current spot-price and ETF-flow evidence is still not accepted. Next: fix deterministic ETF reporting-date selection on the PR branch, run/verify CI for the resulting exact head, then review mergeability and the full PR scope without auto-merging.
