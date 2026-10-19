@@ -169,6 +169,17 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
         || Number(b.revision ?? 0) - Number(a.revision ?? 0);
     });
   const latestEtf = allEtfRows[0];
+  // If the newest ETF publication lacks its logical reporting date, do not
+  // silently fall back to an older dated row and make the feed look current.
+  const latestEtfByObservationTime = [...allEtfRows]
+    .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at))[0];
+  if (latestEtfByObservationTime
+      && !Number.isFinite(dateMs(latestEtfByObservationTime.period_start))) {
+    blockers.push({
+      metric_id: "institutional.etf_net_flow",
+      reason: "latest_observation_missing_reporting_date",
+    });
+  }
   const etfMetric = metricsById.get("institutional.etf_net_flow");
   const etfReadiness = etfMetric?.scenario_readiness;
   const etfLatestMaxAgeHours = Number(etfReadiness?.latest_max_age_hours ?? freshnessHours(etfMetric?.freshness_window, "institutional.etf_net_flow"));
