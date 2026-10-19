@@ -200,3 +200,12 @@
 - Proposed session-aware freshness contract: use an explicit US trading calendar (including holidays/weekends); the latest complete numeric Farside row must match the latest completed US session. Keep reporting/session date, `retrieved_at`, and any provider-supplied publication/observation timestamp separate; never synthesize observation time from the date-only row or HTTP `Date`. Missing/placeholder latest row, missing latest reporting date, or a session mismatch fails closed. Matching dates do not prove no future revisions.
 - ETF two-snapshot comparison gate passed for the captured pair (≥24h; 14 overlapping rows unchanged), but canonical ETF acceptance remains blocked pending source-rights clarification and approval of the session-calendar contract. No registry/runtime changes, production DB writes, ingestion, live evaluation, or source capture performed.
 - Pages reviewed: https://farside.co.uk/ and https://farside.co.uk/privacy-policy/.
+
+
+## 2026-10-19 — BTC fee/subsidy recapture and overlap verification
+
+- Re-ran BTC Public Source Staging read-only, attempt 2: [run #39160316890](https://github.com/olegsh247-stack/Crypto/actions/runs/39160316890), successful. Artifact ID `12207262133`; archive SHA-256 `10cd795bbf6f715182195b7ad8b64a0fde69196960ece9bdb9d47ca57d69d38f`; seven-day retention.
+- New 144-block window `972041–972184`: per-block fees and aggregate endpoint reconcile to `204,469,161 sats`; reward minus fees yields `45,000,000,000 sats` protocol subsidy. Formula `sum(fees_sats)/sum(protocol_subsidy_sats)` gives `0.004543759133333334` (~`0.454376%`).
+- Compared with baseline `971906–972049`: advance 135 blocks; nine-block overlap `972041–972049`; zero differences in block hash, parent hash or per-block fees. Boundary hashes and tip remained stable during capture. Confirmation policy is explicit: recapture must advance ≥6 blocks, overlap at least one height, compare hash/parent hash/fees, and block acceptance on any mismatch; unchanged overlap is pairwise evidence, not permanent-finality proof.
+- Remaining blocker: deployed API/runtime immutable build identity and parity with the reviewed fee implementation remain unproven. Current repo checks and sample `api_version` do not establish what is running; legacy Worker URL is not deployment attestation, and VPS is not provisioned.
+- No production DB access/writes, ingestion, registry/runtime changes, deployment, merge or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy ratio remains review-only.
