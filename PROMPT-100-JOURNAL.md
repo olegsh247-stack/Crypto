@@ -264,5 +264,5 @@
 - VPS API Build Rehearsal [#39382019208](https://github.com/olegsh247-stack/Crypto/actions/runs/39382019208) completed successfully on the same PR head `89dd103b87eb750d4afb121f5c655975844065eb` as the successful BTC Scenario Readiness Gate.
 - The rehearsal covered VPS API/Worker build, disposable PostgreSQL bootstrap, registry/provenance checks, observation idempotency/duplicate reconciliation, backup/restore rehearsal, API/Worker contract and E2E checks, and cleanup.
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
-- PR #83 remains Draft/open and mergeability is still not confirmed (GitHub reports `mergeable: false` on the latest check); its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
+- PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
