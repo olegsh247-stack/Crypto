@@ -243,3 +243,12 @@
 - **Safety boundary:** no live source capture, production database read/write, ingestion, registry/runtime change, scenario-state or monitoring-event write, deployment, or merge was performed. BTC remains `not_evaluable`.
 - **Next:** inspect the readiness workflow triggered by the scenario-document commit; then arrange fresh read-only spot capture only after explicit permission; resolve PR #83's exact-head readiness CI and mergeability before any merge consideration.
 
+## 2026-10-20 — BTC offline scenario gate passed on the updated contract documentation
+
+- BTC Scenario Readiness Gate [#39381872449](https://github.com/olegsh247-stack/Crypto/actions/runs/39381872449) completed successfully for commit `606c3c2dac992f849a770cf29c723b42d8ffeddc`.
+- Passed: shared readiness runtime build; registry/readiness/directional/candidate-normalization tests; reproducible offline BTC fixture runner.
+- Exact fixture output: `btc-offline-rehearsal-2026-10-17`, `scenario_type=base`, `directional_score=-1`, `confidence_band=low`, `baseline_probabilities_changed=false`, `can_persist_scenario_state=false`; log confirms `live_data_used=false` and `database_accessed=false`.
+- Interpretation: offline rule-v1 calculation is reproducible for the committed historical fixture. This does not make the current BTC scenario evaluable and does not accept stale inputs.
+- VPS API Build Rehearsal for commit `606c3c2dac992f849a770cf29c723b42d8ffeddc` was still running at the time of this entry; do not claim it passed until its completed result is checked.
+- PR #83 remains Draft/open and `mergeable: false`; exact-head VPS rehearsal passed, but no BTC Scenario Readiness Gate run was found for its current head `01a4ccd23cb5f6dde56f49e36de24710434c6b45`. No merge.
+
