@@ -32,7 +32,7 @@ const manifest = {
   unresolved: [
     {
       metric_id: "macro.dxy",
-      reason: "No canonical, accessible DXY feed and observation-time convention has been approved. Do not substitute a broad USD index or mix vendor quotes."
+      reason: "Yahoo Finance DX-Y.NYB was retrieved in separate source verification. This BTC capture job does not capture DXY; keep it optional and outside the BTC required-capture gate until its daily session/observation-time semantics are confirmed. Do not substitute a broad USD index or mix vendor quotes."
     },
     {
       metric_id: "institutional.etf_net_flow",
@@ -288,8 +288,10 @@ await capture({
   }
 });
 
-// Use exact recent blocks for a reproducible fee/reward comparison. The 1w
-// endpoints can contain averages; 24h is the documented exact-block window.
+// These 24h endpoints are retained as recent-window diagnostics. Do not assume
+// each row is an individual block: avgHeight/timestamp can describe aggregated
+// buckets. Exact fee/subsidy calculations must use block-identified rows aligned
+// by height and hash, or the separately captured 144-block aggregate contract.
 await capture({
   name: "mempool-block-fees-24h",
   metricId: "security.fee_subsidy_ratio",
@@ -308,7 +310,7 @@ await capture({
       last_timestamp: timestamps.length ? new Date(Math.max(...timestamps) * 1000).toISOString() : null,
       first_row_keys: Object.keys(rows[0]),
       latest_row: rows[rows.length - 1],
-      note: "24h endpoint is used for exact recent-block comparison; confirm fee units and align by height before calculating any ratio."
+      note: "Recent-window diagnostic only; row timestamps/avgHeight do not prove one row per block. Do not calculate a per-block ratio from this endpoint without verifying row granularity, fee units, and block identity."
     };
   }
 });
@@ -331,7 +333,7 @@ await capture({
       last_timestamp: timestamps.length ? new Date(Math.max(...timestamps) * 1000).toISOString() : null,
       first_row_keys: Object.keys(rows[0]),
       latest_row: rows[rows.length - 1],
-      note: "24h endpoint is used for exact recent-block reward comparison; align fee and reward rows by height and confirm units before deriving subsidy."
+      note: "Recent-window diagnostic only; row timestamps/avgHeight do not prove one row per block. Do not calculate a per-block ratio from this endpoint without verifying row granularity, fee units, subsidy, and block identity."
     };
   }
 });
