@@ -81,3 +81,20 @@ test("source-reviewed October 12 fixture remains Base under rule v1", () => {
   assert.equal(r.scenario_type, "base");
   assert.equal(r.can_persist_scenario_state, false);
 });
+
+test("DXY and hashrate are optional context; required signals still evaluate", () => {
+  const r = evaluateBtcScenarioV1({
+    readiness_status: "ready_for_rule_evaluation",
+    price_return_7d_pct: 0,
+    etf_net_flow_5d_usd_millions: 0,
+  });
+  assert.equal(r.status, "evaluated");
+  assert.equal(r.scenario_type, "base");
+  assert.equal(r.directional_score, 0);
+  assert.deepEqual(r.signals.map(s => s.input), [
+    "price_return_7d_pct",
+    "etf_net_flow_5d_usd_millions",
+  ]);
+  assert.equal(r.context.fee_subsidy_ratio, null);
+  assert.equal(r.can_persist_scenario_state, false);
+});
