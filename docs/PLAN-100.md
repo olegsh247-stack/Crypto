@@ -1859,3 +1859,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
 4. Дождаться результата VPS API Build Rehearsal #39382019208 на текущем PR head. После этого повторно проверить mergeability/base divergence и решить, нужно ли разделить 94-файловый PR на меньшие reviewable части. Registry/runtime/seed изменения остаются отдельным reviewed этапом.
 
+## 2026-10-20 — Branch reconciliation audit
+
+- PR #83 (`fix/btc-readiness-registry-runtime-source`) is still open/Draft, non-mergeable, and diverged from current `main`: 617 commits ahead, 141 behind, 98 changed files. Do not merge or rebase it as a whole.
+- The branch's `scripts/capture-btc-public-sources.mjs` is an older, shorter variant (24.6 KB) than current `main` (39.0 KB). Current `main` already contains more extensive Mempool tip consistency/reorg checks, SoSoValue capture, and fee-window tooling. Replacing it with the PR branch version would lose existing capabilities.
+- PR #3 for Product Contour v1 is closed; its branch is also heavily diverged (374 ahead/594 behind). `fix/asset-dashboard-confidence-score-build` is 17 ahead/584 behind and should not be merged blindly either.
+- Created `fix/btc-readiness-mainline-2026-10-20` from current `main` at `03f4a08ec6c533556b655319e358d476359b4cf4`; verified comparison initially identical (0 ahead / 0 behind). This is the safe reconciliation branch.
+- The old PR #83 is retained as a reference until its useful changes are ported selectively. No branches deleted, PR closed, merge/rebase, production write, deployment, or scenario-state change. Next branch work must compare each PR change against current `main`, preserve newer mainline code, and port only reviewed changes into the clean branch.
