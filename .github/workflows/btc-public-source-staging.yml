@@ -1,4 +1,5 @@
 name: BTC Public Source Staging (Read Only)
+# Review-only capture can be triggered by a commit message containing [capture-btc-sources].
 
 on:
   push:
