@@ -1821,3 +1821,41 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Added a fail-closed guard: if the newest ETF publication by `observed_at` lacks a valid reporting date, readiness adds `latest_observation_missing_reporting_date`. Added a regression test with a malformed newer publication alongside otherwise complete history.
 - Commits on `fix/btc-readiness-registry-runtime-source`: implementation `a54b62a4fd9f33c36acdc9cd1680aafeb24fa1a5`; regression test/current head `392caf5dd219b29e231ae5bb51af73754726260a`.
 - CI for the exact head remains unconfirmed: combined status empty and available PR-run lookup returned no runs. The readiness workflow is still configured for automatic code-change validation; the two manually gated workflows are only live external-source probes, not the normal CI tests. No external request, workflow dispatch, deployment or merge. BTC remains `not_evaluable`.
+
+## 2026-10-20 — План 100: единая контрольная точка по четырём BTC-пунктам
+
+### 1. Supply semantics — решение зафиксировано, реестр пока закрыт для изменения
+
+- `monetary.circulating_supply` означает provider-defined economic circulating supply; протокольная эмиссия и сумма UTXO не считаются взаимозаменяемыми значениями.
+- Mempool/protocol-derived total issuance остаётся отдельным review-only кандидатом. Не переименовывать и не подменять им существующую метрику без отдельного согласования Product Contour и проверки downstream-потребителей.
+- Текущая seed-строка circulating supply остаётся непригодной: она устарела, имеет `source_url = NULL`, а описание методологии Bitcoin Core `gettxoutsetinfo` не совпадает с source ID `network.primary`. Документное решение не меняет реестр, SQL seed или runtime.
+
+### 2. Контракты входов — состояние после повторной проверки
+
+- **Spot:** контракт — Kraken XBT/USD → BTC/USD (`USD/BTC`), source trade timestamp отдельно от retrieval timestamp, возраст не более 1 часа, exact pair/endpoint, raw payload checksum и idempotent identity. Последний доступный capture устарел для оценки «сейчас»; требуется новый read-only capture в разрешённом staging-контуре перед live readiness.
+- **Hashrate:** только дневная оценка с явными UTC границами `[period_start, period_end)`, `EH/s`, source timestamp, retrieval time, checksum и versioned method. Не смешивать с `currentHashrate` или weekly rolling average.
+- **Fee/subsidy:** формула — сумма fees / сумма protocol subsidy по одному и тому же набору 144 канонических блоков. Перекрытие двух последних захваченных окон прошло без расхождений; это ограниченное evidence pair, а не доказательство отсутствия будущих reorg. Метрика остаётся review-only/context-only, пока не будет свежего подходящего recapture и принятого правила reorg/finality.
+- **ETF:** Farside — приоритетный исследовательский источник, TFTC — контрольный. Два снимка ≥24 часов и 14 пересекающихся строк сравнивались, изменений не было. Этот результат не делает данные свежими сегодня: последняя строка остаётся сессией 2026-10-16. Не разрешены fallback, усреднение, dash-to-zero или выдуманный publication timestamp. Долговременное хранение/reuse rights и US-session freshness contract остаются блокерами; 7-дневный CI artifact не является постоянным backup.
+- **DXY:** необязательный контекст; не задерживает BTC. В `main` остаётся несогласованность контракта с readiness implementation, поэтому нужно ревью кода, а не новый поиск поставщика.
+
+### 3. Draft PR #83 — проверен, объединять нельзя
+
+- Текущий PR остаётся Draft/open; GitHub сообщает `mergeable: false`. Head на момент проверки: `01a4ccd23cb5f6dde56f49e36de24710434c6b45`.
+- Изменён широкий набор файлов (readiness/runtime, source catalog, ETF archive/SoSoValue, workflows, web/API и документация). Это не узкий PR, поэтому проверять его как один большой пакет без автоматического merge.
+- Для точного head найден успешный VPS API Build Rehearsal run [#39291227429](https://github.com/olegsh247-stack/Crypto/actions/runs/39291227429). Отдельного успешного BTC Scenario Readiness Gate для этого exact head в Actions не найдено; старые успешные readiness runs относятся к другим SHA и не доказывают прохождение текущего PR.
+- Следующий шаг по PR: получить readiness/test CI на актуальном head, затем устранить mergeability/base divergence и повторно проверить полный diff. PR не объединять автоматически.
+
+### 4. Офлайн-воспроизводимость — контракт закреплён, CI-подтверждение ожидается
+
+- `fixtures/btc-offline-scenario-v1.json` — исторический тестовый fixture, а не актуальный рыночный снимок.
+- `scripts/run-btc-offline-scenario.mjs` пересчитывает derived values из provenance и проверяет ожидаемый результат; это проверка детерминизма, не доказательство свежести текущих данных.
+- Документация контракта обновлена в `docs/BTC-SCENARIO-V1.md`; соответствующий commit должен запустить BTC Scenario Readiness Gate, поскольку workflow отслеживает этот путь. Статус CI будет отмечен только после проверки завершённого run.
+- **Общий статус BTC:** `not_evaluable`. Не выполнялись production DB writes, ingestion, registry/runtime changes, scenario-state/monitoring writes, deployment или merge. Для актуальной оценки нужны свежий spot, разрешённый/свежий ETF вход и закрытие оставшихся contract gates.
+
+### Следующая последовательность
+
+1. Проверить завершение BTC Scenario Readiness Gate для commit документации и зафиксировать реальный результат офлайн-прогона.
+2. Не запускать live source capture повторно до явного разрешения; после разрешения выполнить свежий read-only capture spot и проверить, что ETF сессия действительно свежа.
+3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
+4. После подтверждения контрактов отдельно предложить необходимые registry/runtime/seed изменения на review, не выполнять их в рамках этого документного прохода.
+
