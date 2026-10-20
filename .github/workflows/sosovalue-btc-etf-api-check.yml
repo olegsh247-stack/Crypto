@@ -1,6 +1,9 @@
 name: SoSoValue BTC ETF API Check (Read Only)
 
 on:
+  push:
+    paths:
+      - ".github/workflows/sosovalue-btc-etf-api-check.yml"
   workflow_dispatch:
     inputs:
       run_request:
@@ -14,7 +17,7 @@ permissions:
 
 jobs:
   check-api:
-    if: inputs.run_request == true
+    if: (github.event_name == 'workflow_dispatch' && inputs.run_request == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[capture-sosovalue-etf]'))
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
