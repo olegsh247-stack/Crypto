@@ -261,8 +261,8 @@ This section supersedes older readiness wording in this document wherever it con
 The committed `fixtures/btc-offline-scenario-v1.json` is explicitly a historical test fixture, not current market evidence. The offline runner recomputes the ETF five-session sum, BTC return, DXY change and fee/subsidy ratio from fixture provenance, checks them against the stored derived values, and asserts the expected rule-v1 result. It must be run with:
 
 ```bash
-node vps/shared/... # build is performed by the readiness workflow
-node scripts/run-btc-offline-scenario.mjs
+cd vps/shared && npm install && npm run build
+cd ../.. && node scripts/run-btc-offline-scenario.mjs
 ```
 
 The canonical CI workflow builds the shared readiness runtime, runs registry/readiness/directional/candidate-normalization tests, and runs the offline fixture. A successful fixture run proves deterministic historical calculation only; it does not prove current source freshness or permit persistence.
