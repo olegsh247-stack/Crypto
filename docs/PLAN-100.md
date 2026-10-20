@@ -2712,3 +2712,10 @@ Farside all-data and TFTC both returned HTTP 200 in the same capture. Five lates
 - Extracted theoretical issuance calculation into `scripts/bitcoin-protocol-issuance.mjs`, using exact integer satoshis and the 210,000-block halving interval. Six isolated Node 22 tests passed locally, including height 972351 => 20,101,100 BTC and the first two halving boundaries. This remains theoretical protocol issuance, not economic circulating supply.
 - Added the test to `.github/workflows/btc-public-source-staging.yml` and `/api/blocks` to `scripts/validate-source-catalog.mjs`. Full GitHub staging result is still unconfirmed via available status/run lookup; no CI pass is claimed.
 - Relevant commit: `9aeebeeeb542c4b7117a5448efc72e603bdc0b0b`; supporting catalog/workflow/test commits precede it. No runtime source-priority change, production write, scenario evaluation, state/probability change, deployment, or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-20 — Staging workflow reliability
+
+- Updated `.github/workflows/btc-public-source-staging.yml` so changes to the source catalog/validator trigger validation, `scripts/validate-source-catalog.mjs` runs in the BTC staging validation job, and the capture job has an 8-minute timeout for sequential bounded public-source probes. This avoids the workflow omitting the catalog check or terminating at the previous 3-minute ceiling.
+- Commit: `beffc512c7cd42a566ad979c488ba6ea0b5cddb1`. The workflow run/status cannot yet be confirmed through the connected lookup; do not claim CI success.
+- PR #83 remains Draft/non-mergeable and has not been merged because of substantial branch divergence. BTC remains `not_evaluable`; no production write or scenario-state change.
