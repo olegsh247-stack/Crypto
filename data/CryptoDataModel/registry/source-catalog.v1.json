@@ -341,7 +341,7 @@
       },
       "terms_status": "access_terms_blocked",
       "notes": "Do not request a key or scrape to bypass the access decision.",
-      "registry_status": "candidate_unregistered",
+      "registry_status": "registered",
       "documentation_url": "https://finance.yahoo.com/quote/DX-Y.NYB/"
     },
     {
