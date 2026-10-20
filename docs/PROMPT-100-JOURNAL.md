@@ -1395,3 +1395,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Staging capture [#39457704558](https://github.com/olegsh247-stack/Crypto/actions/runs/39457704558) succeeded. Mempool tip-height endpoint returned **972351** at 16:28:32.916Z; response SHA-256 `3984b19cee165f8b20184dc86722d65e90964e4ef6321e5d9de83408ba02a988`.
 - Versioned subsidy schedule calculation through inclusive height returned **20,101,100 BTC**. This is a research-only theoretical issuance candidate; tip endpoint supplies no block hash/timestamp, so height identity and reorg handling remain required. No registry/source-priority change or production write.
 - Next: capture tip hash/timestamp with the height, test subsidy halving boundaries, then run offline BTC readiness replay. BTC remains `not_evaluable`.
+
+
+## 2026-10-20 — Corrected BTC capture semantics
+
+- Commit [b649e252786675199b77e54d55b4ced3a35815e0](https://github.com/olegsh247-stack/Crypto/commit/b649e252786675199b77e54d55b4ced3a35815e0) corrected two misleading staging-manifest statements: Yahoo Finance DX-Y.NYB had already been retrieved in separate source verification, so DXY is described as optional/not part of the required BTC capture gate; the 24h fee/reward endpoints are now explicitly treated as recent-window diagnostics unless individual-block identity/granularity is verified.
+- This is a capture-contract/documentation correction only. It does not change source priorities, ingest data, evaluate the scenario, or change BTC's `not_evaluable` state.
+- Current-head CI result is not confirmed: the GitHub workflow-run lookup returned no PR-triggered runs for this commit. Prior successful capture and offline checks belong to earlier commits and are not represented as validation of this change.
