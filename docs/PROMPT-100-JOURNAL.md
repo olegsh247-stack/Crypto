@@ -1363,3 +1363,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Verification:** VPS API Build Rehearsal [#39284388890](https://github.com/olegsh247-stack/Crypto/actions/runs/39284388890) completed successfully for the preceding semantic-validator journal commit. The new report is documentation-only; no code/runtime contract changed in this commit.
 
 **Boundary:** No source-priority/registry change, live provider capture, production DB access/write, ingestion, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`. Next work should align the BTC spot readiness contract with actual provider trade timestamps and separately document the display ticker, then continue the ETF and network-metric contract gaps.
+
+
+## 2026-10-20 — BTC read-only hashrate API probe
+
+- `mempool.space/api/v1/mining/hashrate/1m` returned timestamped daily hashrate values and difficulty fields. Latest visible point: 2026-10-20 00:00 UTC, about 1,065.92 EH/s; top-level `currentHashrate` about 1,058.35 EH/s. Timestamped point falls within the optional 48h freshness window.
+- This is only an endpoint/shape probe: full body/headers, client retrieval time and response SHA-256 were not captured, so it is not yet an accepted provenance-grade observation. Evidence: `docs/BTC-READONLY-API-PROBE-2026-10-20.md`.
+- Next practical steps: fresh Kraken trade capture, second ETF snapshot and row-level diff, fee/reward capture, then offline BTC rule replay. No production DB writes, scheduled capture, scenario evaluation/state/probability changes, deployment or merge; BTC remains `not_evaluable`.
