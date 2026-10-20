@@ -1,6 +1,6 @@
 name: BTC Public Source Staging (Read Only)
 
-# Manual runs are supported; changes to the listed capture/parser files trigger the same review-only checks.
+# Manual runs and watched-file pushes run the same bounded review-only capture; no database or scenario-state writes occur.
 on:
   push:
     paths:
