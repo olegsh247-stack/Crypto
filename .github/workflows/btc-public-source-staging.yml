@@ -7,6 +7,8 @@ on:
       - "scripts/capture-btc-public-sources.mjs"
       - "scripts/prepare-btc-observation-candidates.mjs"
       - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/bitcoin-protocol-issuance.mjs"
+      - "scripts/bitcoin-protocol-issuance.test.mjs"
       - "scripts/diff-btc-etf-snapshots.mjs"
       - "scripts/diff-btc-etf-snapshots.test.mjs"
       - "scripts/parse-farside-etf-table.mjs"
@@ -46,6 +48,8 @@ jobs:
         run: node --test scripts/parse-farside-etf-table.test.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
+      - name: Test Bitcoin protocol issuance and halving boundaries
+        run: node --test scripts/bitcoin-protocol-issuance.test.mjs
       - name: Test offline BTC ETF snapshot diff
         run: node --test scripts/diff-btc-etf-snapshots.test.mjs
       - name: Test BTC ETF research eligibility policy
