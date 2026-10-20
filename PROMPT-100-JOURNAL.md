@@ -225,3 +225,11 @@
 - Re-attempted GET-only retrieval of the legacy Worker health route; the available retrieval path cannot access it. This is not interpreted as downtime. The VPS runbook still says prepared/not deployed; the manual health workflow requires a VPS URL.
 - **Decision:** connected-repository and Vercel evidence do not identify the active API target or immutable deployed build. The gate remains blocked pending Cloudflare/provider-side deployment metadata or operator confirmation: active host/provider, deployment ID, commit SHA or immutable artifact digest, timestamp, and parity with the reviewed fee/subsidy implementation.
 - No deployment, promotion, production DB access, ingestion, registry/runtime change, or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy remains review-only. Details: `docs/BTC-API-DEPLOYED-VERSION-PARITY-2026-10-17.md`.
+
+
+## 2026-10-20 — Исправление приоритета хостинга: self-hosted, внешние платформы не проверять
+
+- Пользователь повторно подтвердил ранее принятое решение: целевая инфраструктура — собственный VPS + PostgreSQL; VPS покупать/предоставлять позже, когда дойдём до этапа развёртывания. До этого продолжаем подготовку и текущую работу по BTC.
+- В `docs/PLAN-100.md` добавлен обязательный раздел, запрещающий повторно открывать вопрос Cloudflare/Vercel и тратить на них время. Проверка их deployment/account/endpoints, parity старого Worker и доступности не является задачей или блокером Плана 100.
+- Отменена трактовка проверки версии старого API как обязательного блокера текущего этапа. Никаких попыток деплоя, покупки VPS, переключения трафика, отключения старых сервисов, production DB writes или runtime changes не выполнялось.
+- Продолжаем строго по текущему порядку Плана 100: подготовка self-hosted архитектуры без покупки VPS до нужного этапа, закрытие BTC-входов и воспроизводимого offline/read-only сценария; покупка и развёртывание — позже, с отдельным согласованием.
