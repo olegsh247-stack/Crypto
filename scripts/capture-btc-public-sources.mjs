@@ -104,6 +104,7 @@ await capture({
     const latestPrice = Number(latest[0]);
     if (!(latestPrice > 0) || !Number.isFinite(latestPrice) || !Number.isFinite(epochSeconds)) throw new Error("Kraken latest trade has invalid price/timestamp");
     const latestTradeAgeSecondsAtCapture = Math.floor((Date.now() - epochSeconds * 1000) / 1000);
+    // [capture-btc-sources] Read-only staging verification: measure freshness at retrieval time.
     const freshnessLimitSeconds = 60 * 60;
     return {
       pair_key: pairKey,
