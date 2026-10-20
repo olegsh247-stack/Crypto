@@ -1457,3 +1457,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Added .github/workflows/source-catalog-validation.yml to run the catalog validator on relevant pull-request/push changes. GitHub Actions results are not yet available; do not call this validation passed until a run completes.
 - The source catalog's structural endpoint parity check found no missing runtime endpoint families, capture endpoint families, or current candidate-normalization endpoint families in the isolated comparison. A broader semantic-unit audit surfaced expected legacy mismatches (for example, the shared network.primary source covers multiple endpoint families, while ETF holdings metrics currently point at a flow-unit endpoint); these remain audit findings and must not be silently fixed by changing source priority in this branch.
 - No runtime readiness, source priority, scenario state/probabilities, SQL seed, production data, deployment, or merge changed.
+
+
+## 2026-10-20 — Catalog CI first failure and correction
+
+- The first Source Catalog Contract Validation run (#39490867868) failed in the negative test intended to prove that removing the canonical Kraken endpoint makes the BTC spot-price contract fail. The test removed only the trades endpoint, while a separate Kraken ticker endpoint still satisfied the source/unit check. This was a test-isolation defect, not a production/runtime failure.
+- Corrected the negative test to remove all catalog entries for source_id market.kraken in that isolated in-memory test case. No real catalog source entries were removed.
+- The corrected commit is ee6fbedee98085907a3d6a710ccdf704f45ae548. A new Actions result for that exact commit has not yet been returned, so the test remains unconfirmed until CI reruns.
