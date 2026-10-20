@@ -2697,3 +2697,10 @@ Farside all-data and TFTC both returned HTTP 200 in the same capture. Five lates
 - Corrected `scripts/capture-btc-public-sources.mjs`: DXY is optional for the BTC capture gate and the Yahoo Finance DX-Y.NYB retrieval is recorded as a separate source-verification result; daily session/observation-time semantics remain unapproved, so this does not promote DXY into runtime priority.
 - Corrected the 24h fee/reward endpoint comments and manifest notes. Treat these as recent-window diagnostics unless row granularity and individual-block identity are established. The reproducible 144-block fee/reward reconciliation recorded above remains the evidence for the current research calculation.
 - Commit: `b649e252786675199b77e54d55b4ced3a35815e0`. No current-head CI run has been confirmed yet; prior successful runs are not proof for this commit. BTC remains `not_evaluable`; no production write, runtime source-priority change, scenario-state change, deploy, or merge.
+
+
+## 2026-10-20 — Freshness guard in public BTC capture
+
+- The Kraken trade probe now reports age at capture and whether the latest trade is within the 1-hour freshness window; future timestamps and non-finite/non-positive prices are rejected. This is a diagnostic capture result, not an approved runtime metric or scenario readiness decision.
+- Commit: `bcdcf493e9b2b227cf991775de2219f34a6dbe31`. A read-only staging capture was requested by the commit message, but no current-head CI/status result is available through the connected status/run lookup. Verification remains pending; do not claim a pass.
+- BTC remains `not_evaluable`. No production writes, runtime registry changes, scenario-state changes, deployment, or merge.
