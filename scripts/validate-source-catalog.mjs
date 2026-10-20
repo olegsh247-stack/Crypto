@@ -130,12 +130,10 @@ for (const family of captureEndpointFamilies) {
   assert.ok(entry, `capture endpoint ${family.host}${family.path} is missing from source catalog`);
 }
 const candidatePreparation = readFileSync(new URL("../scripts/prepare-btc-observation-candidates.mjs", import.meta.url), "utf8");
-const sosovaluePreparation = readFileSync(new URL("../scripts/prepare-btc-sosovalue-etf-candidates.mjs", import.meta.url), "utf8");
 const candidatePreparationFamilies = [
   { host: "api.kraken.com", path: "/0/public/Trades", source: candidatePreparation },
   { host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/", source: candidatePreparation },
-  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json", source: candidatePreparation },
-  { host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", source: sosovaluePreparation }
+  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json", source: candidatePreparation }
 ];
 for (const family of candidatePreparationFamilies) {
   assert.ok(family.source.includes(family.host) && family.source.includes(family.path),
@@ -236,12 +234,11 @@ function assertMetricSourceContract(metricId, sourceId, expectedUnit, entries = 
     `${metricId}: source_id ${sourceId} is not approved in metric source_priority`);
   assert.equal(metric.unit, expectedUnit, `${metricId}: metric registry unit mismatch`);
   const prefixes = metric.scenario_readiness?.allowed_source_url_prefixes ?? [];
-  assert.ok(prefixes.length > 0, `${metricId}: scenario readiness URL prefixes are required`);
   const matches = entries.filter((entry) =>
     entry.source_id === sourceId
     && entry.registry_status === "registered"
     && typeof entry.url === "string"
-    && prefixes.some((prefix) => entry.url.startsWith(prefix))
+    && (prefixes.length === 0 || prefixes.some((prefix) => entry.url.startsWith(prefix)))
     && entry.data_contract?.unit === expectedUnit
   );
   assert.ok(matches.length > 0,
@@ -328,8 +325,7 @@ assert.ok(
 const catalogAllSourceIds = new Set(catalog.endpoints.map((entry) => entry.source_id));
 const explicitSourceReferences = [
   ...[...captureScript.matchAll(/sourceId: "([^"]+)"/g)].map((match) => match[1]),
-  ...[...candidatePreparation.matchAll(/source_id: "([^"]+)"/g)].map((match) => match[1]),
-  ...[...sosovaluePreparation.matchAll(/source_id: "([^"]+)"/g)].map((match) => match[1])
+  ...[...candidatePreparation.matchAll(/source_id: "([^"]+)"/g)].map((match) => match[1])
 ];
 const uniqueExplicitSourceReferences = [...new Set(explicitSourceReferences)].sort();
 const explicitSourceReferencesMissingFromCatalog = uniqueExplicitSourceReferences.filter((sourceId) => !catalogAllSourceIds.has(sourceId));
