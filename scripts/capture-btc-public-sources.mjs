@@ -101,7 +101,9 @@ await capture({
     if (!pairKey || !Array.isArray(trades) || trades.length === 0) throw new Error("Kraken response has no trade rows");
     const latest = trades.reduce((best, row) => Number(row[2]) > Number(best[2]) ? row : best);
     const epochSeconds = Number(latest[2]);
-    if (!Number.isFinite(epochSeconds) || !Number.isFinite(Number(latest[0]))) throw new Error("Kraken latest trade has invalid price/timestamp");
+    if (!(Number(latest[0]) > 0) || !Number.isFinite(epochSeconds)) throw new Error("Kraken latest trade has invalid price/timestamp");
+    const latestTradeAgeSecondsAtCapture = Math.floor((Date.now() - epochSeconds * 1000) / 1000);
+    const freshnessLimitSeconds = 60 * 60;
     return {
       pair_key: pairKey,
       requested_pair: "XBTUSD",
@@ -109,6 +111,9 @@ await capture({
       latest_trade_price_usd_per_btc: Number(latest[0]),
       latest_trade_epoch_seconds: epochSeconds,
       latest_trade_observed_at: new Date(epochSeconds * 1000).toISOString(),
+      latest_trade_age_seconds_at_capture: latestTradeAgeSecondsAtCapture,
+      latest_trade_freshness_limit_seconds: freshnessLimitSeconds,
+      latest_trade_freshness_status: latestTradeAgeSecondsAtCapture >= 0 && latestTradeAgeSecondsAtCapture <= freshnessLimitSeconds ? "FRESH_WITHIN_1H" : "STALE_OR_FUTURE_TIMESTAMP",
       observed_at: new Date(epochSeconds * 1000).toISOString(),
       source_row_key: `XBTUSD:${epochSeconds}:${String(latest[0])}:${String(latest[1])}:${String(latest[3] ?? "")}:${String(latest[4] ?? "")}:${String(latest[5] ?? "")}`,
       source_row_key_scope: "pair_timestamp_price_volume_side_order_type_misc",
@@ -455,10 +460,12 @@ console.log(JSON.stringify({
   sources: manifest.sources.map(({
     name, status, http_status, error, pair, pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_trade_age_seconds_at_capture, latest_trade_freshness_status,
     latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
   }) => ({
     name, status, http_status, error, pair: pair ?? pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
+    latest_trade_age_seconds_at_capture, latest_trade_freshness_status,
     latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
   })),
   unresolved: manifest.unresolved
