@@ -931,6 +931,34 @@
       "notes": "Candidate-output source_id used by prepare-btc-sosovalue-etf-candidates.mjs. Must not be promoted into metric source_priority without separate approval.",
       "registry_status": "candidate_unregistered",
       "documentation_url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history"
+    },
+    {
+      "catalog_id": "network.mempool.tip-blocks",
+      "source_id": "network.primary",
+      "provider": "Mempool.space",
+      "name": "Recent blocks endpoint — chain tip identity",
+      "url": "https://mempool.space/api/blocks",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Use bounded read-only capture to bind tip height to block hash and provider timestamp; no frequent polling required."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin main chain",
+        "unit": "block height; hash; Unix timestamp",
+        "observation_time": "block timestamp supplied by provider, kept separate from retrieval time",
+        "period_semantics": "recent block list; first row is expected to be current tip and must be validated against height/hash",
+        "revision_finality": "tip may reorganize; retain height+hash and recapture on reorg"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Read-only research candidate for binding protocol-issuance calculation to a specific block identity; not a source-priority promotion.",
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/docs/api/rest"
     }
   ]
 }
