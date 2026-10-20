@@ -1388,3 +1388,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Mempool.space exact recent-block endpoints returned 175 fee rows and 174 reward rows; 174 matched heights (972178–972351). On every matched height, reward minus fees equals 312,500,000 raw units (3.125 BTC subsidy). The 144-block aggregate returned total fees 181,863,392 and total rewards 45,181,863,392; both exactly equal sums from per-block rows for heights 972208–972351. Implied 144-block fee/subsidy ratio: **0.40414%**. Latest block fee/subsidy ratio: **1.75953%**. These are research calculations pending formal metric/methodology and reorg contract.
 - Blockchain.com total-bitcoins chart returned HTTP 200, unit BTC, daily period; latest point **20,098,862.5 BTC at 2026-10-15 23:52:59Z**, ~4.7 days old at retrieval. Response SHA-256 `55b46101fae5e30946b6b7051d632fc9105bb888ea8bb4004171e03e4ca0cec8`. Treat as dated theoretical issuance candidate, not current canonical supply.
 - Next: formalize fee/subsidy calculation and reorg handling; seek a fresher supply observation or define a versioned issuance-derived supply method; repeat ETF capture for revision comparison. BTC remains `not_evaluable`; no production writes or scenario-state changes.
+
+
+## 2026-10-20 — Current-tip BTC issuance candidate
+
+- Staging capture [#39457704558](https://github.com/olegsh247-stack/Crypto/actions/runs/39457704558) succeeded. Mempool tip-height endpoint returned **972351** at 16:28:32.916Z; response SHA-256 `3984b19cee165f8b20184dc86722d65e90964e4ef6321e5d9de83408ba02a988`.
+- Versioned subsidy schedule calculation through inclusive height returned **20,101,100 BTC**. This is a research-only theoretical issuance candidate; tip endpoint supplies no block hash/timestamp, so height identity and reorg handling remain required. No registry/source-priority change or production write.
+- Next: capture tip hash/timestamp with the height, test subsidy halving boundaries, then run offline BTC readiness replay. BTC remains `not_evaluable`.
