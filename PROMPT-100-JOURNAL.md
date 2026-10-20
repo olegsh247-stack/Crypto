@@ -217,3 +217,11 @@
 - Reconfirmed the current VPS API health response exposes only service/status, not an immutable build identity. A public read-only retrieval attempt for the legacy Worker health route was inaccessible through the available web path; this is not interpreted as endpoint downtime.
 - Deployment parity remains blocked until the actual active target/operator and its deployed commit or immutable artifact digest/timestamp are evidenced. No runtime change was made because the active target is not identified and build-identity changes require explicit approval.
 - No production DB access/writes, ingestion, deployment, registry/runtime changes or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy remains review-only.
+
+
+## 2026-10-20 — Connected deployment-provider inventory for BTC API parity
+
+- Queried the connected Vercel account read-only: only `crypto-product-contour-preview` was returned; its latest deployment is **CANCELED** and points to commit `9b9217dc6dba5a1e0af05e42409a98167cd9c91b`. This is a Next.js preview project, not evidence for the legacy Cloudflare Worker API. Vercel returned no deployment for `crypto-api.olegsh247.workers.dev`.
+- Re-attempted GET-only retrieval of the legacy Worker health route; the available retrieval path cannot access it. This is not interpreted as downtime. The VPS runbook still says prepared/not deployed; the manual health workflow requires a VPS URL.
+- **Decision:** connected-repository and Vercel evidence do not identify the active API target or immutable deployed build. The gate remains blocked pending Cloudflare/provider-side deployment metadata or operator confirmation: active host/provider, deployment ID, commit SHA or immutable artifact digest, timestamp, and parity with the reviewed fee/subsidy implementation.
+- No deployment, promotion, production DB access, ingestion, registry/runtime change, or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy remains review-only. Details: `docs/BTC-API-DEPLOYED-VERSION-PARITY-2026-10-17.md`.
