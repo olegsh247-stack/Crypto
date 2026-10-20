@@ -101,7 +101,8 @@ await capture({
     if (!pairKey || !Array.isArray(trades) || trades.length === 0) throw new Error("Kraken response has no trade rows");
     const latest = trades.reduce((best, row) => Number(row[2]) > Number(best[2]) ? row : best);
     const epochSeconds = Number(latest[2]);
-    if (!(Number(latest[0]) > 0) || !Number.isFinite(epochSeconds)) throw new Error("Kraken latest trade has invalid price/timestamp");
+    const latestPrice = Number(latest[0]);
+    if (!(latestPrice > 0) || !Number.isFinite(latestPrice) || !Number.isFinite(epochSeconds)) throw new Error("Kraken latest trade has invalid price/timestamp");
     const latestTradeAgeSecondsAtCapture = Math.floor((Date.now() - epochSeconds * 1000) / 1000);
     const freshnessLimitSeconds = 60 * 60;
     return {
