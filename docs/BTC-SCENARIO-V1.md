@@ -236,3 +236,36 @@ The target VPS API and disposable-PostgreSQL Build Rehearsal now verify the publ
 These are target API contract checks against disposable PostgreSQL. They do not prove that the currently serving public API is on the VPS, do not repair the historical duplicate/stale production observations, and do not authorize a scenario-state or event write.
 
 The current factor-to-input and event acceptance requirements are documented in [BTC Monitoring Readiness Matrix v1](./BTC-MONITORING-READINESS-MATRIX.md). Remaining BTC blockers are source-verified fresh observations, reviewed metric aggregation windows, and explicit confirmation/invalidation conditions before any live state/event is persisted.
+
+## Plan 100 recheck — 2026-10-20
+
+This section supersedes older readiness wording in this document wherever it conflicts with the current Plan 100 contract.
+
+### Supply metric contract
+
+- Keep `monetary.circulating_supply` semantically reserved for a provider-defined **economic circulating-supply** estimate with a documented definition, exclusions, observation time, revision policy and provenance.
+- Do not map protocol-scheduled issuance or a UTXO-set total to that metric merely because all values use BTC units.
+- The reproducible Mempool/protocol calculation remains a separate `REVIEW_ONLY_PROTOCOL_DERIVED_SUPPLY` candidate. A separately named `monetary.protocol_issued_supply` metric may be considered only after its product need and registry/runtime contract are approved.
+- The existing seeded circulating-supply observation remains unusable as current evidence: it is stale, has no source URL, and its Bitcoin Core `gettxoutsetinfo` methodology conflicts with the registry's `network.primary` source mapping. No registry, seed or runtime changes are authorized by this documentation decision.
+
+### Input contract and evaluation boundary
+
+- BTC/USD spot requires a positive `USD/BTC` value from the registered Kraken pair, a source-provided trade timestamp, retrieval timestamp, payload checksum, exact pair/endpoint identity and age no greater than the registry's one-hour limit at evaluation time.
+- Hashrate means the Mempool daily estimate over an explicit UTC interval `[period_start, period_end)`, with `EH/s` conversion, method version, source timestamp and checksum. Do not substitute `currentHashrate` or label the daily estimate as a rolling weekly average.
+- Fee/subsidy means total transaction fees divided by protocol subsidy over the same exact 144 canonical block heights. The latest overlapping-window check passed for its captured pair, but the metric remains review-only until a fresh suitable recapture and accepted reorg/finality rule are available. It is context-only in Scenario Rule v1 and must not change directional scoring.
+- ETF net flow uses Farside as the priority research source and TFTC as a control only. No fallback, averaging, dash-to-zero conversion or invented publication timestamp is allowed. The 24-hour two-snapshot comparison found no row changes in that pair, but the latest observed session is no longer fresh for a current evaluation, and long-term retention/reuse permission plus a U.S.-session-aware freshness contract remain unresolved. The 7-day CI artifact is not durable production backup evidence.
+- DXY is optional context, not a mandatory BTC readiness input. The current `main` readiness implementation still has a contract mismatch that must be resolved through reviewed code changes; this document does not imply that PR #83 has been accepted.
+
+### Offline reproducibility
+
+The committed `fixtures/btc-offline-scenario-v1.json` is explicitly a historical test fixture, not current market evidence. The offline runner recomputes the ETF five-session sum, BTC return, DXY change and fee/subsidy ratio from fixture provenance, checks them against the stored derived values, and asserts the expected rule-v1 result. It must be run with:
+
+```bash
+node vps/shared/... # build is performed by the readiness workflow
+node scripts/run-btc-offline-scenario.mjs
+```
+
+The canonical CI workflow builds the shared readiness runtime, runs registry/readiness/directional/candidate-normalization tests, and runs the offline fixture. A successful fixture run proves deterministic historical calculation only; it does not prove current source freshness or permit persistence.
+
+**Current status:** BTC remains `not_evaluable` for a live evaluation. No production DB access/writes, ingestion, registry/runtime changes, scenario-state writes, monitoring-event writes, deployment or merge were performed by this recheck.
+
