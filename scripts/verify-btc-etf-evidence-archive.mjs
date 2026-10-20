@@ -113,16 +113,71 @@ export async function verifyBtcEtfEvidenceArchive(snapshotDir) {
   };
 }
 
-function argsFrom(argv) {
-  if (argv.length !== 2 || argv[0] !== "--snapshot-dir" || !argv[1] || argv[1].startsWith("--")) {
-    throw new Error("Usage: node scripts/verify-btc-etf-evidence-archive.mjs --snapshot-dir <snapshot-directory>");
+
+export async function verifyBtcEtfIndependentRestore({ primaryDir, restoredDir, receiptPath }) {
+  if (!primaryDir || !restoredDir || !receiptPath) {
+    throw new Error("--primary-dir, --restored-dir and --receipt are required");
   }
-  return argv[1];
+  const primary = resolve(primaryDir);
+  const restored = resolve(restoredDir);
+  if (primary === restored) throw new Error("Primary and restored snapshots must be different paths");
+  const [primaryResult, restoredResult] = await Promise.all([
+    verifyBtcEtfEvidenceArchive(primary),
+    verifyBtcEtfEvidenceArchive(restored)
+  ]);
+  if (primaryResult.snapshot_id !== restoredResult.snapshot_id
+      || primaryResult.reporting_date !== restoredResult.reporting_date
+      || primaryResult.archive_record_sha256 !== restoredResult.archive_record_sha256
+      || primaryResult.verified_files !== restoredResult.verified_files
+      || primaryResult.source_bodies !== restoredResult.source_bodies) {
+    throw new Error("Restored snapshot does not match the primary snapshot identity and archive-record hash");
+  }
+  await regularFile(resolve(receiptPath), "independent restore receipt");
+  let receipt;
+  try { receipt = JSON.parse(await readFile(resolve(receiptPath), "utf8")); }
+  catch { throw new Error("Independent restore receipt must be valid JSON"); }
+  if (receipt?.schema_version !== 1
+      || receipt?.restore_result !== "PASS"
+      || receipt?.independent_failure_domain !== true
+      || typeof receipt?.destination_class !== "string" || !receipt.destination_class.trim()
+      || typeof receipt?.backup_completed_at !== "string" || !Number.isFinite(Date.parse(receipt.backup_completed_at))
+      || typeof receipt?.restore_tested_at !== "string" || !Number.isFinite(Date.parse(receipt.restore_tested_at))
+      || typeof receipt?.evidence_ref !== "string" || !receipt.evidence_ref.trim()) {
+    throw new Error("Restore receipt lacks required independent-backup evidence or PASS attestation");
+  }
+  if (Date.parse(receipt.restore_tested_at) < Date.parse(receipt.backup_completed_at)) {
+    throw new Error("Restore test timestamp precedes backup completion");
+  }
+  return {
+    verified: true,
+    snapshot_id: primaryResult.snapshot_id,
+    reporting_date: primaryResult.reporting_date,
+    primary_verified_files: primaryResult.verified_files,
+    restored_verified_files: restoredResult.verified_files,
+    archive_record_sha256: primaryResult.archive_record_sha256,
+    independent_failure_domain_attested: true,
+    evidence_ref: receipt.evidence_ref,
+    limitation: "File equality is verified locally; destination independence is an external attestation and must be backed by independently reviewable provider/storage evidence."
+  };
+}
+
+function argsFrom(argv) {
+  if (argv.length === 2 && argv[0] === "--snapshot-dir" && argv[1] && !argv[1].startsWith("--")) {
+    return { mode: "snapshot", snapshotDir: argv[1] };
+  }
+  if (argv.length === 6 && argv[0] === "--primary-dir" && argv[2] === "--restored-dir"
+      && argv[4] === "--receipt" && argv[1] && argv[3] && argv[5]) {
+    return { mode: "restore", primaryDir: argv[1], restoredDir: argv[3], receiptPath: argv[5] };
+  }
+  throw new Error("Usage: node scripts/verify-btc-etf-evidence-archive.mjs --snapshot-dir <dir> OR --primary-dir <dir> --restored-dir <dir> --receipt <json>");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const result = await verifyBtcEtfEvidenceArchive(argsFrom(process.argv.slice(2)));
+    const args = argsFrom(process.argv.slice(2));
+    const result = args.mode === "snapshot"
+      ? await verifyBtcEtfEvidenceArchive(args.snapshotDir)
+      : await verifyBtcEtfIndependentRestore(args);
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } catch (error) {
     process.stderr.write("BTC ETF evidence archive verification blocked: " + (error instanceof Error ? error.message : String(error)) + "\n");
