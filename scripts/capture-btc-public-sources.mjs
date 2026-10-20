@@ -356,6 +356,39 @@ await capture({
   }
 });
 
+// Capture the current chain tip separately from the daily supply chart. The
+// protocol issuance calculation is a candidate only; height/hash reorg handling and
+// the metric's canonical source contract remain separate acceptance gates.
+await capture({
+  name: "mempool-tip-height-issuance-candidate",
+  metricId: "supply.circulating",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/blocks/tip/height",
+  parse: body => {
+    const height = Number(body.trim());
+    if (!Number.isSafeInteger(height) || height < 0) throw new Error("mempool tip height is not a non-negative integer");
+    let remainingBlocks = height + 1;
+    let subsidySats = 50 * 100_000_000;
+    let totalSats = 0;
+    while (remainingBlocks > 0 && subsidySats > 0) {
+      const blocksThisEra = Math.min(remainingBlocks, 210_000);
+      totalSats += blocksThisEra * subsidySats;
+      remainingBlocks -= blocksThisEra;
+      subsidySats = Math.floor(subsidySats / 2);
+    }
+    return {
+      latest_tip_height: height,
+      protocol_issuance_candidate_btc: totalSats / 100_000_000,
+      issuance_methodology: "bitcoin-subsidy-schedule-through-inclusive-tip-height-v1",
+      halving_interval_blocks: 210000,
+      initial_subsidy_btc: 50,
+      unit: "BTC",
+      source_observation_timestamp: null,
+      note: "Research-only protocol issuance estimate from the retrieved tip height; the endpoint supplies no timestamp/hash, and chain reorg/tip identity must be handled before canonical acceptance."
+    };
+  }
+});
+
 // Candidate circulating-supply source for field/date/unit inspection only. It is
 // not added to the runtime source registry or approved as a canonical input here.
 await capture({
