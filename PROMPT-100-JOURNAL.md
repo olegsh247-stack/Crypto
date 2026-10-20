@@ -209,3 +209,11 @@
 - Compared with baseline `971906–972049`: advance 135 blocks; nine-block overlap `972041–972049`; zero differences in block hash, parent hash or per-block fees. Boundary hashes and tip remained stable during capture. Confirmation policy is explicit: recapture must advance ≥6 blocks, overlap at least one height, compare hash/parent hash/fees, and block acceptance on any mismatch; unchanged overlap is pairwise evidence, not permanent-finality proof.
 - Remaining blocker: deployed API/runtime immutable build identity and parity with the reviewed fee implementation remain unproven. Current repo checks and sample `api_version` do not establish what is running; legacy Worker URL is not deployment attestation, and VPS is not provisioned.
 - No production DB access/writes, ingestion, registry/runtime changes, deployment, merge or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy ratio remains review-only.
+
+
+## 2026-10-20 — BTC deployed-version parity: read-only repository audit
+
+- Rechecked the workflow inventory and VPS deployment runbook. There is no repository workflow that deploys the legacy Worker or VPS; the only production health workflow is manual GET-only and requires a purchased VPS URL, while the runbook says VPS is prepared but not deployed.
+- Reconfirmed the current VPS API health response exposes only service/status, not an immutable build identity. A public read-only retrieval attempt for the legacy Worker health route was inaccessible through the available web path; this is not interpreted as endpoint downtime.
+- Deployment parity remains blocked until the actual active target/operator and its deployed commit or immutable artifact digest/timestamp are evidenced. No runtime change was made because the active target is not identified and build-identity changes require explicit approval.
+- No production DB access/writes, ingestion, deployment, registry/runtime changes or scenario evaluation. BTC remains `not_evaluable`; fee/subsidy remains review-only.
