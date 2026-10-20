@@ -2719,3 +2719,9 @@ Farside all-data and TFTC both returned HTTP 200 in the same capture. Five lates
 - Updated `.github/workflows/btc-public-source-staging.yml` so changes to the source catalog/validator trigger validation, `scripts/validate-source-catalog.mjs` runs in the BTC staging validation job, and the capture job has an 8-minute timeout for sequential bounded public-source probes. This avoids the workflow omitting the catalog check or terminating at the previous 3-minute ceiling.
 - Commit: `beffc512c7cd42a566ad979c488ba6ea0b5cddb1`. The workflow run/status cannot yet be confirmed through the connected lookup; do not claim CI success.
 - PR #83 remains Draft/non-mergeable and has not been merged because of substantial branch divergence. BTC remains `not_evaluable`; no production write or scenario-state change.
+
+
+## 2026-10-20 — Fresh read-only probe of tip block identity
+
+- Direct fetch of `https://mempool.space/api/blocks` returned the expected shape; first row: height **972366**, hash `000000000000000000015c59b038d71458c626b4d3e5de251a20f7fcba08f77d`, block timestamp **2026-10-20 18:40:29 UTC**. This confirms the candidate endpoint provides the three identity fields needed by the capture parser.
+- Inclusive-height protocol issuance at 972366 is **20,101,146.875 BTC** under the versioned subsidy schedule. It is theoretical issuance, not circulating supply. This direct probe did not save a raw response, exact retrieval timestamp, or response SHA-256, so it is shape/value confirmation only—not accepted provenance-grade evidence.
