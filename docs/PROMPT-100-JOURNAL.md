@@ -1402,3 +1402,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Commit [b649e252786675199b77e54d55b4ced3a35815e0](https://github.com/olegsh247-stack/Crypto/commit/b649e252786675199b77e54d55b4ced3a35815e0) corrected two misleading staging-manifest statements: Yahoo Finance DX-Y.NYB had already been retrieved in separate source verification, so DXY is described as optional/not part of the required BTC capture gate; the 24h fee/reward endpoints are now explicitly treated as recent-window diagnostics unless individual-block identity/granularity is verified.
 - This is a capture-contract/documentation correction only. It does not change source priorities, ingest data, evaluate the scenario, or change BTC's `not_evaluable` state.
 - Current-head CI result is not confirmed: the GitHub workflow-run lookup returned no PR-triggered runs for this commit. Prior successful capture and offline checks belong to earlier commits and are not represented as validation of this change.
+
+
+## 2026-10-20 — Kraken freshness guard added
+
+- Commits [3dd6da6](https://github.com/olegsh247-stack/Crypto/commit/3dd6da6e6bd0b299dbbc93ae96bbc133b9f513e2) and [bcdcf49](https://github.com/olegsh247-stack/Crypto/commit/bcdcf493e9b2b227cf991775de2219f34a6dbe31) add a capture-time freshness result for the latest Kraken XBT/USD trade (1-hour limit, explicit future-timestamp rejection) and reject non-finite/non-positive prices. The capture output now reports age and freshness status; this is a probe-level guard, not scenario acceptance.
+- The latest commit message requests the repository's read-only staging capture workflow. The available commit-status lookup currently returns no status checks, and the workflow-run connector does not expose push-triggered runs; therefore neither execution nor pass/fail is confirmed here. Do not treat this as a successful capture or CI pass.
+- No production write, registry/source-priority change, scenario evaluation/state change, deployment, or merge. BTC remains `not_evaluable`.
