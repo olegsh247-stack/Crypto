@@ -2690,3 +2690,10 @@ Farside all-data and TFTC both returned HTTP 200 in the same capture. Five lates
 - Applying the explicitly versioned Bitcoin subsidy schedule through the inclusive height (50 BTC initial subsidy, halving every 210,000 blocks) gives a research-only issuance candidate of **20,101,100 BTC**. This is consistent with the older daily Blockchain.com chart point after accounting for the blocks issued since that date.
 - This value is not yet an accepted circulating-supply observation: tip height alone has no hash/timestamp, a reorg can change the tip, and the metric must explicitly choose theoretical issuance versus a provider's daily chart series. Keep the source ID/candidate out of runtime priority changes until the method, timestamp/height/hash identity, and reorg policy are approved.
 - Next: capture tip height and hash together (or bind the height to a block hash/timestamp), add unit tests for subsidy-era boundaries and halving arithmetic, then use the resulting versioned calculation in the offline BTC scenario replay. No production DB write or scenario-state change; BTC remains `not_evaluable`.
+
+
+## 2026-10-20 — Capture-contract correction
+
+- Corrected `scripts/capture-btc-public-sources.mjs`: DXY is optional for the BTC capture gate and the Yahoo Finance DX-Y.NYB retrieval is recorded as a separate source-verification result; daily session/observation-time semantics remain unapproved, so this does not promote DXY into runtime priority.
+- Corrected the 24h fee/reward endpoint comments and manifest notes. Treat these as recent-window diagnostics unless row granularity and individual-block identity are established. The reproducible 144-block fee/reward reconciliation recorded above remains the evidence for the current research calculation.
+- Commit: `b649e252786675199b77e54d55b4ced3a35815e0`. No current-head CI run has been confirmed yet; prior successful runs are not proof for this commit. BTC remains `not_evaluable`; no production write, runtime source-priority change, scenario-state change, deploy, or merge.
