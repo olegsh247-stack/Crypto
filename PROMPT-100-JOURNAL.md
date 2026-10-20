@@ -252,3 +252,10 @@
 - VPS API Build Rehearsal for commit `606c3c2dac992f849a770cf29c723b42d8ffeddc` was still running at the time of this entry; do not claim it passed until its completed result is checked.
 - PR #83 remains Draft/open and `mergeable: false`; exact-head VPS rehearsal passed, but no BTC Scenario Readiness Gate run was found for its current head `01a4ccd23cb5f6dde56f49e36de24710434c6b45`. No merge.
 
+## 2026-10-20 — PR #83 exact-head readiness test now passes
+
+- Added a regression test on `fix/btc-readiness-registry-runtime-source` at commit `89dd103b87eb750d4afb121f5c655975844065eb`: a base BTC readiness check with valid spot + five ETF sessions must not require optional `monetary.circulating_supply`, `security.hashrate`, `security.fee_subsidy_ratio` or `macro.dxy` context. This codifies that supply's economic meaning is separate and does not silently become a required rule-v1 input.
+- BTC Scenario Readiness Gate [#39382019171](https://github.com/olegsh247-stack/Crypto/actions/runs/39382019171) passed for that exact head. The shared runtime build/test and registry/readiness/directional/candidate tests all succeeded.
+- PR #83 is still Draft/open and GitHub still reports `mergeable: false`; current diff remains broad (94 files). VPS API Build Rehearsal [#39382019208](https://github.com/olegsh247-stack/Crypto/actions/runs/39382019208) was still running at the time of this entry. Do not merge until that run completes, the base/mergeability issue is resolved, and the full diff is reviewed.
+- No production/runtime registry or SQL seed change; no production DB writes, ingestion, live capture, deployment, scenario-state or monitoring writes.
+
