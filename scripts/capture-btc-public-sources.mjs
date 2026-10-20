@@ -288,6 +288,100 @@ await capture({
   }
 });
 
+// Use exact recent blocks for a reproducible fee/reward comparison. The 1w
+// endpoints can contain averages; 24h is the documented exact-block window.
+await capture({
+  name: "mempool-block-fees-24h",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/blocks/fees/24h",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("mempool fees/24h returned no rows");
+    const timestamps = rows.map(row => Number(row.timestamp)).filter(Number.isFinite);
+    return {
+      response_shape: "array",
+      row_count: rows.length,
+      first_height: rows[0].avgHeight ?? null,
+      last_height: rows[rows.length - 1].avgHeight ?? null,
+      first_timestamp: timestamps.length ? new Date(Math.min(...timestamps) * 1000).toISOString() : null,
+      last_timestamp: timestamps.length ? new Date(Math.max(...timestamps) * 1000).toISOString() : null,
+      first_row_keys: Object.keys(rows[0]),
+      latest_row: rows[rows.length - 1],
+      note: "24h endpoint is used for exact recent-block comparison; confirm fee units and align by height before calculating any ratio."
+    };
+  }
+});
+
+await capture({
+  name: "mempool-block-rewards-24h",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/blocks/rewards/24h",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("mempool rewards/24h returned no rows");
+    const timestamps = rows.map(row => Number(row.timestamp)).filter(Number.isFinite);
+    return {
+      response_shape: "array",
+      row_count: rows.length,
+      first_height: rows[0].avgHeight ?? null,
+      last_height: rows[rows.length - 1].avgHeight ?? null,
+      first_timestamp: timestamps.length ? new Date(Math.min(...timestamps) * 1000).toISOString() : null,
+      last_timestamp: timestamps.length ? new Date(Math.max(...timestamps) * 1000).toISOString() : null,
+      first_row_keys: Object.keys(rows[0]),
+      latest_row: rows[rows.length - 1],
+      note: "24h endpoint is used for exact recent-block reward comparison; align fee and reward rows by height and confirm units before deriving subsidy."
+    };
+  }
+});
+
+await capture({
+  name: "mempool-reward-stats-144",
+  metricId: "security.fee_subsidy_ratio",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/v1/mining/reward-stats/144",
+  parse: body => {
+    const data = JSON.parse(body);
+    return {
+      response_shape: data && typeof data === "object" ? "object" : typeof data,
+      top_level_keys: data && typeof data === "object" ? Object.keys(data) : [],
+      start_block: data.startBlock ?? null,
+      end_block: data.endBlock ?? null,
+      total_reward_raw: data.totalReward ?? null,
+      total_fee_raw: data.totalFee ?? null,
+      total_tx: data.totalTx ?? null,
+      note: "Independent 144-block aggregate for reconciliation; retain raw integer strings and verify denomination before converting."
+    };
+  }
+});
+
+// Candidate circulating-supply source for field/date/unit inspection only. It is
+// not added to the runtime source registry or approved as a canonical input here.
+await capture({
+  name: "blockchain-com-total-bitcoins",
+  metricId: "supply.circulating",
+  sourceId: "network.blockchain_com.candidate",
+  url: "https://api.blockchain.info/charts/total-bitcoins?timespan=30days&format=json&cors=true",
+  parse: body => {
+    const data = JSON.parse(body);
+    const rows = Array.isArray(data.values) ? data.values : [];
+    const latest = rows.reduce((best, row) => !best || Number(row.x) > Number(best.x) ? row : best, null);
+    const epochSeconds = latest ? Number(latest.x) : NaN;
+    const value = latest ? Number(latest.y) : NaN;
+    return {
+      chart_name: data.name ?? null,
+      unit: data.unit ?? null,
+      period: data.period ?? null,
+      description: data.description ?? null,
+      row_count: rows.length,
+      latest_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
+      latest_value: Number.isFinite(value) ? value : null,
+      note: "Candidate circulating-supply series; inspect date lag, units, and theoretical issuance methodology before accepting."
+    };
+  }
+});
+
 await capture({
   name: "farside-btc-etf-page",
   metricId: "institutional.etf_net_flow",
