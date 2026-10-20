@@ -5,7 +5,7 @@ import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { archiveBtcEtfEvidence } from "./archive-btc-etf-evidence.mjs";
-import { verifyBtcEtfEvidenceArchive } from "./verify-btc-etf-evidence-archive.mjs";
+import { verifyBtcEtfEvidenceArchive, verifyBtcEtfIndependentRestore } from "./verify-btc-etf-evidence-archive.mjs";
 
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 
@@ -81,4 +81,67 @@ test("rejects a checksum manifest path traversal", async t => {
   const checksums = await readFile(checksumsPath, "utf8");
   await writeFile(checksumsPath, checksums + "0".repeat(64) + "  ../outside\n");
   await assert.rejects(() => verifyBtcEtfEvidenceArchive(f.target), /Unsafe checksum path/);
+});
+
+
+test("verifies a restored copy plus an independent-backup evidence receipt", async t => {
+  const f = await fixture(t);
+  const restoredDir = join(f.root, "external-backup-restore", "snapshot");
+  await mkdir(join(f.root, "external-backup-restore"), { recursive: true });
+  await cp(f.target, restoredDir, { recursive: true, errorOnExist: true, force: false });
+  const receiptPath = join(f.root, "restore-receipt.json");
+  await writeFile(receiptPath, JSON.stringify({
+    schema_version: 1,
+    backup_completed_at: "2026-10-16T11:00:00.000Z",
+    restore_tested_at: "2026-10-17T11:00:00.000Z",
+    destination_class: "independent encrypted object storage",
+    independent_failure_domain: true,
+    restore_result: "PASS",
+    evidence_ref: "fixture/provider-audit-log-and-restore-report"
+  }));
+  const result = await verifyBtcEtfIndependentRestore({
+    primaryDir: f.target, restoredDir, receiptPath
+  });
+  assert.equal(result.verified, true);
+  assert.equal(result.independent_failure_domain_attested, true);
+  assert.equal(result.archive_record_sha256, sha256(await readFile(join(f.target, "archive-record.json"))));
+  assert.match(result.limitation, /external attestation/);
+});
+
+test("fails closed when the independent restore receipt is missing or not cleared", async t => {
+  const f = await fixture(t);
+  const restoredDir = join(f.root, "restore", "snapshot");
+  await mkdir(join(f.root, "restore"), { recursive: true });
+  await cp(f.target, restoredDir, { recursive: true, errorOnExist: true, force: false });
+  const receiptPath = join(f.root, "restore-receipt.json");
+  await writeFile(receiptPath, JSON.stringify({
+    schema_version: 1, backup_completed_at: "2026-10-16T11:00:00.000Z",
+    restore_tested_at: "2026-10-17T11:00:00.000Z",
+    destination_class: "same VPS disk", independent_failure_domain: false,
+    restore_result: "PASS", evidence_ref: "fixture"
+  }));
+  await assert.rejects(() => verifyBtcEtfIndependentRestore({
+    primaryDir: f.target, restoredDir, receiptPath
+  }), /lacks required independent-backup evidence/);
+  await assert.rejects(() => verifyBtcEtfIndependentRestore({
+    primaryDir: f.target, restoredDir: f.target, receiptPath
+  }), /different paths/);
+});
+
+test("detects a changed restored snapshot even when the receipt claims PASS", async t => {
+  const f = await fixture(t);
+  const restoredDir = join(f.root, "restore", "snapshot");
+  await mkdir(join(f.root, "restore"), { recursive: true });
+  await cp(f.target, restoredDir, { recursive: true, errorOnExist: true, force: false });
+  await writeFile(join(restoredDir, "source", "provider.raw"), "corrupted after restore");
+  const receiptPath = join(f.root, "restore-receipt.json");
+  await writeFile(receiptPath, JSON.stringify({
+    schema_version: 1, backup_completed_at: "2026-10-16T11:00:00.000Z",
+    restore_tested_at: "2026-10-17T11:00:00.000Z",
+    destination_class: "independent encrypted object storage",
+    independent_failure_domain: true, restore_result: "PASS", evidence_ref: "fixture"
+  }));
+  await assert.rejects(() => verifyBtcEtfIndependentRestore({
+    primaryDir: f.target, restoredDir, receiptPath
+  }), /SHA-256 mismatch/);
 });
