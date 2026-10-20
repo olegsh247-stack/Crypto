@@ -1849,7 +1849,7 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 - `fixtures/btc-offline-scenario-v1.json` — исторический тестовый fixture, а не актуальный рыночный снимок.
 - `scripts/run-btc-offline-scenario.mjs` пересчитывает derived values из provenance и проверяет ожидаемый результат; это проверка детерминизма, не доказательство свежести текущих данных.
-- Документация контракта обновлена в `docs/BTC-SCENARIO-V1.md`; соответствующий commit должен запустить BTC Scenario Readiness Gate, поскольку workflow отслеживает этот путь. Статус CI будет отмечен только после проверки завершённого run.
+- Документация контракта обновлена в `docs/BTC-SCENARIO-V1.md`. BTC Scenario Readiness Gate [#39381872449](https://github.com/olegsh247-stack/Crypto/actions/runs/39381872449) **успешно завершён** для commit `606c3c2dac992f849a770cf29c723b42d8ffeddc`; shared runtime build, registry/readiness/directional/candidate tests и offline runner прошли. В логе fixture `btc-offline-rehearsal-2026-10-17` выдал `scenario_type=base`, `directional_score=-1`, `confidence_band=low`, `baseline_probabilities_changed=false`, `can_persist_scenario_state=false`; `live_data_used=false`, `database_accessed=false`. Это подтверждает только историческую детерминированность, не live readiness.
 - **Общий статус BTC:** `not_evaluable`. Не выполнялись production DB writes, ingestion, registry/runtime changes, scenario-state/monitoring writes, deployment или merge. Для актуальной оценки нужны свежий spot, разрешённый/свежий ETF вход и закрытие оставшихся contract gates.
 
 ### Следующая последовательность
