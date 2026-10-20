@@ -9,6 +9,8 @@ on:
       - "scripts/prepare-btc-observation-candidates.test.mjs"
       - "scripts/bitcoin-protocol-issuance.mjs"
       - "scripts/bitcoin-protocol-issuance.test.mjs"
+      - "scripts/validate-source-catalog.mjs"
+      - "data/CryptoDataModel/registry/source-catalog.v1.json"
       - "scripts/diff-btc-etf-snapshots.mjs"
       - "scripts/diff-btc-etf-snapshots.test.mjs"
       - "scripts/parse-farside-etf-table.mjs"
@@ -50,6 +52,8 @@ jobs:
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
       - name: Test Bitcoin protocol issuance and halving boundaries
         run: node --test scripts/bitcoin-protocol-issuance.test.mjs
+      - name: Validate source catalog endpoint and metric contracts
+        run: node scripts/validate-source-catalog.mjs
       - name: Test offline BTC ETF snapshot diff
         run: node --test scripts/diff-btc-etf-snapshots.test.mjs
       - name: Test BTC ETF research eligibility policy
@@ -67,7 +71,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && inputs.capture_sources == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[capture-btc-sources]'))
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
