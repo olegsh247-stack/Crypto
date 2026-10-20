@@ -260,7 +260,7 @@ assert.throws(
 );
 assert.throws(
   () => assertMetricSourceContract("market.spot_price", "market.kraken", "USD/BTC",
-    catalog.endpoints.filter((entry) => entry.catalog_id !== "market.kraken.trades.xbtusd")),
+    catalog.endpoints.filter((entry) => entry.source_id !== "market.kraken")),
   /no registered catalog endpoint links/,
   "metric-source linkage must reject an absent allowed endpoint"
 );
