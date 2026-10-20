@@ -1418,3 +1418,10 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Wired the issuance tests into BTC Public Source Staging and added the endpoint to the source-catalog semantic coverage check. Relevant files were re-fetched after writes and confirmed to contain the expected implementation and workflow wiring.
 - Current GitHub Actions status for the latest branch head remains unconfirmed through the available run/status lookup; the isolated local unit tests do not substitute for the full staging workflow. The staging commit requested a read-only capture; no production DB or scenario state was touched.
 - PR #83 remains Draft/non-mergeable with a diverged history (main is 141 commits ahead of the PR branch's merge base direction; branch is hundreds of commits ahead). Do not merge or rebase the 96-file PR blindly. BTC remains `not_evaluable` pending fresh capture and remaining spot/ETF acceptance gates.
+
+
+## 2026-10-20 — BTC staging workflow coverage fix
+
+- Fixed `.github/workflows/btc-public-source-staging.yml`: source catalog and its validator are now included in path triggers, the catalog contract validator runs in the staging validation job, and the read-only capture job timeout is 8 minutes rather than 3 to avoid prematurely cutting off the bounded multi-source probe. Commit: `beffc512c7cd42a566ad979c488ba6ea0b5cddb1`.
+- The commit message requests the staging capture. The connected GitHub run/status lookup still returns no run/status data for the current head, so execution and pass/fail are not confirmed. Local isolated issuance tests passed 6/6; full staging validation remains pending.
+- PR #83 remains Draft and non-mergeable due to history divergence; do not merge blindly. No production writes, source-priority changes, scenario evaluation/state changes or deployment.
