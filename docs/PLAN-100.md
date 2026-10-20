@@ -1840,9 +1840,9 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 ### 3. Draft PR #83 — проверен, объединять нельзя
 
-- Текущий PR остаётся Draft/open; GitHub сообщает `mergeable: false`. Head на момент проверки: `01a4ccd23cb5f6dde56f49e36de24710434c6b45`.
+- Текущий PR остаётся Draft/open; GitHub сообщает `mergeable: false`. После добавления явного regression test на optional context текущий head: `89dd103b87eb750d4afb121f5c655975844065eb`.
 - Изменён широкий набор файлов (readiness/runtime, source catalog, ETF archive/SoSoValue, workflows, web/API и документация). Это не узкий PR, поэтому проверять его как один большой пакет без автоматического merge.
-- Для точного head найден успешный VPS API Build Rehearsal run [#39291227429](https://github.com/olegsh247-stack/Crypto/actions/runs/39291227429). Отдельного успешного BTC Scenario Readiness Gate для этого exact head в Actions не найдено; старые успешные readiness runs относятся к другим SHA и не доказывают прохождение текущего PR.
+- Для текущего exact head BTC Scenario Readiness Gate [#39382019171](https://github.com/olegsh247-stack/Crypto/actions/runs/39382019171) **успешен**: shared readiness build/test, registry/readiness/directional/candidate tests прошли, включая новый regression test, что supply/hashrate/fee/DXY не являются обязательными входами для базового rule-v1 gate. VPS API Build Rehearsal [#39382019208](https://github.com/olegsh247-stack/Crypto/actions/runs/39382019208) ещё выполнялся на момент записи; прежний VPS build на старом head не заменяет этот результат.
 - Следующий шаг по PR: получить readiness/test CI на актуальном head, затем устранить mergeability/base divergence и повторно проверить полный diff. PR не объединять автоматически.
 
 ### 4. Офлайн-воспроизводимость — контракт закреплён, CI-подтверждение ожидается
@@ -1857,5 +1857,5 @@ Verification boundary: GitHub combined status returned no checks and the availab
 1. Проверить завершение BTC Scenario Readiness Gate для commit документации и зафиксировать реальный результат офлайн-прогона.
 2. Не запускать live source capture повторно до явного разрешения; после разрешения выполнить свежий read-only capture spot и проверить, что ETF сессия действительно свежа.
 3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
-4. После подтверждения контрактов отдельно предложить необходимые registry/runtime/seed изменения на review, не выполнять их в рамках этого документного прохода.
+4. Дождаться результата VPS API Build Rehearsal #39382019208 на текущем PR head. После этого повторно проверить mergeability/base divergence и решить, нужно ли разделить 94-файловый PR на меньшие reviewable части. Registry/runtime/seed изменения остаются отдельным reviewed этапом.
 
