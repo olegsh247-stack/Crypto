@@ -172,3 +172,21 @@ test("blocks historical ETF rows retrieved before the observation/publication ti
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some((b) => b.metric_id === "institutional.etf_net_flow"));
 });
+
+test("base BTC readiness does not require optional supply, hashrate, fee/subsidy, or DXY context", () => {
+  // Scenario Rule v1 uses spot and ETF flows as mandatory inputs. The supply
+  // metric keeps its own economic definition; optional context cannot block
+  // readiness merely because it is absent.
+  const result = assessBtcScenarioReadiness(completeInputs(), NOW);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.deepEqual(result.blockers, []);
+  for (const metricId of [
+    "monetary.circulating_supply",
+    "security.hashrate",
+    "security.fee_subsidy_ratio",
+    "macro.dxy",
+  ]) {
+    assert.equal(result.selected_inputs[metricId], undefined, metricId + " must remain optional context");
+  }
+});
+
