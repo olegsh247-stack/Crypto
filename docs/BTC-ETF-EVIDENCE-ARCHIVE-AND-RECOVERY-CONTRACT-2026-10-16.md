@@ -118,3 +118,37 @@ CI confirmation: [BTC Public Source Staging #38876362752](https://github.com/ole
 ### Source rights gate — refreshed 2026-10-16
 
 The source review now records that TFTC explicitly publishes its ETF-flow dataset under CC BY 4.0 with attribution/link; SoSoValue website terms restrict automated/manual copying and redistribution absent authorization, while separate API-specific rights remain unverified; and Farside's official ETF-flow page does not establish clear long-term raw-response retention/redistribution permission. Do not archive raw SoSoValue or Farside responses until source-specific permission is documented. TFTC-derived artifacts may be considered with attribution and upstream lineage recorded. No live capture or API call was made.
+
+
+## 9. Source-rights decision and approved storage boundary (reviewed 2026-10-20)
+
+This is a project engineering assessment of the publicly available terms, not a legal opinion. Preserve the exact terms URL, review date, relevant clause/quote excerpt, and reviewer in the private rights evidence record. Recheck terms before changing the use case or publishing raw payloads.
+
+| Source | Public terms/evidence found | Raw long-term archive decision | Attribution / use boundary |
+|---|---|---|---|
+| **TFTC / The Commoner Bitcoin ETF Tracker** | The ETF tracker explicitly says its figures may be quoted, charted and republished under **CC BY 4.0** and links an open JSON full series. The page identifies data lineage: SoSoValue for daily aggregates/ongoing per-fund flows and issuer disclosures tabulated by Farside for older history. | **CLEARED for retained ETF dataset and captured response for internal reproducibility, subject to preserving the terms evidence and respecting upstream rights/lineage.** This does not mean TFTC independently originated all underlying observations. | Attribute “The Commoner Bitcoin ETF Tracker by TFTC”, link to https://www.tftc.io/bitcoin-etf-flows and CC BY 4.0; record retrieval date and modifications/normalization. CC BY 4.0 permits reproduction/reuse, including commercial reuse, subject to attribution and other license conditions. Do not imply endorsement. |
+| **Farside Investors** | Its official page describes the ETF flow table as updated in real time and its site shows “All rights reserved”. No clear explicit public grant permitting automated long-term raw-response retention, republication, or redistribution was located in the reviewed official pages. | **UNRESOLVED — do not retain raw response bodies in the durable archive until written permission or a clear applicable license is recorded.** Public visibility and the ability to read/cite a value are not treated as permission for bulk archival or redistribution. | Keep the source as the priority research/reference source, but until permission is established store no raw body. The rights gate must not be bypassed by a “CLEARED” label without a reviewable evidence reference. Contact the publisher for explicit permission covering automated retrieval, long-term internal retention, backups, normalization, and any user-facing republication. |
+| **SoSoValue** | The reviewed website Terms of Use (last modified 2025-01-23) limit website content to personal, non-commercial use and prohibit reproducing, distributing, republishing, downloading/storing/transmitting content beyond stated exceptions; automated and manual monitoring/copying are also prohibited without prior written consent. A separate API exists, but the reviewed website terms do not establish a clear API-specific archival/reuse grant. | **UNRESOLVED — do not archive raw website/API payloads or automate capture for durable use until the applicable API agreement/terms and written storage/reuse permissions are verified.** An API key alone is not a data license. | Require written/API-specific confirmation of automated access, retention duration, backups, derived data, internal analysis, and external display/redistribution. Treat TFTC's explicit CC BY 4.0 publication as the currently usable archival route, while retaining the source lineage caveat. |
+
+Evidence pages reviewed:
+- TFTC data/license and lineage: https://www.tftc.io/bitcoin-etf-flows
+- CC BY 4.0 legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+- Farside official ETF data page: https://farside.co.uk/
+- SoSoValue Terms of Use: https://sosovalue.gitbook.io/helpdocument/resources/terms-of-use
+
+**Operational rule:** a source-rights record must be source-specific and use-case-specific. CLEARED means the reviewed evidence expressly covers the proposed storage and use; it is not a generic claim that the website is public. For the current research archive, TFTC is the only source in this review with an explicit public reuse license. Farside remains the preferred research reference but its raw-response archive is blocked; SoSoValue raw-response archival is blocked pending API-specific clearance. Do not silently replace missing Farside rows with TFTC/SoSoValue values or call the TFTC copy independent confirmation.
+
+## 10. Independent archive restore — implemented offline verifier, real infrastructure still pending
+
+Independent recovery is a restore from a separate failure domain, not a second folder on the same VPS and not a temporary GitHub Actions artifact. Required sequence:
+
+1. Write an immutable snapshot to the private primary evidence store. Never put raw payloads, rights files, credentials, or captured responses in this public repository.
+2. Copy the approved snapshot to an encrypted backup destination outside the primary VPS/account/failure domain. Keep encryption and access credentials separate from the evidence directory.
+3. Capture a restore receipt containing schema_version 1, backup_completed_at, restore_tested_at, destination_class, independent_failure_domain true, restore_result PASS, and evidence_ref. The evidence reference must point to independently reviewable backup-provider logs/audit records and the restore report; a self-written JSON assertion alone is not proof.
+4. Restore the snapshot to a new isolated directory, not over the primary. Run the verifier against both copies. It checks each copy's full checksum manifest and requires identical snapshot ID, reporting date, file count and archive-record SHA-256. Any missing/changed file fails closed.
+5. Run the independent-restore mode:
+   node scripts/verify-btc-etf-evidence-archive.mjs --primary-dir <primary-snapshot> --restored-dir <restored-snapshot> --receipt <restore-receipt.json>
+   A passing result proves local byte integrity and validates the required receipt fields. It cannot independently prove the backup provider/account/failure-domain claim; that requires checking the referenced provider evidence.
+6. Record the report, receipt, timestamps, destination class and verification result in the private operations evidence. Repeat on a scheduled cadence and after backup configuration changes. Do not prune versions until retention policy and reference checks are approved.
+
+The code path and regression tests for independent-restore comparison are now added to the PR branch. **No real independent backup has been created or restored:** there is no provisioned VPS/independent backup target yet, and source rights for raw Farside/SoSoValue responses remain unresolved. A same-runner fixture test is only a software test, not an operational restore certification. BTC therefore remains not_evaluable.
