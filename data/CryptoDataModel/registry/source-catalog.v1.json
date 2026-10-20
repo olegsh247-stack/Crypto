@@ -548,7 +548,7 @@
       "url": "https://fred.stlouisfed.org/series/DTWEXBGS",
       "access_mode": "public",
       "operational_status": "candidate",
-      "data_role": "cross_check",
+      "data_role": "review_only",
       "credential_env": null,
       "polling": {
         "mode": "daily",
@@ -565,7 +565,7 @@
       },
       "terms_status": "series_semantics_review_required",
       "notes": "Not a substitute for ICE DXY and must not be assigned to metric macro.dxy.",
-      "registry_status": "registered",
+      "registry_status": "candidate_unregistered",
       "documentation_url": "https://fred.stlouisfed.org/series/DTWEXBGS"
     },
     {
