@@ -1425,3 +1425,9 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 - Fixed `.github/workflows/btc-public-source-staging.yml`: source catalog and its validator are now included in path triggers, the catalog contract validator runs in the staging validation job, and the read-only capture job timeout is 8 minutes rather than 3 to avoid prematurely cutting off the bounded multi-source probe. Commit: `beffc512c7cd42a566ad979c488ba6ea0b5cddb1`.
 - The commit message requests the staging capture. The connected GitHub run/status lookup still returns no run/status data for the current head, so execution and pass/fail are not confirmed. Local isolated issuance tests passed 6/6; full staging validation remains pending.
 - PR #83 remains Draft and non-mergeable due to history divergence; do not merge blindly. No production writes, source-priority changes, scenario evaluation/state changes or deployment.
+
+
+## 2026-10-20 — Direct Mempool tip endpoint probe
+
+- A fresh read-only fetch of `https://mempool.space/api/blocks` returned a block list whose first row included height **972366**, hash `000000000000000000015c59b038d71458c626b4d3e5de251a20f7fcba08f77d`, and block timestamp **2026-10-20 18:40:29 UTC**. This confirms the endpoint response shape needed by the new capture parser.
+- The versioned inclusive-height subsidy calculation gives a research-only theoretical issuance candidate of **20,101,146.875 BTC** at height 972366 (15 blocks after the previously reviewed height 972351). This is not economic circulating supply and does not pass the full provenance gate: this direct probe did not produce a saved raw artifact, exact retrieval timestamp, or response SHA-256. The staging capture remains the route to a provenance-grade record.
