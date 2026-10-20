@@ -8,6 +8,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseFarsideEtfTable } from "./parse-farside-etf-table.mjs";
+import { protocolIssuanceBtcThroughHeight } from "./bitcoin-protocol-issuance.mjs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -365,9 +366,42 @@ await capture({
   }
 });
 
-// Capture the current chain tip separately from the daily supply chart. The
-// protocol issuance calculation is a candidate only; height/hash reorg handling and
-// the metric's canonical source contract remain separate acceptance gates.
+// Bind protocol issuance to a concrete block identity rather than height alone.
+// The first row is treated as tip only after validating its height, hash and timestamp.
+await capture({
+  name: "mempool-tip-block-identity-issuance-candidate",
+  metricId: "supply.circulating",
+  sourceId: "network.primary",
+  url: "https://mempool.space/api/blocks",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("mempool blocks response has no rows");
+    const tip = rows[0];
+    const height = Number(tip.height);
+    const hash = String(tip.id ?? "");
+    const timestamp = Number(tip.timestamp);
+    if (!Number.isSafeInteger(height) || height < 0) throw new Error("mempool tip block has invalid height");
+    if (!/^[0-9a-f]{64}$/i.test(hash)) throw new Error("mempool tip block has invalid hash");
+    if (!Number.isSafeInteger(timestamp) || timestamp <= 0) throw new Error("mempool tip block has invalid timestamp");
+    return {
+      latest_tip_height: height,
+      latest_tip_hash: hash.toLowerCase(),
+      latest_tip_block_timestamp: new Date(timestamp * 1000).toISOString(),
+      latest_tip_timestamp_epoch_seconds: timestamp,
+      protocol_issuance_candidate_btc: protocolIssuanceBtcThroughHeight(height),
+      issuance_methodology: "bitcoin-subsidy-schedule-through-inclusive-tip-height-v1",
+      halving_interval_blocks: 210000,
+      initial_subsidy_btc: 50,
+      unit: "BTC",
+      source_observation_timestamp: new Date(timestamp * 1000).toISOString(),
+      tip_identity_status: "HEIGHT_HASH_TIMESTAMP_CAPTURED",
+      note: "Research-only theoretical issuance bound to height+hash+block timestamp. The tip can reorganize; recapture and compare hash at the same height before accepting any observation."
+    };
+  }
+});
+
+// Capture the current chain tip height separately as a cross-check. The
+// height-only response does not replace the block-identity observation above.
 await capture({
   name: "mempool-tip-height-issuance-candidate",
   metricId: "supply.circulating",
@@ -376,18 +410,9 @@ await capture({
   parse: body => {
     const height = Number(body.trim());
     if (!Number.isSafeInteger(height) || height < 0) throw new Error("mempool tip height is not a non-negative integer");
-    let remainingBlocks = height + 1;
-    let subsidySats = 50 * 100_000_000;
-    let totalSats = 0;
-    while (remainingBlocks > 0 && subsidySats > 0) {
-      const blocksThisEra = Math.min(remainingBlocks, 210_000);
-      totalSats += blocksThisEra * subsidySats;
-      remainingBlocks -= blocksThisEra;
-      subsidySats = Math.floor(subsidySats / 2);
-    }
     return {
       latest_tip_height: height,
-      protocol_issuance_candidate_btc: totalSats / 100_000_000,
+      protocol_issuance_candidate_btc: protocolIssuanceBtcThroughHeight(height),
       issuance_methodology: "bitcoin-subsidy-schedule-through-inclusive-tip-height-v1",
       halving_interval_blocks: 210000,
       initial_subsidy_btc: 50,
