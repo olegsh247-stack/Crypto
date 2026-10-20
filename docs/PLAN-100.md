@@ -2704,3 +2704,11 @@ Farside all-data and TFTC both returned HTTP 200 in the same capture. Five lates
 - The Kraken trade probe now reports age at capture and whether the latest trade is within the 1-hour freshness window; future timestamps and non-finite/non-positive prices are rejected. This is a diagnostic capture result, not an approved runtime metric or scenario readiness decision.
 - Commit: `bcdcf493e9b2b227cf991775de2219f34a6dbe31`. A read-only staging capture was requested by the commit message, but no current-head CI/status result is available through the connected status/run lookup. Verification remains pending; do not claim a pass.
 - BTC remains `not_evaluable`. No production writes, runtime registry changes, scenario-state changes, deployment, or merge.
+
+
+## 2026-10-20 — Bind issuance candidate to Bitcoin block identity
+
+- Added `https://mempool.space/api/blocks` as a registered, review-only endpoint in `data/CryptoDataModel/registry/source-catalog.v1.json`. Capture requires the current block-list row to provide valid height, 64-character block hash and Unix block timestamp; records retrieval time separately and retains the height-only endpoint as a cross-check.
+- Extracted theoretical issuance calculation into `scripts/bitcoin-protocol-issuance.mjs`, using exact integer satoshis and the 210,000-block halving interval. Six isolated Node 22 tests passed locally, including height 972351 => 20,101,100 BTC and the first two halving boundaries. This remains theoretical protocol issuance, not economic circulating supply.
+- Added the test to `.github/workflows/btc-public-source-staging.yml` and `/api/blocks` to `scripts/validate-source-catalog.mjs`. Full GitHub staging result is still unconfirmed via available status/run lookup; no CI pass is claimed.
+- Relevant commit: `9aeebeeeb542c4b7117a5448efc72e603bdc0b0b`; supporting catalog/workflow/test commits precede it. No runtime source-priority change, production write, scenario evaluation, state/probability change, deployment, or merge. BTC remains `not_evaluable`.
