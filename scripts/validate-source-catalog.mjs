@@ -114,6 +114,7 @@ const captureEndpointFamilies = [
   { host: "api.bybit.com", path: "/v5/market/recent-trade" },
   { host: "mempool.space", path: "/api/v1/mining/hashrate/1w" },
   { host: "mempool.space", path: "/api/v1/mining/blocks/fees/1w" },
+  { host: "mempool.space", path: "/api/blocks" },
   { host: "farside.co.uk", path: "/btc/" },
   { host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/" },
   { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json" }
