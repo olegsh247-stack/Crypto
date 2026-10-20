@@ -389,32 +389,6 @@ await capture({
   }
 });
 
-// Candidate circulating-supply source for field/date/unit inspection only. It is
-// not added to the runtime source registry or approved as a canonical input here.
-await capture({
-  name: "blockchain-com-total-bitcoins",
-  metricId: "supply.circulating",
-  sourceId: "network.blockchain_com.candidate",
-  url: "https://api.blockchain.info/charts/total-bitcoins?timespan=30days&format=json&cors=true",
-  parse: body => {
-    const data = JSON.parse(body);
-    const rows = Array.isArray(data.values) ? data.values : [];
-    const latest = rows.reduce((best, row) => !best || Number(row.x) > Number(best.x) ? row : best, null);
-    const epochSeconds = latest ? Number(latest.x) : NaN;
-    const value = latest ? Number(latest.y) : NaN;
-    return {
-      chart_name: data.name ?? null,
-      unit: data.unit ?? null,
-      period: data.period ?? null,
-      description: data.description ?? null,
-      row_count: rows.length,
-      latest_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-      latest_value: Number.isFinite(value) ? value : null,
-      note: "Candidate circulating-supply series; inspect date lag, units, and theoretical issuance methodology before accepting."
-    };
-  }
-});
-
 await capture({
   name: "farside-btc-etf-page",
   metricId: "institutional.etf_net_flow",
