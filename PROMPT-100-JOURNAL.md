@@ -282,3 +282,12 @@
 - The 2026-10-20 Farside row changed from a placeholder with missing fund values/displayed zero to a complete reported row totaling +23.2 USDm. The old placeholder must not be interpreted as a confirmed zero.
 - For 2026-10-21, SoSoValue reports +528.40023714 USDm while Farside reports +524.8 USDm. Under the documented priority rule, select SoSoValue automatically; preserve the ~3.60023714 USDm difference as reconciliation evidence. TFTC matches SoSoValue but shares its lineage and is not independent corroboration. SoSoValue 2026-10-20 (+23.16242251 USDm) reconciles to rounded Farside +23.2 USDm; 2026-10-19 (+526.59599803 USDm) reconciles to rounded Farside +526.7 USDm.
 - ETF source selection is now documented in Plan 100 and the ETF acceptance contract. This remains review-only: session-aware freshness, timestamp semantics and source lineage still need acceptance; no production ingestion.
+
+## 2026-10-22 — latest BTC recapture and 132-block overlap check
+
+- BTC Public Source Staging [run #39499686294](https://github.com/olegsh247-stack/Crypto/actions/runs/39499686294), attempt 4, succeeded. Artifact 12447343991 captured at 2026-10-22T18:07:06Z; manifest confirms review-only mode, no production database access and no production writes.
+- Kraken XBT/USD: 81,004.30 USD/BTC observed at 18:07:05.599Z and retrieved at 18:07:06.955Z; fresh at capture time.
+- New 144-block fee window 972497–972640: fees 303,418,820 sats (3.03418820 BTC), subsidy 450 BTC, ratio 0.674264%. Compared with the previous window 972485–972628, all 132 overlapping blocks had identical block hash, parent hash and per-block fees; tip/boundary hashes were stable during capture.
+- Blockchain.com chart point: 20,101,440.625 BTC at 2026-10-21T11:11:52Z. Protocol-scheduled maximum issuance at tip height 972640: 20,102,003.125 BTC; difference 562.5 BTC. Treat as distinct metrics, not values to average or substitute. The chart is not a live tip reading; economic circulating supply remains separate from protocol-scheduled issuance.
+- SoSoValue remains priority for ETF aggregates: 21 Oct +528.40023714 USDm, 20 Oct +23.16242251 USDm, 19 Oct +526.59599803 USDm. Farside 21 Oct +524.8 USDm; retain the discrepancy for audit, select SoSoValue automatically.
+- DXY was blocked by the capture's access-terms gate and remains optional. No production ingestion/writes, runtime registry change, deployment, merge or scenario evaluation. BTC remains not_evaluable.
