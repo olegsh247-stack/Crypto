@@ -1915,3 +1915,12 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Если SoSoValue недоступен или не проходит базовую проверку, не переключаться молча на другой источник: оставить вход blocked и повторить сбор.
 - Приоритет не отменяет проверок свежести относительно завершённой US-сессии, полноты строки, retrieval timestamp, происхождения, исправлений и повторяемости снимков. До прохождения этих ворот значение остаётся review-only.
 - Это документированное исследовательское правило; оно само по себе не меняет runtime registry, production source priority, ingestion или состояние BTC-сценария.
+
+## 2026-10-22 — текущий read-only BTC recapture
+
+- Latest successful BTC Public Source Staging run #39499686294, attempt 4; artifact 12447343991, capture time 2026-10-22T18:07:06Z. The artifact explicitly confirms read-only staging with no production database access or production writes.
+- Kraken XBT/USD latest trade was 81,004.30 USD/BTC at 2026-10-22T18:07:05.599Z; retrieval 18:07:06.955Z. It was fresh at capture, not a promise of freshness at a later scenario calculation.
+- Fee window 972497–972640: 144 blocks, 303,418,820 sats (3.03418820 BTC) fees, 450 BTC subsidy, fee/subsidy ratio 0.674264%. Tip/boundary hashes were stable during capture. Compared with window 972485–972628, all 132 overlapping blocks had identical block hash, parent hash and per-block fees.
+- SoSoValue remains the selected ETF aggregate source: 2026-10-21 +528.40023714 USDm; 2026-10-20 +23.16242251 USDm; 2026-10-19 +526.59599803 USDm. Farside 21 Oct displays +524.8 USDm; record the ~3.60023714 USDm discrepancy but automatically use SoSoValue under the source-priority rule.
+- The latest Blockchain.com supply-chart point is 20,101,440.625 BTC at 2026-10-21T11:11:52Z. Protocol-scheduled maximum issuance at captured tip height 972640 calculates to 20,102,003.125 BTC, a difference of 562.5 BTC. These are not interchangeable metrics: keep provider-defined economic/circulating supply separate from protocol-scheduled issuance and do not blend them. The chart point is not a live tip observation.
+- DXY remains optional and was blocked by the staging workflow's access-terms gate. BTC remains not_evaluable until required inputs pass readiness; no production ingestion, registry/runtime source-priority change, scenario evaluation, deployment or merge.
