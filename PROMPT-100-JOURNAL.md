@@ -275,3 +275,10 @@
 - SoSoValue latest aggregate rows: 2026-10-21 +528.40023714 USDm; 2026-10-20 +23.16242251 USDm; 2026-10-19 +526.59599803 USDm. For 2026-10-21, SoSoValue is selected under the priority rule. ETF remains review-only pending the existing session/freshness and revision gates.
 - Protocol-issued supply and Blockchain.com chart supply remain semantically distinct. No economic circulating-supply candidate is approved from protocol issuance. DXY was blocked by the capture's access-terms gate and remains optional context.
 - No runtime registry/source-priority change, production ingestion/write, deployment, merge or scenario evaluation. BTC remains not_evaluable until required inputs pass readiness.
+
+## 2026-10-22 — ETF snapshot comparison: SoSoValue selected
+
+- Compared Farside all-data baseline retrieved at 2026-10-20T21:21:35.339Z with the fresh snapshot retrieved at 2026-10-22T16:21:07.086Z (about 42.99 hours apart). Of 712 overlapping dated rows, one row changed and two rows were added; no rows were removed.
+- The 2026-10-20 Farside row changed from a placeholder with missing fund values/displayed zero to a complete reported row totaling +23.2 USDm. The old placeholder must not be interpreted as a confirmed zero.
+- For 2026-10-21, SoSoValue reports +528.40023714 USDm while Farside reports +524.8 USDm. Under the documented priority rule, select SoSoValue automatically; preserve the ~3.60023714 USDm difference as reconciliation evidence. TFTC matches SoSoValue but shares its lineage and is not independent corroboration. SoSoValue 2026-10-20 (+23.16242251 USDm) reconciles to rounded Farside +23.2 USDm; 2026-10-19 (+526.59599803 USDm) reconciles to rounded Farside +526.7 USDm.
+- ETF source selection is now documented in Plan 100 and the ETF acceptance contract. This remains review-only: session-aware freshness, timestamp semantics and source lineage still need acceptance; no production ingestion.
