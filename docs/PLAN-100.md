@@ -1904,3 +1904,14 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Additional comparison found the old PR's standalone snapshot diff and protocol-issuance scripts overlap existing current-main tools (`scripts/compare-btc-etf-snapshots.mjs`, `scripts/btc-protocol-supply.mjs`) that are already wired into the staging workflow. A temporary transfer of duplicate legacy files was immediately reverted; the final branch does not contain those duplicates.
 - Decision: no runtime or registry code from PR #83 is transferred yet. Its readiness checks are valuable but require a coordinated schema/contract change and regression coverage; its old candidate normalizer is superseded. Continue with current-main tools and real review-only API captures; inspect the existing ETF compare/parser test coverage for any narrow missing regression before changing code.
 - Current branch comparison remains 0 commits behind `main`; PR #84 remains draft and mergeable. No merge/deploy/production mutation occurred. BTC remains `not_evaluable` pending fresh required observations and readiness acceptance.
+
+## 2026-10-22 — обязательное правило приоритета ETF-источников
+
+При конфликте агрегированных дневных net-flow значений BTC spot ETF приоритет имеет SoSoValue. Это решение пользователя заменяет прежние формулировки, где Farside назывался приоритетным источником или конфликт оставался нерешённым.
+
+- Для institutional.etf_net_flow автоматически выбирать значение SoSoValue, если оно успешно получено и проходит базовую проверку даты сессии, структуры и единиц.
+- Farside использовать для сверки и детализации по фондам; TFTC считать производным контрольным источником, если его lineage указывает на SoSoValue/Farside.
+- Расхождение фиксировать в evidence/journal, но не задавать пользователю вопрос о выборе. Не усреднять значения.
+- Если SoSoValue недоступен или не проходит базовую проверку, не переключаться молча на другой источник: оставить вход blocked и повторить сбор.
+- Приоритет не отменяет проверок свежести относительно завершённой US-сессии, полноты строки, retrieval timestamp, происхождения, исправлений и повторяемости снимков. До прохождения этих ворот значение остаётся review-only.
+- Это документированное исследовательское правило; оно само по себе не меняет runtime registry, production source priority, ingestion или состояние BTC-сценария.
