@@ -307,3 +307,15 @@
 - Read-only inspection found the Mempool protocol-issued-supply candidate still carried canonical metric ID `monetary.circulating_supply`, despite being labelled review-only. This risks confusing protocol-scheduled issuance with the product's economic circulating-supply metric.
 - Updated `scripts/capture-btc-public-sources.mjs`: protocol-derived Mempool supply and the Blockchain.com total-issued-supply chart are no longer assigned to the canonical metric ID; proposed `candidate_metric_id: monetary.protocol_issued_supply` is separate and remains unregistered/unapproved.
 - No registry/seed/runtime or production observation changes. Source-staging run was triggered by the watched script change; result pending at time of this entry.
+
+
+## 2026-10-23 — fresh source recapture, ETF comparison, and supply contract correction
+
+- BTC Public Source Staging [run #39921382976](https://github.com/olegsh247-stack/Crypto/actions/runs/39921382976) succeeded; artifact 12487067719; read-only manifest confirms no production database access/writes. Source Catalog Contract Validation and VPS API Build Rehearsal also succeeded on the capture commit.
+- Kraken XBT/USD captured 81,449.40 USD/BTC (observed 07:58:43.968Z, retrieved 07:58:44.683Z). Current-at-capture only; freshness must be rechecked at calculation time.
+- Farside all-data page captured successfully (page date 23 Oct, latest reported session 22 Oct, total -635.6 USDm, all 12 fund values reconciled). Farside landing page itself returned HTTP 403; the all-data endpoint remains usable for review.
+- Baseline Farside snapshot 20 Oct 21:21:46Z and latest 23 Oct 07:58:54Z are 58.62 hours apart. The 20 Oct row changed from unreported placeholder/zero display to reported +23.2 USDm; 21 Oct +524.8 and 22 Oct -635.6 were added; no overlapping rows removed. SoSoValue 22 Oct -635.492639395 USDm differs from Farside by ~0.107361 USDm; choose Farside by priority and retain the difference. SoSoValue 21 Oct +528.40023714 vs Farside +524.8 remains a larger ~3.600237 USDm discrepancy.
+- New 144-block fee window 972593–972736: 260,209,124 sats fees (2.60209124 BTC), 450 BTC subsidy, ratio 0.5782425%. All 48 overlapping blocks against the previous 972497–972640 window matched block hash, parent hash and per-block fees; boundaries/tip remained stable during capture. This is not permanent finality proof or deployed API parity.
+- Mempool protocol issuance at verified tip 972736 is 20,102,303.125 BTC at block time 07:54:35Z; Blockchain.com chart remains 20,101,440.625 BTC at 21 Oct 11:11:52Z, 862.5 BTC lower. They remain distinct metrics.
+- Fixed a source-capture semantic defect: total-issued-supply candidates no longer carry canonical `monetary.circulating_supply` as their metric ID; the proposed `monetary.protocol_issued_supply` is separately labelled and remains unregistered/unapproved. No registry, seed, runtime, production observation or scenario state changed.
+- Farside ETF exact row publication/observation time, session-aware freshness, finality/revision contract and durable retention/reuse remain unresolved; BTC stays `not_evaluable`.
