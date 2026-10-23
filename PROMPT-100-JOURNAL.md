@@ -300,3 +300,10 @@
 - Если Farside недоступен или строка неполная/placeholder, не делать тихий fallback на SoSoValue/TFTC: вход остаётся blocked.
 - Пример 2026-10-21: Farside +524.8 USDm, SoSoValue +528.40023714 USDm; разница ~3.60023714 USDm сохраняется в аудите, но исследовательское значение — Farside +524.8 USDm. Значения не усреднялись.
 - Это решение задаёт правило выбора, но не снимает блокеров по свежести, точному времени публикации/наблюдения, revision/finality и условиям архивирования. BTC остаётся not_evaluable до прохождения readiness gate.
+
+
+## 2026-10-23 — supply candidate no longer mislabels total issuance
+
+- Read-only inspection found the Mempool protocol-issued-supply candidate still carried canonical metric ID `monetary.circulating_supply`, despite being labelled review-only. This risks confusing protocol-scheduled issuance with the product's economic circulating-supply metric.
+- Updated `scripts/capture-btc-public-sources.mjs`: protocol-derived Mempool supply and the Blockchain.com total-issued-supply chart are no longer assigned to the canonical metric ID; proposed `candidate_metric_id: monetary.protocol_issued_supply` is separate and remains unregistered/unapproved.
+- No registry/seed/runtime or production observation changes. Source-staging run was triggered by the watched script change; result pending at time of this entry.
