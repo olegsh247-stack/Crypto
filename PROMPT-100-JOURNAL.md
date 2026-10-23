@@ -326,3 +326,11 @@
 - Read-only staging [run #39921752769](https://github.com/olegsh247-stack/Crypto/actions/runs/39921752769) succeeded; artifact 12486659972. All capture tests passed, source catalog validation passed, BTC readiness gate passed, VPS API rehearsal passed, and release workflow static validation passed on commit `60c261cadb9f93a0dc351082dd971698d700ac03`.
 - Verified both total-issued-supply candidates now have `metric_id: null` and `candidate_metric_id: monetary.protocol_issued_supply`; this proposed ID is not registered or production-approved.
 - Latest Kraken quote in the follow-up capture: 81,503.90 USD/BTC observed 2026-10-23T08:01:43.812Z and retrieved 08:01:45.702Z. The 144-block fee window, Farside latest row and Mempool tip were unchanged from the preceding capture. No production writes or scenario-state changes.
+
+
+## 2026-10-23 — ETF session freshness contract and current CI
+
+- Added `docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md`: explicit session-date vs observation-time semantics, no fabricated `observed_at`, Farside priority/no silent fallback, and outstanding calendar/publication-window, revision/finality, and durable retention/restore gates.
+- Kept readiness code unchanged: the Farside source does not supply an exact row publication timestamp, so the current ETF gate remains fail-closed rather than being weakened to pass the captured row. BTC remains `not_evaluable`.
+- Latest PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` CI completed successfully: BTC Scenario Readiness Gate run #39921940234; Validate VPS Release Workflow run #39921940328; the contemporaneous source-catalog validation and VPS API rehearsal also completed successfully. The readiness unit-test job explicitly passed the offline BTC scenario fixture step. These are code/fixture checks, not live scenario readiness evidence.
+- No production DB access/writes, ingestion, registry/runtime changes, scenario-state/probability changes, deployment, or merge.
