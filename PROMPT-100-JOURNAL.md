@@ -350,3 +350,10 @@
 - Corrected a capture manifest collision: parsed provider field `name` had overwritten the capture item name. The latest artifact now records `name: coingecko-bitcoin-circulating-supply` and separate `asset_name: Bitcoin`.
 - Same-run Mempool protocol-scheduled issuance was 20,102,312.5 BTC at height 972739; it is 78.5 BTC above CoinGecko total supply and 91.5 BTC above CoinGecko circulating supply. Blockchain.com chart is 20,101,440.625 BTC with last point 2026-10-21T11:11:52Z. Keep source/method differences explicit; do not average/substitute. `last_updated` remains unapproved as a supply-specific `observed_at`; candidate remains review-only.
 - The source-catalog validation and BTC readiness gate passed on the preceding candidate code commit; full CI for the latest head is still being checked. No production DB access/writes, ingestion, registry/seed/runtime changes, scenario-state changes, deployment, or merge.
+
+
+## 2026-10-23 — fee/subsidy overlap re-confirmed on 141 blocks
+
+- BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, captured window 972596–972739: 258,009,739 sats fees / 450 BTC subsidy = 0.573355%. Tip remained stable at height 972739 and the recorded hash.
+- Compared with baseline window 972593–972736 from run #39921752769, all 141 overlapping heights 972596–972736 matched block hash, parent hash and per-block fees; zero overlap differences. Evidence JSON hashes are recorded in the fee acceptance document.
+- Reorg-consistency evidence improved; permanent finality and deployed API version parity remain unproven. Fee/subsidy remains review-only; no ingestion/runtime/production change.
