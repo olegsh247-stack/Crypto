@@ -1947,3 +1947,10 @@ The read-only capture now keeps total-issued-supply candidates separate from the
 ## 2026-10-23 — follow-up capture after supply metadata correction
 
 The follow-up read-only staging run [#39921752769](https://github.com/olegsh247-stack/Crypto/actions/runs/39921752769) succeeded; artifact 12486659972. It confirms the corrected manifest now carries `metric_id: null` and `candidate_metric_id: monetary.protocol_issued_supply` for both the Mempool-derived issuance and Blockchain.com total-issued-supply candidates. This is a candidate label only; no metric registry entry was created. Latest Kraken XBT/USD in this follow-up capture: 81,503.90 USD/BTC observed at 2026-10-23T08:01:43.812Z, retrieved at 08:01:45.702Z. Fee window, Farside latest session and supply tip matched the preceding capture. BTC remains review-only/not_evaluable.
+
+
+## 2026-10-23 — ETF session-aware freshness contract formalized
+
+Added [docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md](docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md). It separates ETF session date from exact observation/publication time, forbids substituting retrieval time/HTTP Date/midnight UTC for `observed_at`, records the Farside-first/no-silent-fallback rule, and defines the remaining acceptance gates: versioned US ETF session calendar and publication window, revision/finality treatment, and durable snapshot retention/restore. The current timestamp-based readiness gate is intentionally unchanged; ETF remains blocked and BTC remains `not_evaluable` until a tested session-aware policy exists. No runtime/registry/source-priority or production changes.
+
+Latest CI on PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` completed successfully: BTC Scenario Readiness Gate, Source Catalog Contract Validation, VPS API Build Rehearsal, and Validate VPS Release Workflow. The readiness workflow's unit-test job explicitly passed the deterministic offline BTC fixture step. This confirms test reproducibility only, not current-data readiness.
