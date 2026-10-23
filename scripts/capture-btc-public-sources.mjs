@@ -267,11 +267,12 @@ manifest.sources.push({
 });
 
 // Blockchain.com public chart reports total mined bitcoins ("in circulation") by daily timestamp.
-// Treat this as an external candidate only: it is not admitted by the current metric source-priority
-// contract, and total issued supply is not a measure of economically spendable coins.
+// This is total issuance, not the product's economic circulating-supply metric. Keep it unlinked
+// from the canonical registry until a separate protocol-issued-supply metric is explicitly approved.
 await capture({
   name: "blockchaincom-total-bitcoins-supply",
-  metricId: "monetary.circulating_supply",
+  metricId: null,
+  candidateMetricId: "monetary.protocol_issued_supply",
   sourceId: "analytics",
   url: "https://api.blockchain.info/charts/total-bitcoins?timespan=all&format=json",
   parse: body => {
@@ -309,7 +310,10 @@ async function captureMempoolProtocolSupply() {
   const blockUrl = hash => `https://mempool.space/api/block/${hash}`;
   const item = {
     name,
-    metric_id: "monetary.circulating_supply",
+    // This is consensus-scheduled issuance, not economic circulating supply.
+    // No protocol-issued-supply metric is registered yet, so do not label it canonical.
+    metric_id: null,
+    candidate_metric_id: "monetary.protocol_issued_supply",
     source_id: "network.primary",
     url: tipHeightUrl,
     related_urls: [ "https://mempool.space/api/block-height/{height}", "https://mempool.space/api/block/{hash}" ],
