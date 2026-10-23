@@ -300,6 +300,52 @@ await capture({
 });
 
 
+// CoinGecko exposes a provider-defined circulating_supply field. Keep this as a
+// candidate until its supply timestamp semantics and freshness contract are proven.
+await capture({
+  name: "coingecko-bitcoin-circulating-supply",
+  metricId: null,
+  candidateMetricId: "monetary.circulating_supply",
+  sourceId: "market.coingecko",
+  url: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.id !== "bitcoin") {
+      throw new Error("CoinGecko markets response must contain exactly the bitcoin row");
+    }
+    const row = rows[0];
+    const circulating = Number(row.circulating_supply);
+    const total = row.total_supply == null ? null : Number(row.total_supply);
+    const maximum = row.max_supply == null ? null : Number(row.max_supply);
+    if (!(circulating > 0) || !Number.isFinite(circulating)) {
+      throw new Error("CoinGecko circulating_supply is missing or invalid");
+    }
+    if (total !== null && (!Number.isFinite(total) || circulating > total)) {
+      throw new Error("CoinGecko circulating_supply exceeds or conflicts with total_supply");
+    }
+    if (maximum !== null && (!Number.isFinite(maximum) || maximum <= 0 || (total !== null && total > maximum))) {
+      throw new Error("CoinGecko total/max supply relationship is invalid");
+    }
+    const providerLastUpdated = row.last_updated ?? null;
+    return {
+      provider_asset_id: row.id,
+      symbol: row.symbol,
+      name: row.name,
+      circulating_supply_btc: circulating,
+      total_supply_btc: total,
+      max_supply_btc: maximum,
+      provider_last_updated: providerLastUpdated,
+      observed_at: null,
+      unit: "BTC",
+      methodology: "coingecko-provider-defined-circulating-supply-candidate-v1",
+      methodology_version: "1",
+      acceptance_status: "REVIEW_ONLY_SUPPLY_TIMESTAMP_SEMANTICS",
+      note: "Candidate only. Do not treat last_updated as the supply observation timestamp unless its field semantics are confirmed. No canonical metric_id and no ingestion."
+    };
+  }
+});
+
+
 /**
  * Review-only supply derivation from a consistency-checked Mempool tip.
  * Recheck height and block hash at the end to reject a moving/reorganized tip.
