@@ -959,6 +959,34 @@
       "notes": "Read-only research candidate for binding protocol-issuance calculation to a specific block identity; not a source-priority promotion.",
       "registry_status": "registered",
       "documentation_url": "https://mempool.space/docs/api/rest"
+    },
+    {
+      "catalog_id": "monetary.coingecko.bitcoin-circulating-supply.candidate",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "BTC circulating-supply candidate — public market endpoint",
+      "url": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "One bounded research capture at a time; respect variable public API rate limits. No scheduled polling or ingestion is implied."
+      },
+      "data_contract": {
+        "asset_pair": "BTC supply",
+        "unit": "BTC",
+        "observation_time": "Supply-specific observation timestamp not yet established; do not treat last_updated as observed_at without provider confirmation",
+        "period_semantics": "Provider-defined circulating supply in a market-data response; candidate only",
+        "revision_finality": "Provider may revise supply values; preserve raw snapshots and compare revisions before acceptance"
+      },
+      "terms_status": "public_api_docs_reviewed_candidate",
+      "notes": "Research candidate only for monetary.circulating_supply. No canonical metric link; live response schema, timestamp semantics, freshness and source terms must pass review.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/coins-markets"
     }
   ]
 }
