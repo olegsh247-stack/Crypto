@@ -330,7 +330,7 @@ await capture({
     return {
       provider_asset_id: row.id,
       symbol: row.symbol,
-      name: row.name,
+      asset_name: row.name,
       circulating_supply_btc: circulating,
       total_supply_btc: total,
       max_supply_btc: maximum,
