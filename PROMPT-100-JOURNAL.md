@@ -319,3 +319,10 @@
 - Mempool protocol issuance at verified tip 972736 is 20,102,303.125 BTC at block time 07:54:35Z; Blockchain.com chart remains 20,101,440.625 BTC at 21 Oct 11:11:52Z, 862.5 BTC lower. They remain distinct metrics.
 - Fixed a source-capture semantic defect: total-issued-supply candidates no longer carry canonical `monetary.circulating_supply` as their metric ID; the proposed `monetary.protocol_issued_supply` is separately labelled and remains unregistered/unapproved. No registry, seed, runtime, production observation or scenario state changed.
 - Farside ETF exact row publication/observation time, session-aware freshness, finality/revision contract and durable retention/reuse remain unresolved; BTC stays `not_evaluable`.
+
+
+## 2026-10-23 — follow-up capture verified candidate labels
+
+- Read-only staging [run #39921752769](https://github.com/olegsh247-stack/Crypto/actions/runs/39921752769) succeeded; artifact 12486659972. All capture tests passed, source catalog validation passed, BTC readiness gate passed, VPS API rehearsal passed, and release workflow static validation passed on commit `60c261cadb9f93a0dc351082dd971698d700ac03`.
+- Verified both total-issued-supply candidates now have `metric_id: null` and `candidate_metric_id: monetary.protocol_issued_supply`; this proposed ID is not registered or production-approved.
+- Latest Kraken quote in the follow-up capture: 81,503.90 USD/BTC observed 2026-10-23T08:01:43.812Z and retrieved 08:01:45.702Z. The 144-block fee window, Farside latest row and Mempool tip were unchanged from the preceding capture. No production writes or scenario-state changes.
