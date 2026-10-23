@@ -1942,3 +1942,8 @@ The read-only capture now keeps total-issued-supply candidates separate from the
 - Mempool protocol-issued supply at verified tip height 972736: 20,102,303.125 BTC, block timestamp 2026-10-23T07:54:35Z; old height 972640 candidate was 20,102,003.125 BTC (delta +300 BTC for 96 blocks). Blockchain.com chart remains at 20,101,440.625 BTC, last point 2026-10-21T11:11:52Z, now 862.5 BTC below the protocol issuance calculation; keep these as distinct metrics.
 - The capture code now leaves both protocol-issued supply candidates without canonical `metric_id`, recording the proposed candidate ID separately; this avoids mislabelling total issuance as economic circulating supply. No registry/seed/runtime or production observation changes.
 - DXY remains blocked by its access-terms gate and optional. BTC remains `not_evaluable` pending ETF session-aware freshness/finality/retention contract and remaining input acceptance checks.
+
+
+## 2026-10-23 — follow-up capture after supply metadata correction
+
+The follow-up read-only staging run [#39921752769](https://github.com/olegsh247-stack/Crypto/actions/runs/39921752769) succeeded; artifact 12486659972. It confirms the corrected manifest now carries `metric_id: null` and `candidate_metric_id: monetary.protocol_issued_supply` for both the Mempool-derived issuance and Blockchain.com total-issued-supply candidates. This is a candidate label only; no metric registry entry was created. Latest Kraken XBT/USD in this follow-up capture: 81,503.90 USD/BTC observed at 2026-10-23T08:01:43.812Z, retrieved at 08:01:45.702Z. Fee window, Farside latest session and supply tip matched the preceding capture. BTC remains review-only/not_evaluable.
