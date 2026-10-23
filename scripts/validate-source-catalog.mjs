@@ -117,7 +117,8 @@ const captureEndpointFamilies = [
   { host: "mempool.space", path: "/api/blocks" },
   { host: "farside.co.uk", path: "/btc/" },
   { host: "farside.co.uk", path: "/bitcoin-etf-flow-all-data/" },
-  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json" }
+  { host: "www.tftc.io", path: "/bitcoin-etf-flows/data.json" },
+  { host: "api.coingecko.com", path: "/api/v3/coins/markets" }
 ];
 for (const family of captureEndpointFamilies) {
   assert.ok(captureScript.includes(family.host) && captureScript.includes(family.path),
@@ -189,6 +190,15 @@ const semanticEndpointContracts = [
   { catalogId: "institutional.sosovalue.etf-candidate-output", sourceId: "institutional.sosovalue.candidate", host: "openapi.sosovalue.com", path: "/openapi/v1/etfs/summary-history", pair: "US spot BTC ETFs", unit: "USD million/day after normalization", role: "cross_check" }
 ];
 for (const contract of semanticEndpointContracts) assertCatalogContract(contract);
+assertCatalogContract({
+  catalogId: "monetary.coingecko.bitcoin-circulating-supply.candidate",
+  sourceId: "market.coingecko",
+  host: "api.coingecko.com",
+  path: "/api/v3/coins/markets",
+  pair: "BTC supply",
+  unit: "BTC",
+  role: "review_only"
+});
 
 // Negative contract tests prove that the parity gate rejects plausible semantic drift,
 // not just missing endpoint text. These operate on in-memory copies only.
