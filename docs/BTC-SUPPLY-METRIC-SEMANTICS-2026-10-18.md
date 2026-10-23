@@ -74,3 +74,8 @@ Read-only inspection of the current repository files found:
 - Economic circulating-supply definition and canonical source: not selected/verified.
 - No registry, SQL seed, runtime or observation changes made.
 - BTC scenario eligibility: unchanged; remains `not_evaluable`.
+
+
+## 2026-10-23 — candidate metadata semantics corrected
+
+The read-only source capture previously labelled the Mempool protocol-issuance candidate with the canonical metric ID `monetary.circulating_supply`, even though its role text said review-only. That identifier blurred two different metric meanings. In `scripts/capture-btc-public-sources.mjs`, the Mempool protocol-derived candidate now has `metric_id: null` and a separate proposed `candidate_metric_id: monetary.protocol_issued_supply`. The Blockchain.com total-issued-supply chart is likewise no longer assigned to the canonical circulating-supply metric. This does not register or approve a new metric; it prevents review-only total issuance from being mistaken for accepted economic circulating supply. The change is pending the current read-only staging run and CI validation.
