@@ -334,3 +334,10 @@
 - Kept readiness code unchanged: the Farside source does not supply an exact row publication timestamp, so the current ETF gate remains fail-closed rather than being weakened to pass the captured row. BTC remains `not_evaluable`.
 - Latest PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` CI completed successfully: BTC Scenario Readiness Gate run #39921940234; Validate VPS Release Workflow run #39921940328; the contemporaneous source-catalog validation and VPS API rehearsal also completed successfully. The readiness unit-test job explicitly passed the offline BTC scenario fixture step. These are code/fixture checks, not live scenario readiness evidence.
 - No production DB access/writes, ingestion, registry/runtime changes, scenario-state/probability changes, deployment, or merge.
+
+
+## 2026-10-23 — next circulating-supply API candidate recorded
+
+- Added `docs/BTC-ECONOMIC-CIRCULATING-SUPPLY-CANDIDATE-2026-10-23.md`: CoinGecko's Bitcoin market endpoint is the next candidate for a real read-only API capture because it exposes a distinct provider-defined `circulating_supply` field and documents its PoW supply methodology.
+- Important limitation: the current staging artifact does not contain a CoinGecko response. No live value, payload hash, or supply observation timestamp is claimed. The semantics of `last_updated` must be verified before using it as supply `observed_at`; candidate remains unapproved and the existing registry/seed provenance mismatch remains unresolved.
+- No registry, seed, source priority, runtime, production observation, ingestion, scenario evaluation, or deployment changes.
