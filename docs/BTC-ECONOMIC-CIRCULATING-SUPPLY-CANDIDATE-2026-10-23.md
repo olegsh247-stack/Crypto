@@ -25,9 +25,25 @@ Do not assume the response field `last_updated` is the exact observation time fo
 5. Establish whether the provider's timestamp supports the registry's 48-hour freshness contract; if not, retain the candidate as review-only.
 6. Preserve the existing registry/seed mismatch as a separate blocker: `network.primary` currently maps to Mempool while the historical seed methodology names Bitcoin Core and has no source URL. Do not change source priority, registry, seed or runtime merely to admit this candidate.
 
+## Read-only API capture — 2026-10-23
+
+BTC Public Source Staging [run #39922662062](https://github.com/olegsh247-stack/Crypto/actions/runs/39922662062), artifact 12487672810, captured the candidate endpoint with HTTP 200. The raw response was preserved in the review artifact; SHA-256 of the response body: `cc3245ff11f387388ed2218aa18560c702376aafcb3760e3cf7cec3592aa45c5`.
+
+- `circulating_supply`: **20,102,221 BTC**
+- `total_supply`: **20,102,234 BTC**
+- `max_supply`: **21,000,000 BTC**
+- Provider field `last_updated`: `2026-10-23T08:08:54Z`
+- Capture retrieval time: `2026-10-23T08:09:39.817Z`
+- Captured row identity: provider asset ID `bitcoin`, symbol `btc`.
+- The response passed the candidate parser's basic value checks: circulating supply is positive and no greater than total supply; total supply is no greater than max supply.
+
+The Mempool protocol-scheduled issuance capture in the same run was `20,102,312.5 BTC` at height `972739`, block hash `0000000000000000000071977ba12083b0e6ad3c20ed23bfaa818dd51fc5139a`. That is 91.5 BTC above CoinGecko's circulating supply and 78.5 BTC above CoinGecko's total supply. Blockchain.com reports `20,101,440.625 BTC` with its latest chart point dated `2026-10-21T11:11:52Z`; it is stale relative to this capture. Preserve all three values and their semantics; do not average or silently substitute them. The gap between protocol-scheduled issuance and provider supply needs reconciliation (for example, protocol-scheduled subsidies can exceed actually claimed coinbase rewards), not an automatic conclusion that any one source is wrong.
+
+**Timestamp gate remains blocked:** `last_updated` is a field on CoinGecko's market-data row; this capture does not prove it is the exact observation time of the supply field. Do not promote it to `observed_at` or use it to pass the 48-hour freshness contract without provider-field semantics evidence. The captured row remains review-only, with `observed_at: null`.
+
 ## Current decision
 
-CoinGecko is the next economic-circulating-supply candidate to test, not an approved replacement. The current staging artifact did not capture this endpoint, so no live value, observation timestamp, payload hash, or freshness result is claimed here. The Mempool value remains protocol-scheduled issuance; the Blockchain.com chart remains its own provider-defined total-mined series. Neither is promoted to canonical `monetary.circulating_supply`.
+CoinGecko is now a tested public API candidate, not an approved replacement. The response shape, numeric fields, response hash and retrieval time are captured. Supply timestamp semantics, freshness acceptance, source-priority decision, and the existing registry/seed provenance mismatch remain open. The candidate is not linked to canonical `monetary.circulating_supply`.
 
 BTC remains `not_evaluable` until the required supply contract and all other mandatory input gates pass. No registry/runtime/source-priority/seed change, production observation, ingestion, scenario evaluation, or deployment is authorized by this candidate note.
 
