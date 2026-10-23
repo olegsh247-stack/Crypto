@@ -341,3 +341,12 @@
 - Added `docs/BTC-ECONOMIC-CIRCULATING-SUPPLY-CANDIDATE-2026-10-23.md`: CoinGecko's Bitcoin market endpoint is the next candidate for a real read-only API capture because it exposes a distinct provider-defined `circulating_supply` field and documents its PoW supply methodology.
 - Important limitation: the current staging artifact does not contain a CoinGecko response. No live value, payload hash, or supply observation timestamp is claimed. The semantics of `last_updated` must be verified before using it as supply `observed_at`; candidate remains unapproved and the existing registry/seed provenance mismatch remains unresolved.
 - No registry, seed, source priority, runtime, production observation, ingestion, scenario evaluation, or deployment changes.
+
+
+## 2026-10-23 — CoinGecko supply candidate captured and identity bug fixed
+
+- Added CoinGecko `/api/v3/coins/markets?vs_currency=usd&ids=bitcoin` as a catalogued `review_only` / `candidate_unregistered` endpoint and added its read-only capture/parser to the BTC staging script. No canonical `metric_id`, registry admission, or ingestion.
+- BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, succeeded. CoinGecko HTTP 200: circulating 20,102,221 BTC, total 20,102,234 BTC, max 21,000,000 BTC; `last_updated=2026-10-23T08:08:54Z`; retrieval 08:10:46.889Z; payload SHA-256 `721d8f022a9c5444c4cb12b1274cecff064124ae9071b7aef14b8e5ef67aa379`. Basic value-order validation passed.
+- Corrected a capture manifest collision: parsed provider field `name` had overwritten the capture item name. The latest artifact now records `name: coingecko-bitcoin-circulating-supply` and separate `asset_name: Bitcoin`.
+- Same-run Mempool protocol-scheduled issuance was 20,102,312.5 BTC at height 972739; it is 78.5 BTC above CoinGecko total supply and 91.5 BTC above CoinGecko circulating supply. Blockchain.com chart is 20,101,440.625 BTC with last point 2026-10-21T11:11:52Z. Keep source/method differences explicit; do not average/substitute. `last_updated` remains unapproved as a supply-specific `observed_at`; candidate remains review-only.
+- The source-catalog validation and BTC readiness gate passed on the preceding candidate code commit; full CI for the latest head is still being checked. No production DB access/writes, ingestion, registry/seed/runtime changes, scenario-state changes, deployment, or merge.
