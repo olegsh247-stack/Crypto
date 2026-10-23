@@ -27,13 +27,13 @@ Do not assume the response field `last_updated` is the exact observation time fo
 
 ## Read-only API capture — 2026-10-23
 
-BTC Public Source Staging [run #39922662062](https://github.com/olegsh247-stack/Crypto/actions/runs/39922662062), artifact 12487672810, captured the candidate endpoint with HTTP 200. The raw response was preserved in the review artifact; SHA-256 of the response body: `cc3245ff11f387388ed2218aa18560c702376aafcb3760e3cf7cec3592aa45c5`.
+BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, recaptured the candidate endpoint with HTTP 200 after fixing a manifest-field collision. The raw response was preserved in the review artifact; SHA-256 of the response body: `721d8f022a9c5444c4cb12b1274cecff064124ae9071b7aef14b8e5ef67aa379`.
 
 - `circulating_supply`: **20,102,221 BTC**
 - `total_supply`: **20,102,234 BTC**
 - `max_supply`: **21,000,000 BTC**
 - Provider field `last_updated`: `2026-10-23T08:08:54Z`
-- Capture retrieval time: `2026-10-23T08:09:39.817Z`
+- Capture retrieval time: `2026-10-23T08:10:46.889Z`
 - Captured row identity: provider asset ID `bitcoin`, symbol `btc`.
 - The response passed the candidate parser's basic value checks: circulating supply is positive and no greater than total supply; total supply is no greater than max supply.
 
