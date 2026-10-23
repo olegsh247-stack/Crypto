@@ -268,7 +268,7 @@
 
 ## 2026-10-22 — ETF source priority and fresh BTC recapture
 
-- User decision recorded in docs/PLAN-100.md and docs/BTC-ETF-TWO-SNAPSHOT-ACCEPTANCE-2026-10-17.md: SoSoValue is the priority source for aggregate daily BTC spot ETF net flows. At conflicts, select SoSoValue automatically; use Farside for reconciliation/detail and TFTC as a lineage-dependent control source. Do not average and do not ask the user to arbitrate. If SoSoValue is unavailable or fails basic validation, keep the metric blocked rather than silently falling back.
+- Earlier provisional decision (superseded on 2026-10-23): SoSoValue was temporarily recorded as the priority source for aggregate daily BTC spot ETF flows. The final decision is Farside as priority; SoSoValue is cross-check only. See the 2026-10-23 entry below.
 - BTC Public Source Staging run #39499686294, attempt 3, succeeded; latest review artifact ID 12441161411, captured 2026-10-22T16:21:07Z. Manifest confirms read-only staging, no production database access, and no production writes.
 - Fresh Kraken XBT/USD trade: 81,518.10 USD/BTC observed 2026-10-22T16:21:04.382Z and retrieved 2026-10-22T16:21:07.086Z; candidate age at retrieval ~2.7 seconds. Binance primary endpoint returns HTTP 451; Binance market-data-only BTC/USDT fallback returns 200 but remains USDT-denominated and non-canonical. Bybit returns HTTP 403.
 - Fee window 972485–972628 contains 144 blocks and 304,650,986 sats fees (3.04650986 BTC), subsidy 450 BTC, fee/subsidy ratio 0.677002%. Boundary/tip hashes matched during capture. Compared with prior same-day window 972431–972574, all 90 overlapping heights 972485–972574 had zero differences in block hash, parent hash or per-block fees. This is pairwise consistency evidence, not permanent-finality proof; deployed API version parity remains unverified.
@@ -289,7 +289,7 @@
 - Kraken XBT/USD: 81,004.30 USD/BTC observed at 18:07:05.599Z and retrieved at 18:07:06.955Z; fresh at capture time.
 - New 144-block fee window 972497–972640: fees 303,418,820 sats (3.03418820 BTC), subsidy 450 BTC, ratio 0.674264%. Compared with the previous window 972485–972628, all 132 overlapping blocks had identical block hash, parent hash and per-block fees; tip/boundary hashes were stable during capture.
 - Blockchain.com chart point: 20,101,440.625 BTC at 2026-10-21T11:11:52Z. Protocol-scheduled maximum issuance at tip height 972640: 20,102,003.125 BTC; difference 562.5 BTC. Treat as distinct metrics, not values to average or substitute. The chart is not a live tip reading; economic circulating supply remains separate from protocol-scheduled issuance.
-- SoSoValue remains priority for ETF aggregates: 21 Oct +528.40023714 USDm, 20 Oct +23.16242251 USDm, 19 Oct +526.59599803 USDm. Farside 21 Oct +524.8 USDm; retain the discrepancy for audit, select SoSoValue automatically.
+- Capture values: SoSoValue 21 Oct +528.40023714 USDm, 20 Oct +23.16242251 USDm, 19 Oct +526.59599803 USDm; Farside 21 Oct +524.8 USDm. The later 2026-10-23 priority decision selects Farside +524.8 USDm for 21 Oct and retains the ~3.60023714 USDm difference for audit.
 - DXY was blocked by the capture's access-terms gate and remains optional. No production ingestion/writes, runtime registry change, deployment, merge or scenario evaluation. BTC remains not_evaluable.
 
 
