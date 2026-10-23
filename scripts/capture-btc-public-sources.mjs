@@ -34,10 +34,11 @@ const manifest = {
   ]
 };
 
-async function capture({ name, metricId, sourceId, url, parse }) {
+async function capture({ name, metricId, candidateMetricId, sourceId, url, parse }) {
   const item = {
     name,
     metric_id: metricId,
+    ...(candidateMetricId ? { candidate_metric_id: candidateMetricId } : {}),
     source_id: sourceId,
     url,
     retrieved_at: new Date().toISOString(),
