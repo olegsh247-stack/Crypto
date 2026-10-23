@@ -79,3 +79,10 @@ Read-only inspection of the current repository files found:
 ## 2026-10-23 — candidate metadata semantics corrected
 
 The read-only source capture previously labelled the Mempool protocol-issuance candidate with the canonical metric ID `monetary.circulating_supply`, even though its role text said review-only. That identifier blurred two different metric meanings. In `scripts/capture-btc-public-sources.mjs`, the Mempool protocol-derived candidate now has `metric_id: null` and a separate proposed `candidate_metric_id: monetary.protocol_issued_supply`. The Blockchain.com total-issued-supply chart is likewise no longer assigned to the canonical circulating-supply metric. This does not register or approve a new metric; it prevents review-only total issuance from being mistaken for accepted economic circulating supply. The change is pending the current read-only staging run and CI validation.
+
+
+## 2026-10-23 — fresh protocol-issuance recapture
+
+BTC Public Source Staging [run #39921382976](https://github.com/olegsh247-stack/Crypto/actions/runs/39921382976), artifact 12487067719, retrieved a consistent Mempool tip at height 972736 with block hash `00000000000000000000139b1d700a3c46ec2bfd273211010b793714d9e6bb6f` and block timestamp `2026-10-23T07:54:35Z`. Integer-satoshi protocol schedule gives `20,102,303.125 BTC` through that height inclusive. Tip height/hash were rechecked after capture and remained stable. The prior captured height 972640 gave `20,102,003.125 BTC`; 96 further blocks account for +300 BTC scheduled subsidy.
+
+Blockchain.com total-bitcoins chart remains at `20,101,440.625 BTC` with last point `2026-10-21T11:11:52Z`, so it is not a current tip observation and differs from the newer protocol issuance calculation by 862.5 BTC. Do not substitute or average these metrics. Both candidates remain review-only and unlinked from canonical `monetary.circulating_supply`; no new metric was registered and no production observation was written.
