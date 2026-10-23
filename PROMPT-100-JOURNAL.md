@@ -291,3 +291,12 @@
 - Blockchain.com chart point: 20,101,440.625 BTC at 2026-10-21T11:11:52Z. Protocol-scheduled maximum issuance at tip height 972640: 20,102,003.125 BTC; difference 562.5 BTC. Treat as distinct metrics, not values to average or substitute. The chart is not a live tip reading; economic circulating supply remains separate from protocol-scheduled issuance.
 - SoSoValue remains priority for ETF aggregates: 21 Oct +528.40023714 USDm, 20 Oct +23.16242251 USDm, 19 Oct +526.59599803 USDm. Farside 21 Oct +524.8 USDm; retain the discrepancy for audit, select SoSoValue automatically.
 - DXY was blocked by the capture's access-terms gate and remains optional. No production ingestion/writes, runtime registry change, deployment, merge or scenario evaluation. BTC remains not_evaluable.
+
+
+## 2026-10-23 — подтверждён приоритет Farside при конфликте ETF-агрегатов
+
+- По просьбе пользователя самостоятельно выбрать наиболее стабильный и надёжный источник, зафиксирован **Farside Investors как приоритетный источник** дневного агрегированного потока BTC spot ETF. Это совпадает с действующим metric registry/readiness contract; runtime-код менять ради самого выбора не нужно.
+- При расхождении за одну дату выбирать Farside, не усреднять и не задавать пользователю повторный вопрос. SoSoValue — контрольная сверка; TFTC — дополнительный контроль с учётом пересечения lineage.
+- Если Farside недоступен или строка неполная/placeholder, не делать тихий fallback на SoSoValue/TFTC: вход остаётся blocked.
+- Пример 2026-10-21: Farside +524.8 USDm, SoSoValue +528.40023714 USDm; разница ~3.60023714 USDm сохраняется в аудите, но исследовательское значение — Farside +524.8 USDm. Значения не усреднялись.
+- Это решение задаёт правило выбора, но не снимает блокеров по свежести, точному времени публикации/наблюдения, revision/finality и условиям архивирования. BTC остаётся not_evaluable до прохождения readiness gate.
