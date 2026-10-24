@@ -397,3 +397,13 @@
 
 - При расхождении supply значений брать Mempool protocol-scheduled issuance как приоритетную основу **для протокольной эмиссии**, без усреднения. На height 972939: **20,102,937.5 BTC**; CoinGecko total **20,102,871 BTC** (разница 66.5 BTC), circulating **20,102,809 BTC** (разница 128.5 BTC).
 - Не смешивать метрики: это не подтверждает экономическую circulating supply. CoinGecko остаётся отдельным review-only кандидатом; last_updated не принят как supply-specific observed_at. monetary.protocol_issued_supply не зарегистрирован/не одобрен для production. Readiness и not_evaluable не меняются.
+
+
+## 2026-10-24 — свежий BTC capture, 143-block overlap и ETF incomplete-row regression
+
+- Read-only staging run [#40107313213](https://github.com/olegsh247-stack/Crypto/actions/runs/40107313213), artifact 12565600908, passed. Archive SHA-256 `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`; production DB untouched.
+- Kraken XBT/USD **79,308.30 USD/BTC** at `15:30:55.481Z`; raw payload hash `aab5ba1eef7455d03dbe4c2f8a05409bfd567f61b3917b17d6e8d322af596820`.
+- Fee window 972797–972940: 144 blocks, **197,993,884 sats** fees / 450 BTC subsidy, ratio **0.4399864089%**. Against 972796–972939, 143 common blocks, 0 differences in hash/parent/fees; stable tip 972940. Fee JSON hash `e1063c76e96f45caa804865af70106ea94237a7ff06e8b2ac8933bcb516d362b`.
+- Mempool protocol issuance at height 972940 = **20,102,940.625 BTC**. CoinGecko total = **20,102,878 BTC**, circulating = **20,102,809 BTC**; gaps 62.625 / 131.625 BTC. User's Mempool-priority decision applies to protocol issuance only; metrics stay distinct.
+- Farside latest complete row 22 Oct **−635.6 USDm**; 23 Oct **−137.9 USDm** remains incomplete because HODL is absent. Farside payload hash `40e211b691f06495f3a34cd290252b829b030687075a21c7b9ec43c044fff41e`; no zero inference or fallback.
+- Added partial-row regression test in commit `f147699b21c0d6194ba9c56fccd115b0edaeb31c`; read-only capture, source catalog, readiness, release workflow validation and VPS API build/rehearsal all passed. BTC remains `not_evaluable`; no production changes/deploy/merge.
