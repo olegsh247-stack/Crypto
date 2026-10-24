@@ -2043,3 +2043,14 @@ Read-only staging run [#40103950724](https://github.com/olegsh247-stack/Crypto/a
 **Contract decision:** retain Farside as the chosen priority source; retain SoSoValue and TFTC only as cross-checks, never average values. Store session_date separately from retrieved_at. Until a source-level publication timestamp and a documented revision/finality marker are actually exposed, set provider_published_at=null and finality/revision_status=UNKNOWN; keep raw payload hash and retrieval time as provenance only. Treat any later change to a historical row as a revision detected by comparing immutable snapshots (session date + fund/aggregate values + raw hash); do not overwrite earlier evidence. A complete daily total requires every expected fund field to be explicitly reported and the fund sum to reconcile with the displayed aggregate within the parser's stated rounding tolerance. Missing is not zero.
 
 **Disposition:** this review narrows the blocker but does not clear it: Farside's public documentation does not establish an authoritative per-row publication time or a formal finality/revision contract. ETF remains not accepted for canonical/production ingestion; BTC remains not_evaluable. No runtime/registry/DB/scenario changes, ingestion, deployment, or merge.
+
+
+## 2026-10-24 — Farside repeat-snapshot revision comparison (>24h)
+
+**Snapshots compared (read-only artifacts):**
+- Older capture: `btc-public-source-review-2026-10-23-final.zip`; capture time `2026-10-23T08:01:55.335Z`; Farside raw payload SHA-256 `a96032a3d9f4c881201ecc79654210afa6a992faa76937e9562eabcffa102f57`; archive SHA-256 `c204535e252842ec037abd3ca46ebf7bab60f30ef9713f49c92512fbe4debefb`.
+- Newer capture: `btc-public-source-review-2026-10-24-next.zip`; capture time `2026-10-24T15:31:08.713Z`; Farside raw payload SHA-256 `40e211b691f06495f3a34cd290252b829b030687075a21c7b9ec43c044fff41e`; archive SHA-256 `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`.
+- Interval **31.487 hours**, so the minimum 24-hour gate passes. There are **13 overlapping reporting dates** (2026-10-06 through 2026-10-22); all 13 parsed row signatures are unchanged. No historical row revision was detected in the overlap. New capture adds 2026-10-23 and no longer includes 2026-10-05 due to the rolling 14-row window.
+- Raw payload hashes differ, as expected when the table/page changes; payload change alone is not evidence of a historical row revision.
+
+**Disposition:** this is a successful two-snapshot, >24h comparison for the 13 shared dates, not proof that Farside rows are final forever or that provider publication timestamps exist. The 2026-10-23 row remains incomplete (HODL missing), so it is not accepted as a complete daily fund panel. Preserve both immutable artifacts/hashes; never overwrite old evidence. No production DB access/writes, ingestion, registry/runtime/scenario changes, deployment, or merge. BTC remains `not_evaluable`.
