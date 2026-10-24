@@ -1,6 +1,6 @@
 # BTC Economic Circulating-Supply Candidate — CoinGecko — 2026-10-23
 
-**Status:** source candidate only; not captured in the current BTC staging artifact, not accepted, not registered as canonical, and not approved for ingestion.
+**Status:** public API candidate captured in read-only staging; not accepted, not registered as canonical, and not approved for ingestion.
 
 ## Candidate
 
@@ -43,12 +43,14 @@ The Mempool protocol-scheduled issuance capture in the same run was `20,102,312.
 
 ## Current decision
 
-CoinGecko is now a tested public API candidate, not an approved replacement. The response shape, numeric fields, response hash and retrieval time are captured. Supply timestamp semantics, freshness acceptance, source-priority decision, and the existing registry/seed provenance mismatch remain open. The candidate is not linked to canonical `monetary.circulating_supply`.
+CoinGecko is a tested public API candidate, not an approved replacement. The response shape, numeric fields, response hash and retrieval time are captured. The official API schema describes `last_updated` generically as the coin market-data update timestamp; it does not establish that this is a supply-specific observation time. CoinGecko also documents historical `/coins/{id}/circulating_supply_chart` endpoints, but its changelog identifies historical supply chart endpoints as Enterprise-plan exclusive, so availability under the current public endpoint/plan is not established. Do not treat `last_updated` as `observed_at`; the candidate remains blocked on timestamp semantics and freshness acceptance. The existing registry/seed provenance mismatch remains open. The candidate is not linked to canonical `monetary.circulating_supply`.
 
 BTC remains `not_evaluable` until the required supply contract and all other mandatory input gates pass. No registry/runtime/source-priority/seed change, production observation, ingestion, scenario evaluation, or deployment is authorized by this candidate note.
 
 ## Official references
 
 - [CoinGecko API](https://www.coingecko.com/en/api)
+- [Official CoinGecko API changelog](https://docs.coingecko.com/v3.0.1/changelog/update-frequency-improvements-for-selected-pro-api-endpoints) — documents the circulating-supply chart endpoint family and plan limits.
+- [Official CoinGecko TypeScript schema](https://github.com/coingecko/coingecko-typescript/blob/main/src/resources/coins/markets.ts) — defines `last_updated` as the coin market-data update timestamp, not specifically a supply observation timestamp.
 - [CoinGecko Supply Methodology](https://support.coingecko.com/articles/6758974979-coingecko-supply-methodology)
 - [CoinGecko Public API rate limit](https://support.coingecko.com/articles/5125303456-what-is-the-rate-limit-for-coingecko-api-public-plan)
