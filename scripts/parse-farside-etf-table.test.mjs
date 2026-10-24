@@ -69,3 +69,18 @@ test("allows only the one-decimal rounding envelope for aggregate reconciliation
   assert.equal(parsed.fund_sum_minus_reported_total_usd_million, 0.5);
   assert.equal(parsed.reconciliation_status, "MATCHES_DISPLAY_ROUNDING");
 });
+
+test("keeps a partially missing fund field incomplete even when the remaining fields equal the displayed total", () => {
+  // The displayed total can equal the sum of known fields while one fund is absent.
+  // Missing HODL (or any other fund) must not be inferred to be zero.
+  const values = ["(40.0)", "(30.0)", "(20.0)", "(10.0)", "0.0", "0.0", "(7.9)", "-", "0.0", "0.0", "(30.0)", "0.0", "(137.9)"];
+  const parsed = parseFarsideEtfTable(row("23 Oct 2026", values)).latest_rows[0];
+  assert.equal(parsed.status, "REPORTED_CANDIDATE");
+  assert.equal(parsed.fund_flows.HODL, null);
+  assert.equal(parsed.fund_values_complete, false);
+  assert.equal(parsed.reported_total_usd_million, -137.9);
+  assert.equal(parsed.calculated_fund_sum_usd_million, null);
+  assert.equal(parsed.fund_sum_minus_reported_total_usd_million, null);
+  assert.equal(parsed.reconciliation_status, "INCOMPLETE");
+  assert.equal(parsed.observed_at, null);
+});
