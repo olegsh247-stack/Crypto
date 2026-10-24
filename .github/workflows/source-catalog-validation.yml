@@ -1,0 +1,40 @@
+name: Source Catalog Contract Validation
+
+on:
+  pull_request:
+    paths:
+      - "data/CryptoDataModel/registry/source-catalog.v1.json"
+      - "data/CryptoDataModel/registry/source-registry.json"
+      - "data/CryptoDataModel/registry/metric-registry.json"
+      - "scripts/validate-source-catalog.mjs"
+      - "scripts/capture-btc-public-sources.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
+      - "vps/api/src/app.ts"
+      - "infrastructure/postgres/seed-v1.sql"
+      - ".github/workflows/source-catalog-validation.yml"
+  push:
+    paths:
+      - "data/CryptoDataModel/registry/source-catalog.v1.json"
+      - "data/CryptoDataModel/registry/source-registry.json"
+      - "data/CryptoDataModel/registry/metric-registry.json"
+      - "scripts/validate-source-catalog.mjs"
+      - "scripts/capture-btc-public-sources.mjs"
+      - "scripts/prepare-btc-observation-candidates.mjs"
+      - "vps/api/src/app.ts"
+      - "infrastructure/postgres/seed-v1.sql"
+      - ".github/workflows/source-catalog-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-source-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate source catalog against current registries, seed, and runtime endpoints
+        run: node scripts/validate-source-catalog.mjs

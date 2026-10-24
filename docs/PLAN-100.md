@@ -1859,3 +1859,236 @@ Verification boundary: GitHub combined status returned no checks and the availab
 3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
 4. Дождаться результата VPS API Build Rehearsal #39382019208 на текущем PR head. После этого повторно проверить mergeability/base divergence и решить, нужно ли разделить 94-файловый PR на меньшие reviewable части. Registry/runtime/seed изменения остаются отдельным reviewed этапом.
 
+## 2026-10-20 — Branch reconciliation audit
+
+- PR #83 (`fix/btc-readiness-registry-runtime-source`) is still open/Draft, non-mergeable, and diverged from current `main`: 617 commits ahead, 141 behind, 98 changed files. Do not merge or rebase it as a whole.
+- The branch's `scripts/capture-btc-public-sources.mjs` is an older, shorter variant (24.6 KB) than current `main` (39.0 KB). Current `main` already contains more extensive Mempool tip consistency/reorg checks, SoSoValue capture, and fee-window tooling. Replacing it with the PR branch version would lose existing capabilities.
+- PR #3 for Product Contour v1 is closed; its branch is also heavily diverged (374 ahead/594 behind). `fix/asset-dashboard-confidence-score-build` is 17 ahead/584 behind and should not be merged blindly either.
+- Created `fix/btc-readiness-mainline-2026-10-20` from current `main` at `03f4a08ec6c533556b655319e358d476359b4cf4`; verified comparison initially identical (0 ahead / 0 behind). This is the safe reconciliation branch.
+- The old PR #83 is retained as a reference until its useful changes are ported selectively. No branches deleted, PR closed, merge/rebase, production write, deployment, or scenario-state change. Next branch work must compare each PR change against current `main`, preserve newer mainline code, and port only reviewed changes into the clean branch.
+
+
+## 2026-10-20 — Mainline compatibility checks for source catalog
+
+- Ported the source endpoint catalog and validator from legacy PR #83 without replacing current-main BTC capture or staging workflow files.
+- Compared catalog entries with current-main source registry, metric registry, SQL seed, API runtime endpoints, BTC capture script, and candidate-normalization script. The first parity pass found the legacy catalog's FRED broad-dollar candidate incorrectly marked registered even though current main has no matching source-registry ID; changed it to candidate-unregistered/review-only. Confirmed Yahoo DXY candidate is present in the current source registry and catalog, but remains operationally blocked and excluded from metric source priority.
+- Adjusted the validator to current mainline: removed its dependency on a SoSoValue candidate-preparation script that does not exist on main, and made the readiness URL-prefix check optional when the current metric registry does not define that field. The catalog does not approve sources or change scenario readiness.
+- Added .github/workflows/source-catalog-validation.yml to run the catalog validator on relevant pull-request/push changes. GitHub Actions results are not yet available; do not call this validation passed until a run completes.
+- The source catalog's structural endpoint parity check found no missing runtime endpoint families, capture endpoint families, or current candidate-normalization endpoint families in the isolated comparison. A broader semantic-unit audit surfaced expected legacy mismatches (for example, the shared network.primary source covers multiple endpoint families, while ETF holdings metrics currently point at a flow-unit endpoint); these remain audit findings and must not be silently fixed by changing source priority in this branch.
+- No runtime readiness, source priority, scenario state/probabilities, SQL seed, production data, deployment, or merge changed.
+
+
+## 2026-10-20 — Catalog CI confirmed; legacy readiness changes reviewed
+
+- Source Catalog Contract Validation run [#39490935414](https://github.com/olegsh247-stack/Crypto/actions/runs/39490935414) completed successfully on corrected commit `ee6fbedee98085907a3d6a710ccdf704f45ae548`. The `validate-source-catalog` job passed. This closes the catalog validator's negative-test failure; it does not certify source freshness or BTC readiness.
+- VPS API Build Rehearsal [#39490935376](https://github.com/olegsh247-stack/Crypto/actions/runs/39490935376) also completed successfully on that corrected code commit. All listed steps passed, including shared runtime build, Worker/API build and contract tests, disposable PostgreSQL setup, BTC registry/provenance checks, duplicate/idempotency rehearsal, backup/restore rehearsal, and API E2E checks. This is a test-environment rehearsal, not a production deployment or live BTC evaluation.
+- The branch was subsequently updated with documentation-only commits; these run results are for the corrected code commit, not a claim that CI ran on the latest docs-only head.
+- Continued file-by-file review of PR #83: its readiness implementation contains substantive improvements over current `main` (registry-driven required metrics; mandatory payload hashes and retrieval-after-observation checks; explicit ETF fund-completeness/revision/finality gates; deterministic reporting-date ordering and malformed-latest-publication blocking). However, the PR's readiness implementation and metric-registry contract differ from `main`, and the old branch also carries broad workflow, API/Worker, archive and registry changes. Do not port runtime/registry changes without a separately reviewed compatibility plan and CI on the exact resulting head.
+- The PR #83 candidate normalizer is older/smaller than current `main` and introduces a research-only two-source arithmetic-mean output; it must not replace the current-main normalizer. Review or port individual behaviors only after confirming they are absent from current `main` and covered by regression tests.
+- No production writes, live source capture, source-priority change, scenario state/probability change, deployment, or merge occurred. BTC remains `not_evaluable`.
+
+
+### PR #83 branch audit — additional file-by-file findings (2026-10-20)
+
+- Compared the old-branch versions of `vps/shared/src/btc-scenario-readiness.ts`, `scripts/prepare-btc-observation-candidates.mjs`, `scripts/validate-crypto-registries.mjs`, and `data/CryptoDataModel/registry/metric-registry.json` with current `main`.
+- Readiness gate: PR #83 has stricter hash requirements (hash must be present, not merely valid when supplied), registry-driven required metrics/freshness, and ETF completeness/revision/finality checks. Those are worthwhile behaviors to preserve, but the implementation depends on a different registry contract and differs materially from current main; do not copy the whole file or change runtime readiness until a small compatibility patch and exact-head tests exist.
+- Observation candidate normalizer: current `main` is newer and contains additional session-date/freshness handling for ETF candidates. PR #83 is not a safe replacement. Any candidate-only behavior to retain must be ported as a targeted change against current main and remain review-only.
+- PR #83 also introduces isolated offline ETF archive/verification and snapshot-diff/eligibility scripts, plus protocol-issuance calculation. These files are absent from current main; they are potential standalone transfers, not automatically production-ready. Before adding them, inspect their tests, package/workflow integration, path safety, and whether they require any files that are absent on main.
+- Registry validator in PR #83 expects the new `scenario_readiness` contract and asserts no hard-coded runtime freshness thresholds. Current main instead checks that existing registry `freshness_window` values match runtime constants. This confirms the registry and runtime changes must be reviewed as one compatibility unit, not cherry-picked independently.
+- Branch decision: no merge/rebase of PR #83. Next safe review target is the isolated offline scripts and their tests; only add a self-contained, tested subset to the current-main branch if dependencies and contracts are satisfied. No production data/state, source priority, deployment, or merge was changed. BTC remains `not_evaluable`.
+
+
+### Follow-up verification and transfer decision (2026-10-20)
+
+- GitHub Actions VPS API Build Rehearsal run `39492543987` completed with `success`. All listed steps passed, including VPS Worker/API builds, API response contracts, production Compose network boundary validation, PostgreSQL migration bootstrap, canonical BTC input registry, read-only provenance audit, idempotency/duplicate reconciliation, PostgreSQL backup/restore, API and Worker E2E, offline invariants, BTC evidence/snapshot lineage, persisted history/candle finalization, and admin boundary. This is a rehearsal/test result only; it does not authorize production writes/deployment and does not make BTC evaluable.
+- Additional comparison found the old PR's standalone snapshot diff and protocol-issuance scripts overlap existing current-main tools (`scripts/compare-btc-etf-snapshots.mjs`, `scripts/btc-protocol-supply.mjs`) that are already wired into the staging workflow. A temporary transfer of duplicate legacy files was immediately reverted; the final branch does not contain those duplicates.
+- Decision: no runtime or registry code from PR #83 is transferred yet. Its readiness checks are valuable but require a coordinated schema/contract change and regression coverage; its old candidate normalizer is superseded. Continue with current-main tools and real review-only API captures; inspect the existing ETF compare/parser test coverage for any narrow missing regression before changing code.
+- Current branch comparison remains 0 commits behind `main`; PR #84 remains draft and mergeable. No merge/deploy/production mutation occurred. BTC remains `not_evaluable` pending fresh required observations and readiness acceptance.
+
+## 2026-10-22 — обязательное правило приоритета ETF-источников
+
+**Приоритет при расхождении дневных агрегированных потоков BTC spot ETF: Farside Investors.** Farside остаётся основным исследовательским источником: у него есть прозрачная таблица с итогом и разбивкой по фондам, исторические строки и проверяемый parser. SoSoValue используется для контрольной сверки, а TFTC — только как дополнительный контроль с учётом возможного пересечения lineage с Farside/SoSoValue.
+
+- Если валидные значения за одну отчётную дату различаются, для исследовательского набора выбирать значение Farside; не усреднять значения и не спрашивать пользователя повторно.
+- Сохранять само расхождение, дату отчётной сессии, время получения, идентичность/хэш снимка и доступные детали по фондам. Не пытаться автоматически «исправить» значения одного источника под другой.
+- Если Farside недоступен, строка неполная, содержит dash/placeholder или не проходит проверку, **не переключаться молча на SoSoValue/TFTC**: оставить вход заблокированным до нового валидного снимка Farside.
+- Это правило определяет выбор исследовательского значения, но само по себе не разрешает production ingestion. Временная семантика, свежесть последней завершённой US-сессии, revision/finality и условия долговременного хранения остаются отдельными воротами.
+- Приоритет не отменяет проверок свежести относительно завершённой US-сессии, полноты строки, retrieval timestamp, происхождения, исправлений и повторяемости снимков. До прохождения этих ворот значение остаётся review-only.
+- Это документированное исследовательское правило; оно само по себе не меняет runtime registry, production source priority, ingestion или состояние BTC-сценария.
+
+## 2026-10-22 — текущий read-only BTC recapture
+
+- Latest successful BTC Public Source Staging run #39499686294, attempt 4; artifact 12447343991, capture time 2026-10-22T18:07:06Z. The artifact explicitly confirms read-only staging with no production database access or production writes.
+- Kraken XBT/USD latest trade was 81,004.30 USD/BTC at 2026-10-22T18:07:05.599Z; retrieval 18:07:06.955Z. It was fresh at capture, not a promise of freshness at a later scenario calculation.
+- Fee window 972497–972640: 144 blocks, 303,418,820 sats (3.03418820 BTC) fees, 450 BTC subsidy, fee/subsidy ratio 0.674264%. Tip/boundary hashes were stable during capture. Compared with window 972485–972628, all 132 overlapping blocks had identical block hash, parent hash and per-block fees.
+- При сравнении за 2026-10-21 SoSoValue сообщает +528.40023714 USDm, Farside показывает +524.8 USDm; по закреплённому правилу приоритета исследовательским значением является Farside (+524.8 USDm). Разница около 3.60023714 USDm сохраняется в аудите, не усредняется и не разрешает автоматически менять исходные значения. SoSoValue за 2026-10-20 (+23.16242251 USDm) и 2026-10-19 (+526.59599803 USDm) остаётся контрольной сверкой с округлёнными строками Farside.
+- The latest Blockchain.com supply-chart point is 20,101,440.625 BTC at 2026-10-21T11:11:52Z. Protocol-scheduled maximum issuance at captured tip height 972640 calculates to 20,102,003.125 BTC, a difference of 562.5 BTC. These are not interchangeable metrics: keep provider-defined economic/circulating supply separate from protocol-scheduled issuance and do not blend them. The chart point is not a live tip observation.
+- DXY remains optional and was blocked by the staging workflow's access-terms gate. BTC remains not_evaluable until required inputs pass readiness; no production ingestion, registry/runtime source-priority change, scenario evaluation, deployment or merge.
+
+
+## 2026-10-23 — supply candidate metadata correction
+
+The read-only capture now keeps total-issued-supply candidates separate from the canonical `monetary.circulating_supply` metric: Blockchain.com and the Mempool protocol calculation are marked as review candidates with no canonical `metric_id`; the proposed `monetary.protocol_issued_supply` is recorded separately and is not registered or production-approved. This avoids conflating total protocol issuance with economic circulating supply. The change is pending the current source-staging run and CI validation; no registry, seed, production observation, or runtime readiness rules were changed.
+
+
+## 2026-10-23 — свежий read-only BTC source recapture
+
+- BTC Public Source Staging run [#39921382976](https://github.com/olegsh247-stack/Crypto/actions/runs/39921382976) completed successfully; artifact 12487067719; capture started 2026-10-23T07:58:44Z. Manifest explicitly says read-only staging, no production database access/writes.
+- Kraken XBT/USD: 81,449.40 USD/BTC observed 2026-10-23T07:58:43.968Z, retrieved 07:58:44.683Z. Fresh only at capture time; recheck before any calculation.
+- Farside all-data page HTTP 200; page date 2026-10-23; latest reported session 2026-10-22, complete 12-fund row total -635.6 USDm. The separate Farside landing page returned HTTP 403; the all-data endpoint remains the captured candidate.
+- Compared Farside baseline retrieved 2026-10-20T21:21:46.598Z to new snapshot retrieved 2026-10-23T07:58:54.536Z (58.62 h): 712 historical dated rows in baseline vs 714 in new; one overlapping row changed (2026-10-20 placeholder displayed as zero became reported +23.2 USDm), two rows were added (21 Oct +524.8 USDm, 22 Oct -635.6 USDm), no row removals in the overlapping date range. The prior placeholder is not a confirmed zero.
+- SoSoValue aggregate for 2026-10-22 is -635.492639395 USDm; Farside displays -635.6 USDm. Difference is about 0.107361 USDm; retain both raw values and select Farside by the established priority rule. The difference is not averaged. SoSoValue 21 Oct +528.40023714 USDm still differs from Farside +524.8 USDm by about 3.600237 USDm.
+- Fee window 972593–972736: 144 contiguous block rows, fees 260,209,124 sats (2.60209124 BTC), subsidy 450 BTC, ratio 0.5782425%. Against the previous window 972497–972640, all 48 overlapping heights have identical block hash, parent hash and per-block fees; current window tip and boundaries remained stable during capture. This is pairwise reorg-consistency evidence, not proof of finality or deployed API parity.
+- Mempool protocol-issued supply at verified tip height 972736: 20,102,303.125 BTC, block timestamp 2026-10-23T07:54:35Z; old height 972640 candidate was 20,102,003.125 BTC (delta +300 BTC for 96 blocks). Blockchain.com chart remains at 20,101,440.625 BTC, last point 2026-10-21T11:11:52Z, now 862.5 BTC below the protocol issuance calculation; keep these as distinct metrics.
+- The capture code now leaves both protocol-issued supply candidates without canonical `metric_id`, recording the proposed candidate ID separately; this avoids mislabelling total issuance as economic circulating supply. No registry/seed/runtime or production observation changes.
+- DXY remains blocked by its access-terms gate and optional. BTC remains `not_evaluable` pending ETF session-aware freshness/finality/retention contract and remaining input acceptance checks.
+
+
+## 2026-10-23 — follow-up capture after supply metadata correction
+
+The follow-up read-only staging run [#39921752769](https://github.com/olegsh247-stack/Crypto/actions/runs/39921752769) succeeded; artifact 12486659972. It confirms the corrected manifest now carries `metric_id: null` and `candidate_metric_id: monetary.protocol_issued_supply` for both the Mempool-derived issuance and Blockchain.com total-issued-supply candidates. This is a candidate label only; no metric registry entry was created. Latest Kraken XBT/USD in this follow-up capture: 81,503.90 USD/BTC observed at 2026-10-23T08:01:43.812Z, retrieved at 08:01:45.702Z. Fee window, Farside latest session and supply tip matched the preceding capture. BTC remains review-only/not_evaluable.
+
+
+## 2026-10-23 — ETF session-aware freshness contract formalized
+
+Added [docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md](docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md). It separates ETF session date from exact observation/publication time, forbids substituting retrieval time/HTTP Date/midnight UTC for `observed_at`, records the Farside-first/no-silent-fallback rule, and defines the remaining acceptance gates: versioned US ETF session calendar and publication window, revision/finality treatment, and durable snapshot retention/restore. The current timestamp-based readiness gate is intentionally unchanged; ETF remains blocked and BTC remains `not_evaluable` until a tested session-aware policy exists. No runtime/registry/source-priority or production changes.
+
+Latest CI on PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` completed successfully: BTC Scenario Readiness Gate, Source Catalog Contract Validation, VPS API Build Rehearsal, and Validate VPS Release Workflow. The readiness workflow's unit-test job explicitly passed the deterministic offline BTC fixture step. This confirms test reproducibility only, not current-data readiness.
+
+
+## 2026-10-23 — следующий кандидат экономического circulating supply
+
+Добавлен документ `docs/BTC-ECONOMIC-CIRCULATING-SUPPLY-CANDIDATE-2026-10-23.md`: CoinGecko `/coins/markets?vs_currency=usd&ids=bitcoin` выбран следующим кандидатом для реального read-only API теста, потому что предоставляет отдельное поле `circulating_supply` и публикует методологию supply для PoW-активов. На момент создания заметки это был план теста; позднее кандидат был захвачен в read-only staging. Фактические значения, hash и время получения записаны в следующем разделе этого документа. Ключевой вопрос — означает ли `last_updated` время обновления supply или всего market-data объекта; до доказательства семантики оно не принимается как `observed_at`. Никаких registry/seed/runtime/source-priority изменений нет. Официальные ссылки и проверочные шаги зафиксированы в документе кандидата.
+
+
+## 2026-10-23 — CoinGecko supply API captured in read-only staging
+
+- Added the CoinGecko candidate endpoint to the source catalog as `review_only` / `candidate_unregistered`, and added a bounded capture to `scripts/capture-btc-public-sources.mjs`. No canonical metric link was added: capture uses `metric_id: null`, `candidate_metric_id: monetary.circulating_supply`, and leaves `observed_at: null` until timestamp semantics are verified.
+- BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, succeeded in read-only mode. CoinGecko HTTP 200; circulating supply 20,102,221 BTC; total supply 20,102,234 BTC; max supply 21,000,000 BTC; provider `last_updated` 2026-10-23T08:08:54Z; retrieval 08:10:46.889Z; response SHA-256 `721d8f022a9c5444c4cb12b1274cecff064124ae9071b7aef14b8e5ef67aa379`. The parser checks basic numeric supply ordering. The manifest identity collision (provider `name` overwriting capture `name`) was fixed; latest artifact now preserves `coingecko-bitcoin-circulating-supply` as the capture name and `asset_name: Bitcoin` separately.
+- Same capture's Mempool protocol-scheduled issuance: 20,102,312.5 BTC at height 972739, block time 08:06:59Z. It exceeds CoinGecko total supply by 78.5 BTC and circulating supply by 91.5 BTC. Blockchain.com chart is 20,101,440.625 BTC at 2026-10-21T11:11:52Z and is stale. Preserve these values as distinct methods; reconcile the gap (scheduled subsidy vs actually claimed issuance and provider methodology) rather than average/substitute.
+- `last_updated` is not yet proven to be the supply field's own observation timestamp; the candidate remains review-only and the 48-hour freshness contract is not accepted. The existing `network.primary`/Bitcoin Core seed provenance mismatch remains open. No metric registry, SQL seed, runtime, production observation, or source priority was changed.
+
+
+## 2026-10-23 — fee/subsidy re-capture and overlap comparison
+
+The new read-only staging run [#39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, captured the 144-block fee window 972596–972739: 258,009,739 sats fees (2.58009739 BTC), 450 BTC protocol subsidy, ratio 0.573355%. Tip height/hash were stable during capture. Compared with the prior window 972593–972736 from run #39921752769, all 141 overlapping heights (972596–972736) matched block hash, parent hash and per-block fees; no overlap differences. Window JSON hashes are recorded in `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md`. This supports pairwise consistency but does not prove permanent finality or deployed API version parity. Fee/subsidy remains review-only.
+
+
+## 2026-10-24 — календарь ETF-сессий и семантика времени CoinGecko
+
+- Для календарной части ETF-контракта выбраны официальные календари NYSE Group/NYSE Arca и Nasdaq U.S. Equity Markets на 2026–2028 годы. В `docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md` зафиксированы источники, праздничные даты и ранние закрытия; раннее закрытие остаётся торговой сессией. Календарь определяет только дату сессии, но не публикационное время Farside. Публикационное окно пока не подтверждено, поэтому freshness gate не реализуется и не ослабляется.
+- Уточнена CoinGecko timestamp-семантика: официальная схема описывает `last_updated` как время обновления market-data объекта, а не как доказанное время наблюдения supply. Исторический `circulating_supply_chart` документирован, но отмечен CoinGecko как endpoint семейства Enterprise-plan; доступность в текущем публичном плане не предполагается. Кандидат остаётся review-only.
+- Исправлена историческая формулировка в supply-документе, которая после успешного захвата CoinGecko продолжала говорить, что ответа ещё нет. Фактические числа и hash сохранены без изменений.
+
+
+## 2026-10-24 — versioned ETF calendar fixture added to read-only workflow
+
+- Added `data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json` with official NYSE Group/NYSE Arca and Nasdaq full-session holidays and published early closes. Early-close dates count as sessions; unscheduled closures fail closed. Fixture metadata explicitly says upstream raw-payload hashes are not yet captured and that the calendar is not wired into runtime readiness.
+- Added `scripts/validate-us-etf-session-calendar.mjs` to check schema/version, source URLs, date validity, duplicate dates, weekday-only holiday/early-close dates, no overlap between full closures and early closes, and the rule that early closes remain sessions.
+- Wired the validator and fixture into `.github/workflows/btc-public-source-staging.yml`. This workflow-file change also triggers a fresh read-only public-source capture, so the next artifact can refresh BTC spot, ETF, supply and fee evidence using the current code. The new run was queued as #40103950724 at the last check; final capture and test status still pending.
+- This calendar fixture does not define Farside's publication window and is not used to pass readiness. ETF and BTC remain blocked until publication semantics, upstream hashes, revision/finality, and durable retention/restore are resolved.
+
+
+## 2026-10-24 — fresh BTC capture and ETF partial-row blocker
+
+Read-only staging run [#40103950724](https://github.com/olegsh247-stack/Crypto/actions/runs/40103950724) completed successfully, artifact 12563807727. All source-capture tests and the new ETF calendar validator passed. Manifest confirms no production DB access/writes.
+
+- Kraken XBT/USD: **80,123.20 USD/BTC**, observed at `2026-10-24T14:45:57.375Z`, retrieved at `14:45:59.579Z`, raw response SHA-256 `37cb0fbdc05ee5744a46458f7fd7c2201ffc5c3b03f3c61a148ebfddb41f4f5b`. Binance main endpoint remains HTTP 451; Binance market-data-only endpoint HTTP 200 but is BTC/USDT; OKX BTC-USDT HTTP 200; Bybit HTTP 403. These USDT quotes are cross-checks only and are not blended with Kraken USD.
+- Farside all-data endpoint HTTP 200, generated date 2026-10-24, raw response SHA-256 `0d9c31742ed7eb5bfed9bae07a9be17d3a23b49e27edc2afaf412cff5be23b2d`. Latest complete session remains 22 Oct **-635.6 USDm**. A new 23 Oct row is present with displayed total **-137.9 USDm**, but HODL is null. The known fields happen to sum to -137.9, but the 12-fund total cannot be reconciled with one missing fund value. SoSoValue and TFTC are only updated through 22 Oct. Do not accept the partial row or silently fall back; ETF and BTC readiness remain blocked.
+- CoinGecko HTTP 200: circulating **20,102,809 BTC**, total **20,102,871 BTC**, max **21,000,000 BTC**, raw response SHA-256 `5ec3caa54e124381db673ef244e336a3469d20ffa750ceeeb293513ecdce770b`, retrieved `14:46:07.221Z`, `last_updated=14:44:58Z`. Mempool protocol-scheduled issuance **20,102,921.875 BTC** at height **972934**, block time 14:41:03Z. Protocol-scheduled issuance is 50.875 BTC above CoinGecko total supply and 112.875 BTC above circulating supply. Blockchain.com chart remains 20,101,440.625 BTC at 21 Oct and is stale. The gap remains unexplained; preserve separate series and do not average/substitute. CoinGecko `last_updated` is not accepted as supply `observed_at`.
+- Fees: 144 contiguous blocks, heights **972791–972934**; fees **202,056,851 sats / 2.02056851 BTC**, subsidy **450 BTC**, ratio **0.449015%**. Independently checked all 144 parent links and sum of per-block fees; zero continuity errors and aggregate matched. Tip and boundary hashes stable before/after at height 972934. Window JSON SHA-256 `e897c849cb22dc5a2b5cd92b52213a1deee113ef4af3d2336283b34eac949f7a`. Previous window ended at 972739, so no overlap comparison is claimed. Fee remains review-only pending reorg/finality and deployed API-version parity.
+- Calendar fixture and validator passed in the same run. Exact upstream calendar payload hashes and Farside publication-window semantics remain open. No readiness policy, registry, seed, runtime, production observation, or scenario state changed.
+
+
+## 2026-10-24 15:10 UTC — повторный read-only BTC capture и проверка перекрытия блоков
+
+Повторно запущен job `capture` существующего BTC Public Source Staging run #40103950724; повторный захват завершился успешно, новый artifact **12564682048** (SHA-256 архива `938e11c3ca4a0786543ed27784e157273e36ce27f124371c327b857d1a9b0ac5`). Manifest: `read-only-staging-only`, production DB не использовалась, production writes отсутствуют.
+
+- **Комиссии / реорганизация:** новое окно 972796–972939, 144 блока; fees **200,015,244 sats**, subsidy **45,000,000,000 sats (450 BTC)**, ratio **0.44447832%**. Сравнили с предыдущим окном 972791–972934: пересекаются **139 блоков (972796–972934)**; все block hash, parent hash и per-block fees совпали (**0 различий**). Tip до/после стабилен на 972939. SHA-256 нового JSON: `284fa965027b39e1ff8b8ffd3b7cc9f94500bc487d8d65311ea9659fbefe25a5`. Это закрывает pairwise overlap check для этой пары, но не доказывает вечную финальность и не подтверждает deployed API-version parity; metric остаётся review-only.
+- **Spot:** Kraken XBT/USD **79,703.10 USD/BTC**, trade observation `2026-10-24T15:09:57.321Z`, retrieval `15:09:57.722Z`, payload SHA-256 `989acceed442865d5f0f70d9ccc3a8103d0459bd70c138c673222fadb18e59e9`. BTC/USDT quotes остаются только cross-check и не смешиваются с USD.
+- **ETF:** Farside all-data payload обновлён (SHA-256 `9727806f6b7dc287234082b329bcfca820d2c54db8736c6c5d012ad228fa890f`), но строка **23 Oct** по-прежнему неполная: displayed total **−137.9 USDm**, HODL value отсутствует, aggregate reconciliation = `INCOMPLETE`. Последняя полная строка — **22 Oct −635.6 USDm**; SoSoValue и TFTC по-прежнему обновлены только по 22 Oct. Не принимать 23 Oct, не подставлять ноль и не делать fallback. Publication/observation time и provider revision/finality неизвестны.
+- **Supply:** CoinGecko снова HTTP 200: circulating **20,102,809 BTC**, total **20,102,871 BTC**, max **21,000,000 BTC**, `last_updated=2026-10-24T15:08:57Z`; payload SHA-256 `acf0bc881526e8cb48199dc3439aca50ce8bbd2f7b4e3eb330dc77fd9b8e0b7b`. Mempool protocol-scheduled issuance **20,102,937.5 BTC** на height **972939**. Gap теперь **66.5 BTC** к CoinGecko total и **128.5 BTC** к circulating. Значения и методы сохраняются отдельно; причина gap и supply-specific timestamp не подтверждены.
+- Capture/tests прошли успешно. BTC остаётся `not_evaluable`; нет ingestion, production DB writes, registry/seed/runtime changes, scenario-state/probability changes, deployment или merge.
+
+
+## 2026-10-24 — принято правило для расхождения supply: Mempool protocol issuance
+
+- Решение пользователя: если значения CoinGecko и Mempool расходятся, **основой для протокольной эмиссии BTC считаем Mempool**. Не усреднять значения и не подменять ими друг друга.
+- На capture height **972939** Mempool protocol-scheduled issuance = **20,102,937.5 BTC**. CoinGecko сообщает total supply **20,102,871 BTC** и circulating supply **20,102,809 BTC**. Разницы: **66.5 BTC** к CoinGecko total и **128.5 BTC** к circulating.
+- Это решение фиксирует приоритет для метрики **protocol-issued/scheduled supply**, а не утверждает, что Mempool заменяет экономическую метрику circulating supply. CoinGecko остаётся отдельным review-only кандидатом на economic circulating supply; last_updated не подтверждён как supply-specific observation timestamp.
+- Протокольная эмиссия пока не допущена в production: candidate ID monetary.protocol_issued_supply остаётся незарегистрированным/неутверждённым. Нужны дальнейшая проверка вычисления и acceptance/provenance; readiness не ослабляется.
+
+
+## 2026-10-24 — повторный read-only BTC capture и проверка ETF incomplete-row regression
+
+- BTC Public Source Staging [run #40107313213](https://github.com/olegsh247-stack/Crypto/actions/runs/40107313213), artifact **12565600908**, завершился успешно. Архив SHA-256 `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`; manifest: read-only staging, production DB access/writes = false.
+- Kraken XBT/USD: **79,308.30 USD/BTC**, trade observation `2026-10-24T15:30:55.481Z`, retrieval `15:30:56.565Z`, payload SHA-256 `aab5ba1eef7455d03dbe4c2f8a05409bfd567f61b3917b17d6e8d322af596820`.
+- Fee window **972797–972940**, 144 blocks, fees **197,993,884 sats**, subsidy **450 BTC**, fee/subsidy ratio **0.4399864089%**. Compared with previous window 972796–972939, **143 overlapping blocks** (972797–972939) matched by block hash, parent hash and per-block fees; **0 differences**. Tip stable at 972940. Fee JSON SHA-256 `e1063c76e96f45caa804865af70106ea94237a7ff06e8b2ac8933bcb516d362b`. This is pairwise consistency evidence, not permanent finality or deployed API parity.
+- Supply: Mempool tip height **972940**, block hash `00000000000000000000a1b61ecc31c0fb0b0814aa3b1174c4b398f741deb2e0`, block timestamp `2026-10-24T15:19:01Z`; protocol-scheduled issuance **20,102,940.625 BTC**. CoinGecko reports circulating **20,102,809 BTC**, total **20,102,878 BTC** (`last_updated=2026-10-24T15:29:49Z`, generic market-data timestamp). Difference is **62.625 BTC** to total and **131.625 BTC** to circulating. Per user's decision, Mempool is the basis for protocol issuance; economic circulating supply remains a separate metric. No averaging/substitution; protocol-issued candidate remains unregistered/unapproved.
+- Farside all-data HTTP 200, payload SHA-256 `40e211b691f06495f3a34cd290252b829b030687075a21c7b9ec43c044fff41e`. Latest complete session remains **22 Oct −635.6 USDm**; **23 Oct −137.9 USDm** still misses HODL, aggregate reconciliation `INCOMPLETE`. SoSoValue/TFTC snapshots are still through 22 Oct. No zero inference/fallback; provider publication timestamp/revision/finality remain unresolved.
+- Added regression test `keeps a partially missing fund field incomplete even when the remaining fields equal the displayed total`: it verifies missing HODL remains null and a partial sum equal to −137.9 does not become a complete/reconciled row. Commit `f147699b21c0d6194ba9c56fccd115b0edaeb31c`. Source capture, source-catalog validation, BTC readiness gate, release workflow validation, and VPS API Build Rehearsal passed on this head. This does not clear the live-data readiness blockers.
+- No production DB access/writes, ingestion, registry/seed/runtime changes, scenario state/probability changes, deployment, or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-24 — ETF timing/revision semantics: public-source review
+
+**Scope:** read-only review of Farside's own description and the TFTC methodology/changelog; no new live capture, credentials, DB access, or source/runtime changes.
+
+**Evidence:**
+- Farside's official page describes the table as daily US spot Bitcoin ETF flows in USD millions, updated in real time, with updates typically in the evening/night US time: https://farside.co.uk/ . This is a broad update window, **not** a per-row publication timestamp or a finality guarantee.
+- Farside's own public explanation says its backend polls multiple sources each minute, processes them, calculates an implied flow in USD, and pushes values to the live table: https://www.linkedin.com/posts/farsideinvestors_farside-investors-has-produced-a-bitcoin-activity-7159188203738906624-iOG1 . Therefore the published value should not be represented as a timestamped issuer-confirmed final observation without additional evidence.
+- TFTC methodology says daily aggregates and ongoing per-fund flows are sourced from SoSoValue, while Farside is used for archived per-fund history only through mid-July 2026; it also states that SoSoValue revisions flow into later syncs automatically: https://www.tftc.io/bitcoin-etf-flows/methodology . TFTC is consequently not independent confirmation of current Farside values and is only a diagnostic cross-check here.
+- Current capture still has Farside 2026-10-23 displayed aggregate −137.9 USDm but HODL missing; row stays INCOMPLETE. Latest fully reconciled session is 2026-10-22 at −635.6 USDm. HTTP retrieval time and HTTP Date are not substitutes for provider publication time.
+
+**Contract decision:** retain Farside as the chosen priority source; retain SoSoValue and TFTC only as cross-checks, never average values. Store session_date separately from retrieved_at. Until a source-level publication timestamp and a documented revision/finality marker are actually exposed, set provider_published_at=null and finality/revision_status=UNKNOWN; keep raw payload hash and retrieval time as provenance only. Treat any later change to a historical row as a revision detected by comparing immutable snapshots (session date + fund/aggregate values + raw hash); do not overwrite earlier evidence. A complete daily total requires every expected fund field to be explicitly reported and the fund sum to reconcile with the displayed aggregate within the parser's stated rounding tolerance. Missing is not zero.
+
+**Disposition:** this review narrows the blocker but does not clear it: Farside's public documentation does not establish an authoritative per-row publication time or a formal finality/revision contract. ETF remains not accepted for canonical/production ingestion; BTC remains not_evaluable. No runtime/registry/DB/scenario changes, ingestion, deployment, or merge.
+
+
+## 2026-10-24 — Farside repeat-snapshot revision comparison (>24h)
+
+**Snapshots compared (read-only artifacts):**
+- Older capture: `btc-public-source-review-2026-10-23-final.zip`; capture time `2026-10-23T08:01:55.335Z`; Farside raw payload SHA-256 `a96032a3d9f4c881201ecc79654210afa6a992faa76937e9562eabcffa102f57`; archive SHA-256 `c204535e252842ec037abd3ca46ebf7bab60f30ef9713f49c92512fbe4debefb`.
+- Newer capture: `btc-public-source-review-2026-10-24-next.zip`; capture time `2026-10-24T15:31:08.713Z`; Farside raw payload SHA-256 `40e211b691f06495f3a34cd290252b829b030687075a21c7b9ec43c044fff41e`; archive SHA-256 `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`.
+- Interval **31.487 hours**, so the minimum 24-hour gate passes. There are **13 overlapping reporting dates** (2026-10-06 through 2026-10-22); all 13 parsed row signatures are unchanged. No historical row revision was detected in the overlap. New capture adds 2026-10-23 and no longer includes 2026-10-05 due to the rolling 14-row window.
+- Raw payload hashes differ, as expected when the table/page changes; payload change alone is not evidence of a historical row revision.
+
+**Disposition:** this is a successful two-snapshot, >24h comparison for the 13 shared dates, not proof that Farside rows are final forever or that provider publication timestamps exist. The 2026-10-23 row remains incomplete (HODL missing), so it is not accepted as a complete daily fund panel. Preserve both immutable artifacts/hashes; never overwrite old evidence. No production DB access/writes, ingestion, registry/runtime/scenario changes, deployment, or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-24 20:28 UTC — повторный read-only BTC capture и сравнение fee-window overlap
+
+BTC Public Source Staging [run #40107313213, attempt 2](https://github.com/olegsh247-stack/Crypto/actions/runs/40107313213) успешно завершился; artifact **12574657927**. Архив SHA-256: `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb`. Manifest подтверждает `read-only-staging-only`, production DB access = false и production writes = false. Все capture, parser, calendar, fee-window и candidate-preparation шаги прошли.
+
+- **Spot:** Kraken XBT/USD **80,454.80 USD/BTC**; trade observation `2026-10-24T20:28:16.209Z`, retrieval `20:28:17.616Z`, response SHA-256 `d52982b74f598f711665918c0f41b6827e6028183f8035c7b42850b057c3139e`. Binance primary по-прежнему HTTP 451; Binance market-data-only и OKX доступны только как BTC/USDT cross-checks, не смешивать с USD. Bybit по-прежнему HTTP 403.
+- **ETF:** Farside all-data HTTP 200, page generated date 2026-10-24, payload SHA-256 `368a6a8c9e1c4ebf68de93921057512588f9ea855ccddff3b9923b01e0528efd`. Строка 2026-10-23 всё ещё показывает `-137.9 USDm`, но HODL = null; статус `INCOMPLETE`, не принимать и не считать missing нулём. SoSoValue API успешно отвечает HTTP 200 (raw SHA-256 `d3666d105e0eb460996b11437c62d9d974f94cc3e578a63338876b06c981ff8b`), но последняя дата в нём всё ещё **2026-10-22**; TFTC также не подтверждает полную строку 23 Oct. Farside остаётся приоритетом, SoSoValue/TFTC — только cross-check; не усреднять и не делать fallback.
+- **Protocol supply:** Mempool tip height **972970**, hash `00000000000000000000f641a993b3f589150f30bc15f155d33d86c7448979b3`, block timestamp `2026-10-24T20:26:44Z`; protocol-scheduled issuance **20,103,034.375 BTC**, payload SHA-256 `4f2d7d7e3aa2d10a6a17ddb784e79a58ff8c308eab08b86b652a66518f6d71b6`. CoinGecko HTTP 200 сообщает circulating **20,102,953 BTC**, total **20,103,015 BTC**, max **21,000,000 BTC**, `last_updated=2026-10-24T20:26:48Z`, raw SHA-256 `5398f4f0c88d49d6540768e5007db95563a75253a858f8bba5483ead66ba3fe6`. Mempool выше CoinGecko total на **19.375 BTC** и circulating на **81.375 BTC**. По принятому решению Mempool — основа только для protocol-issued/scheduled supply; CoinGecko circulating остаётся отдельной economic метрикой, а `last_updated` не принят как supply-specific `observed_at`.
+- **Fees/subsidy:** новое окно **972827–972970**, 144 блока; fees **204,356,274 sats = 2.04356274 BTC**, subsidy **450 BTC**, ratio **0.4541250533%**. Сравнили с предыдущим окном **972797–972940**: **114 общих блоков (972827–972940)** совпали по block hash, parent hash и per-block fees; **0 различий**. Tip до/после захвата стабилен на 972970. JSON SHA-256 `758da0a6abcd29324c8eec5ae04e6aa5c1733d4a61ca75a15e3944f648fd35d5`. Это усиливает pairwise consistency, но не доказывает вечную finality или parity с deployed API.
+
+**Disposition:** свежие данные получены, fee overlap проверен, но ETF остаётся неполным и supply timestamp/семантика экономического circulating supply не приняты. BTC остаётся `not_evaluable`; ни production DB, ingestion, registry/seed/runtime, scenario state/probability, deployment, ни merge не менялись. Сохранить артефакт и hashes как отдельное evidence; не менять прежние снимки.
+
+
+## 2026-10-24 — cross-source check for the incomplete 2026-10-23 ETF row
+
+Inspected the raw response bodies in read-only staging artifact **12574657927** (run #40107313213, attempt 2); no new source call or production access was needed for this comparison.
+
+- **Farside all-data** is current through 2026-10-23 and reports aggregate **−137.9 USDm**, but at least one fund value (HODL) is missing; parser correctly returns `fund_values_complete=false` / reconciliation `INCOMPLETE`. The separate Farside `/btc/` page returned HTTP 403; the all-data page is the captured endpoint used for the panel.
+- **CryptoETF.today** returns aggregate `netFlowUsdM=-137.9` for 2026-10-23, matching Farside only at displayed 0.1 USDm precision. It exposes aggregate daily flow only in this response, not the missing per-fund HODL value; it therefore cannot repair or independently reconcile the panel. Its 2026-10-24 value is 0, which is treated as a future/unreported placeholder, not an observed zero flow.
+- **SoSoValue** latest row is 2026-10-22 (−635,492,639.395 USD); it does not yet cover 2026-10-23.
+- **TFTC** metadata says `updatedThrough=2026-10-22` and `dateModified=2026-10-22T22:00:00Z`; latest day is 2026-10-22. It also does not confirm 2026-10-23.
+
+**Decision:** no ETF source supplies independent, complete per-fund evidence for 23 Oct. Keep Farside as the priority source; SoSoValue/TFTC/CryptoETF.today remain cross-checks. Do not fill HODL with zero, do not infer missing values from an aggregate, do not average sources, and do not promote 23 Oct to a complete daily observation. The last complete, reconciled date remains 2026-10-22. Continue with the next required BTC input-quality blocker; no production ingestion or runtime change.
+
+
+## 2026-10-24 — read-only artifact retrieval/restore integrity check
+
+Independently re-downloaded the two GitHub Actions artifacts via their artifact IDs and tested extraction and raw-body integrity locally:
+
+| Artifact | Retrieval time in manifest | Archive bytes | Archive SHA-256 | Raw payload hashes checked | Mismatches |
+|---|---|---:|---|---:|---:|
+| Prior snapshot, artifact 12565600908 | 2026-10-24T15:30:56.565Z | 232,848 | `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34` | 16 | 0 |
+| New snapshot, artifact 12574657927 | 2026-10-24T20:28:17.616Z | 234,556 | `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb` | 16 | 0 |
+
+Both ZIP integrity checks passed; each archive contains 19 files, 17 manifest source entries, and manifest mode `read-only-staging-only` with `production_database_accessed=false` and `production_writes_performed=false`. All 16 available raw payload hashes matched their manifest values in both archives. This proves that these artifacts can currently be independently retrieved and restored without raw-body corruption.
+
+**Boundary:** GitHub Actions artifact retention is only 7 days, so this is a successful short-term retrieval/restore rehearsal, **not** proof of durable archival, long-term retention, or backup outside GitHub Actions. The durable retention/recovery gate remains open until the future self-hosted environment and its backup/restore procedure exist and are tested. Do not change production or runtime state.

@@ -1,6 +1,6 @@
 name: BTC Public Source Staging (Read Only)
 
-# Manual runs are supported; changes to the listed capture/parser files trigger the same review-only checks.
+# Manual runs and watched-file pushes run the same bounded review-only capture; no database or scenario-state writes occur.
 on:
   push:
     paths:
@@ -11,6 +11,8 @@ on:
       - "scripts/parse-farside-etf-table.test.mjs"
       - "scripts/compare-btc-etf-snapshots.mjs"
       - "scripts/compare-btc-etf-snapshots.test.mjs"
+      - "scripts/validate-us-etf-session-calendar.mjs"
+      - "data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json"
       - "scripts/btc-protocol-supply.mjs"
       - "scripts/btc-protocol-supply.test.mjs"
       - "scripts/validate-btc-fee-window.mjs"
@@ -48,6 +50,8 @@ jobs:
         run: node --test scripts/btc-protocol-supply.test.mjs
       - name: Test Farside two-snapshot revision comparison
         run: node --test scripts/compare-btc-etf-snapshots.test.mjs
+      - name: Validate versioned US ETF session calendar baseline
+        run: node scripts/validate-us-etf-session-calendar.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
       - name: Capture public source responses for review only

@@ -34,10 +34,11 @@ const manifest = {
   ]
 };
 
-async function capture({ name, metricId, sourceId, url, parse }) {
+async function capture({ name, metricId, candidateMetricId, sourceId, url, parse }) {
   const item = {
     name,
     metric_id: metricId,
+    ...(candidateMetricId ? { candidate_metric_id: candidateMetricId } : {}),
     source_id: sourceId,
     url,
     retrieved_at: new Date().toISOString(),
@@ -267,11 +268,12 @@ manifest.sources.push({
 });
 
 // Blockchain.com public chart reports total mined bitcoins ("in circulation") by daily timestamp.
-// Treat this as an external candidate only: it is not admitted by the current metric source-priority
-// contract, and total issued supply is not a measure of economically spendable coins.
+// This is total issuance, not the product's economic circulating-supply metric. Keep it unlinked
+// from the canonical registry until a separate protocol-issued-supply metric is explicitly approved.
 await capture({
   name: "blockchaincom-total-bitcoins-supply",
-  metricId: "monetary.circulating_supply",
+  metricId: null,
+  candidateMetricId: "monetary.protocol_issued_supply",
   sourceId: "analytics",
   url: "https://api.blockchain.info/charts/total-bitcoins?timespan=all&format=json",
   parse: body => {
@@ -298,6 +300,52 @@ await capture({
 });
 
 
+// CoinGecko exposes a provider-defined circulating_supply field. Keep this as a
+// candidate until its supply timestamp semantics and freshness contract are proven.
+await capture({
+  name: "coingecko-bitcoin-circulating-supply",
+  metricId: null,
+  candidateMetricId: "monetary.circulating_supply",
+  sourceId: "market.coingecko",
+  url: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.id !== "bitcoin") {
+      throw new Error("CoinGecko markets response must contain exactly the bitcoin row");
+    }
+    const row = rows[0];
+    const circulating = Number(row.circulating_supply);
+    const total = row.total_supply == null ? null : Number(row.total_supply);
+    const maximum = row.max_supply == null ? null : Number(row.max_supply);
+    if (!(circulating > 0) || !Number.isFinite(circulating)) {
+      throw new Error("CoinGecko circulating_supply is missing or invalid");
+    }
+    if (total !== null && (!Number.isFinite(total) || circulating > total)) {
+      throw new Error("CoinGecko circulating_supply exceeds or conflicts with total_supply");
+    }
+    if (maximum !== null && (!Number.isFinite(maximum) || maximum <= 0 || (total !== null && total > maximum))) {
+      throw new Error("CoinGecko total/max supply relationship is invalid");
+    }
+    const providerLastUpdated = row.last_updated ?? null;
+    return {
+      provider_asset_id: row.id,
+      symbol: row.symbol,
+      asset_name: row.name,
+      circulating_supply_btc: circulating,
+      total_supply_btc: total,
+      max_supply_btc: maximum,
+      provider_last_updated: providerLastUpdated,
+      observed_at: null,
+      unit: "BTC",
+      methodology: "coingecko-provider-defined-circulating-supply-candidate-v1",
+      methodology_version: "1",
+      acceptance_status: "REVIEW_ONLY_SUPPLY_TIMESTAMP_SEMANTICS",
+      note: "Candidate only. Do not treat last_updated as the supply observation timestamp unless its field semantics are confirmed. No canonical metric_id and no ingestion."
+    };
+  }
+});
+
+
 /**
  * Review-only supply derivation from a consistency-checked Mempool tip.
  * Recheck height and block hash at the end to reject a moving/reorganized tip.
@@ -309,7 +357,10 @@ async function captureMempoolProtocolSupply() {
   const blockUrl = hash => `https://mempool.space/api/block/${hash}`;
   const item = {
     name,
-    metric_id: "monetary.circulating_supply",
+    // This is consensus-scheduled issuance, not economic circulating supply.
+    // No protocol-issued-supply metric is registered yet, so do not label it canonical.
+    metric_id: null,
+    candidate_metric_id: "monetary.protocol_issued_supply",
     source_id: "network.primary",
     url: tipHeightUrl,
     related_urls: [ "https://mempool.space/api/block-height/{height}", "https://mempool.space/api/block/{hash}" ],

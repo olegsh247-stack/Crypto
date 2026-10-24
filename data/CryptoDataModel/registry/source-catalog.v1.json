@@ -1,0 +1,992 @@
+{
+  "catalog_version": "1.0.0",
+  "updated_at": "2026-10-17",
+  "policy": {
+    "secret_values_allowed": false,
+    "observation_time_must_not_default_to_retrieval_time": true,
+    "source_role_does_not_grant_metric_eligibility": true,
+    "polling_intervals_are_provider_limited": true
+  },
+  "endpoints": [
+    {
+      "catalog_id": "market.kraken.trades.xbtusd",
+      "source_id": "market.kraken",
+      "provider": "Kraken",
+      "name": "Public Trades — XBT/USD",
+      "url": "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+      "access_mode": "public",
+      "operational_status": "verified",
+      "data_role": "canonical_candidate",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15m on the working branch; source trade timestamp must remain distinct from retrieval time."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events; preserve raw response and trade identity"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Research canonical candidate; actual metric eligibility remains controlled by metric-registry.json.",
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
+    },
+    {
+      "catalog_id": "market.binance.trades.btcusdt.primary",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Spot API — BTC/USDT primary host",
+      "url": "https://api.binance.com/api/v3/trades?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Runner returned HTTP 451; do not bypass regional/host restrictions."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "USDT is not USD; never blend with canonical BTC/USD.",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.binance.trades.btcusdt.dataapi",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Market-data-only API — BTC/USDT",
+      "url": "https://data-api.binance.vision/api/v3/trades?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "verified",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Public market-data-only host; do not use as canonical USD quote."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "HTTP 200 in staging; cross-check only.",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.okx.trades.btcusdt",
+      "source_id": "market.okx",
+      "provider": "OKX",
+      "name": "Public spot trades — BTC-USDT",
+      "url": "https://www.okx.com/api/v5/market/trades?instId=BTC-USDT",
+      "access_mode": "public",
+      "operational_status": "verified",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Cross-check only; preserve source timestamp."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "USDT is not USD.",
+      "registry_status": "registered",
+      "documentation_url": "https://www.okx.com/docs-v5/en/"
+    },
+    {
+      "catalog_id": "market.bybit.trades.btcusdt",
+      "source_id": "market.bybit",
+      "provider": "Bybit",
+      "name": "V5 public spot recent trades — BTCUSDT",
+      "url": "https://api.bybit.com/v5/market/recent-trade?category=spot&symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "HTTP 403 in staging; do not attempt to bypass access restrictions."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "provider trade timestamp",
+        "period_semantics": "individual trades",
+        "revision_finality": "trade events"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "No key requested because the observed block is not evidence that authentication is appropriate.",
+      "registry_status": "registered",
+      "documentation_url": "https://bybit-exchange.github.io/docs/v5/market/tickers"
+    },
+    {
+      "catalog_id": "network.mempool.hashrate",
+      "source_id": "network.primary",
+      "provider": "Mempool.space",
+      "name": "Hashrate endpoint — 1-week series",
+      "url": "https://mempool.space/api/v1/mining/hashrate/1w",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 60,
+        "minimum_interval_minutes": null,
+        "notes": "Do not poll more often than needed for a multi-day aggregate."
+      },
+      "data_contract": {
+        "asset_pair": "BTC network",
+        "unit": "EH/s after verified normalization",
+        "observation_time": "endpoint bucket timestamp to be confirmed",
+        "period_semantics": "1-week hashrate series; bucket/window semantics still require validation",
+        "revision_finality": "aggregated estimate; methodology/window validation required"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Staging HTTP 200; metric remains unready until window and unit checks pass.",
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/"
+    },
+    {
+      "catalog_id": "network.mempool.block-fees",
+      "source_id": "network.primary",
+      "provider": "Mempool.space",
+      "name": "Block fees endpoint — 1-week series",
+      "url": "https://mempool.space/api/v1/mining/blocks/fees/1w",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "Use bounded polling; this endpoint represents current mempool block estimates, not a daily finalized metric."
+      },
+      "data_contract": {
+        "asset_pair": "BTC network",
+        "unit": "endpoint-defined fee rate; not yet mapped to a registry metric",
+        "observation_time": "retrieval time only unless provider timestamp is present",
+        "period_semantics": "1-week mining block fee series; do not confuse projected mempool estimates with realized block fees",
+        "revision_finality": "projections change as mempool changes"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Staging HTTP 200; do not treat projected block fees as realized fees.",
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/"
+    },
+    {
+      "catalog_id": "institutional.farside.etf-all-data",
+      "source_id": "institutional.primary",
+      "provider": "Farside Investors",
+      "name": "Bitcoin ETF flow all-data table",
+      "url": "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; do not poll every 15 minutes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day",
+        "observation_time": "provider publication time not established",
+        "period_semantics": "ETF reporting/trading day; timezone and session semantics need explicit contract",
+        "revision_finality": "revision/finality semantics unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "All-data page HTTP 200 in staging; landing page 403. Rows are review-only until time, identity, revision and finality checks pass.",
+      "registry_status": "registered",
+      "documentation_url": "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+    },
+    {
+      "catalog_id": "institutional.tftc.etf-landing",
+      "source_id": "institutional.tftc",
+      "provider": "TFTC",
+      "name": "TFTC Bitcoin ETF flows landing page",
+      "url": "https://www.tftc.io/bitcoin-etf-flows",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "documentation_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; no high-frequency polling."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day after parser confirmation",
+        "observation_time": "publication time not established",
+        "period_semantics": "daily ETF flow rows",
+        "revision_finality": "lineage and revision semantics require confirmation"
+      },
+      "terms_status": "cc-by-4.0-advertised_review_required",
+      "notes": "Landing page/documentation reference; the separate data.json endpoint is the actual public JSON capture source.",
+      "registry_status": "registered",
+      "documentation_url": "https://www.tftc.io/bitcoin-etf-flows"
+    },
+    {
+      "catalog_id": "institutional.sosovalue.etf-summary",
+      "source_id": "institutional.sosovalue",
+      "provider": "SoSoValue",
+      "name": "ETF daily summary API",
+      "url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history",
+      "access_mode": "api_key",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": "SOSOVALUE_API_KEY",
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Keyed cross-check; daily/event-driven. Do not increase polling to 15-minute intervals."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day after normalization",
+        "observation_time": "trading date supplied; publication timestamp not supplied in tested response",
+        "period_semantics": "daily trading-session row",
+        "revision_finality": "revision/finality semantics unresolved"
+      },
+      "terms_status": "api_terms_review_required",
+      "notes": "Exact summary-history endpoint used by the offline candidate normalizer; keyed cross-check only, not canonical ingestion.",
+      "registry_status": "registered",
+      "documentation_url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history"
+    },
+    {
+      "catalog_id": "institutional.cryptoetf.today.etf-mcp",
+      "source_id": "institutional.cryptoetf_today",
+      "provider": "CryptoETF.today",
+      "name": "ETF flow MCP cross-check",
+      "url": "https://cryptoetf.today",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Cross-check only; no need to poll more often than the underlying daily ETF data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day to be verified per response",
+        "observation_time": "provider response timestamp semantics not established",
+        "period_semantics": "daily ETF flow summary",
+        "revision_finality": "not established"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Automatic cross-check only; never canonical ETF flow source.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://cryptoetf.today"
+    },
+    {
+      "catalog_id": "macro.yahoo-finance.dxy",
+      "source_id": "macro.yahoo_finance_candidate",
+      "provider": "Yahoo Finance",
+      "name": "DX-Y.NYB daily quote candidate",
+      "url": "https://finance.yahoo.com/quote/DX-Y.NYB/",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No automated polling until access terms and permitted access method are resolved."
+      },
+      "data_contract": {
+        "asset_pair": "DXY index",
+        "unit": "index points",
+        "observation_time": "daily candle/session date semantics not yet approved",
+        "period_semantics": "daily quote candidate; exact close and timezone semantics unconfirmed",
+        "revision_finality": "unconfirmed"
+      },
+      "terms_status": "access_terms_blocked",
+      "notes": "Do not request a key or scrape to bypass the access decision.",
+      "registry_status": "registered",
+      "documentation_url": "https://finance.yahoo.com/quote/DX-Y.NYB/"
+    },
+    {
+      "catalog_id": "macro.ice.dxy",
+      "source_id": "macro.ice_dxy_candidate",
+      "provider": "ICE",
+      "name": "ICE U.S. Dollar Index (DXY) candidate",
+      "url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices",
+      "access_mode": "licensed",
+      "operational_status": "candidate",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No polling until an accessible endpoint and license are confirmed."
+      },
+      "data_contract": {
+        "asset_pair": "ICE DXY",
+        "unit": "index points",
+        "observation_time": "official index dissemination timestamp required",
+        "period_semantics": "ICE index business date kept separately from observed_at",
+        "revision_finality": "unconfirmed"
+      },
+      "terms_status": "license_and_endpoint_unconfirmed",
+      "notes": "Product documentation only; not an approved quote endpoint.",
+      "registry_status": "registered",
+      "documentation_url": "https://developer.ice.com/fixed-income-data-services/catalog/ice-data-indices-currency-indices"
+    },
+    {
+      "catalog_id": "protocol.bitcoin-developer-reference",
+      "source_id": "protocol.primary",
+      "provider": "Bitcoin Developer Reference",
+      "name": "Protocol documentation reference",
+      "url": "https://developer.bitcoin.org/reference/",
+      "access_mode": "documentation",
+      "operational_status": "candidate",
+      "data_role": "documentation_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "event_driven",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Static protocol documentation; refresh on relevant release or documentation change."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin protocol",
+        "unit": "Metric-specific; not applicable to documentation",
+        "observation_time": "Document publication/update date when supplied",
+        "period_semantics": "Protocol constants and reference material",
+        "revision_finality": "Version/release identity must be preserved where applicable"
+      },
+      "terms_status": "documentation_reference",
+      "notes": "Not a live market-data endpoint; specific node/RPC integrations need separate endpoint contracts.",
+      "registry_status": "registered",
+      "documentation_url": "https://developer.bitcoin.org/reference/"
+    },
+    {
+      "catalog_id": "market.provider.placeholder",
+      "source_id": "market.primary",
+      "provider": "Unselected provider",
+      "name": "Market data provider placeholder",
+      "url": null,
+      "access_mode": "manual",
+      "operational_status": "unknown",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "manual",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No provider selected; derivatives metrics are not source-ready."
+      },
+      "data_contract": {
+        "asset_pair": "Not selected",
+        "unit": "Metric-specific; no provider contract",
+        "observation_time": "Unavailable until a provider is selected",
+        "period_semantics": "Unconfigured",
+        "revision_finality": "Unconfigured"
+      },
+      "terms_status": "not_applicable_provider_unselected",
+      "notes": "Registry placeholder only; must not be treated as evidence that futures OI, funding, or options OI are available.",
+      "registry_status": "registered",
+      "documentation_url": null
+    },
+    {
+      "catalog_id": "analytics.glassnode",
+      "source_id": "analytics",
+      "provider": "Glassnode",
+      "name": "On-chain analytics provider",
+      "url": "https://glassnode.com/",
+      "access_mode": "api_key",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "No API polling until plan, endpoint, terms, history coverage and methodology are reviewed."
+      },
+      "data_contract": {
+        "asset_pair": "Metric-specific on-chain/market analytics",
+        "unit": "Provider metric-specific",
+        "observation_time": "Provider timestamp semantics not yet contracted",
+        "period_semantics": "Metric-specific time series",
+        "revision_finality": "Methodology and revision behavior need review"
+      },
+      "terms_status": "plan_and_terms_review_required",
+      "notes": "No credential configured or requested; candidate only.",
+      "registry_status": "registered",
+      "documentation_url": "https://glassnode.com/"
+    },
+    {
+      "catalog_id": "lightning.mempool.documentation",
+      "source_id": "lightning.primary",
+      "provider": "Mempool.space",
+      "name": "Lightning REST API documentation",
+      "url": "https://mempool.space/docs/api/rest",
+      "access_mode": "documentation",
+      "operational_status": "candidate",
+      "data_role": "documentation_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Capacity is an aggregate; daily refresh is sufficient unless the metric contract says otherwise."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin Lightning Network",
+        "unit": "BTC for capacity after endpoint verification",
+        "observation_time": "Endpoint timestamp semantics not yet verified",
+        "period_semantics": "Network capacity snapshot/aggregate",
+        "revision_finality": "Snapshot can change; preserve retrieval and source time separately"
+      },
+      "terms_status": "documentation_reference",
+      "notes": "Registry source identity exists, but a concrete capture call site must be verified before claiming runtime ingestion.",
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/docs/api/rest"
+    },
+    {
+      "catalog_id": "macro.official-agencies.placeholder",
+      "source_id": "macro.primary",
+      "provider": "US official agencies",
+      "name": "Macro data provider placeholder",
+      "url": "https://home.treasury.gov/",
+      "access_mode": "documentation",
+      "operational_status": "unknown",
+      "data_role": "blocked",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Select an authoritative agency and exact series per metric before automated access."
+      },
+      "data_contract": {
+        "asset_pair": "Metric-specific macro series",
+        "unit": "Metric-specific",
+        "observation_time": "Agency publication/release time required",
+        "period_semantics": "Series-specific observation period",
+        "revision_finality": "Revisions and release calendar must be modeled"
+      },
+      "terms_status": "series_and_endpoint_unselected",
+      "notes": "Generic registry entry; does not establish that DXY, US 10Y yield or other macro metrics are supplied.",
+      "registry_status": "registered",
+      "documentation_url": "https://home.treasury.gov/"
+    },
+    {
+      "catalog_id": "market.mexc.spot-api",
+      "source_id": "market.mexc",
+      "provider": "MEXC",
+      "name": "Spot market API documentation",
+      "url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 30,
+        "minimum_interval_minutes": null,
+        "notes": "No live use confirmed; only poll after endpoint and terms review."
+      },
+      "data_contract": {
+        "asset_pair": "Pair-specific; not selected",
+        "unit": "Pair-specific",
+        "observation_time": "Provider timestamp required",
+        "period_semantics": "Endpoint-specific",
+        "revision_finality": "Endpoint-specific; unverified"
+      },
+      "terms_status": "endpoint_and_terms_review_required",
+      "notes": "Registry candidate; no call site was confirmed in this audit.",
+      "registry_status": "registered",
+      "documentation_url": "https://mexcdevelop.github.io/apidocs/spot_v3_en/"
+    },
+    {
+      "catalog_id": "macro.fred.dtwexbgs",
+      "source_id": "macro.fred_broad_usd_candidate",
+      "provider": "Federal Reserve Bank of St. Louis FRED",
+      "name": "Trade Weighted U.S. Dollar Index: Broad, Goods and Services",
+      "url": "https://fred.stlouisfed.org/series/DTWEXBGS",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily release/update cadence; no 15-minute polling."
+      },
+      "data_contract": {
+        "asset_pair": "Broad USD index (not ICE DXY)",
+        "unit": "Index points",
+        "observation_time": "FRED observation date; release/retrieval timestamps kept separately",
+        "period_semantics": "Daily broad trade-weighted USD series",
+        "revision_finality": "Series-specific revisions should be checked"
+      },
+      "terms_status": "series_semantics_review_required",
+      "notes": "Not a substitute for ICE DXY and must not be assigned to metric macro.dxy.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://fred.stlouisfed.org/series/DTWEXBGS"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback — BTC/USDT sample",
+      "url": "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI path uses shared 15-minute cache on the working branch; endpoint fallback order is not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code currently stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker price",
+        "revision_finality": "Current quote; provider timestamp not exposed by this endpoint"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime UI ticker fallback only; BTC/USDT is not BTC/USD and must not be blended into research spot price.",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle history — sample BTC/USDT",
+      "url": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven with provider fallback across data-api.binance.vision, api-gcp.binance.com and api.binance.com; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps from provider; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; consumers must respect candle close/finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime chart history only. USD candle path can also call Binance USDT candles and is not a canonical USD candle source.",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.kraken.ticker.ui",
+      "source_id": "market.kraken",
+      "provider": "Kraken",
+      "name": "Runtime UI ticker fallback — BTC/USD sample",
+      "url": "https://api.kraken.com/0/public/Ticker?pair=XBTUSD&assetVersion=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "Fallback after Binance; shared UI cache is 15 minutes on the working branch."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "Runtime code currently stamps retrieval time; Ticker response time semantics need contract review",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime UI ticker fallback only; research staging separately uses Kraken Trades to preserve individual trade timestamps.",
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
+    },
+    {
+      "catalog_id": "market.kraken.ohlc.ui",
+      "source_id": "market.kraken",
+      "provider": "Kraken",
+      "name": "Runtime UI daily OHLC — sample XBT/USD",
+      "url": "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history path; interval is 1440 minutes for this fallback."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC OHLC",
+        "observation_time": "Candle open/close timestamps from provider; preserve both",
+        "period_semantics": "Daily candle",
+        "revision_finality": "Current daily candle may be unfinished"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Runtime chart fallback only; separate from research spot trade observations.",
+      "registry_status": "registered",
+      "documentation_url": "https://docs.kraken.com/api/docs/rest-api/get-tradable-asset-pairs"
+    },
+    {
+      "catalog_id": "market.coingecko.simple-price.ui",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "Runtime UI ticker fallback — simple price sample",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "Only called as last fallback after Binance and Kraken; shared ticker cache is 15 minutes on the working branch. Verify current free-tier rate limits before increasing use."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD/BTC",
+        "observation_time": "Endpoint response has no trade-level timestamp in the tested contract; runtime stamps retrieval time",
+        "period_semantics": "Latest aggregated quote",
+        "revision_finality": "Provider aggregate; not a trade observation"
+      },
+      "terms_status": "public_api_docs_review_required",
+      "notes": "Runtime UI fallback only; not an approved canonical research market.spot_price source.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/simple-price"
+    },
+    {
+      "catalog_id": "market.coingecko.market-chart.ui",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "Runtime UI chart history — market chart sample",
+      "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history fallback; no scheduled polling is implied."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USD",
+        "unit": "USD price series",
+        "observation_time": "Provider point timestamps; verify bucket granularity and timezone",
+        "period_semantics": "Historical market chart over requested days",
+        "revision_finality": "Provider aggregation and revision semantics require review"
+      },
+      "terms_status": "public_api_docs_review_required",
+      "notes": "Runtime UI chart fallback only; not a canonical research data source.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/coins-id-market-chart"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui.apigcp",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback host",
+      "url": "https://api-gcp.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15 minutes on the working branch; not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI ticker fallback host api-gcp",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.binance.ticker.btcusdt.ui.primary",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI ticker fallback host",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "interval",
+        "preferred_interval_minutes": 15,
+        "minimum_interval_minutes": null,
+        "notes": "UI ticker cache is 15 minutes on the working branch; not canonical research source selection."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC",
+        "observation_time": "Runtime code stamps retrieval time, not provider trade time",
+        "period_semantics": "Latest ticker snapshot",
+        "revision_finality": "Snapshot can change"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI ticker fallback primary host; HTTP 451 was observed in staging",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui.apigcp",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle fallback host",
+      "url": "https://api-gcp.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; preserve finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI candle fallback host api-gcp",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "market.binance.klines.ui.primary",
+      "source_id": "market.binance",
+      "provider": "Binance",
+      "name": "Runtime UI candle fallback host",
+      "url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Request-driven chart history; no fixed polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "BTC/USDT",
+        "unit": "USDT/BTC candles",
+        "observation_time": "Candle open/close timestamps; preserve both",
+        "period_semantics": "Requested candle interval; runtime interval varies",
+        "revision_finality": "Current candle may be unfinished; preserve finality"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Binance runtime UI candle fallback primary host; HTTP 451 was observed in staging",
+      "registry_status": "registered",
+      "documentation_url": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints"
+    },
+    {
+      "catalog_id": "institutional.farside.etf-landing",
+      "source_id": "institutional.primary",
+      "provider": "Farside Investors",
+      "name": "Bitcoin ETF flow landing page",
+      "url": "https://farside.co.uk/btc/",
+      "access_mode": "public",
+      "operational_status": "blocked",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Access/reconciliation diagnostic only; landing page returned HTTP 403 in staging."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day",
+        "observation_time": "Publication time not established",
+        "period_semantics": "Daily ETF flow page; exact row semantics need confirmation",
+        "revision_finality": "Revision/finality semantics unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Capture-only diagnostic; the all-data page is a separate endpoint. Do not infer a value or freshness from the landing-page response.",
+      "registry_status": "registered",
+      "documentation_url": "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+    },
+    {
+      "catalog_id": "institutional.tftc.etf-json",
+      "source_id": "institutional.tftc",
+      "provider": "TFTC",
+      "name": "Public Bitcoin ETF flows JSON data endpoint",
+      "url": "https://www.tftc.io/bitcoin-etf-flows/data.json",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven; do not poll every 15 minutes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD/day after parser confirmation",
+        "observation_time": "Publication time not established",
+        "period_semantics": "Daily ETF flow rows",
+        "revision_finality": "Lineage and revision semantics require confirmation"
+      },
+      "terms_status": "cc-by-4.0-advertised_review_required",
+      "notes": "Exact JSON endpoint used by public source capture; mirror/cross-check only.",
+      "registry_status": "registered",
+      "documentation_url": "https://www.tftc.io/bitcoin-etf-flows"
+    },
+    {
+      "catalog_id": "institutional.sosovalue.etf-candidate-output",
+      "source_id": "institutional.sosovalue.candidate",
+      "provider": "SoSoValue",
+      "name": "Offline candidate output identity for ETF summary-history",
+      "url": "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history",
+      "access_mode": "api_key",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": "SOSOVALUE_API_KEY",
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Offline candidate preparation from captured response; not a live polling schedule."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day after normalization",
+        "observation_time": "Trading date supplied; publication timestamp not supplied in tested response",
+        "period_semantics": "Daily trading-session row",
+        "revision_finality": "Revision/finality semantics unresolved"
+      },
+      "terms_status": "api_terms_review_required",
+      "notes": "Candidate-output source_id used by prepare-btc-sosovalue-etf-candidates.mjs. Must not be promoted into metric source_priority without separate approval.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://sodex.com/documentation/for-developers/api-reference/market-data-api/etf/summary-history"
+    },
+    {
+      "catalog_id": "network.mempool.tip-blocks",
+      "source_id": "network.primary",
+      "provider": "Mempool.space",
+      "name": "Recent blocks endpoint — chain tip identity",
+      "url": "https://mempool.space/api/blocks",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Use bounded read-only capture to bind tip height to block hash and provider timestamp; no frequent polling required."
+      },
+      "data_contract": {
+        "asset_pair": "Bitcoin main chain",
+        "unit": "block height; hash; Unix timestamp",
+        "observation_time": "block timestamp supplied by provider, kept separate from retrieval time",
+        "period_semantics": "recent block list; first row is expected to be current tip and must be validated against height/hash",
+        "revision_finality": "tip may reorganize; retain height+hash and recapture on reorg"
+      },
+      "terms_status": "public_api_docs_reviewed",
+      "notes": "Read-only research candidate for binding protocol-issuance calculation to a specific block identity; not a source-priority promotion.",
+      "registry_status": "registered",
+      "documentation_url": "https://mempool.space/docs/api/rest"
+    },
+    {
+      "catalog_id": "monetary.coingecko.bitcoin-circulating-supply.candidate",
+      "source_id": "market.coingecko",
+      "provider": "CoinGecko",
+      "name": "BTC circulating-supply candidate — public market endpoint",
+      "url": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "on_demand",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "One bounded research capture at a time; respect variable public API rate limits. No scheduled polling or ingestion is implied."
+      },
+      "data_contract": {
+        "asset_pair": "BTC supply",
+        "unit": "BTC",
+        "observation_time": "Supply-specific observation timestamp not yet established; do not treat last_updated as observed_at without provider confirmation",
+        "period_semantics": "Provider-defined circulating supply in a market-data response; candidate only",
+        "revision_finality": "Provider may revise supply values; preserve raw snapshots and compare revisions before acceptance"
+      },
+      "terms_status": "public_api_docs_reviewed_candidate",
+      "notes": "Research candidate only for monetary.circulating_supply. No canonical metric link; live response schema, timestamp semantics, freshness and source terms must pass review.",
+      "registry_status": "candidate_unregistered",
+      "documentation_url": "https://docs.coingecko.com/reference/coins-markets"
+    }
+  ]
+}
