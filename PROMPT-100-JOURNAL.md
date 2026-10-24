@@ -391,3 +391,9 @@
 - ETF: Farside raw hash `9727806f6b7dc287234082b329bcfca820d2c54db8736c6c5d012ad228fa890f`; строка 23 Oct по-прежнему incomplete (−137.9 USDm, HODL отсутствует), последняя полная сессия 22 Oct −635.6 USDm. SoSoValue/TFTC — только по 22 Oct. Никакого нулевого значения или fallback.
 - Supply: CoinGecko circulating 20,102,809 BTC / total 20,102,871 BTC; Mempool protocol-scheduled issuance 20,102,937.5 BTC на height 972939. Gap 66.5 BTC к total и 128.5 BTC к circulating; не усреднять и не подменять series. `last_updated` CoinGecko не принят как supply-specific observed_at.
 - Plan 100 обновлён commit `f4665e0d9d859e609fabc3ec27c671b5f325f489`. BTC остаётся `not_evaluable`; без ingestion, production writes, registry/seed/runtime changes, scenario changes, deploy или merge.
+
+
+## 2026-10-24 — решение пользователя: Mempool как основа протокольной эмиссии
+
+- При расхождении supply значений брать Mempool protocol-scheduled issuance как приоритетную основу **для протокольной эмиссии**, без усреднения. На height 972939: **20,102,937.5 BTC**; CoinGecko total **20,102,871 BTC** (разница 66.5 BTC), circulating **20,102,809 BTC** (разница 128.5 BTC).
+- Не смешивать метрики: это не подтверждает экономическую circulating supply. CoinGecko остаётся отдельным review-only кандидатом; last_updated не принят как supply-specific observed_at. monetary.protocol_issued_supply не зарегистрирован/не одобрен для production. Readiness и not_evaluable не меняются.
