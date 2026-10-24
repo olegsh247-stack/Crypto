@@ -54,3 +54,16 @@ BTC remains `not_evaluable` until the required supply contract and all other man
 - [Official CoinGecko TypeScript schema](https://github.com/coingecko/coingecko-typescript/blob/main/src/resources/coins/markets.ts) — defines `last_updated` as the coin market-data update timestamp, not specifically a supply observation timestamp.
 - [CoinGecko Supply Methodology](https://support.coingecko.com/articles/6758974979-coingecko-supply-methodology)
 - [CoinGecko Public API rate limit](https://support.coingecko.com/articles/5125303456-what-is-the-rate-limit-for-coingecko-api-public-plan)
+
+
+## Fresh read-only recapture — 2026-10-24
+
+BTC Public Source Staging [run #40103950724](https://github.com/olegsh247-stack/Crypto/actions/runs/40103950724), artifact 12563807727, returned CoinGecko HTTP 200. Raw response SHA-256: `5ec3caa54e124381db673ef244e336a3469d20ffa750ceeeb293513ecdce770b`; retrieval `2026-10-24T14:46:07.221Z`; provider `last_updated` `2026-10-24T14:44:58Z`.
+
+- Circulating supply: **20,102,809 BTC**.
+- Total supply: **20,102,871 BTC**.
+- Maximum supply: **21,000,000 BTC**.
+- Same-run Mempool protocol-scheduled issuance: **20,102,921.875 BTC** at height **972934**, block timestamp `2026-10-24T14:41:03Z`, block hash `000000000000000000004fa9b3242a1c8984474c5cac2bab01abe57368ef0724`.
+- Protocol-scheduled issuance exceeds CoinGecko total supply by **50.875 BTC** and circulating supply by **112.875 BTC**. Blockchain.com chart remains **20,101,440.625 BTC**, with its latest point dated 2026-10-21, and is stale relative to this capture.
+
+The new sample confirms the same ordering gap on a later capture; it does not explain it. Keep these values as distinct provider/method series and do not average or substitute them. `last_updated` remains a generic market-data update timestamp, not a proven supply-specific observation timestamp; candidate stays review-only.
