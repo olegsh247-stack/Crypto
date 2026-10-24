@@ -364,3 +364,10 @@
 - Selected official NYSE Group/NYSE Arca and Nasdaq U.S. equity full-session calendars for the 2026–2028 baseline; recorded holidays, early closes and source URLs in `docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md`. Early close remains a session day. This does not establish when Farside publishes flow rows; publication-window and durable archive/restore gates remain open, and the readiness gate is unchanged.
 - Corrected a stale sentence in the CoinGecko supply candidate doc that still said no API capture existed, despite the successful 2026-10-23 artifact. Official schema/changelog review confirms `last_updated` is a generic market-data update timestamp, not proven supply-specific `observed_at`; historical circulating-supply chart endpoints are documented as Enterprise-plan-only. CoinGecko remains review-only.
 - No runtime/registry/seed/source-priority/production changes, scenario-state changes, deployment, or merge.
+
+
+## 2026-10-24 — versioned ETF calendar fixture and validation wired into staging
+
+- Added `data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json` (NYSE Group/NYSE Arca + Nasdaq published calendar baseline) and `scripts/validate-us-etf-session-calendar.mjs`. Structural validation covers source links, version/coverage, valid unique weekday dates, no full-closure/early-close overlap, and early-close-is-session semantics.
+- Added the validator and fixture to the read-only staging workflow watched paths and test steps. This triggers a fresh public-source capture on current date through the existing read-only workflow. Run #40103950724 was queued at the last check; final run/artifact result pending.
+- Upstream source-payload hashes are still not captured; the calendar is a research fixture only and does not alter readiness or publication-window logic. No production DB access/writes, ingestion, registry/seed/runtime changes, scenario-state changes, deployment, or merge.
