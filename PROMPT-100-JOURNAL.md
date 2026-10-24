@@ -357,3 +357,10 @@
 - BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, captured window 972596–972739: 258,009,739 sats fees / 450 BTC subsidy = 0.573355%. Tip remained stable at height 972739 and the recorded hash.
 - Compared with baseline window 972593–972736 from run #39921752769, all 141 overlapping heights 972596–972736 matched block hash, parent hash and per-block fees; zero overlap differences. Evidence JSON hashes are recorded in the fee acceptance document.
 - Reorg-consistency evidence improved; permanent finality and deployed API version parity remain unproven. Fee/subsidy remains review-only; no ingestion/runtime/production change.
+
+
+## 2026-10-24 — ETF session calendar baseline and CoinGecko timestamp semantics
+
+- Selected official NYSE Group/NYSE Arca and Nasdaq U.S. equity full-session calendars for the 2026–2028 baseline; recorded holidays, early closes and source URLs in `docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md`. Early close remains a session day. This does not establish when Farside publishes flow rows; publication-window and durable archive/restore gates remain open, and the readiness gate is unchanged.
+- Corrected a stale sentence in the CoinGecko supply candidate doc that still said no API capture existed, despite the successful 2026-10-23 artifact. Official schema/changelog review confirms `last_updated` is a generic market-data update timestamp, not proven supply-specific `observed_at`; historical circulating-supply chart endpoints are documented as Enterprise-plan-only. CoinGecko remains review-only.
+- No runtime/registry/seed/source-priority/production changes, scenario-state changes, deployment, or merge.
