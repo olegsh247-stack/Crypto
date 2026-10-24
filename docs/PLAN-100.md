@@ -2078,3 +2078,17 @@ Inspected the raw response bodies in read-only staging artifact **12574657927** 
 - **TFTC** metadata says `updatedThrough=2026-10-22` and `dateModified=2026-10-22T22:00:00Z`; latest day is 2026-10-22. It also does not confirm 2026-10-23.
 
 **Decision:** no ETF source supplies independent, complete per-fund evidence for 23 Oct. Keep Farside as the priority source; SoSoValue/TFTC/CryptoETF.today remain cross-checks. Do not fill HODL with zero, do not infer missing values from an aggregate, do not average sources, and do not promote 23 Oct to a complete daily observation. The last complete, reconciled date remains 2026-10-22. Continue with the next required BTC input-quality blocker; no production ingestion or runtime change.
+
+
+## 2026-10-24 — read-only artifact retrieval/restore integrity check
+
+Independently re-downloaded the two GitHub Actions artifacts via their artifact IDs and tested extraction and raw-body integrity locally:
+
+| Artifact | Retrieval time in manifest | Archive bytes | Archive SHA-256 | Raw payload hashes checked | Mismatches |
+|---|---|---:|---|---:|---:|
+| Prior snapshot, artifact 12565600908 | 2026-10-24T15:30:56.565Z | 232,848 | `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34` | 16 | 0 |
+| New snapshot, artifact 12574657927 | 2026-10-24T20:28:17.616Z | 234,556 | `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb` | 16 | 0 |
+
+Both ZIP integrity checks passed; each archive contains 19 files, 17 manifest source entries, and manifest mode `read-only-staging-only` with `production_database_accessed=false` and `production_writes_performed=false`. All 16 available raw payload hashes matched their manifest values in both archives. This proves that these artifacts can currently be independently retrieved and restored without raw-body corruption.
+
+**Boundary:** GitHub Actions artifact retention is only 7 days, so this is a successful short-term retrieval/restore rehearsal, **not** proof of durable archival, long-term retention, or backup outside GitHub Actions. The durable retention/recovery gate remains open until the future self-hosted environment and its backup/restore procedure exist and are tested. Do not change production or runtime state.
