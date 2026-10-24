@@ -26,6 +26,20 @@ Every candidate row/snapshot must preserve:
 7. Revision comparison against prior snapshots, including old value/status, new value/status, retrieval times, and the source payload hashes.
 8. Units fixed to `USD million/day`; verify all fund fields reconcile to the displayed total within the provider's rounding precision.
 
+## Calendar source selection — version 1 baseline
+
+For the first calendar baseline, use the official full-session holiday schedules from both **NYSE Group (including NYSE Arca Equities)** and **Nasdaq U.S. Equity Markets**:
+
+- NYSE Group holidays and trading hours: https://www.nyse.com/trade/hours-calendars
+- Nasdaq Trader U.S. equity holiday calendar: https://nasdaqtrader.com/Trader.aspx?id=Calendar
+- NYSE published 2026–2028 yearly calendar PDF: https://www.nyse.com/publicdocs/nyse/ICE_NYSE_2026_Yearly_Trading_Calendar.pdf
+
+The published full-market closures align for 2026–2028: Jan 1 (2026), Jan 1 (2027), Jan 17 (2028); Jan 19 2026 / Jan 18 2027 / Jan 17 2028 (MLK); Feb 16 2026 / Feb 15 2027 / Feb 21 2028 (Washington's Birthday); Good Friday Apr 3 2026 / Mar 26 2027 / Apr 14 2028; Memorial Day May 25 2026 / May 31 2027 / May 29 2028; Juneteenth Jun 19 2026 / Jun 18 2027 / Jun 19 2028; Independence Day observed Jul 3 2026 / Jul 5 2027 / Jul 4 2028; Labor Day Sep 7 2026 / Sep 6 2027 / Sep 4 2028; Thanksgiving Nov 26 2026 / Nov 25 2027 / Nov 23 2028; and Christmas Dec 25 2026 / Dec 24 2027 / Dec 25 2028. Dates are the published exchange calendar, not a guarantee against exceptional unscheduled closures.
+
+Early closes do **not** remove a date from the trading-session calendar. The currently published early-close dates include Nov 27 and Dec 24, 2026; Nov 26, 2027; and Nov 24, 2028. The calendar must be reviewed against both official sources at each annual refresh and after an emergency closure notice. Store the exact source URL, retrieval date, content hash, calendar version, coverage years, and any manual exceptional-closure amendment with the repository data.
+
+This calendar baseline answers only **whether a U.S. equity/ETF trading session was scheduled**. It does not establish when Farside publishes that session's ETF flow. The two are separate contract dimensions.
+
 ## Freshness rule — deliberately not yet implementable
 
 A session-aware freshness decision must use the **latest completed US ETF trading session**, not simply `now - period_start` and not `now - retrieved_at`.
@@ -61,7 +75,8 @@ Read-only BTC Public Source Staging run [#39921752769](https://github.com/olegsh
 - [x] Priority source selected and fallback behavior defined.
 - [x] Two snapshots separated by more than 24 hours compared; row revisions and additions recorded.
 - [x] Complete latest captured row and arithmetic reconciliation verified.
-- [ ] Select/version an auditable US ETF session calendar and publication-window convention.
+- [x] Select official NYSE Group/NYSE Arca and Nasdaq full-session holiday calendars as the 2026–2028 baseline; versioned repository fixture and source hashes still need to be added.
+- [ ] Define and verify the provider publication-window convention (not inferable from the exchange calendar).
 - [ ] Implement and test session-aware freshness without fabricating `observed_at`.
 - [ ] Define and test revision/finality treatment for revised provider rows.
 - [ ] Prove durable snapshot retention, independent retrieval, and restore.
