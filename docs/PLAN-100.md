@@ -2009,3 +2009,11 @@ Read-only staging run [#40103950724](https://github.com/olegsh247-stack/Crypto/a
 - **ETF:** Farside all-data payload обновлён (SHA-256 `9727806f6b7dc287234082b329bcfca820d2c54db8736c6c5d012ad228fa890f`), но строка **23 Oct** по-прежнему неполная: displayed total **−137.9 USDm**, HODL value отсутствует, aggregate reconciliation = `INCOMPLETE`. Последняя полная строка — **22 Oct −635.6 USDm**; SoSoValue и TFTC по-прежнему обновлены только по 22 Oct. Не принимать 23 Oct, не подставлять ноль и не делать fallback. Publication/observation time и provider revision/finality неизвестны.
 - **Supply:** CoinGecko снова HTTP 200: circulating **20,102,809 BTC**, total **20,102,871 BTC**, max **21,000,000 BTC**, `last_updated=2026-10-24T15:08:57Z`; payload SHA-256 `acf0bc881526e8cb48199dc3439aca50ce8bbd2f7b4e3eb330dc77fd9b8e0b7b`. Mempool protocol-scheduled issuance **20,102,937.5 BTC** на height **972939**. Gap теперь **66.5 BTC** к CoinGecko total и **128.5 BTC** к circulating. Значения и методы сохраняются отдельно; причина gap и supply-specific timestamp не подтверждены.
 - Capture/tests прошли успешно. BTC остаётся `not_evaluable`; нет ingestion, production DB writes, registry/seed/runtime changes, scenario-state/probability changes, deployment или merge.
+
+
+## 2026-10-24 — принято правило для расхождения supply: Mempool protocol issuance
+
+- Решение пользователя: если значения CoinGecko и Mempool расходятся, **основой для протокольной эмиссии BTC считаем Mempool**. Не усреднять значения и не подменять ими друг друга.
+- На capture height **972939** Mempool protocol-scheduled issuance = **20,102,937.5 BTC**. CoinGecko сообщает total supply **20,102,871 BTC** и circulating supply **20,102,809 BTC**. Разницы: **66.5 BTC** к CoinGecko total и **128.5 BTC** к circulating.
+- Это решение фиксирует приоритет для метрики **protocol-issued/scheduled supply**, а не утверждает, что Mempool заменяет экономическую метрику circulating supply. CoinGecko остаётся отдельным review-only кандидатом на economic circulating supply; last_updated не подтверждён как supply-specific observation timestamp.
+- Протокольная эмиссия пока не допущена в production: candidate ID monetary.protocol_issued_supply остаётся незарегистрированным/неутверждённым. Нужны дальнейшая проверка вычисления и acceptance/provenance; readiness не ослабляется.
