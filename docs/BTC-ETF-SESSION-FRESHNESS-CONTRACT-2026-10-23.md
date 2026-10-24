@@ -86,3 +86,14 @@ Read-only BTC Public Source Staging run [#39921752769](https://github.com/olegsh
 ## Safety boundary
 
 This contract does not authorize production database access/writes, ingestion, registry/source-priority changes, runtime changes, scenario evaluation/state writes, monitoring writes, or deployment.
+
+
+## Fresh read-only recapture — 2026-10-24
+
+BTC Public Source Staging [run #40103950724](https://github.com/olegsh247-stack/Crypto/actions/runs/40103950724), artifact 12563807727, completed successfully. The calendar validator passed before capture.
+
+- Capture time: `2026-10-24T14:45:59.578Z`; Farside all-data page generated date: `2026-10-24`; response HTTP 200; raw response SHA-256 `0d9c31742ed7eb5bfed9bae07a9be17d3a23b49e27edc2afaf412cff5be23b2d`.
+- Latest **complete** Farside session remains 2026-10-22 at **-635.6 USDm**, all 12 fund fields present, displayed total reconciled exactly to the fund sum.
+- Farside now contains a row for 2026-10-23 with displayed total **-137.9 USDm**, but fund field HODL is blank/null; the row is marked incomplete and cannot be accepted. The row total does not reconcile because one fund field is missing. SoSoValue and TFTC snapshots in this run are updated only through 2026-10-22; neither independently confirms a complete 23 Oct value. Do not treat the -137.9 partial row as the day's final flow and do not fall back silently.
+- Farside's landing page still returns HTTP 403; the all-data endpoint succeeds.
+- Conclusion: current source has started reporting the next session, but the latest row is partial and has no exact publication timestamp. Both the incomplete-row gate and session-aware freshness gate remain blocked. No readiness rule was relaxed.
