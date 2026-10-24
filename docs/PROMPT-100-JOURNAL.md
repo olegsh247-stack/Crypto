@@ -1514,3 +1514,13 @@ Compared the read-only Farside captures from 2026-10-23T08:01:55.335Z and 2026-1
 **Result:** 13 overlapping sessions (2026-10-06–2026-10-22), **0 changed row signatures**. The newer rolling 14-row view adds 2026-10-23 and drops 2026-10-05; the raw payload changed but that is not itself a historical revision. The 2026-10-23 row still has missing HODL and remains INCOMPLETE. This confirms no revision was detected for the 13 overlapping dates during this interval; it does not establish permanent finality or source publication timestamps.
 
 Both artifacts/hashes are retained as evidence in the local review workspace; no production DB, ingestion, registry/runtime/scenario state, deployment, or merge changes. BTC remains not_evaluable.
+
+
+## 2026-10-24 20:28 UTC — BTC recapture attempt 2 and fee overlap
+
+- Re-ran the existing read-only staging job [#40107313213, attempt 2](https://github.com/olegsh247-stack/Crypto/actions/runs/40107313213); success. Artifact **12574657927**, archive SHA-256 `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb`. Manifest confirms no production DB access/writes.
+- Kraken XBT/USD **80,454.80 USD/BTC**, observation `20:28:16.209Z`, retrieval `20:28:17.616Z`, payload SHA `d52982b74f598f711665918c0f41b6827e6028183f8035c7b42850b057c3139e`.
+- Farside payload SHA `368a6a8c9e1c4ebf68de93921057512588f9ea855ccddff3b9923b01e0528efd`; 23 Oct still `-137.9 USDm` with HODL null, `INCOMPLETE`. SoSoValue API HTTP 200, SHA `d3666d105e0eb460996b11437c62d9d974f94cc3e578a63338876b06c981ff8b`, but latest date remains 22 Oct. No fallback/averaging; Farside priority, SoSoValue/TFTC cross-check only.
+- Mempool tip **972970**, issuance **20,103,034.375 BTC**, hash `00000000000000000000f641a993b3f589150f30bc15f155d33d86c7448979b3`; CoinGecko circulating **20,102,953**, total **20,103,015 BTC**, last_updated `2026-10-24T20:26:48Z`. Gap: Mempool +19.375 BTC vs total and +81.375 BTC vs circulating. Keep protocol issuance and economic circulating supply separate; timestamp still not accepted as supply-specific.
+- Fee window **972827–972970**: 204,356,274 sats fees, 450 BTC subsidy, ratio **0.4541250533%**. Compared with prior window 972797–972940, **114 overlapping blocks** (972827–972940) match hash, parent hash and per-block fees; **0 differences**. JSON SHA `758da0a6abcd29324c8eec5ae04e6aa5c1733d4a61ca75a15e3944f648fd35d5`.
+- All capture/parser/calendar/fee/candidate steps passed. BTC remains `not_evaluable`; no production DB, ingestion, registry/runtime/scenario changes, deployment or merge. Plan 100 updated in commit `4e7fd73b0b47e7c413a324d925d579ec376c0e58`.
