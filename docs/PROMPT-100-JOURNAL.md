@@ -1505,3 +1505,12 @@ Added the disposable archive/backup/restore/tamper test to the existing VPS API 
 **Decision:** Farside remains priority; SoSoValue/TFTC are cross-checks only, no averaging. Store session_date separately from retrieved_at; provider_published_at remains null and revision/finality UNKNOWN unless provider evidence is present. Keep immutable snapshots and detect revisions by comparing historical rows/payload hashes. Missing fund fields remain missing, not zero; incomplete rows cannot be accepted even if remaining values happen to sum to the displayed aggregate.
 
 **Result:** the public-source review establishes the current contract limitation, not finality. The 2026-10-23 Farside row (−137.9 USDm, HODL missing) remains INCOMPLETE; 2026-10-22 (−635.6 USDm) is the latest fully reconciled session. ETF remains blocked from canonical/production ingestion and BTC remains not_evaluable. No runtime, registry, DB, scenario, ingestion, deployment, or merge changes.
+
+
+## 2026-10-24 — Farside >24h repeat-snapshot comparison executed
+
+Compared the read-only Farside captures from 2026-10-23T08:01:55.335Z and 2026-10-24T15:31:08.713Z (**31.487h apart**, 24h gate passed). Raw payload hashes: older `a96032a3d9f4c881201ecc79654210afa6a992faa76937e9562eabcffa102f57`, newer `40e211b691f06495f3a34cd290252b829b030687075a21c7b9ec43c044fff41e`. Archive hashes: older `c204535e252842ec037abd3ca46ebf7bab60f30ef9713f49c92512fbe4debefb`, newer `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`.
+
+**Result:** 13 overlapping sessions (2026-10-06–2026-10-22), **0 changed row signatures**. The newer rolling 14-row view adds 2026-10-23 and drops 2026-10-05; the raw payload changed but that is not itself a historical revision. The 2026-10-23 row still has missing HODL and remains INCOMPLETE. This confirms no revision was detected for the 13 overlapping dates during this interval; it does not establish permanent finality or source publication timestamps.
+
+Both artifacts/hashes are retained as evidence in the local review workspace; no production DB, ingestion, registry/runtime/scenario state, deployment, or merge changes. BTC remains not_evaluable.
