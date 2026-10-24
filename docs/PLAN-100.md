@@ -2066,3 +2066,15 @@ BTC Public Source Staging [run #40107313213, attempt 2](https://github.com/olegs
 - **Fees/subsidy:** новое окно **972827–972970**, 144 блока; fees **204,356,274 sats = 2.04356274 BTC**, subsidy **450 BTC**, ratio **0.4541250533%**. Сравнили с предыдущим окном **972797–972940**: **114 общих блоков (972827–972940)** совпали по block hash, parent hash и per-block fees; **0 различий**. Tip до/после захвата стабилен на 972970. JSON SHA-256 `758da0a6abcd29324c8eec5ae04e6aa5c1733d4a61ca75a15e3944f648fd35d5`. Это усиливает pairwise consistency, но не доказывает вечную finality или parity с deployed API.
 
 **Disposition:** свежие данные получены, fee overlap проверен, но ETF остаётся неполным и supply timestamp/семантика экономического circulating supply не приняты. BTC остаётся `not_evaluable`; ни production DB, ingestion, registry/seed/runtime, scenario state/probability, deployment, ни merge не менялись. Сохранить артефакт и hashes как отдельное evidence; не менять прежние снимки.
+
+
+## 2026-10-24 — cross-source check for the incomplete 2026-10-23 ETF row
+
+Inspected the raw response bodies in read-only staging artifact **12574657927** (run #40107313213, attempt 2); no new source call or production access was needed for this comparison.
+
+- **Farside all-data** is current through 2026-10-23 and reports aggregate **−137.9 USDm**, but at least one fund value (HODL) is missing; parser correctly returns `fund_values_complete=false` / reconciliation `INCOMPLETE`. The separate Farside `/btc/` page returned HTTP 403; the all-data page is the captured endpoint used for the panel.
+- **CryptoETF.today** returns aggregate `netFlowUsdM=-137.9` for 2026-10-23, matching Farside only at displayed 0.1 USDm precision. It exposes aggregate daily flow only in this response, not the missing per-fund HODL value; it therefore cannot repair or independently reconcile the panel. Its 2026-10-24 value is 0, which is treated as a future/unreported placeholder, not an observed zero flow.
+- **SoSoValue** latest row is 2026-10-22 (−635,492,639.395 USD); it does not yet cover 2026-10-23.
+- **TFTC** metadata says `updatedThrough=2026-10-22` and `dateModified=2026-10-22T22:00:00Z`; latest day is 2026-10-22. It also does not confirm 2026-10-23.
+
+**Decision:** no ETF source supplies independent, complete per-fund evidence for 23 Oct. Keep Farside as the priority source; SoSoValue/TFTC/CryptoETF.today remain cross-checks. Do not fill HODL with zero, do not infer missing values from an aggregate, do not average sources, and do not promote 23 Oct to a complete daily observation. The last complete, reconciled date remains 2026-10-22. Continue with the next required BTC input-quality blocker; no production ingestion or runtime change.
