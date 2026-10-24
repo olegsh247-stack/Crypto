@@ -1958,7 +1958,7 @@ Latest CI on PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` completed su
 
 ## 2026-10-23 — следующий кандидат экономического circulating supply
 
-Добавлен документ `docs/BTC-ECONOMIC-CIRCULATING-SUPPLY-CANDIDATE-2026-10-23.md`: CoinGecko `/coins/markets?vs_currency=usd&ids=bitcoin` выбран следующим кандидатом для реального read-only API теста, потому что предоставляет отдельное поле `circulating_supply` и публикует методологию supply для PoW-активов. Это пока только план теста: текущий staging artifact не содержит ответ CoinGecko, поэтому live-значение, hash и timestamp не заявляются. Ключевой вопрос — означает ли `last_updated` время обновления supply или всего market-data объекта; до доказательства семантики оно не принимается как `observed_at`. Никаких registry/seed/runtime/source-priority изменений нет. Официальные ссылки и проверочные шаги зафиксированы в документе кандидата.
+Добавлен документ `docs/BTC-ECONOMIC-CIRCULATING-SUPPLY-CANDIDATE-2026-10-23.md`: CoinGecko `/coins/markets?vs_currency=usd&ids=bitcoin` выбран следующим кандидатом для реального read-only API теста, потому что предоставляет отдельное поле `circulating_supply` и публикует методологию supply для PoW-активов. На момент создания заметки это был план теста; позднее кандидат был захвачен в read-only staging. Фактические значения, hash и время получения записаны в следующем разделе этого документа. Ключевой вопрос — означает ли `last_updated` время обновления supply или всего market-data объекта; до доказательства семантики оно не принимается как `observed_at`. Никаких registry/seed/runtime/source-priority изменений нет. Официальные ссылки и проверочные шаги зафиксированы в документе кандидата.
 
 
 ## 2026-10-23 — CoinGecko supply API captured in read-only staging
@@ -1972,3 +1972,10 @@ Latest CI on PR #84 head `b0b1d57edc4dd44de024f3275edad40c1897c2a2` completed su
 ## 2026-10-23 — fee/subsidy re-capture and overlap comparison
 
 The new read-only staging run [#39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, captured the 144-block fee window 972596–972739: 258,009,739 sats fees (2.58009739 BTC), 450 BTC protocol subsidy, ratio 0.573355%. Tip height/hash were stable during capture. Compared with the prior window 972593–972736 from run #39921752769, all 141 overlapping heights (972596–972736) matched block hash, parent hash and per-block fees; no overlap differences. Window JSON hashes are recorded in `docs/BTC-HASHRATE-FEE-SUBSIDY-ACCEPTANCE-2026-10-17.md`. This supports pairwise consistency but does not prove permanent finality or deployed API version parity. Fee/subsidy remains review-only.
+
+
+## 2026-10-24 — календарь ETF-сессий и семантика времени CoinGecko
+
+- Для календарной части ETF-контракта выбраны официальные календари NYSE Group/NYSE Arca и Nasdaq U.S. Equity Markets на 2026–2028 годы. В `docs/BTC-ETF-SESSION-FRESHNESS-CONTRACT-2026-10-23.md` зафиксированы источники, праздничные даты и ранние закрытия; раннее закрытие остаётся торговой сессией. Календарь определяет только дату сессии, но не публикационное время Farside. Публикационное окно пока не подтверждено, поэтому freshness gate не реализуется и не ослабляется.
+- Уточнена CoinGecko timestamp-семантика: официальная схема описывает `last_updated` как время обновления market-data объекта, а не как доказанное время наблюдения supply. Исторический `circulating_supply_chart` документирован, но отмечен CoinGecko как endpoint семейства Enterprise-plan; доступность в текущем публичном плане не предполагается. Кандидат остаётся review-only.
+- Исправлена историческая формулировка в supply-документе, которая после успешного захвата CoinGecko продолжала говорить, что ответа ещё нет. Фактические числа и hash сохранены без изменений.
