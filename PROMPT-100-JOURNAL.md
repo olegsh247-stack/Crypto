@@ -381,3 +381,13 @@
 - CoinGecko 20,102,809 BTC circulating / 20,102,871 BTC total / 21,000,000 max; payload hash `5ec3caa54e124381db673ef244e336a3469d20ffa750ceeeb293513ecdce770b`. Mempool scheduled issuance 20,102,921.875 BTC at height 972934; gap to CoinGecko total 50.875 BTC and circulating 112.875 BTC. Blockchain.com 20,101,440.625 BTC remains stale (last chart point 21 Oct). Timestamp semantics remain unaccepted.
 - Fee window 972791–972934 verified across 144 contiguous blocks; 202,056,851 sats fees / 450 BTC subsidy, ratio 0.449015%. Sum of per-block fees matches aggregate; all parent links valid; tip/boundary stable. SHA-256 `e897c849cb22dc5a2b5cd92b52213a1deee113ef4af3d2336283b34eac949f7a`. Previous window ends at 972739, so windows do not overlap; no cross-window comparison claimed. Review-only until reorg/finality and API version parity gates pass.
 - No production DB access/writes, ingestion, registry/seed/runtime changes, scenario-state changes, deployment, or merge.
+
+
+## 2026-10-24 — повторный BTC capture: перекрытие fee-window подтверждено
+
+- Повторно выполнен read-only capture job в BTC Public Source Staging run #40103950724; artifact **12564682048**, SHA-256 архива `938e11c3ca4a0786543ed27784e157273e36ce27f124371c327b857d1a9b0ac5`. Все тесты и захват успешны; manifest запрещает production DB access/writes.
+- Новое fee-window 972796–972939: 144 блока, fees 200,015,244 sats, subsidy 450 BTC, ratio 0.44447832%. Сравнение с окном 972791–972934 дало 139 общих блоков, **0 различий** по block hash, parent hash и fees; tip стабилен на 972939. JSON SHA-256 `284fa965027b39e1ff8b8ffd3b7cc9f94500bc487d8d65311ea9659fbefe25a5`. Pairwise reorg check пройден для этой пары; finality и deployed API version parity остаются отдельными gate.
+- Kraken: 79,703.10 USD/BTC, observation 15:09:57.321Z; payload SHA-256 `989acceed442865d5f0f70d9ccc3a8103d0459bd70c138c673222fadb18e59e9`.
+- ETF: Farside raw hash `9727806f6b7dc287234082b329bcfca820d2c54db8736c6c5d012ad228fa890f`; строка 23 Oct по-прежнему incomplete (−137.9 USDm, HODL отсутствует), последняя полная сессия 22 Oct −635.6 USDm. SoSoValue/TFTC — только по 22 Oct. Никакого нулевого значения или fallback.
+- Supply: CoinGecko circulating 20,102,809 BTC / total 20,102,871 BTC; Mempool protocol-scheduled issuance 20,102,937.5 BTC на height 972939. Gap 66.5 BTC к total и 128.5 BTC к circulating; не усреднять и не подменять series. `last_updated` CoinGecko не принят как supply-specific observed_at.
+- Plan 100 обновлён commit `f4665e0d9d859e609fabc3ec27c671b5f325f489`. BTC остаётся `not_evaluable`; без ingestion, production writes, registry/seed/runtime changes, scenario changes, deploy или merge.
