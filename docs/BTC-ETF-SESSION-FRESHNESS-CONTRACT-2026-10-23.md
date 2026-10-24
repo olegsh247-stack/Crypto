@@ -75,7 +75,8 @@ Read-only BTC Public Source Staging run [#39921752769](https://github.com/olegsh
 - [x] Priority source selected and fallback behavior defined.
 - [x] Two snapshots separated by more than 24 hours compared; row revisions and additions recorded.
 - [x] Complete latest captured row and arithmetic reconciliation verified.
-- [x] Select official NYSE Group/NYSE Arca and Nasdaq full-session holiday calendars as the 2026–2028 baseline; versioned repository fixture and source hashes still need to be added.
+- [x] Select official NYSE Group/NYSE Arca and Nasdaq full-session holiday calendars as the 2026–2028 baseline and add a versioned repository fixture plus structural validator.
+- [ ] Capture and record hashes of the exact upstream calendar source payloads.
 - [ ] Define and verify the provider publication-window convention (not inferable from the exchange calendar).
 - [ ] Implement and test session-aware freshness without fabricating `observed_at`.
 - [ ] Define and test revision/finality treatment for revised provider rows.
