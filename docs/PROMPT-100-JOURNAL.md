@@ -1529,3 +1529,8 @@ Both artifacts/hashes are retained as evidence in the local review workspace; no
 ## 2026-10-24 — ETF 23 Oct cross-source resolution
 
 Reviewed raw responses in read-only artifact 12574657927 (run #40107313213). Farside all-data says 2026-10-23 aggregate −137.9 USDm but HODL is null, so row remains incomplete. CryptoETF.today repeats −137.9 at 0.1 USDm precision but supplies only aggregate flow; its 24 Oct zero is a placeholder, not an observed zero. SoSoValue and TFTC stop at 22 Oct (`updatedThrough=2026-10-22` for TFTC). None supplies independent per-fund evidence to fill HODL. Keep Farside priority; other sources cross-check only; no averaging, no missing-to-zero conversion, no promotion of 23 Oct. Plan 100 updated in `efb40cad069250c4060e231ff21d4e5b9054a350`. BTC remains `not_evaluable`; no production writes or runtime changes.
+
+
+## 2026-10-24 — staging artifact retrieval/restore rehearsal
+
+Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity passed for both; each archive had 19 files / 17 source entries, and all 16 available raw payload hashes matched the manifest (0 mismatches). Archive SHA-256: prior `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`; newer `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb`. Both manifests confirm read-only staging and no production DB access/writes. This proves current artifact retrieval/restore integrity only; 7-day CI retention is not durable archive/backup. Long-term retention/restore remains blocked pending self-hosted infrastructure and its backup test. Plan 100 updated in `40b688e4b64b1fc67736a8e0f3ae74996b235979`.
