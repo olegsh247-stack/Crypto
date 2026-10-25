@@ -1534,3 +1534,13 @@ Reviewed raw responses in read-only artifact 12574657927 (run #40107313213). Far
 ## 2026-10-24 — staging artifact retrieval/restore rehearsal
 
 Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity passed for both; each archive had 19 files / 17 source entries, and all 16 available raw payload hashes matched the manifest (0 mismatches). Archive SHA-256: prior `e0eee123c2e361696df3a9da444f269a3224fbabf4fd404055d123cd73502e34`; newer `af34b85f7f7de7d99b932f4a30ab5f9e994c4be98d5b1040efbd0d6c51c45dfb`. Both manifests confirm read-only staging and no production DB access/writes. This proves current artifact retrieval/restore integrity only; 7-day CI retention is not durable archive/backup. Long-term retention/restore remains blocked pending self-hosted infrastructure and its backup test. Plan 100 updated in `40b688e4b64b1fc67736a8e0f3ae74996b235979`.
+
+
+## 2026-10-25 07:53 UTC — BTC staging recapture
+
+- Re-ran read-only capture [BTC Public Source Staging #40107313213, attempt 3](https://github.com/olegsh247-stack/Crypto/actions/runs/40107313213): success. Artifact **12591299886**, ZIP SHA-256 `a49a52197dc68708ae15a406305bbafa329bd2436b0e001c56424d05458ad76c`. Production DB access/writes both false.
+- Kraken XBT/USD **80,594.80 USD/BTC**, trade `2026-10-25T07:52:51.193Z`, retrieved `07:52:51.438Z`, SHA `f94a5326626140ab18a6655c55b15e5a93e6183c82790341a2097fe4c41d5ca7`.
+- Farside 23 Oct total remains **−137.9 USDm**, HODL is `-`, calculated fund sum null, status `INCOMPLETE`; payload SHA `277d557b576239cd0e8340b6cec9b680d848db8ea859546872477035767ebaef`. SoSoValue latest date remains 22 Oct. CryptoETF.today's −137.9 for 23 Oct is a cross-check only; it does not fill the missing fund value. No averaging/fallback.
+- Mempool tip 973037, issuance **20,103,243.75 BTC**; CoinGecko circulating/total both **20,103,187 BTC**, `last_updated=2026-10-25T07:51:47Z`. Gap 56.75 BTC; keep metrics separate and timestamp unresolved. Mempool payload SHA `fcf5fc42a3b8070701e3b2310106e12f2061f49605903db8c8d469b4d14e5e46`; CoinGecko SHA `c322ce265dec23580a876ca52e8b50aea95de4e5e5529ba9ff35b8244c46afcd`.
+- Fee window **972894–973037**: fees 193,815,563 sats (**1.93815563 BTC**), subsidy 450 BTC, ratio **0.4307012511%**. Compared with prior 972827–972970 window, **77 overlapping blocks** match block hash, parent hash and fees; zero differences; tip stable before/after.
+- BTC remains `not_evaluable`; no production DB/ingestion/registry/runtime/scenario changes, deployment or merge. Plan 100 updated in commit `5589e90c737b4b8ed5f40203943c99972ead8d36`.
