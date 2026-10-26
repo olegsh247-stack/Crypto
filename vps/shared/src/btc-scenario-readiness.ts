@@ -145,12 +145,15 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .filter(row => row?.metric_id === "institutional.etf_net_flow")
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
+  const latestReportedSessionMs = allEtfRows
+    .map(row => dateMs(row?.period_start))
+    .filter(periodMs => Number.isFinite(periodMs) && periodMs <= nowMs && nowMs - periodMs <= 14 * 24 * 3600000)
+    .sort((a, b) => b - a)[0];
   const latestEtf = allEtfRows
     .filter(row => {
       const periodMs = dateMs(row?.period_start);
-      return Number.isFinite(periodMs)
-        && periodMs <= nowMs
-        && nowMs - periodMs <= 14 * 24 * 3600000
+      return Number.isFinite(latestReportedSessionMs)
+        && periodMs === latestReportedSessionMs
         && validEtfSource(row)
         && !explicitlyIncompleteEtfPanel(row)
         && validObservation(row, nowMs, 36, "USD million/day", [String(row?.source_id ?? "")], ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")]);
