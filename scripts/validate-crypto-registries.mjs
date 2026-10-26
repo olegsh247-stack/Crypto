@@ -71,10 +71,11 @@ for (const [, metricId, fields] of readinessRows) {
 // ETF daily history has a separate rule block (latest-row freshness + distinct reporting days).
 const etfMetric = metricsById.get("institutional.etf_net_flow");
 assert.ok(etfMetric, "ETF flow metric must exist in metric registry");
-const etfRule = /validObservation\(row, nowMs, (\d+(?:\.\d+)?), "([^"]+)", \[String\(row\?\.source_id \?\? ""\)\], ETF_SOURCE_URL_PREFIXES\[String\(row\?\.source_id \?\? ""\)\]\)\)/.exec(readinessSource);
+const etfRule = /validEtfObservation\(row, nowMs\)/.exec(readinessSource);
 assert.ok(etfRule, "ETF source-fallback readiness rule must be discoverable");
-assert.equal(Number(etfRule[1]), ageHours(etfMetric.freshness_window, etfMetric.metric_id), "ETF latest-row freshness drift");
-assert.equal(etfRule[2], etfMetric.unit, "ETF flow unit drift");
+assert.equal(ageHours(etfMetric.freshness_window, etfMetric.metric_id), 36, "ETF latest-row freshness contract must remain 36 hours");
+assert.equal(etfMetric.unit, "USD million/day", "ETF flow unit contract drift");
+assert.match(readinessSource, /nowMs - retrievedMs <= 36 \* 3600000/, "ETF fallback must use a bounded recent retrieval window");
 assert.match(readinessSource, /const ETF_SOURCE_PRIORITY = \[/, "ETF fallback source priority must be explicit");
 assert.match(readinessSource, /institutional\.sosovalue/);
 assert.match(readinessSource, /institutional\.cryptoetf_today/);
