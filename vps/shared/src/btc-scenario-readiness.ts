@@ -196,6 +196,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
       && row?.source_registered === true
       && validEtfSource(row)
+      && !explicitlyIncompleteEtfPanel(row)
       && row?.unit === "USD million/day"
       && row?.expected_unit === "USD million/day";
   });
