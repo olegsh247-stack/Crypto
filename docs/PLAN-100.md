@@ -2105,3 +2105,12 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - **Access:** direct Farside /btc page returned HTTP 403 challenge; the all-data page still returned 200 and is the parsed evidence. Yahoo DXY was not requested; remains optional and excluded from BTC blocking requirements.
 
 **Disposition:** fresh evidence captured and cross-window checks passed, but the ETF row is still incomplete and economic-supply timestamp semantics remain unaccepted. BTC remains `not_evaluable`; no production DB, ingestion, registry/runtime/scenario-state/probability changes, deployment, or merge.
+
+
+## 2026-10-26 — расширен реестр публичных ETF flow и holdings источников
+
+- Зарегистрированы как **кандидаты для исследования/cross-check**, без добавления в активный `metric-registry.json`/source priority: CryptoETF.today (`institutional.cryptoetf_today`), CoinPulseHQ (`institutional.coinpulse`), Bitcoin Almanack (`institutional.bitcoin_almanack`), BitTradeScanner (`institutional.bittradescanner`), Bitbo (`holdings.bitbo`) и BitcoinTreasuries.net (`holdings.bitcointreasuries`).
+- Farside остаётся приоритетным исследовательским источником flows; SoSoValue и TFTC — сверка. CryptoETF.today, CoinPulseHQ и BitTradeScanner — дополнительные cross-check; Bitcoin Almanack — проверка статуса сессии. Bitbo и BitcoinTreasuries.net — только holdings, отдельно от flows.
+- Уточнено: включение источника в реестр не подтверждает качество, полноту, права повторного использования, timestamp/revision/finality или пригодность для production. Не усреднять источники; не считать пропуски нулями; не подменять flows значениями holdings.
+- Добавлен единый рабочий промт `docs/SOURCE-REGISTRY-PROMPT.md`; следующий шаг — проверить source-catalog validation на exact head, затем продолжить BTC review-only capture/входы по Плану 100.
+- Без изменений runtime, metric source priority, production DB/ingestion, readiness или состояния/вероятностей сценария. BTC остаётся `not_evaluable`.
