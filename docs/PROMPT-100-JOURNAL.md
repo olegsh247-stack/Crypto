@@ -1544,3 +1544,12 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 - Mempool tip 973037, issuance **20,103,243.75 BTC**; CoinGecko circulating/total both **20,103,187 BTC**, `last_updated=2026-10-25T07:51:47Z`. Gap 56.75 BTC; keep metrics separate and timestamp unresolved. Mempool payload SHA `fcf5fc42a3b8070701e3b2310106e12f2061f49605903db8c8d469b4d14e5e46`; CoinGecko SHA `c322ce265dec23580a876ca52e8b50aea95de4e5e5529ba9ff35b8244c46afcd`.
 - Fee window **972894–973037**: fees 193,815,563 sats (**1.93815563 BTC**), subsidy 450 BTC, ratio **0.4307012511%**. Compared with prior 972827–972970 window, **77 overlapping blocks** match block hash, parent hash and fees; zero differences; tip stable before/after.
 - BTC remains `not_evaluable`; no production DB/ingestion/registry/runtime/scenario changes, deployment or merge. Plan 100 updated in commit `5589e90c737b4b8ed5f40203943c99972ead8d36`.
+
+
+## 2026-10-26 — ETF source list expanded; source prompt added
+
+- Added source-registry entries for CryptoETF.today, CoinPulseHQ, Bitcoin Almanack, BitTradeScanner, Bitbo and BitcoinTreasuries.net; updated the existing CryptoETF.today catalog candidate to reference its registered source ID.
+- Added five source-catalog endpoints for CoinPulseHQ flow cross-check, Bitcoin Almanack session-status cross-check, BitTradeScanner flow cross-check, Bitbo holdings, and BitcoinTreasuries.net holdings. The catalog now contains 40 endpoint entries; source registry contains 22 source entries.
+- Added `docs/SOURCE-REGISTRY-PROMPT.md` with source-selection rules, ETF flow versus BTC holdings distinction, source roles, provenance requirements, and next-step sequence. The prompt does not approve any source for canonical ingestion or alter metric source priority.
+- Source policy retained: Farside primary research source for flows; SoSoValue/TFTC cross-check; CryptoETF.today/CoinPulseHQ/BitTradeScanner auxiliary flow cross-checks; Bitcoin Almanack session-status cross-check; Bitbo/BitcoinTreasuries.net holdings-only.
+- **Verification pending:** source-catalog validation and exact-head CI must be checked after these commits. No claim that a new API capture has run. No runtime/readiness, metric source priority, production DB, ingestion, scenario state/probabilities, deployment, or merge changes. BTC remains `not_evaluable`.
