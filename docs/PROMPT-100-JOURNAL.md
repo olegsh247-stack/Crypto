@@ -1553,3 +1553,11 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 - Added `docs/SOURCE-REGISTRY-PROMPT.md` with source-selection rules, ETF flow versus BTC holdings distinction, source roles, provenance requirements, and next-step sequence. The prompt does not approve any source for canonical ingestion or alter metric source priority.
 - Source policy retained: Farside primary research source for flows; SoSoValue/TFTC cross-check; CryptoETF.today/CoinPulseHQ/BitTradeScanner auxiliary flow cross-checks; Bitcoin Almanack session-status cross-check; Bitbo/BitcoinTreasuries.net holdings-only.
 - **Verification pending:** source-catalog validation and exact-head CI must be checked after these commits. No claim that a new API capture has run. No runtime/readiness, metric source priority, production DB, ingestion, scenario state/probabilities, deployment, or merge changes. BTC remains `not_evaluable`.
+
+
+### 2026-10-26 — corrected source-registry/SQL seed parity
+
+- First CI run after expanding source registry failed: six new candidate IDs were missing from the static `infrastructure/postgres/seed-v1.sql` source block. The BTC registry/readiness job stopped at the same registry validator before running the test suite; this was not a scenario-rule regression.
+- Added matching seed entries for `institutional.cryptoetf_today`, `institutional.coinpulse`, `institutional.bitcoin_almanack`, `institutional.bittradescanner`, `holdings.bitbo`, and `holdings.bitcointreasuries`.
+- Manual current-branch consistency check: 22 registry sources, 22 seed source IDs, no missing/extra/duplicate IDs; 40 unique catalog endpoint IDs; none of the six new sources appears in active metric source priority.
+- Exact-head CI after this correction is **unconfirmed** because the workflow-run lookup returned no run for the corrected SHA. The previous failure remains a real historical result, not a passing check. No database was modified; no runtime/readiness, metric priority, scenario state, deployment, or merge changes.
