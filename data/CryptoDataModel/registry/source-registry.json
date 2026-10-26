@@ -161,6 +161,66 @@
       "reliability": "blocked_pending_permission",
       "access_method": "Yahoo Finance website / undocumented chart endpoint; automated capture disabled",
       "notes": "Ticker DX-Y.NYB is the U.S. Dollar Index (DXY), shown as an ICE Futures instrument. The chart endpoint is undocumented and is not an approved public API. Yahoo's general Terms of Service prohibit automated data collection without express prior permission. Daily Close must be distinguished from Adj Close and intraday price. Provider timestamp is a candle/session label, not proven actual close or publication time. Session date must use provider exchange timezone and be stored separately. No macro.dxy source_priority approval; no canonical ingestion until access/reuse permission, exact close timestamp semantics, and freshness rule are verified."
+    },
+    {
+      "source_id": "institutional.cryptoetf_today",
+      "name": "CryptoETF.today — US spot Bitcoin ETF flow tracker",
+      "type": "institutional",
+      "url": "https://cryptoetf.today/en/bitcoin-etf-flows",
+      "priority": 4,
+      "reliability": "to_validate",
+      "access_method": "public website/API documentation",
+      "notes": "Aggregate and per-fund ETF flow cross-check candidate. Do not treat aggregate agreement as proof of complete per-fund rows; verify session date, row completeness, units, retrieval timestamp and revision semantics. Never canonical or production-approved by catalog inclusion."
+    },
+    {
+      "source_id": "institutional.coinpulse",
+      "name": "CoinPulseHQ — Bitcoin ETF flow tracker",
+      "type": "institutional",
+      "url": "https://coinpulsehq.com/bitcoin-etf-flows/",
+      "priority": 4,
+      "reliability": "to_validate",
+      "access_method": "public website",
+      "notes": "Independent public tracker candidate for per-fund US spot BTC ETF flows. Research cross-check only; verify exact session, fund coverage, units, source lineage and revision/finality before use."
+    },
+    {
+      "source_id": "institutional.bitcoin_almanack",
+      "name": "Bitcoin Almanack — Bitcoin ETF flow tracker",
+      "type": "institutional",
+      "url": "https://bitcoinalmanack.com/etfs/bitcoin-etf-flow-tracker/",
+      "priority": 4,
+      "reliability": "to_validate",
+      "access_method": "public website",
+      "notes": "Session-validation/status cross-check. Not a primary per-fund flow source; tracker may label the latest session preliminary/unfinalized. Preserve its stated status and do not infer missing values."
+    },
+    {
+      "source_id": "institutional.bittradescanner",
+      "name": "BitTradeScanner — Bitcoin ETF flow tracker",
+      "type": "institutional",
+      "url": "https://bittradescanner.com/",
+      "priority": 5,
+      "reliability": "to_validate",
+      "access_method": "public website",
+      "notes": "Auxiliary flow cross-check only. Observed tracker data can be incomplete and materially disagree with Farside; never substitute its aggregate silently or fill missing funds without row-level evidence."
+    },
+    {
+      "source_id": "holdings.bitbo",
+      "name": "Bitbo — Bitcoin ETF holdings tracker",
+      "type": "holdings",
+      "url": "https://bitbo.io/treasuries/latest-changes/",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "public website",
+      "notes": "BTC holdings change cross-check candidate. Holdings are a separate metric from USD flows; preserve fund ticker, BTC units, observation/session date, retrieval time and provider/source lineage. Not approved for canonical ingestion."
+    },
+    {
+      "source_id": "holdings.bitcointreasuries",
+      "name": "BitcoinTreasuries.net — Bitcoin ETF holdings tracker",
+      "type": "holdings",
+      "url": "https://bitcointreasuries.net/",
+      "priority": 3,
+      "reliability": "to_validate",
+      "access_method": "public website",
+      "notes": "ETF/fund holdings cross-check candidate. Verify the exact fund, BTC units, date and underlying issuer evidence. Holdings do not substitute for daily USD net flows; not approved for canonical ingestion."
     }
   ]
 }
