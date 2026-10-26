@@ -149,17 +149,21 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .map(row => dateMs(row?.period_start))
     .filter(periodMs => Number.isFinite(periodMs) && periodMs <= nowMs && nowMs - periodMs <= 14 * 24 * 3600000)
     .sort((a, b) => b - a)[0];
-  const latestEtf = allEtfRows
-    .filter(row => {
-      const periodMs = dateMs(row?.period_start);
-      return Number.isFinite(latestReportedSessionMs)
-        && periodMs === latestReportedSessionMs
-        && validEtfSource(row)
-        && !explicitlyIncompleteEtfPanel(row)
-        && validObservation(row, nowMs, 36, "USD million/day", [String(row?.source_id ?? "")], ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")]);
-    })
-    .sort((a, b) => dateMs(b.period_start) - dateMs(a.period_start)
-      || ETF_SOURCE_PRIORITY.indexOf(String(a.source_id)) - ETF_SOURCE_PRIORITY.indexOf(String(b.source_id))
+  const latestSessionRows = allEtfRows.filter(row => dateMs(row?.period_start) === latestReportedSessionMs);
+  const latestRowBySource = new Map<string, any>();
+  for (const row of latestSessionRows) {
+    const sourceId = String(row?.source_id ?? "");
+    const prior = latestRowBySource.get(sourceId);
+    if (!prior || dateMs(row?.observed_at) > dateMs(prior?.observed_at)
+        || (dateMs(row?.observed_at) === dateMs(prior?.observed_at) && Number(row?.revision ?? 0) > Number(prior?.revision ?? 0))) {
+      latestRowBySource.set(sourceId, row);
+    }
+  }
+  const latestEtf = [...latestRowBySource.values()]
+    .filter(row => validEtfSource(row)
+      && !explicitlyIncompleteEtfPanel(row)
+      && validObservation(row, nowMs, 36, "USD million/day", [String(row?.source_id ?? "")], ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")]))
+    .sort((a, b) => ETF_SOURCE_PRIORITY.indexOf(String(a.source_id)) - ETF_SOURCE_PRIORITY.indexOf(String(b.source_id))
       || dateMs(b.observed_at) - dateMs(a.observed_at))[0];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
   if (!latestEtf || !Number.isFinite(latestEtfPeriodMs)) {
@@ -195,6 +199,9 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && row?.unit === "USD million/day"
       && row?.expected_unit === "USD million/day";
   });
+  etfRows.sort((a, b) => dateMs(b.period_start) - dateMs(a.period_start)
+    || ETF_SOURCE_PRIORITY.indexOf(String(a.source_id)) - ETF_SOURCE_PRIORITY.indexOf(String(b.source_id))
+    || dateMs(b.observed_at) - dateMs(a.observed_at));
   const uniqueByDay = new Map<string, any>();
   for (const row of etfRows) {
     const day = new Date(dateMs(row.period_start)).toISOString().slice(0, 10);
