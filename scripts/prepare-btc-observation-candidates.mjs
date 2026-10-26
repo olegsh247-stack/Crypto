@@ -191,10 +191,10 @@ export function prepareBtcObservationCandidates(manifest) {
         const sosoSource = sources.find(item => item?.source_id === "institutional.sosovalue"
           && item?.status === "CAPTURED" && Array.isArray(item.latest_rows));
         const sosoLatestDate = sosoSource
-          ? sosoSource.latest_rows.map(item => item?.date).filter(date => typeof date === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(date)).sort().reverse()[0]
+          ? sosoSource.latest_rows.map(item => item?.date).filter(date => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).sort().reverse()[0]
           : null;
         for (const row of source.latest_rows) {
-          const date = typeof row?.date === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(row.date) ? row.date : null;
+          const date = typeof row?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date : null;
           const value = sourceId === "institutional.sosovalue" ? row?.total_net_inflow_usd_million : row?.net_flow_usd_million;
           const dateMs = date ? Date.parse(date + "T00:00:00Z") : NaN;
           const retrievedMs = Date.parse(String(source.retrieved_at ?? manifest?.retrieved_at ?? ""));
@@ -247,7 +247,7 @@ export function prepareBtcObservationCandidates(manifest) {
         && Array.isArray(source.recent_days_in_last_14_days)) {
         const bodyHash = source.source_payload_sha256 ?? source.body_sha256 ?? null;
         for (const row of source.recent_days_in_last_14_days) {
-          const date = typeof row?.date === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(row.date) ? row.date : null;
+          const date = typeof row?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date : null;
           const value = typeof row?.netFlowUsd === "number" ? row.netFlowUsd / 1_000_000 : NaN;
           const retrievedMs = Date.parse(String(source.retrieved_at ?? manifest?.retrieved_at ?? ""));
           const dateMs = date ? Date.parse(date + "T00:00:00Z") : NaN;
