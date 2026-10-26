@@ -2114,3 +2114,11 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Уточнено: включение источника в реестр не подтверждает качество, полноту, права повторного использования, timestamp/revision/finality или пригодность для production. Не усреднять источники; не считать пропуски нулями; не подменять flows значениями holdings.
 - Добавлен единый рабочий промт `docs/SOURCE-REGISTRY-PROMPT.md`; следующий шаг — проверить source-catalog validation на exact head, затем продолжить BTC review-only capture/входы по Плану 100.
 - Без изменений runtime, metric source priority, production DB/ingestion, readiness или состояния/вероятностей сценария. BTC остаётся `not_evaluable`.
+
+
+### 2026-10-26 — seed parity corrected after source-catalog CI finding
+
+- Initial Source Catalog Contract Validation and BTC registry/readiness workflow failed because the six newly registered ETF flow/holdings candidates were not yet present in `infrastructure/postgres/seed-v1.sql`. This was a repository seed/contract mismatch; no database was touched.
+- Added the same six candidate source IDs to the versioned PostgreSQL seed. Manual parity check against the current branch now finds 22 source-registry IDs and 22 seeded IDs, with no missing IDs, extra seed IDs, or duplicate IDs; the catalog has 40 unique endpoint IDs. The six new source IDs are absent from every active metric `source_priority`.
+- **Exact-head CI after the seed fix is not confirmed:** the available workflow-run lookup returned no runs for the corrected head, and local clone/testing was unavailable. Do not report the earlier failed run as passed or claim the validator rerun succeeded.
+- No production DB write, live ingestion, runtime/readiness or metric-priority change, scenario state/probability change, deployment, or merge. BTC remains `not_evaluable`.
