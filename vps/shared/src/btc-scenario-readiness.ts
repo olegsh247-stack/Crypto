@@ -6,7 +6,7 @@
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sourceIds: string[]; sourceUrlPrefixes: string[]; approvedMethodologyIds?: string[]; label: string }> = [
-  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
+  { metricId: "market.spot_price", maxAgeHours: 6, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
   // Hashrate is supporting network-health context, not a mandatory directional input
   // for the first institutional/macro BTC scenario. Validate it if/when a scenario rule uses it.
   // Fee/subsidy ratio is deferred: it is not required or calculated for this scenario.
@@ -16,6 +16,36 @@ const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sou
   // readiness when no approved source is available; any supplied DXY observation
   // is not selected by this required-input gate.
 ];
+
+// ETF source substitution is allowed when the chosen row is for the same reporting
+// session, explicitly numeric, traceable, and normalized to USD million/day.
+// This is a source fallback policy, not automatic production/source-priority approval.
+const ETF_SOURCE_URL_PREFIXES: Record<string, string[]> = {
+  "institutional.primary": ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"],
+  "institutional.sosovalue": ["https://openapi.sosovalue.com/openapi/v1/etfs/summary-history"],
+  "institutional.cryptoetf_today": ["https://cryptoetf.today"],
+  "institutional.coinpulse": ["https://coinpulsehq.com/bitcoin-etf-flows/"],
+  "institutional.bittradescanner": ["https://bittradescanner.com/"],
+  "institutional.tftc": ["https://www.tftc.io/bitcoin-etf-flows/"],
+};
+const ETF_SOURCE_PRIORITY = [
+  "institutional.primary",
+  "institutional.sosovalue",
+  "institutional.cryptoetf_today",
+  "institutional.coinpulse",
+  "institutional.bittradescanner",
+  "institutional.tftc",
+];
+function validEtfSource(row: any): boolean {
+  const prefixes = ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")] ?? [];
+  return row?.source_registered === true
+    && prefixes.some(prefix => String(row?.source_url ?? "").startsWith(prefix));
+}
+function explicitlyIncompleteEtfPanel(row: any): boolean {
+  return row?.fund_values_complete === false
+    || String(row?.reconciliation_status ?? row?.reconciliation ?? "").toUpperCase() === "INCOMPLETE"
+    || String(row?.completeness_status ?? "").toUpperCase() === "INCOMPLETE";
+}
 
 function dateMs(value: unknown): number {
   const n = Date.parse(value == null ? "" : String(value));
@@ -115,16 +145,24 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .filter(row => row?.metric_id === "institutional.etf_net_flow")
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
-  const latestEtf = allEtfRows[0];
+  const latestEtf = allEtfRows
+    .filter(row => {
+      const periodMs = dateMs(row?.period_start);
+      return Number.isFinite(periodMs)
+        && periodMs <= nowMs
+        && nowMs - periodMs <= 14 * 24 * 3600000
+        && validEtfSource(row)
+        && !explicitlyIncompleteEtfPanel(row)
+        && validObservation(row, nowMs, 36, "USD million/day", [String(row?.source_id ?? "")], ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")]);
+    })
+    .sort((a, b) => dateMs(b.period_start) - dateMs(a.period_start)
+      || ETF_SOURCE_PRIORITY.indexOf(String(a.source_id)) - ETF_SOURCE_PRIORITY.indexOf(String(b.source_id))
+      || dateMs(b.observed_at) - dateMs(a.observed_at))[0];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
-  if (!latestEtf
-      || !Number.isFinite(latestEtfPeriodMs)
-      || latestEtfPeriodMs > nowMs
-      || nowMs - latestEtfPeriodMs > 14 * 24 * 3600000
-      || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"])) {
+  if (!latestEtf || !Number.isFinite(latestEtfPeriodMs)) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
-      reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
+      reason: "no_current_traceable_etf_source_for_latest_session_within_14_days",
     });
   }
 
@@ -150,8 +188,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
       && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
       && typeof row?.source_id === "string" && row.source_id.trim().length > 0
       && row?.source_registered === true
-      && row?.source_id === "institutional.primary"
-      && ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"].some(prefix => String(row?.source_url ?? "").startsWith(prefix))
+      && validEtfSource(row)
       && row?.unit === "USD million/day"
       && row?.expected_unit === "USD million/day";
   });
