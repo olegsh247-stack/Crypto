@@ -119,7 +119,8 @@ test("date-only ETF source rows can be reviewed using recent retrieval without i
 
 test("unreported ETF placeholder does not supersede the latest reported session", () => {
   const nowLate = new Date("2026-10-26T20:00:00.000Z");
-  const inputs = completeInputs().filter(x => x.metric_id !== "institutional.etf_net_flow");
+  const inputs = completeInputs().filter(x => !["institutional.etf_net_flow", "market.spot_price"].includes(x.metric_id));
+  inputs.push(row("market.spot_price", "2026-10-26T19:00:00.000Z", 80000));
   for (const day of ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"]) {
     inputs.push({
       ...row("institutional.etf_net_flow", day + "T00:00:00.000Z", day === "2026-10-23" ? -137.9 : 1),
