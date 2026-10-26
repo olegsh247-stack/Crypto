@@ -18,6 +18,13 @@ if (!btcSpotMetric?.freshness_policy_id || !freshnessWindow) {
 }
 const BTC_SPOT_MAX_AGE_SECONDS = Number(freshnessWindow[1]) * ({ s: 1, m: 60, h: 3600, d: 86400 }[freshnessWindow[2]]);
 const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
+const etfSessionCalendar = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json", import.meta.url), "utf8"));
+const fullClosureDates = new Set((etfSessionCalendar.full_closures ?? []).map(item => item.date));
+function isEtfSessionDate(date) {
+  if (typeof date !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return false;
+  const day = new Date(date + "T12:00:00Z").getUTCDay();
+  return day !== 0 && day !== 6 && !fullClosureDates.has(date);
+}
 
 function validIso(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value))
@@ -201,9 +208,10 @@ export function prepareBtcObservationCandidates(manifest) {
           const isConfirmedSession = sourceId === "institutional.sosovalue" || (sosoLatestDate && date <= sosoLatestDate);
           const valid = date && Number.isFinite(dateMs) && Number.isFinite(retrievedMs)
             && dateMs <= retrievedMs && retrievedMs - dateMs <= 14 * 24 * 3600000
-            && isConfirmedSession && typeof value === "number" && Number.isFinite(value);
+            && isEtfSessionDate(date) && isConfirmedSession && typeof value === "number" && Number.isFinite(value);
           const reasons = [];
           if (!date) reasons.push("provider_reporting_date_missing_or_invalid");
+          if (!isEtfSessionDate(date)) reasons.push("date_is_not_an_ETF_trading_session; placeholder_not_accepted");
           if (!isConfirmedSession) reasons.push("session_not_confirmed_by_date-bearing_reference; placeholder_not_accepted");
           if (typeof value !== "number" || !Number.isFinite(value)) reasons.push("aggregate_flow_missing_or_invalid");
           if (source.url !== expectedUrl && !String(source.url ?? "").startsWith(expectedUrl)) reasons.push("source_url_does_not_match_registered_adapter");
@@ -252,7 +260,7 @@ export function prepareBtcObservationCandidates(manifest) {
           const retrievedMs = Date.parse(String(source.retrieved_at ?? manifest?.retrieved_at ?? ""));
           const dateMs = date ? Date.parse(date + "T00:00:00Z") : NaN;
           const valid = date && Number.isFinite(dateMs) && Number.isFinite(retrievedMs) && dateMs <= retrievedMs
-            && retrievedMs - dateMs <= 14 * 24 * 3600000 && Number.isFinite(value);
+            && retrievedMs - dateMs <= 14 * 24 * 3600000 && isEtfSessionDate(date) && Number.isFinite(value);
           if (!valid) continue;
           etfReviewRows.push({
             candidate_state: "REVIEW_ONLY", persistable: false, asset_id: "btc",
