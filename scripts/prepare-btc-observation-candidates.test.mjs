@@ -116,6 +116,46 @@ test("keeps ETF capture blocked until row-level values and reporting dates are n
   assert.deepEqual(result.blocked[0].reasons, ["ETF_source_not_canonical_or_capture_missing_parsed_reporting_rows"]);
 });
 
+test("normalizes SoSoValue aggregate flow as a review-only fallback with date-only provenance", () => {
+  const result = prepareBtcObservationCandidates({
+    retrieved_at: "2026-10-26T19:30:00.000Z",
+    sources: [{
+      metric_id: "institutional.etf_net_flow", source_id: "institutional.sosovalue",
+      url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US&limit=300",
+      status: "CAPTURED", retrieved_at: "2026-10-26T19:30:00.000Z", source_payload_sha256: hash,
+      latest_rows: [{ date: "2026-10-23", total_net_inflow_usd_million: -137.93636481 }]
+    }]
+  });
+  const row = result.etf_review_rows.find(x => x.source_id === "institutional.sosovalue" && x.period_start === "2026-10-23");
+  assert.ok(row);
+  assert.equal(row.candidate_state, "REVIEW_ONLY");
+  assert.equal(row.value_numeric, -137.93636481);
+  assert.equal(row.unit, "USD million/day");
+  assert.equal(row.observed_at, null);
+  assert.equal(row.source_registered, true);
+  assert.equal(row.persistable, false);
+});
+
+test("does not accept CryptoETF.today zero placeholders after the latest confirmed session", () => {
+  const result = prepareBtcObservationCandidates({
+    retrieved_at: "2026-10-26T19:30:00.000Z",
+    sources: [
+      { metric_id: "institutional.etf_net_flow", source_id: "institutional.cryptoetf_today",
+        url: "https://mcp.cryptoetf.today/api/mcp", status: "CAPTURED", retrieved_at: "2026-10-26T19:30:00.000Z", source_payload_sha256: hash,
+        latest_rows: [{ date: "2026-10-23", net_flow_usd_million: -137.9 }, { date: "2026-10-26", net_flow_usd_million: 0 }] },
+      { metric_id: "institutional.etf_net_flow", source_id: "institutional.sosovalue",
+        url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US", status: "CAPTURED", retrieved_at: "2026-10-26T19:30:00.000Z", source_payload_sha256: hash,
+        latest_rows: [{ date: "2026-10-23", total_net_inflow_usd_million: -137.93636481 }] }
+    ]
+  });
+  const confirmed = result.etf_review_rows.find(x => x.source_id === "institutional.cryptoetf_today" && x.period_start === "2026-10-23");
+  const placeholder = result.etf_review_rows.find(x => x.source_id === "institutional.cryptoetf_today" && x.period_start === "2026-10-26");
+  assert.equal(confirmed.value_numeric, -137.9);
+  assert.equal(confirmed.candidate_state, "REVIEW_ONLY");
+  assert.equal(placeholder.value_numeric, null);
+  assert.equal(placeholder.candidate_state, "REVIEW_ONLY_BLOCKED");
+});
+
 test("blocks a source event timestamp later than the capture retrieval time", () => {
   const result = prepareBtcObservationCandidates(manifest({
     latest_trade_observed_at: "2026-10-14T16:54:00.000Z",
