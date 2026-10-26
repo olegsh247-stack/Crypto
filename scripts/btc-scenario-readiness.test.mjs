@@ -161,15 +161,16 @@ test("approved source ID with an unrelated HTTPS URL cannot pass provenance gate
     && x.reason === "source_url_not_approved_for_metric"));
 });
 
-test("registered but unapproved ETF mirror cannot pass canonical-source gate", () => {
+test("status-only ETF tracker cannot replace a numeric flow source", () => {
   const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
-    ? { ...x, source_id: "institutional.tftc" } : x);
+    ? { ...x, source_id: "institutional.bitcoin_almanack", source_url: "https://bitcoinalmanack.com/etfs/bitcoin-etf-flow-tracker/" } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "no_current_traceable_etf_source_for_latest_session_within_14_days"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
 });
+
 
 test("non-canonical unit cannot pass readiness", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
@@ -222,22 +223,35 @@ test("unapproved ICE DXY candidate is ignored as optional context", () => {
   assert.equal(result.selected_inputs["macro.dxy"], undefined);
 });
 
-test("registered SoSoValue ETF candidate cannot bypass the canonical Farside source contract", () => {
+test("registered SoSoValue can replace Farside when it supplies the same normalized ETF flow rows", () => {
   const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
-    ? {
-        ...x,
-        source_id: "institutional.sosovalue",
-        source_url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US",
-        source_registered: true,
-      }
+    ? { ...x, source_id: "institutional.sosovalue", source_url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US" }
     : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
-  assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
+  assert.ok(result.selected_inputs["institutional.etf_net_flow"].every(x => x.source_id === "institutional.sosovalue"));
 });
 
+test("incomplete Farside panel can fall back to a traceable alternative for the same session", () => {
+  const inputs = completeInputs();
+  const latestPrimary = inputs.find(x => x.metric_id === "institutional.etf_net_flow" && x.period_start === "2026-10-12");
+  latestPrimary.fund_values_complete = false;
+  latestPrimary.reconciliation_status = "INCOMPLETE";
+  inputs.push({
+    ...latestPrimary,
+    source_id: "institutional.cryptoetf_today",
+    source_url: "https://cryptoetf.today/bitcoin-etf-flows",
+    source_row_key: "cryptoetf_today:2026-10-12",
+    fund_values_complete: null,
+    reconciliation_status: "AGGREGATE_ONLY",
+    retrieved_at: "2026-10-12T11:30:00.000Z",
+    observed_at: "2026-10-12T11:30:00.000Z",
+  });
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].source_id, "institutional.cryptoetf_today");
+});
 
 test("ETF observation timestamp cannot substitute for a missing reporting date", () => {
   const inputs = completeInputs().map(x => {
