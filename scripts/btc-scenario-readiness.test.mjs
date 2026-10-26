@@ -91,6 +91,14 @@ test("spot price must be positive", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
 });
 
+test("spot observation three hours old remains usable for a reviewed run", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
+    ? { ...x, observed_at: "2026-10-12T09:00:00.000Z", retrieved_at: "2026-10-12T09:00:01.000Z" } : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["market.spot_price"].observed_at, "2026-10-12T09:00:00.000Z");
+});
+
 test("stale observation cannot pass even with a source URL", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, observed_at: "2026-10-10T11:00:00.000Z" } : x);
@@ -124,7 +132,7 @@ test("stale latest ETF flow blocks instead of falling back to five older current
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "no_current_traceable_etf_source_for_latest_session_within_14_days"));
 });
 
 test("future-dated observations are rejected", () => {
@@ -262,7 +270,7 @@ test("ETF observation timestamp cannot substitute for a missing reporting date",
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "no_current_traceable_etf_source_for_latest_session_within_14_days"));
   assert.ok(!result.selected_inputs["institutional.etf_net_flow"]);
 });
 
