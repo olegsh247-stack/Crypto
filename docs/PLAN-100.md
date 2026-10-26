@@ -2122,3 +2122,12 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Added the same six candidate source IDs to the versioned PostgreSQL seed. Manual parity check against the current branch now finds 22 source-registry IDs and 22 seeded IDs, with no missing IDs, extra seed IDs, or duplicate IDs; the catalog has 40 unique endpoint IDs. The six new source IDs are absent from every active metric `source_priority`.
 - **Exact-head CI after the seed fix is not confirmed:** the available workflow-run lookup returned no runs for the corrected head, and local clone/testing was unavailable. Do not report the earlier failed run as passed or claim the validator rerun succeeded.
 - No production DB write, live ingestion, runtime/readiness or metric-priority change, scenario state/probability change, deployment, or merge. BTC remains `not_evaluable`.
+
+
+## 2026-10-26 — решение пользователя: fallback источников и практическая свежесть BTC
+
+- Пользователь разрешил заменять недоступные, устаревшие или неполные значения данными новых зарегистрированных источников того же показателя. Farside больше не единственный допустимый источник ETF flows: SoSoValue, CryptoETF.today, CoinPulseHQ, BitTradeScanner и TFTC могут быть fallback для той же сессии при явном числе, корректных единицах и provenance. Bitcoin Almanack — только статус сессии; Bitbo/BitcoinTreasuries — holdings, не flows.
+- Для BTC spot readiness окно увеличено с 1 до 6 часов. Перед реальным запуском сценария котировку нужно обновлять; BTC/USD и BTC/USDT не смешивать.
+- ETF readiness выбирает самую новую доступную сессию и допускает fallback на пригодную запись той же сессии. Явно неполная панель не выбирается поверх пригодной альтернативы. Не считать пропуск нулём, не усреднять и не откатываться молча на старую сессию.
+- Код readiness и регрессионные тесты изменены; CI на итоговом head ещё не подтверждён. BTC не объявлять evaluable до проверки.
+- Не менялись production source priority, ingestion/DB, scenario state/probabilities, deployment или merge.
