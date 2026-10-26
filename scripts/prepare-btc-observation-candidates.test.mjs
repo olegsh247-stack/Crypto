@@ -142,16 +142,20 @@ test("does not accept CryptoETF.today zero placeholders after the latest confirm
     sources: [
       { metric_id: "institutional.etf_net_flow", source_id: "institutional.cryptoetf_today",
         url: "https://mcp.cryptoetf.today/api/mcp", status: "CAPTURED", retrieved_at: "2026-10-26T19:30:00.000Z", source_payload_sha256: hash,
-        latest_rows: [{ date: "2026-10-23", net_flow_usd_million: -137.9 }, { date: "2026-10-26", net_flow_usd_million: 0 }] },
+        latest_rows: [{ date: "2026-10-18", net_flow_usd_million: 0 }, { date: "2026-10-23", net_flow_usd_million: -137.9 }, { date: "2026-10-26", net_flow_usd_million: 0 }] },
       { metric_id: "institutional.etf_net_flow", source_id: "institutional.sosovalue",
         url: "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history?symbol=BTC&country_code=US", status: "CAPTURED", retrieved_at: "2026-10-26T19:30:00.000Z", source_payload_sha256: hash,
         latest_rows: [{ date: "2026-10-23", total_net_inflow_usd_million: -137.93636481 }] }
     ]
   });
   const confirmed = result.etf_review_rows.find(x => x.source_id === "institutional.cryptoetf_today" && x.period_start === "2026-10-23");
+  const weekend = result.etf_review_rows.find(x => x.source_id === "institutional.cryptoetf_today" && x.period_start === "2026-10-18");
   const placeholder = result.etf_review_rows.find(x => x.source_id === "institutional.cryptoetf_today" && x.period_start === "2026-10-26");
   assert.equal(confirmed.value_numeric, -137.9);
   assert.equal(confirmed.candidate_state, "REVIEW_ONLY");
+  assert.equal(weekend.value_numeric, null);
+  assert.equal(weekend.candidate_state, "REVIEW_ONLY_BLOCKED");
+  assert.ok(weekend.reasons.some(x => x.includes("not_an_ETF_trading_session")));
   assert.equal(placeholder.value_numeric, null);
   assert.equal(placeholder.candidate_state, "REVIEW_ONLY_BLOCKED");
 });
