@@ -8,6 +8,10 @@ on:
       - "scripts/capture-btc-public-sources.mjs"
       - "scripts/prepare-btc-observation-candidates.mjs"
       - "scripts/prepare-btc-observation-candidates.test.mjs"
+      - "scripts/evaluate-btc-review-capture.mjs"
+      - "scripts/btc-scenario-readiness.mjs"
+      - "vps/shared/src/btc-scenario-readiness.ts"
+      - "data/CryptoDataModel/registry/metric-registry.json"
       - "scripts/parse-farside-etf-table.mjs"
       - "scripts/parse-farside-etf-table.test.mjs"
       - "scripts/compare-btc-etf-snapshots.mjs"
@@ -41,6 +45,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build shared BTC readiness contract
+        run: npm install && npm run build
       - name: Test BTC confirmed-window reorg comparison
         run: node --test scripts/compare-btc-fee-windows.test.mjs
       - name: Test BTC per-block fee window validation
@@ -63,6 +69,8 @@ jobs:
         run: node scripts/capture-btc-fee-subsidy-window.mjs
       - name: Prepare normalized observation candidates (review only)
         run: node scripts/prepare-btc-observation-candidates.mjs
+      - name: Assess readiness from this capture (offline review only)
+        run: node scripts/evaluate-btc-review-capture.mjs
       - name: Upload raw responses, provenance manifest, and review-only candidates
         if: always()
         uses: actions/upload-artifact@v4
