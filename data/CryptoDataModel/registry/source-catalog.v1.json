@@ -1,6 +1,6 @@
 {
   "catalog_version": "1.0.0",
-  "updated_at": "2026-10-17",
+  "updated_at": "2026-10-26",
   "policy": {
     "secret_values_allowed": false,
     "observation_time_must_not_default_to_retrieval_time": true,
@@ -312,8 +312,8 @@
         "revision_finality": "not established"
       },
       "terms_status": "reuse_review_required",
-      "notes": "Automatic cross-check only; never canonical ETF flow source.",
-      "registry_status": "candidate_unregistered",
+      "notes": "Public API/website cross-check candidate. Verify per-fund endpoint response and source semantics; never canonical ETF flow source or automatic replacement for missing Farside rows.",
+      "registry_status": "registered",
       "documentation_url": "https://cryptoetf.today"
     },
     {
@@ -987,6 +987,146 @@
       "notes": "Research candidate only for monetary.circulating_supply. No canonical metric link; live response schema, timestamp semantics, freshness and source terms must pass review.",
       "registry_status": "candidate_unregistered",
       "documentation_url": "https://docs.coingecko.com/reference/coins-markets"
+    },
+    {
+      "catalog_id": "institutional.coinpulse.etf-flows",
+      "source_id": "institutional.coinpulse",
+      "provider": "CoinPulseHQ",
+      "name": "Bitcoin ETF daily flow tracker",
+      "url": "https://coinpulsehq.com/bitcoin-etf-flows/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven research cross-check; do not poll more often than underlying data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day; verify per response",
+        "observation_time": "provider publication timestamp not established",
+        "period_semantics": "daily reporting/session date",
+        "revision_finality": "revision/finality unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Auxiliary cross-check only. Preserve per-fund rows and do not assume completeness or independent lineage.",
+      "registry_status": "registered",
+      "documentation_url": "https://coinpulsehq.com/bitcoin-etf-flows/"
+    },
+    {
+      "catalog_id": "institutional.bitcoin-almanack.etf-status",
+      "source_id": "institutional.bitcoin_almanack",
+      "provider": "Bitcoin Almanack",
+      "name": "Bitcoin ETF flow/session status tracker",
+      "url": "https://bitcoinalmanack.com/etfs/bitcoin-etf-flow-tracker/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven research cross-check; do not poll more often than underlying data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETF reporting sessions",
+        "unit": "status/session metadata; no canonical numeric unit",
+        "observation_time": "provider status timestamp not established",
+        "period_semantics": "latest validated reporting session/status",
+        "revision_finality": "finality status is tracker-defined and must be preserved verbatim"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Session-status cross-check only; preserve preliminary/unfinalized labels and do not use as a substitute for per-fund flow values.",
+      "registry_status": "registered",
+      "documentation_url": "https://bitcoinalmanack.com/etfs/bitcoin-etf-flow-tracker/"
+    },
+    {
+      "catalog_id": "institutional.bittradescanner.etf-flows",
+      "source_id": "institutional.bittradescanner",
+      "provider": "BitTradeScanner",
+      "name": "Bitcoin ETF daily flow tracker",
+      "url": "https://bittradescanner.com/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven research cross-check; do not poll more often than underlying data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day; verify per response",
+        "observation_time": "provider publication timestamp not established",
+        "period_semantics": "daily reporting/session date",
+        "revision_finality": "revision/finality unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Auxiliary source; known observations may be incomplete or materially divergent. Never substitute its total without reconciliation.",
+      "registry_status": "registered",
+      "documentation_url": "https://bittradescanner.com/"
+    },
+    {
+      "catalog_id": "holdings.bitbo.etf-holdings",
+      "source_id": "holdings.bitbo",
+      "provider": "Bitbo",
+      "name": "Bitcoin ETF holdings and latest changes",
+      "url": "https://bitbo.io/treasuries/latest-changes/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven research cross-check; do not poll more often than underlying data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETF holdings",
+        "unit": "BTC per fund",
+        "observation_time": "provider observation/publication timestamp not established",
+        "period_semantics": "fund holdings snapshot/session date",
+        "revision_finality": "revision/finality unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Holdings-only cross-check. Keep BTC holdings separate from daily USD net flows; validate fund ticker, date, lineage and issuer source.",
+      "registry_status": "registered",
+      "documentation_url": "https://bitbo.io/treasuries/latest-changes/"
+    },
+    {
+      "catalog_id": "holdings.bitcointreasuries.etf-holdings",
+      "source_id": "holdings.bitcointreasuries",
+      "provider": "BitcoinTreasuries.net",
+      "name": "Bitcoin ETF and treasury holdings tracker",
+      "url": "https://bitcointreasuries.net/",
+      "access_mode": "public",
+      "operational_status": "candidate",
+      "data_role": "review_only",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "preferred_interval_minutes": null,
+        "minimum_interval_minutes": null,
+        "notes": "Daily/event-driven research cross-check; do not poll more often than underlying data changes."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETF holdings",
+        "unit": "BTC per fund where explicitly reported",
+        "observation_time": "provider observation/publication timestamp not established",
+        "period_semantics": "fund holdings snapshot/session date",
+        "revision_finality": "revision/finality unresolved"
+      },
+      "terms_status": "reuse_review_required",
+      "notes": "Holdings-only cross-check; verify fund identity, units, session date and underlying issuer evidence. Not a daily flow substitute.",
+      "registry_status": "registered",
+      "documentation_url": "https://bitcointreasuries.net/"
     }
   ]
 }
