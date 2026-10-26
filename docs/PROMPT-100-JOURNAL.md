@@ -1561,3 +1561,14 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 - Added matching seed entries for `institutional.cryptoetf_today`, `institutional.coinpulse`, `institutional.bitcoin_almanack`, `institutional.bittradescanner`, `holdings.bitbo`, and `holdings.bitcointreasuries`.
 - Manual current-branch consistency check: 22 registry sources, 22 seed source IDs, no missing/extra/duplicate IDs; 40 unique catalog endpoint IDs; none of the six new sources appears in active metric source priority.
 - Exact-head CI after this correction is **unconfirmed** because the workflow-run lookup returned no run for the corrected SHA. The previous failure remains a real historical result, not a passing check. No database was modified; no runtime/readiness, metric priority, scenario state, deployment, or merge changes.
+
+
+## 2026-10-26 — разрешён fallback между источниками BTC/ETF
+
+**Решение пользователя:** разрешено заменять недоступные, устаревшие или неполные данные новыми источниками того же показателя. Farside больше не единственный допустимый источник flows, а свежесть котировки не должна делать работу бесконечной.
+
+**Изменение:** spot readiness допускает наблюдение BTC/USD до 6 часов; перед реальным запуском нужно обновить котировку. ETF flows может использовать Farside, SoSoValue, CryptoETF.today, CoinPulseHQ, BitTradeScanner или TFTC при зарегистрированном источнике, допустимом URL, нормализованных USD million/day, валидной сессии/provenance и явном числовом значении. Bitcoin Almanack — статус сессии; holdings не заменяют flows. Для самой новой сессии разрешён fallback на пригодную альтернативу, а явно неполная панель не выбирается поверх неё.
+
+**Проверка:** добавлены regression tests для SoSoValue fallback, альтернативы при неполной Farside-панели и отказа status-only tracker. CI на итоговом commit ещё не подтверждён; BTC не объявляется evaluable до проверки.
+
+**Граница:** только readiness, тесты и документация; production source priority, ingestion, DB, scenario state/probabilities, deployment и merge не менялись.
