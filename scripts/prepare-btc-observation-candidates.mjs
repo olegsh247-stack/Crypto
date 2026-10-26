@@ -21,7 +21,7 @@ const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
 const etfSessionCalendar = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json", import.meta.url), "utf8"));
 const fullClosureDates = new Set((etfSessionCalendar.full_closures ?? []).map(item => item.date));
 function isEtfSessionDate(date) {
-  if (typeof date !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return false;
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
   const day = new Date(date + "T12:00:00Z").getUTCDay();
   return day !== 0 && day !== 6 && !fullClosureDates.has(date);
 }
