@@ -1,6 +1,7 @@
 name: BTC Public Source Staging (Read Only)
 
 # Manual runs and watched-file pushes run the same bounded review-only capture; no database or scenario-state writes occur.
+# A workflow-file-only change can refresh the capture when manual dispatch is unavailable.
 on:
   push:
     paths:
