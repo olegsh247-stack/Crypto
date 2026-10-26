@@ -107,6 +107,38 @@ test("stale observation cannot pass even with a source URL", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
 });
 
+test("date-only ETF source rows can be reviewed using recent retrieval without inventing observed_at", () => {
+  const inputs = completeInputs().map(x => x.metric_id === "institutional.etf_net_flow"
+    ? { ...x, observed_at: null, observation_timestamp_semantics: "trading date only; provider publication timestamp unavailable" }
+    : x);
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].observed_at, null);
+  assert.match(result.selected_inputs["institutional.etf_net_flow"][0].observation_timestamp_semantics, /timestamp unavailable/);
+});
+
+test("unreported ETF placeholder does not supersede the latest reported session", () => {
+  const nowLate = new Date("2026-10-26T20:00:00.000Z");
+  const inputs = completeInputs().filter(x => x.metric_id !== "institutional.etf_net_flow");
+  for (const day of ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"]) {
+    inputs.push({
+      ...row("institutional.etf_net_flow", day + "T00:00:00.000Z", day === "2026-10-23" ? -137.9 : 1),
+      period_start: day, observed_at: null, retrieved_at: "2026-10-26T19:30:00.000Z", freshness: "CURRENT",
+      source_row_key: "farside:" + day,
+      observation_timestamp_semantics: "reporting date only; publication timestamp unavailable",
+    });
+  }
+  inputs.push({
+    ...row("institutional.etf_net_flow", "2026-10-26T00:00:00.000Z", 0),
+    period_start: "2026-10-26", observed_at: null, retrieved_at: "2026-10-26T19:30:00.000Z",
+    source_row_key: "farside:2026-10-26", status: "UNREPORTED_PLACEHOLDER", reconciliation_status: "UNREPORTED",
+    value_numeric: null,
+  });
+  const result = assessBtcScenarioReadiness(inputs, nowLate);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].day, "2026-10-23");
+});
+
 test("ETF flows need five distinct recent days", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "institutional.etf_net_flow");
   inputs.push(
