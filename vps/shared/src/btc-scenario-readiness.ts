@@ -41,6 +41,23 @@ function validEtfSource(row: any): boolean {
   return row?.source_registered === true
     && prefixes.some(prefix => String(row?.source_url ?? "").startsWith(prefix));
 }
+function validEtfObservation(row: any, nowMs: number): boolean {
+  const retrievedMs = dateMs(row?.retrieved_at);
+  const observedMs = row?.observed_at == null || row?.observed_at === "" ? NaN : dateMs(row.observed_at);
+  const value = row?.value_numeric ?? row?.value_integer;
+  return Number.isFinite(retrievedMs)
+    && retrievedMs <= nowMs
+    && nowMs - retrievedMs <= 36 * 3600000
+    && (row?.observed_at == null || row?.observed_at === "" || (Number.isFinite(observedMs) && observedMs <= nowMs))
+    && (row?.freshness == null || String(row.freshness).toUpperCase() === "CURRENT")
+    && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
+    && (row?.source_payload_sha256 == null || /^[0-9a-f]{64}$/i.test(String(row.source_payload_sha256)))
+    && value !== null && value !== undefined && Number.isFinite(Number(value))
+    && typeof row?.source_url === "string" && /^https:\/\//i.test(row.source_url)
+    && validEtfSource(row)
+    && row?.unit === "USD million/day"
+    && row?.expected_unit === "USD million/day";
+}
 function explicitlyIncompleteEtfPanel(row: any): boolean {
   return row?.fund_values_complete === false
     || String(row?.reconciliation_status ?? row?.reconciliation ?? "").toUpperCase() === "INCOMPLETE"
@@ -146,6 +163,13 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestReportedSessionMs = allEtfRows
+    .filter(row => {
+      const value = row?.value_numeric ?? row?.value_integer;
+      return value !== null && value !== undefined && Number.isFinite(Number(value))
+        && row?.status !== "UNREPORTED_PLACEHOLDER"
+        && row?.row_status !== "UNREPORTED_PLACEHOLDER"
+        && String(row?.reconciliation_status ?? "").toUpperCase() !== "UNREPORTED";
+    })
     .map(row => dateMs(row?.period_start))
     .filter(periodMs => Number.isFinite(periodMs) && periodMs <= nowMs && nowMs - periodMs <= 14 * 24 * 3600000)
     .sort((a, b) => b - a)[0];
@@ -162,7 +186,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   const latestEtf = [...latestRowBySource.values()]
     .filter(row => validEtfSource(row)
       && !explicitlyIncompleteEtfPanel(row)
-      && validObservation(row, nowMs, 36, "USD million/day", [String(row?.source_id ?? "")], ETF_SOURCE_URL_PREFIXES[String(row?.source_id ?? "")]))
+      && validEtfObservation(row, nowMs))
     .sort((a, b) => ETF_SOURCE_PRIORITY.indexOf(String(a.source_id)) - ETF_SOURCE_PRIORITY.indexOf(String(b.source_id))
       || dateMs(b.observed_at) - dateMs(a.observed_at))[0];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
@@ -185,8 +209,7 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
     return Number.isFinite(periodMs)
       && periodMs <= nowMs
       && nowMs - periodMs <= 14 * 24 * 3600000
-      && Number.isFinite(observedMs)
-      && observedMs <= nowMs
+      && (row?.observed_at == null || row?.observed_at === "" || (Number.isFinite(observedMs) && observedMs <= nowMs))
       && Number.isFinite(dateMs(row?.retrieved_at))
       && dateMs(row.retrieved_at) <= nowMs
       && typeof row?.source_row_key === "string" && row.source_row_key.trim().length > 0
@@ -223,7 +246,8 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
         source_url: row.source_url,
         unit: row.unit,
         revision: Number(row.revision ?? 1),
-        observed_at: row.observed_at,
+        observed_at: row.observed_at ?? null,
+        observation_timestamp_semantics: row.observation_timestamp_semantics ?? (row.observed_at == null ? "provider publication timestamp unavailable; freshness based on recent retrieval and reporting session" : "provider observation timestamp supplied"),
         source_updated_at: row.source_updated_at ?? null,
         retrieved_at: row.retrieved_at,
         source_row_key: row.source_row_key,
