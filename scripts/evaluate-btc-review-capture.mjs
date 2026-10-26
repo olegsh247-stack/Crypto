@@ -36,9 +36,10 @@ const etfRows = (captured.etf_review_rows ?? [])
     source_registered: row.source_registered === true,
   }));
 
-const result = assessBtcScenarioReadiness([...spotRows, ...etfRows], manifest.retrieved_at);
+const evaluatedAt = new Date().toISOString();
+const result = assessBtcScenarioReadiness([...spotRows, ...etfRows], evaluatedAt);
 const report = {
-  evaluated_at: manifest.retrieved_at,
+  evaluated_at: evaluatedAt,
   mode: "offline-review-only",
   source_capture_mode: manifest.mode ?? null,
   production_database_accessed: manifest.production_database_accessed === true,
