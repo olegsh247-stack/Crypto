@@ -1127,6 +1127,32 @@
       "notes": "Holdings-only cross-check; verify fund identity, units, session date and underlying issuer evidence. Not a daily flow substitute.",
       "registry_status": "registered",
       "documentation_url": "https://bitcointreasuries.net/"
+    },
+    {
+      "catalog_id": "institutional.cryptoetf_today.etf-mcp-api",
+      "source_id": "institutional.cryptoetf_today",
+      "provider": "CryptoETF.today",
+      "name": "ETF flows MCP API — daily BTC aggregate",
+      "url": "https://mcp.cryptoetf.today/api/mcp",
+      "access_mode": "public",
+      "operational_status": "verified",
+      "data_role": "cross_check",
+      "credential_env": null,
+      "polling": {
+        "mode": "daily",
+        "notes": "Read-only MCP response returns a dated aggregate series; zero rows after the latest confirmed session may be placeholders and must not be accepted without confirmation."
+      },
+      "data_contract": {
+        "asset_pair": "US spot BTC ETFs",
+        "unit": "USD million/day after response normalization",
+        "observation_time": "trading/reporting date supplied; publication timestamp not established",
+        "period_semantics": "daily aggregate net flow by reporting date; no per-fund panel",
+        "revision_finality": "provider revision/finality semantics unresolved; preserve raw payload and hash"
+      },
+      "terms_status": "candidate_pending_methodology_review",
+      "notes": "Registered fallback candidate for aggregate ETF flows. Do not infer zero from future/unreported dates; not a per-fund reconciliation source and not an active metric source_priority entry.",
+      "registry_status": "registered",
+      "documentation_url": "https://cryptoetf.today"
     }
   ]
 }
