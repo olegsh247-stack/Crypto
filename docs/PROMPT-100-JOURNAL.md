@@ -1572,3 +1572,14 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Проверка:** добавлены regression tests для SoSoValue fallback, альтернативы при неполной Farside-панели и отказа status-only tracker. CI на итоговом commit ещё не подтверждён; BTC не объявляется evaluable до проверки.
 
 **Граница:** только readiness, тесты и документация; production source priority, ingestion, DB, scenario state/probabilities, deployment и merge не менялись.
+
+
+## 2026-10-26 — BTC review-only capture passes input readiness
+
+**Evidence:** BTC Public Source Staging [run #40388837927](https://github.com/olegsh247-stack/Crypto/actions/runs/40388837927), artifact 12682068022, captured at 2026-10-26T19:41:02.631Z; archive SHA-256 `269e689b2ee2171cb00daa0a3aa2daf265744df121c56ac130e13b54457d1412`. Production DB access/writes both false.
+
+**Data:** Kraken BTC/USD 79,900.90, trade time 19:40:59.182Z, retrieval 19:41:02.631Z, raw SHA-256 `22f311f8f966ae4a42fff5106f31e5ea044ef379c6b752fe2e3c140ab042f9fd`. Farside 23 Oct ETF total −137.9 USDm is complete and reconciled; latest 26 Oct placeholder is excluded. SoSoValue −137.93636481 and CryptoETF.today −137.9 USDm corroborate the aggregate; no averaging. Weekend/market non-session zero placeholders are excluded.
+
+**Result:** offline readiness assessment returned `ready_for_rule_evaluation`, blockers empty, selected inputs contain spot price and ETF flows. The ETF provider publication timestamp remains unknown and is kept null; readiness freshness uses recent retrieval plus explicit session date. All relevant CI checks passed on head `2feff18655d6314d4d9669635cc0468b254095c8`: readiness gate, source catalog, VPS API build rehearsal, seed idempotency, release workflow validation and read-only capture.
+
+**Boundary:** this establishes readiness for rule evaluation only; no scenario direction/probabilities, persisted scenario state, production ingestion, DB writes, deployment or merge.
