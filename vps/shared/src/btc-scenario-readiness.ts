@@ -23,7 +23,7 @@ const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sou
 const ETF_SOURCE_URL_PREFIXES: Record<string, string[]> = {
   "institutional.primary": ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"],
   "institutional.sosovalue": ["https://openapi.sosovalue.com/openapi/v1/etfs/summary-history"],
-  "institutional.cryptoetf_today": ["https://cryptoetf.today"],
+  "institutional.cryptoetf_today": ["https://mcp.cryptoetf.today/api/mcp", "https://cryptoetf.today"],
   "institutional.coinpulse": ["https://coinpulsehq.com/bitcoin-etf-flows/"],
   "institutional.bittradescanner": ["https://bittradescanner.com/"],
   "institutional.tftc": ["https://www.tftc.io/bitcoin-etf-flows/"],
