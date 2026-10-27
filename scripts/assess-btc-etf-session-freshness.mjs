@@ -70,6 +70,25 @@ export function assessEtfSessionFreshness({ now, calendar, rows, publicationPoli
       note: "Exchange calendar does not establish when Farside publishes a session row."
     };
   }
+  const currentLocal = localDateParts(new Date(now), calendar.timezone);
+  const currentDate = isoDate(currentLocal.year, currentLocal.month, currentLocal.day);
+  const currentMinutes = Number(currentLocal.hour) * 60 + Number(currentLocal.minute);
+  const graceMinutes = Number.isInteger(publicationPolicy.grace_period_minutes)
+    ? publicationPolicy.grace_period_minutes : 0;
+  if (latestSession.session_date === currentDate
+      && currentMinutes >= (Number(latestSession.close_time_local.split(":")[0]) * 60
+        + Number(latestSession.close_time_local.split(":")[1]))
+      && currentMinutes < (Number(latestSession.close_time_local.split(":")[0]) * 60
+        + Number(latestSession.close_time_local.split(":")[1]) + graceMinutes)) {
+    return {
+      status: "AWAITING_EXPECTED_PUBLICATION_WINDOW",
+      expected_session_date: latestSession.session_date,
+      latest_complete_row_date: null,
+      observed_at: null,
+      grace_period_minutes: graceMinutes,
+      note: "Farside updates are typically published in the US evening/night; do not fail freshness during the configured grace period."
+    };
+  }
   const completeDates = new Set(rows.filter(row =>
     row?.status === "REPORTED_CANDIDATE"
     && row?.fund_values_complete === true
