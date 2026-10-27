@@ -5,7 +5,7 @@ import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { evaluateBtcScenarioV1 } from "./btc-scenario-direction.mjs";
 
-const dateOK = x => typeof x === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(x);
+const dateOK = x => typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x);
 const num = x => typeof x === "number" && Number.isFinite(x);
 
 export function calculateBtcReviewScenario(manifest, candidates) {
@@ -92,13 +92,13 @@ async function main() {
   const candidatesPath=resolve(process.argv[3] ?? join(dirname(manifestPath),"observation-candidates.json"));
   const outputPath=resolve(process.argv[4] ?? join(dirname(manifestPath),"btc-current-scenario-review.json"));
   const report=calculateBtcReviewScenario(JSON.parse(readFileSync(manifestPath,"utf8")),JSON.parse(readFileSync(candidatesPath,"utf8")));
-  writeFileSync(outputPath,JSON.stringify(report,null,2)+"\\n","utf8");
+  writeFileSync(outputPath,JSON.stringify(report,null,2)+"\n","utf8");
   process.stdout.write(JSON.stringify({
     status:report.output.status, scenario_type:report.output.scenario_type,
     directional_score:report.output.directional_score,
     price_return_7d_pct:report.intermediate_calculations.price_return_7d_pct,
     etf_net_flow_5d_usd_millions:report.intermediate_calculations.etf_net_flow_5d_usd_millions,
     etf_source:report.provenance.etf_net_flow.source_id, output:outputPath, ...report.safety
-  },null,2)+"\\n");
+  },null,2)+"\n");
 }
 if (process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) main();
