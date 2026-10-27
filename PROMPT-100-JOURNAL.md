@@ -266,3 +266,11 @@
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
 - PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
+
+## 2026-10-27 — DXY optional context wired into BTC test contour
+
+- Updated the shared read-only BTC readiness gate so DXY is not a required blocker. Updated the pure rule-v1 evaluator so absent/null DXY is omitted from directional signals rather than treated as zero; required BTC inputs still fail closed.
+- Added regression tests for readiness without approved DXY and evaluator behavior with missing/null DXY. Updated BTC scenario and DXY contract docs plus Plan 100.
+- Source decision unchanged: Yahoo `DX-Y.NYB` remains blocked for automated collection pending permission/retention review; exchangerate.dev is a reconstruction, not official ICE DXY. The recent public-source captures are research evidence only and are not wired into production or accepted as canonical observations.
+- Changes are isolated on branch `fix/btc-dxy-optional-context-v1`; no merge, production database write, ingestion, source-registry/priority change, scenario-state write, probability mutation or deployment.
+- **Validation pending:** run BTC Scenario Readiness Gate and VPS API Build Rehearsal against the exact branch head before treating the integration as tested.
