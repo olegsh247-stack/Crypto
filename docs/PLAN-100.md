@@ -2214,3 +2214,11 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Official NYSE hours page, Nasdaq calendar page and NYSE 2026 PDF returned HTTP 200 and their response hashes are stored in the calendar fixture. The Nasdaq page's exact-response hash is byte-variable between captures; do not interpret that alone as a trading-date change.
 - The actual 2026-10-20 placeholder-to-reported (+23.2 USDm) Farside row transition is already documented; revision example gate is covered.
 - Remaining ETF production blockers: durable self-hosted archive/read-back/restore and a reviewed allowed-retention approach. Full BTC staging also has a separate scenario test failure: `hashrate_change_7d_pct must be a finite number`, unrelated to ETF tests. No production ingestion.
+
+
+### 2026-10-27 — BTC scenario missing-input handling and hashrate calculation
+
+- Corrected a workflow failure: the BTC scenario rule previously threw when `hashrate_change_7d_pct` or `fee_subsidy_ratio` was missing. It now returns `not_evaluable` and names missing required inputs; no score or scenario direction is emitted for incomplete inputs.
+- Mempool capture now uses the 1-month daily hashrate series and calculates a 7-day change only from two valid points exactly 604,800 seconds apart. Both observations, interval boundaries, calculation method and raw payload hash are retained. This value is still review-only until source semantics/freshness are accepted.
+- Calculator records hashrate evidence but does not use it in scoring unless its acceptance status is explicitly `ACCEPTED`. Fee/subsidy remains blocked pending the confirmed-window/reorg and deployed-version gates. ETF remains blocked from production ingestion pending self-hosted durable archive/read-back/restore and retention review.
+- CI rerun and test results are pending. No production writes, live ingestion, source-priority changes, scenario state/probability changes, deployment or merge.
