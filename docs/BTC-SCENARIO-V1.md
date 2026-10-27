@@ -116,7 +116,7 @@ The next implementation step is a fail-closed input gate, not a scenario predict
 | BTC spot price | Numeric, source-linked, marked CURRENT, observed within 24 hours |
 | Network hashrate | Numeric, source-linked, marked CURRENT, observed within 7 days |
 | Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within 5 days |
+| DXY macro proxy | Optional only; if supplied, must be source-linked, marked CURRENT, and observed within 48 hours under an approved timestamp/session-age policy. If absent or unapproved, omit the vote; do not substitute zero or another USD index. |
 | US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked and CURRENT; latest within 48 hours |
 
 All observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. A missing required metric is a blocker, not an implicit neutral signal.
@@ -176,7 +176,7 @@ Each directional signal contributes +1, 0, or −1. The result is Bull at a scor
 
 The fee/subsidy ratio (`security.fee_subsidy_ratio`) is a required security-economics context input, but is not a directional vote in v1: a higher ratio alone can reflect stronger fee demand or temporary congestion.
 
-These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale inputs block evaluation before this rule is called. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
+These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale required inputs block evaluation before this rule is called; DXY is optional context and is omitted when unavailable or unapproved. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
 
 
 ## Dry-run of the directional rule against source-reviewed inputs — 2026-10-12
