@@ -1611,3 +1611,13 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 - Offline Rule v1 remains **Base, directional score 0, low confidence**. Review readiness has zero blockers; repeat calculation is byte-identical. No scenario state is persisted and no probabilities changed.
 - Passed on exact head: staging #40471108936, readiness #40471113390, source catalog #40471113428, seed idempotency #40471113348, release workflow validation #40471113415, and VPS rehearsal #40471108869. Duplicate VPS rehearsal #40471113337 was still running at the time of this entry.
 - Remaining production acceptance: ETF publication-time/revision/finality policy and durable retention/restore on future self-hosted infrastructure. DXY is optional. No production DB access/write, ingestion, source priority/registry change, scenario-state/probability/monitoring persistence, deployment or merge.
+
+## 2026-10-27 — ETF session freshness evaluator and revision provenance
+
+**Change:** Added a calendar-backed session freshness evaluator and tests for New York close, weekends, full closures, early close, incomplete rows, and fail-closed behavior while Farside's publication window is undefined. The snapshot comparator now includes old/new row keys, completeness, and enclosing payload hashes in revision evidence. Staging CI runs the new tests.
+
+**Result:** Calendar/session mechanics are now testable, but this is not production freshness approval. The evaluator intentionally blocks until publication-window semantics are reviewed; no synthetic `observed_at` is created. Synthetic revision tests do not replace evidence of an actual provider revision.
+
+**Remaining blockers:** hash exact upstream NYSE/Nasdaq calendar payloads; review Farside publication-window convention; retain evidence for an actual provider revision; prove durable archive, independent retrieval and backup/restore on self-hosted infrastructure.
+
+**Boundary:** No production DB writes, live ingestion, source-priority/runtime changes, scenario state/probability persistence, deployment, or merge. Farside remains priority; SoSoValue is cross-check only; no averaging or silent fallback.
