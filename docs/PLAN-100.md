@@ -2174,3 +2174,10 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Binance primary spot endpoint returned HTTP 451; Binance market-data-only and OKX returned USDT quotes, used only as cross-checks; Bybit returned HTTP 403. No USDT quote was blended into canonical Kraken USD/BTC.
 - Artifact `12718750633`, staging workflow [#40471108936](https://github.com/olegsh247-stack/Crypto/actions/runs/40471108936). Staging, readiness, source-catalog validation, seed idempotency, release-workflow validation and VPS rehearsal #40471108869 passed on the exact head. Duplicate VPS rehearsal #40471113337 was still running at note time.
 - No production DB access/writes, ingestion, registry/source-priority change, scenario-state/probability/monitoring persistence, deployment or merge. DXY remains optional; ETF timestamp/revision and durable-retention gates remain production-only blockers.
+
+### 2026-10-27 — ETF session freshness and revision evidence checkpoint
+
+- Added `scripts/assess-btc-etf-session-freshness.mjs` and deterministic tests. The helper uses the versioned U.S. session calendar, New York local close, weekends, full closures and early closes. It explicitly fails closed while Farside publication-window semantics remain unreviewed; no `observed_at` is fabricated.
+- Extended snapshot revision evidence to retain old/new row key, completeness state and enclosing payload SHA-256, with a regression test. Added these tests to the read-only BTC staging workflow.
+- ETF remains research-only / blocked from production ingestion. Remaining external/operational evidence: exact upstream NYSE/Nasdaq payload hashes; reviewed Farside publication-window policy; a real provider revision example (synthetic test is not a substitute); durable archive/read-back/backup-restore on the user's own infrastructure.
+- No production DB write, live ingestion, registry/runtime priority change, scenario-state/probability persistence, deployment, or merge. Farside remains priority; SoSoValue cross-check only; no averaging or silent fallback.
