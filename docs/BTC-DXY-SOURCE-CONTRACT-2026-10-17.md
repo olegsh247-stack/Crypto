@@ -43,7 +43,7 @@ Sources:
 
 ## BTC scenario input-check behavior
 
-DXY is an **optional macro-context candidate, not a required input for the first BTC scenario**. If no newly permitted capture with verifiable observation time is available, omit DXY context and keep the source blocked for canonical ingestion; do not substitute zero, carry forward silently, or use a broad trade-weighted USD index as DXY. This source block alone must not block scenario readiness. Current `main` still has an implementation mismatch because `vps/shared/src/btc-scenario-readiness.ts` lists DXY as required; see the reconciliation note in `docs/PLAN-100.md`. This documentation correction does not change runtime or registry.
+DXY is an **optional macro-context candidate, not a required input for the first BTC scenario**. If no newly permitted capture with verifiable observation time is available, omit DXY context and keep the source blocked for canonical ingestion; do not substitute zero, carry forward silently, or use a broad trade-weighted USD index as DXY. This source block alone must not block scenario readiness. The readiness implementation now excludes DXY from required blockers, and the pure BTC rule omits the DXY vote when no validated value is supplied. A DXY value is included only after a separate source-quality review; the Yahoo chart endpoint remains blocked by the existing access/retention contract, and the reconstructed exchangerate.dev value is not official ICE DXY.
 
 ## Acceptance checklist
 
