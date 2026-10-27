@@ -291,33 +291,18 @@ export async function collectBtcObservationCandidates(options: {
 
   await Promise.all([
     collect("market.spot_price", async () => {
-      const payload = await responseJson(fetchImpl, BINANCE_URL);
-      if (payload?.symbol !== "BTCUSDT") throw new Error("unexpected_binance_symbol");
-      const price = finitePositive(payload?.price);
-      if (!price) throw new Error("invalid_spot_price");
-      const observedAt = new Date(Math.floor(now.getTime() / 60_000) * 60_000);
-      return {
-        metricId: "market.spot_price",
-        sourceId: "market_binance",
-        sourceUrl: BINANCE_URL,
-        valueNumeric: price,
-        unit: "USD/BTC",
-        observedAt,
-        periodStart: null,
-        periodEnd: null,
-        methodology: "Binance public BTCUSDT ticker; endpoint does not include a quote timestamp, so observed_at is the UTC collection minute.",
-        status: "NORMAL",
-        freshness: "CURRENT",
-      };
+      const result = await responseJsonWithHash(fetchImpl, KRAKEN_TRADES_URL);
+      return parseKrakenSpotPricePayload(result.payload, now, result.sha256);
     }),
     collect("security.hashrate", async () => {
-      const payload = await responseJson(fetchImpl, HASHRATE_URL);
-      const candidate = parseHashratePayload(payload, now);
+      const result = await responseJsonWithHash(fetchImpl, HASHRATE_URL);
+      const candidate = parseHashratePayload(result.payload, now, result.sha256);
       if (!candidate) throw new Error("no_complete_hashrate_day");
       return candidate;
     }),
     collect("security.fee_subsidy_ratio", async () => {
-      const stats = await responseJson(fetchImpl, REWARD_STATS_URL);
+      const result = await responseJsonWithHash(fetchImpl, REWARD_STATS_URL);
+      const stats = result.payload;
       const startBlock = Number(stats?.startBlock);
       const endBlock = Number(stats?.endBlock);
       if (!Number.isInteger(startBlock) || !Number.isInteger(endBlock) || endBlock < startBlock) throw new Error("invalid_reward_stats_block_range");
@@ -325,11 +310,11 @@ export async function collectBtcObservationCandidates(options: {
         fetchBlockTimestamp(fetchImpl, startBlock),
         fetchBlockTimestamp(fetchImpl, endBlock),
       ]);
-      return parseRewardStatsPayload(stats, startBlockAt, endBlockAt, now);
+      return parseRewardStatsPayload(stats, startBlockAt, endBlockAt, now, result.sha256);
     }),
     collect("institutional.etf_net_flow", async () => {
-      const html = await responseText(fetchImpl, FARSIDE_URL);
-      return parseFarsideBtcFlows(html, now);
+      const result = await responseTextWithHash(fetchImpl, FARSIDE_URL);
+      return parseFarsideBtcFlows(result.text, now, result.sha256);
     }),
   ]);
 
@@ -350,6 +335,7 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
     && row.value_json == null
     && row.unit === candidate.unit
     && row.source_url === candidate.sourceUrl
+    && row.source_row_key === candidate.sourceRowKey
     && row.methodology === candidate.methodology
     && row.status === candidate.status
     && row.freshness === candidate.freshness;
@@ -358,31 +344,39 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
 export async function persistBtcObservation(databaseUrl: string, candidate: BtcObservationCandidate) {
   return withSqlTransaction(databaseUrl, async client => {
     const lockKey = [
-      "btc", candidate.metricId, candidate.sourceId, candidate.observedAt.toISOString(),
+      "btc", candidate.metricId, candidate.sourceId, candidate.sourceRowKey,
       candidate.periodStart?.toISOString() ?? "", candidate.periodEnd?.toISOString() ?? "",
     ].join("|");
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [lockKey]);
     const existing = await client.query(
-      `SELECT revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,source_url,methodology,status,freshness
+      `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,source_url,source_row_key,methodology,status,freshness
        FROM observations
-       WHERE asset_id='btc' AND metric_id=$1 AND source_id=$2 AND observed_at=$3
+       WHERE asset_id='btc' AND metric_id=$1 AND source_id=$2 AND source_row_key=$3
          AND period_start IS NOT DISTINCT FROM $4::timestamptz
-         AND period_end IS NOT DISTINCT FROM $5::timestamptz
        ORDER BY revision DESC LIMIT 1 FOR UPDATE`,
-      [candidate.metricId, candidate.sourceId, candidate.observedAt, candidate.periodStart, candidate.periodEnd]
+      [candidate.metricId, candidate.sourceId, candidate.sourceRowKey, candidate.periodStart]
     );
     const latest = existing.rows[0];
     if (latest && samePayload(latest, candidate)) {
+      await client.query(
+        `UPDATE observations
+         SET retrieved_at=$2,source_payload_sha256=$3,
+             observed_at=CASE WHEN $4='institutional.etf_net_flow' THEN $5 ELSE observed_at END
+         WHERE observation_id=$1`,
+        [latest.observation_id,candidate.retrievedAt,candidate.sourcePayloadSha256,candidate.metricId,candidate.observedAt]
+      );
       return { action: "unchanged" as const, revision: Number(latest.revision) };
     }
     const revision = latest ? Number(latest.revision) + 1 : 1;
     await client.query(
       `INSERT INTO observations (
          metric_id,asset_id,value_numeric,value_integer,value_boolean,value_text,value_json,
-         unit,observed_at,period_start,period_end,source_id,source_url,methodology,status,freshness,revision
-       ) VALUES ($1,'btc',$2,NULL,NULL,NULL,NULL,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+         unit,observed_at,period_start,period_end,source_id,source_url,retrieved_at,source_row_key,
+         source_payload_sha256,methodology,status,freshness,revision
+       ) VALUES ($1,'btc',$2,NULL,NULL,NULL,NULL,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
       [candidate.metricId,candidate.valueNumeric,candidate.unit,candidate.observedAt,candidate.periodStart,candidate.periodEnd,
-       candidate.sourceId,candidate.sourceUrl,candidate.methodology,candidate.status,candidate.freshness,revision]
+       candidate.sourceId,candidate.sourceUrl,candidate.retrievedAt,candidate.sourceRowKey,candidate.sourcePayloadSha256,
+       candidate.methodology,candidate.status,candidate.freshness,revision]
     );
     return { action: latest ? "revised" as const : "inserted" as const, revision };
   });
