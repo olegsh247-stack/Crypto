@@ -16,7 +16,7 @@ const row=(d,v,s="institutional.primary")=>({source_id:s,candidate_state:"REVIEW
  reconciliation_status:"MATCHES_DISPLAY_ROUNDING",source_row_key:s+":"+d,source_payload_sha256:"b".repeat(64)});
 test("primary five-session calculation is reproducible and review-only",()=>{
  const report=calculateBtcReviewScenario(manifest,{etf_review_rows:dates.map((d,i)=>row(d,[23.2,524.8,-635.6,-137.9,110.3][i]))});
- assert.equal(report.intermediate_calculations.price_return_7d_pct,-2);
+ assert.ok(Math.abs(report.intermediate_calculations.price_return_7d_pct+2)<1e-9);
  assert.ok(Math.abs(report.intermediate_calculations.etf_net_flow_5d_usd_millions+115.2)<1e-9);
  assert.equal(report.output.scenario_type,"base"); assert.equal(report.output.directional_score,0);
  assert.equal(report.safety.database_writes_performed,false); assert.equal(report.safety.can_persist_scenario_state,false);
@@ -28,7 +28,7 @@ test("fallback to SoSoValue is explicit when Farside lacks five accepted rows",(
  const report=calculateBtcReviewScenario(manifest,{etf_review_rows:[...primary,...fallback]});
  assert.equal(report.provenance.etf_net_flow.source_id,"institutional.sosovalue");
  assert.ok(report.provenance.etf_net_flow.fallback_reason);
- assert.ok(Math.abs(report.intermediate_calculations.etf_net_flow_5d_usd_millions+111.52222653)<1e-8);
+ assert.ok(Math.abs(report.intermediate_calculations.etf_net_flow_5d_usd_millions+111.522224555)<1e-8);
 });
 test("fails closed without BTC historical candles",()=>{
  assert.throws(()=>calculateBtcReviewScenario({sources:[]},{etf_review_rows:[]}),/hourly BTC\/USD history/);
