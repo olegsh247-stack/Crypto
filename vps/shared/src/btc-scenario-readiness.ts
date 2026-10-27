@@ -112,7 +112,8 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
 
   const allEtfRows = rows
     .filter(row => row?.metric_id === "institutional.etf_net_flow")
-    .sort((a, b) => dateMs(b.observed_at) - dateMs(a.observed_at)
+    .sort((a, b) => dateMs(b.period_start) - dateMs(a.period_start)
+      || dateMs(b.observed_at) - dateMs(a.observed_at)
       || Number(b.revision ?? 0) - Number(a.revision ?? 0));
   const latestEtf = allEtfRows[0];
   const latestEtfPeriodMs = dateMs(latestEtf?.period_start);
