@@ -5,6 +5,31 @@ const COOKIE_NAME = "crypto_admin_session";
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const failedAttempts = new Map<string, { count: number; resetAt: number }>();
 
+async function readBodyLimited(request: NextRequest, maxBytes: number): Promise<string | null> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.byteLength; }
+  return new TextDecoder().decode(merged);
+}
+
 function safeEqual(left: string, right: string) {
   const a = Buffer.from(left);
   const b = Buffer.from(right);
@@ -45,10 +70,8 @@ export async function POST(request: NextRequest) {
 
   let submittedKey = "";
   try {
-    const raw = await request.text();
-    if (Buffer.byteLength(raw, "utf8") > 2048) {
-      return NextResponse.json({ status: "error", error: "request_too_large" }, { status: 413 });
-    }
+    const raw = await readBodyLimited(request, 2048);
+    if (raw === null) return NextResponse.json({ status: "error", error: "request_too_large" }, { status: 413 });
     const payload = JSON.parse(raw) as { accessKey?: unknown };
     submittedKey = typeof payload.accessKey === "string" ? payload.accessKey : "";
   } catch {
@@ -70,7 +93,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ status: "ok", expiresAt: Number(expiresAt) });
   response.cookies.set(COOKIE_NAME, expiresAt + "." + signature, {
     httpOnly: true,
-    secure: request.nextUrl.protocol === "https:",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/api/admin",
     maxAge: SESSION_TTL_SECONDS,
