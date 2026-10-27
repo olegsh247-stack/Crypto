@@ -40,8 +40,24 @@ test("sub-threshold and mixed inputs remain Base", () => {
 test("DXY direction is inverse to BTC risk direction", () => {
   const weak = evaluateBtcScenarioV1({ ...ready, dxy_change_5d_pct: -0.5 });
   const strong = evaluateBtcScenarioV1({ ...ready, dxy_change_5d_pct: 0.5 });
-  assert.equal(weak.signals[3].score, 1);
-  assert.equal(strong.signals[3].score, -1);
+  assert.equal(weak.signals.find(s => s.input === "dxy_change_5d_pct").score, 1);
+  assert.equal(strong.signals.find(s => s.input === "dxy_change_5d_pct").score, -1);
+});
+
+test("missing DXY is omitted and does not block BTC evaluation", () => {
+  const { dxy_change_5d_pct: _unused, ...withoutDxy } = ready;
+  const r = evaluateBtcScenarioV1(withoutDxy);
+  assert.equal(r.status, "evaluated");
+  assert.equal(r.context.dxy_included, false);
+  assert.equal(r.signals.some(s => s.input === "dxy_change_5d_pct"), false);
+  assert.equal(r.directional_score, 0);
+  assert.equal(r.scenario_type, "base");
+});
+
+test("null DXY is omitted, not converted to a zero signal", () => {
+  const r = evaluateBtcScenarioV1({ ...ready, dxy_change_5d_pct: null });
+  assert.equal(r.context.dxy_included, false);
+  assert.equal(r.signals.some(s => s.input === "dxy_change_5d_pct"), false);
 });
 
 test("failed readiness gate never evaluates", () => {
@@ -50,7 +66,7 @@ test("failed readiness gate never evaluates", () => {
   assert.equal(r.can_persist_scenario_state, false);
 });
 
-test("missing values and negative fee ratio are rejected", () => {
+test("missing required values and negative fee ratio are rejected", () => {
   assert.throws(() => evaluateBtcScenarioV1({ ...ready, price_return_7d_pct: null }), /finite number/);
   assert.throws(() => evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: -0.1 }), /cannot be negative/);
 });
