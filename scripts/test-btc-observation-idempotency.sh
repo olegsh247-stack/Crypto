@@ -12,11 +12,11 @@ psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations
 # Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
 base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
 INSERT INTO observations (
-  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256,
   methodology, status, freshness, revision
 ) VALUES (
   'market.spot_price', 'btc', 80000, 'USD/BTC', date_trunc('minute', now()) - interval '1 hour',
-  'market_binance', 'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT',
+  'market.kraken', 'https://api.kraken.com/0/public/Trades?pair=XBTUSD', now(), 'kraken:XBTUSD:test-fixture', repeat('a',64),
   'Disposable idempotency test fixture', 'NORMAL', 'CURRENT', 1
 ) RETURNING observation_id;
 SQL
@@ -27,10 +27,10 @@ test -n "$base_id"
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-  unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+  unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 )
 SELECT metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-       unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+       unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 FROM observations WHERE observation_id = :'base_id'::uuid;
 SQL
 
@@ -56,10 +56,10 @@ psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-  unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+  unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 )
 SELECT metric_id, asset_id, value_numeric + 1, value_integer, value_boolean, value_text, value_json,
-       unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+       unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 FROM observations WHERE observation_id = :'base_id'::uuid;
 SQL
 
@@ -108,11 +108,14 @@ import { persistBtcObservation } from "./vps/worker/dist/btc-observations.js";
 
 const candidate = {
   metricId: "market.spot_price",
-  sourceId: "market_binance",
-  sourceUrl: "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT",
+  sourceId: "market.kraken",
+  sourceUrl: "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
   valueNumeric: 80000,
   unit: "USD/BTC",
   observedAt: new Date(process.env.BTC_TEST_OBSERVED_AT),
+  retrievedAt: new Date(),
+  sourceRowKey: "kraken:XBTUSD:test-fixture",
+  sourcePayloadSha256: "a".repeat(64),
   periodStart: null,
   periodEnd: null,
   methodology: "Disposable idempotency test fixture",
