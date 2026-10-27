@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { evaluateBtcScenarioV1 } from "./btc-scenario-direction.mjs";
+import { assessBtcScenarioReadiness } from "./btc-scenario-readiness.mjs";
 
 const dateOK = x => typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x);
 const num = x => typeof x === "number" && Number.isFinite(x);
@@ -44,12 +45,23 @@ export function calculateBtcReviewScenario(manifest, candidates) {
     && num(hashrateSource.hashrate_change_7d_pct)
     && hashrateSource.seven_day_reference_delta_seconds === 604800
     ? hashrateSource.hashrate_change_7d_pct : null;
-  // These values are review-only candidates, not readiness-approved observations.
-  // Keep the current capture not_evaluable until the spot/ETF freshness and ETF
-  // publication-time/finality/revision gates are accepted. Missing optional context
-  // (hashrate and fee/subsidy) must not be used as a substitute blocker.
+  // Run the canonical readiness contract on the actual captured candidates.
+  // This keeps review-only calculation possible when inputs pass, while preserving
+  // not_evaluable for stale/untraceable spot data or an incomplete ETF session.
+  const spotRows = (Array.isArray(candidates?.candidates) ? candidates.candidates : [])
+    .filter(row => row?.metric_id === "market.spot_price" && row?.candidate_state === "REVIEW_ONLY")
+    .map(row => ({ ...row, freshness: row.freshness_status, expected_unit: row.unit, source_registered: true }));
+  const readinessEtfRows = rows
+    .filter(row => row?.metric_id === "institutional.etf_net_flow"
+      && row?.candidate_state === "REVIEW_ONLY"
+      && num(row?.value_numeric)
+      && row?.row_status !== "UNREPORTED_PLACEHOLDER"
+      && row?.reconciliation_status !== "UNREPORTED")
+    .map(row => ({ ...row, freshness: "CURRENT", expected_unit: row.expected_unit ?? row.unit,
+      source_registered: row.source_registered === true }));
+  const readiness = assessBtcScenarioReadiness([...spotRows, ...readinessEtfRows], new Date());
   const result = evaluateBtcScenarioV1({
-    readiness_status: "not_evaluable",
+    readiness_status: readiness.status,
     price_return_7d_pct: priceReturn,
     etf_net_flow_5d_usd_millions: etfSum,
     hashrate_change_7d_pct: acceptedHashrateChange,
@@ -107,10 +119,8 @@ export function calculateBtcReviewScenario(manifest, candidates) {
       missing_required_inputs:result.missing_required_inputs ?? []
     },
     output:result,
-    readiness_blockers:[
-      "Captured spot/ETF values remain review-only and have not passed the accepted-observation readiness gate",
-      "ETF publication-time, finality and provider-revision acceptance is incomplete"
-    ],
+    readiness_blockers: readiness.blockers.map(item => ({ metric_id: item.metric_id, reason: item.reason })),
+    readiness_status: readiness.status,
     safety:{
       live_data_fetched_by_calculator:false, database_accessed:false, database_writes_performed:false,
       scenario_state_persisted:false, monitoring_events_written:false,
