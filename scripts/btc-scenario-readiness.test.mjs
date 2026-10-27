@@ -91,13 +91,12 @@ test("spot price must be positive", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
 });
 
-test("spot observation three hours old is stale under the one-hour contract", () => {
+test("spot observation three hours old remains usable for a reviewed run", () => {
   const inputs = completeInputs().map(x => x.metric_id === "market.spot_price"
     ? { ...x, observed_at: "2026-10-12T09:00:00.000Z", retrieved_at: "2026-10-12T09:00:01.000Z" } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
-  assert.equal(result.selected_inputs["market.spot_price"], undefined);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["market.spot_price"].observed_at, "2026-10-12T09:00:00.000Z");
 });
 
 test("stale observation cannot pass even with a source URL", () => {
