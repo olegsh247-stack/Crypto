@@ -46,3 +46,29 @@ export async function closePool() {
     pool = null;
   }
 }
+
+
+export interface SqlTransactionClient {
+  query(text: string, values?: any[]): Promise<{ rows: any[] }>;
+  release(): void;
+}
+
+/** Run related observation reads/writes on one PostgreSQL connection and transaction. */
+export async function withSqlTransaction<T>(
+  databaseUrl: string,
+  callback: (client: SqlTransactionClient) => Promise<T>
+): Promise<T> {
+  if (!databaseUrl) throw new Error("DATABASE_URL is required");
+  const client = await getPool(databaseUrl).connect();
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    try { await client.query("ROLLBACK"); } catch {}
+    throw error;
+  } finally {
+    client.release();
+  }
+}
