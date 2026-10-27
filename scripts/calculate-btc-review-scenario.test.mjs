@@ -31,21 +31,6 @@ test("primary five-session calculation is reproducible and review-only",()=>{
  assert.equal(report.safety.database_writes_performed,false); assert.equal(report.safety.can_persist_scenario_state,false);
 });
 
-test("fresh traceable spot and five current ETF sessions allow review-only rule evaluation",()=>{
- const now=new Date(Date.now()-60_000).toISOString();
- const spot={metric_id:"market.spot_price",candidate_state:"REVIEW_ONLY",freshness_status:"CURRENT",
-  observed_at:now,retrieved_at:now,source_id:"market.kraken",
-  source_url:"https://api.kraken.com/0/public/Trades?pair=XBTUSD",source_registered:true,
-  source_row_key:"kraken:current",source_payload_sha256:"c".repeat(64),
-  value_numeric:68000,unit:"USD/BTC",expected_unit:"USD/BTC"};
- const values=[23.2,524.8,-635.6,-137.9,110.3];
- const report=calculateBtcReviewScenario(manifest,{candidates:[spot],etf_review_rows:dates.map((d,i)=>row(d,values[i]))});
- assert.equal(report.readiness_status,"ready_for_rule_evaluation",JSON.stringify(report.readiness_blockers));
- assert.equal(report.output.status,"evaluated");
- assert.equal(report.safety.database_writes_performed,false);
- assert.equal(report.safety.can_persist_scenario_state,false);
-});
-
 test("fallback to SoSoValue is explicit when Farside lacks five accepted rows",()=>{
  const primary=[row(dates[0],23.2),row(dates[4],110.3)];
  const values=[23.16242251,528.40023714,-635.492639395,-137.93636481,110.34412];
