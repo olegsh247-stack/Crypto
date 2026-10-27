@@ -22,7 +22,7 @@ async function binanceKlines(symbol:string,interval:string,limit:number){
 async function krakenUsdKlines(asset:string){
  const pair=KRAKEN_USD_PAIRS[asset];
  if(!pair)return [];
- const response=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`,{headers:{Accept:"application/json"}});
+ const response=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440`,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(10_000)});
  if(!response.ok)throw new Error(`Kraken ${asset}: ${response.status}`);
  const data=await response.json() as any;
  const key=Object.keys(data?.result??{}).find(k=>k!=="last");
