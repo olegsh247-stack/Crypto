@@ -6,12 +6,12 @@ Status: implementation and fixture tests only; scheduled persistence is **disabl
 
 | Metric ID | Provider / endpoint | Canonical unit | Timestamp/window semantics |
 |---|---|---|---|
-| `market.spot_price` | Binance public BTCUSDT ticker | `USD/BTC` | The ticker response has no event timestamp. `observed_at` is the UTC collection minute; the method field records this limitation. |
+| `market.spot_price` | Kraken public XBTUSD Trades endpoint | `USD/BTC` | `observed_at` is the provider's latest trade timestamp; `retrieved_at` records collection time. Source ID is `market.kraken`. |
 | `security.hashrate` | Mempool.space `/api/v1/mining/hashrate/1w` | `EH/s` | Select the latest complete UTC daily bucket, not the partial current day; convert `avgHashrate` from H/s to EH/s. |
 | `security.fee_subsidy_ratio` | Mempool.space `/api/v1/mining/reward-stats/144` | `ratio` | Compute `totalFee / (totalReward - totalFee)` over the endpoint's start/end block range; verify both endpoint block timestamps and store them as period bounds. |
 | `institutional.etf_net_flow` | Farside Investors BTC ETF table | `USD million/day` | Parse the table's explicit `Total` column; preserve reporting day as a UTC daily window; parentheses are negative; rows with no reported fund values are skipped. |
 
-DXY is intentionally **not collected**. The metric is registered but remains a readiness blocker until a reviewed, licensed data feed is selected. No alternative index or unverified quote page is silently substituted.
+DXY is intentionally **not collected**. It is optional supporting context and does not block the first BTC scenario. No alternative index or unverified quote page is silently substituted.
 
 ## Read-only candidate review
 
@@ -34,7 +34,7 @@ When enabled, the collector:
 - leaves identical payloads unchanged and increments revision when the payload for the same logical key changes;
 - reports per-source errors as a partial result instead of inventing fallback values.
 
-The collector never writes scenario states or monitoring events. The DXY input remains missing, so the readiness gate must continue to return `not_evaluable` until that source is reviewed and current inputs pass the gate.
+The collector never writes scenario states or monitoring events. DXY may remain missing without blocking readiness; required spot-price and ETF-flow inputs must still pass source, freshness, period and provenance checks.
 
 ## Verification
 
