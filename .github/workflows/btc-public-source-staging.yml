@@ -12,6 +12,8 @@ on:
       - "scripts/evaluate-btc-review-capture.mjs"
       - "scripts/calculate-btc-review-scenario.mjs"
       - "scripts/calculate-btc-review-scenario.test.mjs"
+      - "scripts/compare-btc-review-scenarios.mjs"
+      - "scripts/compare-btc-review-scenarios.test.mjs"
       - "scripts/btc-scenario-readiness.mjs"
       - "vps/shared/src/btc-scenario-readiness.ts"
       - "data/CryptoDataModel/registry/metric-registry.json"
@@ -77,6 +79,12 @@ jobs:
         run: node --test scripts/calculate-btc-review-scenario.test.mjs
       - name: Calculate current BTC scenario from this capture (review only)
         run: node scripts/calculate-btc-review-scenario.mjs
+      - name: Test multi-capture stability comparison
+        run: node --test scripts/compare-btc-review-scenarios.test.mjs
+      - name: Verify identical capture inputs produce byte-identical reports
+        run: |
+          node scripts/calculate-btc-review-scenario.mjs tmp/btc-source-review/manifest.json tmp/btc-source-review/observation-candidates.json tmp/btc-source-review/btc-current-scenario-review-repeat.json
+          cmp tmp/btc-source-review/btc-current-scenario-review.json tmp/btc-source-review/btc-current-scenario-review-repeat.json
       - name: Assess readiness from this capture (offline review only)
         run: node scripts/evaluate-btc-review-capture.mjs
       - name: Upload raw responses, provenance manifest, and review-only candidates
