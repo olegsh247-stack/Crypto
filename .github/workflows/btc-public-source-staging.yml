@@ -26,6 +26,7 @@ on:
       - "scripts/validate-us-etf-session-calendar.mjs"
       - "scripts/assess-btc-etf-session-freshness.mjs"
       - "scripts/assess-btc-etf-session-freshness.test.mjs"
+      - "scripts/capture-etf-source-evidence.mjs"
       - "data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json"
       - "scripts/btc-protocol-supply.mjs"
       - "scripts/btc-protocol-supply.test.mjs"
@@ -73,6 +74,9 @@ jobs:
         run: node --test scripts/assess-btc-etf-session-freshness.test.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
+      - name: Capture official ETF calendar and Farside response hashes (read only)
+        continue-on-error: true
+        run: node scripts/capture-etf-source-evidence.mjs
       - name: Capture public source responses for review only
         env:
           SOSOVALUE_API_KEY: ${{ secrets.SOSOVALUE_API_KEY }}
