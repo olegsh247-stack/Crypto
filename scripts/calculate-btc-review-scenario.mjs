@@ -44,13 +44,15 @@ export function calculateBtcReviewScenario(manifest, candidates) {
     && num(hashrateSource.hashrate_change_7d_pct)
     && hashrateSource.seven_day_reference_delta_seconds === 604800
     ? hashrateSource.hashrate_change_7d_pct : null;
+  // These values are review-only candidates, not readiness-approved observations.
+  // Keep the current capture not_evaluable until the spot/ETF freshness and ETF
+  // publication-time/finality/revision gates are accepted. Missing optional context
+  // (hashrate and fee/subsidy) must not be used as a substitute blocker.
   const result = evaluateBtcScenarioV1({
-    readiness_status: "ready_for_rule_evaluation",
+    readiness_status: "not_evaluable",
     price_return_7d_pct: priceReturn,
     etf_net_flow_5d_usd_millions: etfSum,
     hashrate_change_7d_pct: acceptedHashrateChange,
-    // The per-block fee window must pass confirmation/reorg and version checks before
-    // it can be supplied as an accepted input to this scenario rule.
     fee_subsidy_ratio: null
   });
   return {
@@ -105,6 +107,10 @@ export function calculateBtcReviewScenario(manifest, candidates) {
       missing_required_inputs:result.missing_required_inputs ?? []
     },
     output:result,
+    readiness_blockers:[
+      "Captured spot/ETF values remain review-only and have not passed the accepted-observation readiness gate",
+      "ETF publication-time, finality and provider-revision acceptance is incomplete"
+    ],
     safety:{
       live_data_fetched_by_calculator:false, database_accessed:false, database_writes_performed:false,
       scenario_state_persisted:false, monitoring_events_written:false,
