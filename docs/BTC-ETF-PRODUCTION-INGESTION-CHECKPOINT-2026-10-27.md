@@ -19,11 +19,10 @@ The existing snapshot comparator already detects changed overlapping rows, added
 
 ## Remaining production blockers
 
-1. Capture and record SHA-256 hashes of the exact upstream NYSE/Nasdaq calendar payloads (the normalized fixture's current metadata explicitly says these hashes are not captured).
-2. Review and document Farside's publication-window convention from evidence; until then session freshness intentionally fails closed.
-3. Exercise the revision policy against an actual provider revision when one occurs; synthetic regression tests only verify behavior.
-4. Prove durable storage, independent retrieval, and backup restore on the user's own infrastructure. CI artifacts are not durable operational storage evidence.
-5. Only after the above: rerun the full readiness gate and offline BTC scenario. No registry/runtime source-priority changes or production ingestion are part of this patch.
+1. Verify successful hashing of the canonical Farside all-data endpoint (the landing-page endpoint can return HTTP 403 and must not be confused with the data endpoint).
+2. Preserve the already documented real Farside revision example: 2026-10-20 changed from an unreported placeholder to +23.2 USDm between snapshots, as detailed in `docs/BTC-ETF-TWO-SNAPSHOT-ACCEPTANCE-2026-10-17.md`. The two-snapshot exercise does not need to be repeated.
+3. Prove durable storage, independent retrieval, and backup restore on the user's own infrastructure. CI artifacts are short-lived evidence, not durable operational storage.
+4. Rerun the full readiness gate and offline BTC scenario after the separate BTC fee-window capture is stable. No registry/runtime source-priority changes or production ingestion are part of this patch.
 
 ## Safety boundary
 
