@@ -44,7 +44,16 @@ for (const date of earlyCloses) {
 assert.equal(calendar.calendar_rules.early_close_counts_as_session, true);
 assert.equal(calendar.calendar_rules.full_closure_counts_as_session, false);
 assert.match(calendar.calendar_rules.publication_window_policy, /Do not infer Farside publication timing/);
-assert.match(calendar.calendar_rules.source_payload_hashes, /Not captured yet/);
+assert.equal(calendar.calendar_rules.source_payload_hashes.status, "CAPTURED_READ_ONLY_CI");
+assert.match(calendar.calendar_rules.source_payload_hashes.algorithm, /SHA-256/);
+assert.ok(calendar.calendar_rules.source_payload_hashes.sources.length >= 3);
+for (const source of calendar.calendar_rules.source_payload_hashes.sources) {
+  assert.equal(source.http_status, 200);
+  assert.match(source.sha256, /^[a-f0-9]{64}$/);
+  assert.ok(source.body_bytes > 0);
+}
+assert.equal(calendar.calendar_rules.source_payload_hashes.farside_capture.http_status, 403);
+assert.equal(calendar.calendar_rules.source_payload_hashes.farside_capture.status, "NOT_A_SOURCE_PAYLOAD");
 
 console.log(
   `US ETF session calendar ${calendar.calendar_version}: ${fullClosures.size} full closures, ${earlyCloses.size} early closes; research baseline validated (not wired into readiness).`
