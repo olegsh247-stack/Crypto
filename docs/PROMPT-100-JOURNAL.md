@@ -1653,3 +1653,11 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 The existing two-snapshot acceptance report already contains a real Farside row transition: 2026-10-20 changed from an unreported placeholder to +23.2 USDm between snapshots. This is sufficient as the real revision-policy example; do not repeat the same two-snapshot task. The direct landing page can return HTTP 403, so source-hash capture was corrected to target the canonical all-data endpoint `https://farside.co.uk/bitcoin-etf-flow-all-data/`. The denial response is not valid ETF payload evidence.
 
 Remaining blockers: verify successful canonical all-data capture/hash and prove durable self-hosted archive/read-back/restore. Production ingestion remains disabled.
+
+## 2026-10-27 — Canonical Farside capture verified
+
+The standard read-only source capture succeeded for the canonical Farside all-data endpoint: retrieved `2026-10-27T15:56:53.261Z`, HTTP 200, SHA-256 `403a10014b89c99d41bfc2be4e1b17cfd4a5e0bc714f4d7cd153d04c8c2be7ff`, latest reported session 2026-10-26, +110.3 USDm, reconciliation `MATCHES_DISPLAY_ROUNDING`. The 27 Oct US session had not yet closed at capture time, so this is the latest completed session row.
+
+Official NYSE/Nasdaq calendar response hashes and NYSE PDF hash are recorded in the calendar fixture. A direct probe can get HTTP 403 while the established source-capture workflow succeeds; do not use the probe's denial-body hash as source evidence. Actual Farside row revision evidence already exists (2026-10-20 placeholder -> +23.2 USDm).
+
+**Remaining ETF production blockers:** durable self-hosted archive/read-back/restore and reviewed allowed-retention approach. Broader BTC staging separately fails its offline scenario test because `hashrate_change_7d_pct` is not finite; ETF parser, session freshness and calendar hash checks passed. No production ingestion or merge.
