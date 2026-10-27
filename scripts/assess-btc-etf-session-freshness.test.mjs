@@ -54,7 +54,17 @@ test("does not mark a session stale during the evening/night publication grace w
   const result = assessEtfSessionFreshness({
     now: "2026-10-27T23:00:00Z", calendar,
     rows: [],
-    publicationPolicy: { status: "reviewed", max_session_lag: 1, grace_period_minutes: 480 }
+    publicationPolicy: { status: "reviewed", max_session_lag: 1, grace_period_minutes: 720 }
+  });
+  assert.equal(result.status, "AWAITING_EXPECTED_PUBLICATION_WINDOW");
+  assert.equal(result.expected_session_date, "2026-10-27");
+});
+
+test("publication grace continues past midnight US time", () => {
+  const result = assessEtfSessionFreshness({
+    now: "2026-10-28T07:00:00Z", calendar,
+    rows: [],
+    publicationPolicy: { status: "reviewed", max_session_lag: 1, grace_period_minutes: 720 }
   });
   assert.equal(result.status, "AWAITING_EXPECTED_PUBLICATION_WINDOW");
   assert.equal(result.expected_session_date, "2026-10-27");
