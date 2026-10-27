@@ -11,7 +11,10 @@ const manifest={retrieved_at:"2026-10-27T06:44:00Z",sources:[{
  seven_day_close_to_close_return_pct:-2
 }]};
 const dates=["2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26"];
-const row=(d,v,s="institutional.primary")=>({source_id:s,candidate_state:"REVIEW_ONLY",
+const row=(d,v,s="institutional.primary")=>({metric_id:"institutional.etf_net_flow",source_id:s,
+ source_url:s==="institutional.sosovalue"?"https://openapi.sosovalue.com/openapi/v1/etfs/summary-history":"https://farside.co.uk/bitcoin-etf-flow-all-data/",
+ source_registered:true,unit:"USD million/day",expected_unit:"USD million/day",freshness:"CURRENT",
+ observed_at:null,retrieved_at:new Date().toISOString(),candidate_state:"REVIEW_ONLY",
  period_start:d,period_end:d,value_numeric:v,row_status:"REPORTED_CANDIDATE",
  reconciliation_status:"MATCHES_DISPLAY_ROUNDING",source_row_key:s+":"+d,source_payload_sha256:"b".repeat(64)});
 test("primary five-session calculation is reproducible and review-only",()=>{
@@ -23,9 +26,26 @@ test("primary five-session calculation is reproducible and review-only",()=>{
  assert.equal(report.output.scenario_type,undefined);
  assert.equal(report.output.directional_score,undefined);
  assert.equal(report.output.missing_required_inputs,undefined);
- assert.ok(report.readiness_blockers.some(x=>x.includes("ETF publication-time")));
+ assert.ok(report.readiness_blockers.some(x=>x.metric_id==="market.spot_price"));
+ assert.equal(report.readiness_status,"not_evaluable");
  assert.equal(report.safety.database_writes_performed,false); assert.equal(report.safety.can_persist_scenario_state,false);
 });
+
+test("fresh traceable spot and five current ETF sessions allow review-only rule evaluation",()=>{
+ const now=new Date().toISOString();
+ const spot={metric_id:"market.spot_price",candidate_state:"REVIEW_ONLY",freshness_status:"CURRENT",
+  observed_at:now,retrieved_at:now,source_id:"market.kraken",
+  source_url:"https://api.kraken.com/0/public/Trades?pair=XBTUSD",source_registered:true,
+  source_row_key:"kraken:current",source_payload_sha256:"c".repeat(64),
+  value_numeric:68000,unit:"USD/BTC",expected_unit:"USD/BTC"};
+ const values=[23.2,524.8,-635.6,-137.9,110.3];
+ const report=calculateBtcReviewScenario(manifest,{candidates:[spot],etf_review_rows:dates.map((d,i)=>row(d,values[i]))});
+ assert.equal(report.readiness_status,"ready_for_rule_evaluation");
+ assert.equal(report.output.status,"evaluated");
+ assert.equal(report.safety.database_writes_performed,false);
+ assert.equal(report.safety.can_persist_scenario_state,false);
+});
+
 test("fallback to SoSoValue is explicit when Farside lacks five accepted rows",()=>{
  const primary=[row(dates[0],23.2),row(dates[4],110.3)];
  const values=[23.16242251,528.40023714,-635.492639395,-137.93636481,110.34412];
