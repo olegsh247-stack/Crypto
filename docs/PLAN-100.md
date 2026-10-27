@@ -2181,3 +2181,9 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Extended snapshot revision evidence to retain old/new row key, completeness state and enclosing payload SHA-256, with a regression test. Added these tests to the read-only BTC staging workflow.
 - ETF remains research-only / blocked from production ingestion. Remaining external/operational evidence: exact upstream NYSE/Nasdaq payload hashes; reviewed Farside publication-window policy; a real provider revision example (synthetic test is not a substitute); durable archive/read-back/backup-restore on the user's own infrastructure.
 - No production DB write, live ingestion, registry/runtime priority change, scenario-state/probability persistence, deployment, or merge. Farside remains priority; SoSoValue cross-check only; no averaging or silent fallback.
+
+### 2026-10-27 — ETF freshness CI verification
+
+- BTC Public Source Staging run [#40531601122](https://github.com/olegsh247-stack/Crypto/actions/runs/40531601122): Farside snapshot revision tests, calendar validator, and all six session-freshness tests passed after the date-regex fix.
+- The full staging workflow still ended blocked at the independent BTC fee/subsidy audit: `BLOCKED_PER_BLOCK_FEE_SUBSIDY_AUDIT`, reason `tip changed or behind window`. This is not an ETF test failure and no ingestion occurred; recapture/recheck the fee window separately when continuing the broader BTC capture.
+- ETF production ingestion remains blocked on the documented publication-window policy, upstream calendar payload hashes, real revision evidence, and self-hosted durable retention/restore.
