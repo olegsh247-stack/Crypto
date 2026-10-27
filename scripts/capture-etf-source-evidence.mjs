@@ -14,7 +14,11 @@ const retrievedAt = new Date().toISOString();
 const records = [];
 for (const target of targets) {
   try {
-    const response = await fetch(target.url, { redirect: "follow", signal: AbortSignal.timeout(15000) });
+    const response = await fetch(target.url, {
+      redirect: "follow",
+      headers: { "user-agent": "Crypto-BTC-Source-Review/1.0", "accept": "application/json,text/html;q=0.9,*/*;q=0.8" },
+      signal: AbortSignal.timeout(15000)
+    });
     const bytes = Buffer.from(await response.arrayBuffer());
     const record = {
       source_id: target.id,
