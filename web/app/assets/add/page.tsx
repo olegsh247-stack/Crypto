@@ -19,7 +19,6 @@ export default function AddAssetPage() {
   useEffect(() => {
     getAssetTypes().then(({ items }) => {
       setAssetTypes(items);
-      if (items[0]) setAssetTypeId(items[0].asset_type_id);
     }).catch(err => setError(err instanceof Error ? err.message : "Unable to load asset types"));
   }, []);
 
