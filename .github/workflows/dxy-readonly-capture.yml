@@ -1,0 +1,35 @@
+name: DXY Read-Only Public Data Capture
+
+on:
+  push:
+    paths:
+      - "scripts/capture-dxy-public-sources.mjs"
+      - ".github/workflows/dxy-readonly-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dxy-readonly-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture current public USD-index observations (read only)
+        run: node scripts/capture-dxy-public-sources.mjs
+      - name: Upload raw responses, hashes and parsed observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dxy-public-source-review
+          path: tmp/dxy-source-review/
+          if-no-files-found: error
+          retention-days: 7
