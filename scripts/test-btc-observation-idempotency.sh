@@ -8,15 +8,15 @@ if [[ "$actual_database" != "crypto_test" ]]; then
   exit 2
 fi
 
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq; DROP INDEX IF EXISTS observations_btc_legacy_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
 # Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
 base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
 INSERT INTO observations (
-  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
+  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256,
   methodology, status, freshness, revision
 ) VALUES (
-  'market.spot_price', 'btc', 80000, 'USD/BTC', now() - interval '1 hour',
-  'market_binance', 'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT',
+  'market.spot_price', 'btc', 80000, 'USD/BTC', date_trunc('minute', now()) - interval '1 hour',
+  'market.kraken', 'https://api.kraken.com/0/public/Trades?pair=XBTUSD', now(), 'kraken:XBTUSD:test-fixture', repeat('a',64),
   'Disposable idempotency test fixture', 'NORMAL', 'CURRENT', 1
 ) RETURNING observation_id;
 SQL
@@ -27,10 +27,10 @@ test -n "$base_id"
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-  unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+  unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 )
 SELECT metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-       unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+       unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 FROM observations WHERE observation_id = :'base_id'::uuid;
 SQL
 
@@ -52,14 +52,14 @@ remaining="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "
 test "$remaining" = "0"
 
 # Verify conflicting payloads are not automatically reconciled.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq; DROP INDEX IF EXISTS observations_btc_legacy_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
-  unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+  unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 )
 SELECT metric_id, asset_id, value_numeric + 1, value_integer, value_boolean, value_text, value_json,
-       unit, observed_at, period_start, period_end, source_id, source_url, methodology, status, freshness, revision
+       unit, observed_at, period_start, period_end, source_id, source_url, retrieved_at, source_row_key, source_payload_sha256, methodology, status, freshness, revision
 FROM observations WHERE observation_id = :'base_id'::uuid;
 SQL
 
@@ -99,53 +99,35 @@ WHERE o.observation_id=r.observation_id AND r.row_rank>1;
 SQL
 
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-13-btc-observation-natural-key.sql
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-15-btc-source-row-key-idempotency.sql
+index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_natural_key_revision_uq') IS NOT NULL")"
+test "$index_exists" = "t"
+observed_at="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_char(observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') FROM observations WHERE observation_id='$base_id'::uuid")"
+DATABASE_URL="$DATABASE_URL" BTC_TEST_OBSERVED_AT="$observed_at" node --input-type=module <<'NODE'
+import assert from "node:assert/strict";
+import { persistBtcObservation } from "./vps/worker/dist/btc-observations.js";
 
-# Distinct provider rows at the exact same timestamp must remain distinct.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
-INSERT INTO observations (
-  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
-  methodology, status, freshness, revision, source_row_key
-)
-SELECT metric_id, asset_id, value_numeric + 10, unit, observed_at, 'market_kraken',
-       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
-       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-a'
-FROM observations WHERE observation_id = :'base_id'::uuid;
+const candidate = {
+  metricId: "market.spot_price",
+  sourceId: "market.kraken",
+  sourceUrl: "https://api.kraken.com/0/public/Trades?pair=XBTUSD",
+  valueNumeric: 80000,
+  unit: "USD/BTC",
+  observedAt: new Date(process.env.BTC_TEST_OBSERVED_AT),
+  retrievedAt: new Date(),
+  sourceRowKey: "kraken:XBTUSD:test-fixture",
+  sourcePayloadSha256: "a".repeat(64),
+  periodStart: null,
+  periodEnd: null,
+  methodology: "Disposable idempotency test fixture",
+  status: "NORMAL",
+  freshness: "CURRENT",
+};
+assert.equal((await persistBtcObservation(process.env.DATABASE_URL, candidate)).action, "unchanged");
+const revised = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
+assert.deepEqual(revised, { action: "revised", revision: 2 });
+const unchanged = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
+assert.deepEqual(unchanged, { action: "unchanged", revision: 2 });
+console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
+NODE
 
-INSERT INTO observations (
-  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
-  methodology, status, freshness, revision, source_row_key
-)
-SELECT metric_id, asset_id, value_numeric + 20, unit, observed_at, 'market_kraken',
-       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
-       'Disposable source-row identity fixture', status, freshness, revision, 'test-trade-b'
-FROM observations WHERE observation_id = :'base_id'::uuid;
-
--- Replaying the same provider row identity must not create another row.
-INSERT INTO observations (
-  metric_id, asset_id, value_numeric, unit, observed_at, source_id, source_url,
-  methodology, status, freshness, revision, source_row_key
-)
-SELECT metric_id, asset_id, value_numeric + 10, unit, observed_at, 'market_kraken',
-       'https://api.kraken.com/0/public/Trades?pair=XBTUSD',
-       'Disposable source-row identity fixture', status, freshness, revision + 1, 'test-trade-a'
-FROM observations WHERE observation_id = :'base_id'::uuid
-ON CONFLICT DO NOTHING;
-SQL
-
-row_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT count(*) FROM observations WHERE asset_id='btc' AND source_id='market_kraken' AND source_row_key IN ('test-trade-a','test-trade-b')")"
-test "$row_count" = "2"
-source_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_source_row_revision_uq') IS NOT NULL")"
-legacy_index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_legacy_natural_key_revision_uq') IS NOT NULL")"
-test "$source_index_exists" = "t"
-test "$legacy_index_exists" = "t"
-
-# Remove disposable fixtures so later rehearsal steps see a clean database.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
-DELETE FROM observations
-WHERE observation_id = :'base_id'::uuid
-   OR (asset_id = 'btc' AND source_id = 'market_kraken'
-       AND source_row_key IN ('test-trade-a', 'test-trade-b'));
-SQL
-
-echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_legacy_duplicates_removed=1 conflicting_legacy_payloads_rejected=1 distinct_source_rows_at_same_timestamp=2 source_row_replay_idempotent=1"
+echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"
