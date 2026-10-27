@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 
 const calendarUrl = new URL("../data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json", import.meta.url);
+const policyUrl = new URL("../data/CryptoDataModel/calendars/btc-etf-publication-freshness-policy.json", import.meta.url);
 
 function localDateParts(now, timeZone) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -125,10 +126,16 @@ export function assessEtfSessionFreshness({ now, calendar, rows, publicationPoli
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
-  const calendar = JSON.parse(await readFile(calendarUrl, "utf8"));
   const [nowArg] = process.argv.slice(2);
+  const [calendar, publicationPolicy] = await Promise.all([
+    readFile(calendarUrl, "utf8").then(JSON.parse),
+    readFile(policyUrl, "utf8").then(JSON.parse)
+  ]);
+  const now = nowArg ?? new Date();
+  const latest = latestCompletedUsEtfSession(now, calendar);
   console.log(JSON.stringify({
-    latest_completed_session: latestCompletedUsEtfSession(nowArg ?? new Date(), calendar),
-    publication_policy: "UNDEFINED — no production freshness pass until provider publication window is reviewed"
+    latest_completed_session: latest,
+    freshness_review: assessEtfSessionFreshness({ now, calendar, rows: [], publicationPolicy }),
+    publication_policy: publicationPolicy
   }, null, 2));
 }
