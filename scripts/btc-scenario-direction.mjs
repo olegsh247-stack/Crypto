@@ -33,7 +33,6 @@ export function evaluateBtcScenarioV1(input) {
   const price = number(input.price_return_7d_pct, "price_return_7d_pct");
   const flows = number(input.etf_net_flow_5d_usd_millions, "etf_net_flow_5d_usd_millions");
   const hashrate = number(input.hashrate_change_7d_pct, "hashrate_change_7d_pct");
-  const dxy = number(input.dxy_change_5d_pct, "dxy_change_5d_pct");
   const feeRatio = number(input.fee_subsidy_ratio, "fee_subsidy_ratio");
   if (feeRatio < 0) throw new RangeError("fee_subsidy_ratio cannot be negative");
 
@@ -41,15 +40,30 @@ export function evaluateBtcScenarioV1(input) {
     { input: "price_return_7d_pct", value: price, score: direction(price, 5, -5) },
     { input: "etf_net_flow_5d_usd_millions", value: flows, score: direction(flows, 500, -500) },
     { input: "hashrate_change_7d_pct", value: hashrate, score: direction(hashrate, 3, -3) },
-    { input: "dxy_change_5d_pct", value: dxy, score: direction(dxy, -0.5, 0.5, true) },
   ];
+
+  // DXY is optional supporting context. Missing/invalid-unavailable data is omitted,
+  // never converted to zero and never allowed to block evaluation by itself.
+  const hasDxy = input.dxy_change_5d_pct !== null
+    && input.dxy_change_5d_pct !== undefined
+    && input.dxy_change_5d_pct !== "";
+  if (hasDxy) {
+    const dxy = number(input.dxy_change_5d_pct, "dxy_change_5d_pct");
+    signals.push({
+      input: "dxy_change_5d_pct",
+      value: dxy,
+      score: direction(dxy, -0.5, 0.5, true),
+    });
+  }
+
   const score = signals.reduce((sum, item) => sum + item.score, 0);
   const scenario = score >= 3 ? "bull" : score <= -3 ? "bear" : "base";
   return {
     status: "evaluated", methodology_version: RULE.methodology_version,
     scenario_type: scenario, directional_score: score,
     confidence_band: Math.abs(score) === 4 ? "high" : Math.abs(score) === 3 ? "medium" : "low",
-    signals, context: { fee_subsidy_ratio: feeRatio, fee_subsidy_ratio_used_as_directional_signal: false },
+    signals, context: { fee_subsidy_ratio: feeRatio, fee_subsidy_ratio_used_as_directional_signal: false,
+      dxy_included: hasDxy },
     baseline_probabilities_changed: false, can_persist_scenario_state: false,
   };
 }
