@@ -19,9 +19,11 @@ test("primary five-session calculation is reproducible and review-only",()=>{
  assert.ok(Math.abs(report.intermediate_calculations.price_return_7d_pct+2)<1e-9);
  assert.ok(Math.abs(report.intermediate_calculations.etf_net_flow_5d_usd_millions+115.2)<1e-9);
  assert.equal(report.output.status,"not_evaluable");
+ assert.equal(report.output.reason,"input_quality_gate_not_passed");
  assert.equal(report.output.scenario_type,undefined);
  assert.equal(report.output.directional_score,undefined);
- assert.deepEqual(report.output.missing_required_inputs,["hashrate_change_7d_pct","fee_subsidy_ratio"]);
+ assert.equal(report.output.missing_required_inputs,undefined);
+ assert.ok(report.readiness_blockers.some(x=>x.includes("ETF publication-time")));
  assert.equal(report.safety.database_writes_performed,false); assert.equal(report.safety.can_persist_scenario_state,false);
 });
 test("fallback to SoSoValue is explicit when Farside lacks five accepted rows",()=>{
