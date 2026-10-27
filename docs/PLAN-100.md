@@ -2201,3 +2201,9 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - Nasdaq page body hash changed between two captures three minutes apart while body size remained 54,629 bytes. This is recorded as byte-level response volatility, not evidence of changed trading dates.
 - The separate direct Farside URL request returned HTTP 403. Its response hash is explicitly marked as an access-denial response, not as a hash of ETF data. Do not use it as provider payload evidence.
 - The dedicated ETF policy/calendar tests passed in staging. Full workflow still separately stops at the BTC fee/subsidy window audit (`tip changed or behind window`); no production ingestion occurred.
+
+### 2026-10-27 — Correction: real ETF row revision was already documented
+
+- The existing `docs/BTC-ETF-TWO-SNAPSHOT-ACCEPTANCE-2026-10-17.md` already records a real Farside change between snapshots: the 2026-10-20 row changed from an unreported placeholder to a complete +23.2 USDm row. This satisfies the requirement to have at least one observed provider row-status/value transition as a revision-policy example; do not repeat the two-snapshot exercise.
+- Hash capture must target the canonical all-data URL `https://farside.co.uk/bitcoin-etf-flow-all-data/`, not the separate landing page endpoint that can return HTTP 403. The 403 response hash is not an ETF data payload hash.
+- Remaining operational blockers are canonical endpoint hash verification and durable self-hosted archive/read-back/restore. Production ingestion remains blocked.
