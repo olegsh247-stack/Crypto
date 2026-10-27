@@ -7,6 +7,31 @@ const SESSION_SECRET = process.env.CRYPTO_ADMIN_SESSION_SECRET ?? ADMIN_TOKEN;
 const COOKIE_NAME = "crypto_admin_session";
 const MAX_BODY_BYTES = 16 * 1024;
 
+async function readBodyLimited(request: NextRequest, maxBytes: number): Promise<string | null> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.byteLength; }
+  return new TextDecoder().decode(merged);
+}
+
 function safeEqual(left: string, right: string) {
   const a = Buffer.from(left);
   const b = Buffer.from(right);
@@ -59,10 +84,8 @@ async function forward(request: NextRequest, path: string[]) {
     return NextResponse.json({ status: "error", error: "request_too_large" }, { status: 413 });
   }
 
-  const body = request.method === "GET" || request.method === "HEAD" ? undefined : await request.text();
-  if (body !== undefined && Buffer.byteLength(body, "utf8") > MAX_BODY_BYTES) {
-    return NextResponse.json({ status: "error", error: "request_too_large" }, { status: 413 });
-  }
+  const body = request.method === "GET" || request.method === "HEAD" ? undefined : await readBodyLimited(request, MAX_BODY_BYTES);
+  if (body === null) return NextResponse.json({ status: "error", error: "request_too_large" }, { status: 413 });
 
   const base = API_BASE.endsWith("/") ? API_BASE : API_BASE + "/";
   const url = new URL(backendPath.replace(/^\//, ""), base);
