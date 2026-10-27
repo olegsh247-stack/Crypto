@@ -368,6 +368,19 @@ export async function persistBtcObservation(databaseUrl: string, candidate: BtcO
       return { action: "unchanged" as const, revision: Number(latest.revision) };
     }
     const revision = latest ? Number(latest.revision) + 1 : 1;
+    if (latest) {
+      // Source-row keys are unique across revisions; retain one row and increment its revision.
+      await client.query(
+        `UPDATE observations SET
+           value_numeric=$2,value_integer=NULL,value_boolean=NULL,value_text=NULL,value_json=NULL,
+           unit=$3,observed_at=$4,period_start=$5,period_end=$6,source_url=$7,retrieved_at=$8,
+           source_payload_sha256=$9,methodology=$10,status=$11,freshness=$12,revision=$13
+         WHERE observation_id=$1`,
+        [latest.observation_id,candidate.valueNumeric,candidate.unit,candidate.observedAt,candidate.periodStart,candidate.periodEnd,
+         candidate.sourceUrl,candidate.retrievedAt,candidate.sourcePayloadSha256,candidate.methodology,candidate.status,candidate.freshness,revision]
+      );
+      return { action: "revised" as const, revision };
+    }
     await client.query(
       `INSERT INTO observations (
          metric_id,asset_id,value_numeric,value_integer,value_boolean,value_text,value_json,
@@ -378,7 +391,7 @@ export async function persistBtcObservation(databaseUrl: string, candidate: BtcO
        candidate.sourceId,candidate.sourceUrl,candidate.retrievedAt,candidate.sourceRowKey,candidate.sourcePayloadSha256,
        candidate.methodology,candidate.status,candidate.freshness,revision]
     );
-    return { action: latest ? "revised" as const : "inserted" as const, revision };
+    return { action: "inserted" as const, revision };
   });
 }
 
