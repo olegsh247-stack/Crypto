@@ -7,7 +7,9 @@
 - Added `scripts/assess-btc-etf-session-freshness.mjs`: resolves the latest completed U.S. ETF session using the versioned 2026–2028 calendar, New York timezone, regular 16:00 close, early closes, weekends, and full closures.
 - Added deterministic tests for pre-/post-close behavior, Thanksgiving, early close, incomplete rows, and the missing publication-window policy.
 - Freshness is measured against the expected session date and a reviewed, explicit session-lag policy—not a generic elapsed-hour threshold.
-- The helper deliberately returns `BLOCKED_PROVIDER_PUBLICATION_WINDOW_UNDEFINED` unless a provider publication-window policy has been reviewed. The exchange calendar alone cannot prove when Farside publishes a row. It never fabricates `observed_at`.
+- Added `data/CryptoDataModel/calendars/btc-etf-publication-freshness-policy.json`. Farside's official page says updates are in real time and typically occur in the US evening/night. The operational rule allows a 12-hour post-close grace period spanning midnight, then requires a complete reconciled row no more than one scheduled trading session behind. This is a conservative local acceptance threshold, not a provider guarantee.
+- The helper never fabricates `observed_at`; exact provider publication timestamps remain unknown. Missing/incomplete rows are never treated as zero.
+- Added `scripts/capture-etf-source-evidence.mjs` to hash the exact HTTP response-body bytes from official NYSE and Nasdaq calendar pages and the Farside ETF page, preserving retrieval time, status, final URL, content type and SHA-256 in the read-only CI artifact. These hashes are per-capture evidence and do not alter production state.
 
 ## Revision policy
 
