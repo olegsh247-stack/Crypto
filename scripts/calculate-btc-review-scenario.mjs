@@ -71,10 +71,11 @@ export function calculateBtcReviewScenario(manifest, candidates) {
     },
     intermediate_calculations: {
       price_return_7d_pct:priceReturn,
-      price_score:result.signals.find(s=>s.input==="price_return_7d_pct")?.score ?? null,
+      price_score:result.signals?.find(s=>s.input==="price_return_7d_pct")?.score ?? null,
       etf_net_flow_5d_usd_millions:etfSum,
-      etf_score:result.signals.find(s=>s.input==="etf_net_flow_5d_usd_millions")?.score ?? null,
-      directional_score:result.directional_score
+      etf_score:result.signals?.find(s=>s.input==="etf_net_flow_5d_usd_millions")?.score ?? null,
+      directional_score:result.directional_score ?? null,
+      missing_required_inputs:result.missing_required_inputs ?? []
     },
     output:result,
     safety:{
@@ -94,8 +95,9 @@ async function main() {
   const report=calculateBtcReviewScenario(JSON.parse(readFileSync(manifestPath,"utf8")),JSON.parse(readFileSync(candidatesPath,"utf8")));
   writeFileSync(outputPath,JSON.stringify(report,null,2)+"\n","utf8");
   process.stdout.write(JSON.stringify({
-    status:report.output.status, scenario_type:report.output.scenario_type,
-    directional_score:report.output.directional_score,
+    status:report.output.status, scenario_type:report.output.scenario_type ?? null,
+    directional_score:report.output.directional_score ?? null,
+    missing_required_inputs:report.output.missing_required_inputs ?? [],
     price_return_7d_pct:report.intermediate_calculations.price_return_7d_pct,
     etf_net_flow_5d_usd_millions:report.intermediate_calculations.etf_net_flow_5d_usd_millions,
     etf_source:report.provenance.etf_net_flow.source_id, output:outputPath, ...report.safety
