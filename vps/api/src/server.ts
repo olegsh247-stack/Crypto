@@ -8,6 +8,11 @@ const env:Env={DATABASE_URL:process.env.DATABASE_URL??"",ADMIN_TOKEN:process.env
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 const server=http.createServer(async(req,res)=>{
+  const startedAt = Date.now();
+  res.on("finish", () => {
+    const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+    console.log(JSON.stringify({ status: "request", method: req.method, path: pathname, status_code: res.statusCode, elapsed_ms: Date.now() - startedAt }));
+  });
   try{
     const hostHeader=req.headers.host??"localhost";
     const url=new URL(req.url??"/",`http://${hostHeader}`);
@@ -47,6 +52,7 @@ const server=http.createServer(async(req,res)=>{
     const bytes=new Uint8Array(await response.arrayBuffer());
     res.end(Buffer.from(bytes));
   }catch(error){
+    console.error(JSON.stringify({status:"error",service:"crypto-api-vps",error:"request_failed",name:error instanceof Error?error.name:"unknown"}));
     res.statusCode=500;res.setHeader("content-type","application/json");res.end(JSON.stringify({status:"error",error:"internal_server_error"}));
   }
 });
