@@ -308,3 +308,17 @@ test("official Farside all-data endpoint passes readiness without requiring DXY"
     && x.reason === "source_url_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
+
+
+test("readiness capture cannot let ETF history starve the latest non-ETF inputs", () => {
+  const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
+  assert.ok(apiSource.includes("o.observation_id=(select o2.observation_id"));
+  assert.ok(apiSource.includes("o.period_start >= current_date - interval '14 days'"));
+  assert.ok(!apiSource.includes("order by o.metric_id,o.observed_at desc nulls first,o.revision desc,o.created_at desc limit 100"));
+});
+
+test("asset-list lifecycle treats N/A blocks as resolved and requires all blocks for monitoring", () => {
+  const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
+  assert.ok(apiSource.includes("count(*) filter(where rb.status in ('complete','n_a')) as resolved"));
+  assert.ok(apiSource.includes("coalesce(b.resolved,0)<15"));
+});
