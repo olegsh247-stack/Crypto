@@ -50,8 +50,8 @@ const server=http.createServer(async(req,res)=>{
     res.statusCode=500;res.setHeader("content-type","application/json");res.end(JSON.stringify({status:"error",error:"internal_server_error"}));
   }
 });
-server.requestTimeout = 30_000;
-server.headersTimeout = 35_000;
+server.requestTimeout = 35_000;
+server.headersTimeout = 30_000;
 server.keepAliveTimeout = 5_000;
 server.setTimeout(30_000, socket => socket.destroy());
 server.listen(port,host,()=>console.log(`crypto-api-vps listening on ${host}:${port}`));
