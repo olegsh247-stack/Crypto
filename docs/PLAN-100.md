@@ -2225,3 +2225,11 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 
 
 - **Verification update 2026-10-27:** BTC Scenario Readiness Gate run [#40552827526](https://github.com/olegsh247-stack/Crypto/actions/runs/40552827526) passed, including the new test that checks missing inputs return `not_evaluable` without a directional score. Live Mempool 1-month series points for 20 Oct and 27 Oct at 00:00 UTC are exactly seven days apart; calculated hashrate change is +5.4843% (approximately 1.0659 → 1.1244 EH/s). The value remains review-only until the source/methodology/freshness gate accepts it. The latest full BTC Public Source Staging run has not yet been completed on this code.
+
+
+### 2026-10-27 — Rule v1 required-input contract reconciled
+
+- Aligned the pure directional rule with the current Plan 100/readiness contract: BTC 7-day spot return and accepted ETF flow are required; hashrate is optional supporting evidence; fee/subsidy is optional context only; DXY remains optional. Missing hashrate/fee no longer blocks the rule.
+- The current capture calculator still returns `not_evaluable` because the captured spot/ETF candidates have not passed the accepted-observation gate and ETF publication-time/finality/revision acceptance is incomplete. It does not emit a scenario score or persist state. This prevents optional metrics from disguising the actual blocker.
+- BTC Scenario Readiness Gate [#40561116902](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116902) passed the directional-rule, fail-closed capture and offline-fixture tests; Source Catalog Contract Validation [#40561116787](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116787) passed. VPS API Build Rehearsal [#40561116781](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116781) was still running when recorded.
+- No production writes/ingestion, runtime priority change, scenario state/probability change, deployment or merge. BTC remains `not_evaluable`.
