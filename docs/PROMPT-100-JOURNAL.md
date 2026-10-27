@@ -1682,3 +1682,8 @@ The latest associated CI set passed: BTC Scenario Readiness Gate [#40558426044](
 ## 2026-10-27 — BTC Rule v1 input contract reconciled
 
 Rule v1 now requires only the 7-day spot return and accepted ETF flow. Hashrate is optional supporting evidence; fee/subsidy is optional context and not a directional vote; DXY remains optional. The review calculator still fails closed because current spot/ETF candidates are not readiness-approved and ETF publication-time/finality/revision acceptance is incomplete, rather than because optional metrics are missing. Readiness Gate [#40561116902](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116902) and Source Catalog validation [#40561116787](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116787) passed; VPS API rehearsal [#40561116781](https://github.com/olegsh247-stack/Crypto/actions/runs/40561116781) was still running at note time. No production changes, deployment, merge, scenario persistence or probability changes.
+
+
+## 2026-10-27 — Spot freshness corrected; final capture status
+
+Aligned the branch's spot freshness window from 6h to 1h in the metric registry and readiness gate; changed the test so a 3h-old observation is rejected. Updated the read-only BTC source-staging workflow trigger. The previously available manifest timestamped 06:44 UTC is stale under the 1h contract. The connector did not expose the push-triggered staging run/artifact, so current capture outcome is unverified. Remaining gate: inspect one fresh capture artifact for a spot observation <=1h and five traceable ETF sessions; use the already allowed registered fallback when primary data are unusable. Do not repeat historical ETF comparisons. No production changes, merge or scenario persistence.
