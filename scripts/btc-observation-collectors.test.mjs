@@ -55,7 +55,8 @@ test("Farside parser reads the Total column, parentheses as negative and skips n
   assert.equal(candidates[0].valueNumeric, 1);
   assert.equal(candidates[1].valueNumeric, 3);
   assert.equal(candidates[1].unit, "USD million/day");
-  assert.equal(candidates[1].observedAt.toISOString(), "2026-10-12T00:00:00.000Z");
+  assert.equal(candidates[1].observedAt.toISOString(), now.toISOString());
+  assert.equal(candidates[1].periodStart.toISOString(), "2026-10-12T00:00:00.000Z");
 });
 
 test("Farside parser fails closed when the Total column is missing", () => {
@@ -70,7 +71,7 @@ test("candidate collector validates provider payloads and leaves DXY explicitly 
   </table>`;
   const fetchImpl = async input => {
     const url = String(input);
-    if (url.includes("ticker/price")) return new Response(JSON.stringify({ symbol: "BTCUSDT", price: "81000.25" }), { status: 200 });
+    if (url.includes("/Trades?pair=XBTUSD")) return new Response(JSON.stringify({ error: [], result: { XXBTZUSD: [ ["81000.25", "0.001", seconds("2026-10-12T17:59:30Z"), "b", "l", ""], ["81001.25", "0.002", seconds("2026-10-12T17:59:50Z"), "b", "l", ""] ], last: "123" } }), { status: 200 });
     if (url.includes("hashrate/1w")) return new Response(JSON.stringify({ hashrates: [
       { timestamp: seconds("2026-10-11T12:00:00Z"), avgHashrate: 2.5e20 },
       { timestamp: seconds("2026-10-12T12:00:00Z"), avgHashrate: 2.6e20 },
@@ -85,7 +86,12 @@ test("candidate collector validates provider payloads and leaves DXY explicitly 
   };
   const result = await collectBtcObservationCandidates({ fetchImpl, now });
   assert.deepEqual(result.failures, []);
-  assert.ok(result.candidates.some(x => x.metricId === "market.spot_price" && x.valueNumeric === 81000.25));
+  assert.ok(result.candidates.some(x => x.metricId === "market.spot_price" && x.valueNumeric === 81001.25 && x.sourceId === "market.kraken"));
+  const spot = result.candidates.find(x => x.metricId === "market.spot_price");
+  assert.equal(spot.observedAt.toISOString(), "2026-10-12T17:59:50.000Z");
+  assert.equal(spot.retrievedAt.toISOString(), now.toISOString());
+  assert.match(spot.sourceRowKey, /^kraken:XBTUSD:/);
+  assert.match(spot.sourcePayloadSha256, /^[0-9a-f]{64}$/);
   assert.ok(result.candidates.some(x => x.metricId === "security.hashrate" && x.valueNumeric === 250));
   assert.ok(result.candidates.some(x => x.metricId === "security.fee_subsidy_ratio"));
   assert.equal(result.candidates.filter(x => x.metricId === "institutional.etf_net_flow").length, 2);
