@@ -1592,3 +1592,11 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 
 **Safety boundary:** artifact-only and deterministic local calculation. No database access/write, scenario-state persistence, baseline probability change, production ingestion approval, deployment, or merge. Multi-capture comparison is available when a prior report is supplied; the current workflow's default run only proves same-input determinism.
 
+## 2026-10-27 — BTC Rule v1 offline scenario completed
+
+- Fresh read-only capture: BTC spot **79,487 USD/BTC**; 7-day closed-hourly return **−2.670356%**; latest five distinct Farside sessions sum **−115.2m USD** (20, 21, 22, 23, 26 Oct).
+- Offline Rule v1 output: **`base`**, directional score **0**, confidence **low**. Readiness **`ready_for_rule_evaluation`**, zero blockers. Same-input recalculation produced a byte-identical report.
+- Exact-head SHA `ad90cd781537484167f70a33562899a12df5ef94`: staging, readiness gate, source catalog validation, VPS build rehearsal, seed idempotency, and release workflow validation all passed.
+- **Scope decision:** BTC Rule v1 review-only scenario is complete. ETF provider publication timestamp and revision/finality policy remain required for production ingestion only; durable retention/restore belongs to future self-hosted operations. DXY, hashrate, fee/subsidy and supply are not blockers for Rule v1.
+- No production DB access/write, ingestion, runtime/source-priority change, scenario state/probability/monitoring persistence, deployment or merge. PR #84 remains open/draft.
+
