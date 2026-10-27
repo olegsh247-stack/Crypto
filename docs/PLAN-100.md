@@ -5,7 +5,7 @@
 **Актуальность снимка:** 14 октября 2026 года (Europe/Riga)  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Exact-head CI and read-only BTC staging passed on 2026-10-27 at `ad90cd781537484167f70a33562899a12df5ef94`. The offline BTC Rule v1 scenario is evaluated; DXY, hashrate and fee/subsidy are optional context, not blockers. ETF provider publication/finality/revision semantics remain a separate production-ingestion gate, not a blocker for the review-only scenario.  
+**Последние проверенные CI-свидетельства (27 октября 2026):** BTC Public Source Staging [#40471108936](https://github.com/olegsh247-stack/Crypto/actions/runs/40471108936), BTC Scenario Readiness Gate [#40471113390](https://github.com/olegsh247-stack/Crypto/actions/runs/40471113390), Source Catalog Contract Validation [#40471113428](https://github.com/olegsh247-stack/Crypto/actions/runs/40471113428), seed idempotency rehearsal [#40471113348](https://github.com/olegsh247-stack/Crypto/actions/runs/40471113348), Validate VPS Release Workflow [#40471113415](https://github.com/olegsh247-stack/Crypto/actions/runs/40471113415), and VPS API Build Rehearsal [#40471108869](https://github.com/olegsh247-stack/Crypto/actions/runs/40471108869) passed on code SHA `8ed46df441285a5341b1d0a346bf006083bd698b`. Duplicate VPS API Build Rehearsal [#40471113337](https://github.com/olegsh247-stack/Crypto/actions/runs/40471113337) was still running when recorded. Latest capture report: `docs/BTC-READONLY-CAPTURE-RESULT-2026-10-27-0805Z.md`. DXY is optional; ETF publication-time/revision/finality and durable retention remain production-ingestion gates.
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 
@@ -2162,3 +2162,15 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 
 **Safety:** no production database access/writes, live ingestion, source-priority or runtime change, scenario-state/probability/monitoring persistence, deployment, or merge. PR #84 remains open/draft pending explicit approval.
 
+
+
+## 2026-10-27 08:05 UTC — latest BTC recapture supersedes earlier spot/return snapshot
+
+- Fresh Kraken XBT/USD latest trade: **79,795.50 USD/BTC**, observed 08:05:19.523Z, retrieved 08:05:22.106Z; payload SHA-256 `7876552d26eec37cac58bf1ac7cabdf4004fc6fa3ee4fc82c8a6902747fbb2af`.
+- Latest completed hourly candle close-to-close 7-day return: **−2.199510%**. This is a different declared method from the prior current-trade-based return (−2.670356%); do not compare them as if they were the same calculation.
+- Farside priority five-session ETF sum remains **−$115.2m**: 20 Oct +23.2m, 21 Oct +524.8m, 22 Oct −635.6m, 23 Oct −137.9m, 26 Oct +110.3m. New all-data payload SHA-256 `13e13f1589ad21913a667bfdf6ceb274d40151bb1447d8fec56110014f91705e`. Provider publication timestamp and revision/finality semantics remain unknown; review-only, not approved for production ingestion.
+- Fresh 144-block fee window 973226–973369: fees 227,281,372 sats, subsidy 45,000,000,000 sats, ratio **0.505070%**; boundary and tip hashes matched before/after capture. Context only, not a Rule v1 gate.
+- Offline Rule v1 output remains **Base / score 0 / low confidence**; review readiness has zero blockers, and same-input recalculation is byte-identical. This is not a persisted/live scenario state.
+- Binance primary spot endpoint returned HTTP 451; Binance market-data-only and OKX returned USDT quotes, used only as cross-checks; Bybit returned HTTP 403. No USDT quote was blended into canonical Kraken USD/BTC.
+- Artifact `12718750633`, staging workflow [#40471108936](https://github.com/olegsh247-stack/Crypto/actions/runs/40471108936). Staging, readiness, source-catalog validation, seed idempotency, release-workflow validation and VPS rehearsal #40471108869 passed on the exact head. Duplicate VPS rehearsal #40471113337 was still running at note time.
+- No production DB access/writes, ingestion, registry/source-priority change, scenario-state/probability/monitoring persistence, deployment or merge. DXY remains optional; ETF timestamp/revision and durable-retention gates remain production-only blockers.
