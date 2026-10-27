@@ -117,6 +117,58 @@ await capture({
 
 // These exchange feeds are corroboration candidates only. BTC/USDT is not BTC/USD;
 // keep the unit and venue separate, and never merge these rows into the canonical quote.
+// Historical hourly candles are captured separately from the latest-trade quote.
+// They provide a reproducible ~7-day comparison point without treating a USDT quote as USD.
+await capture({
+  name: "kraken-xbtusd-ohlc-1h-history",
+  metricId: null,
+  candidateMetricId: "market.spot_price_history_review",
+  sourceId: "market.kraken",
+  url: "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=60",
+  parse: body => {
+    const data = JSON.parse(body);
+    if (Array.isArray(data.error) && data.error.length) throw new Error(`Kraken OHLC API error: ${data.error.join(", ")}`);
+    const result = data.result ?? {};
+    const pairKey = Object.keys(result).find(key => key !== "last");
+    const rows = result[pairKey];
+    if (!pairKey || !Array.isArray(rows) || rows.length < 170) throw new Error("Kraken OHLC response has insufficient hourly history");
+    const candles = rows.map(row => ({
+      candle_start_epoch_seconds: Number(row[0]),
+      open_usd_per_btc: Number(row[1]),
+      high_usd_per_btc: Number(row[2]),
+      low_usd_per_btc: Number(row[3]),
+      close_usd_per_btc: Number(row[4]),
+      vwap_usd_per_btc: Number(row[5]),
+      volume_btc: Number(row[6]),
+      trade_count: Number(row[7])
+    })).filter(row => Number.isFinite(row.candle_start_epoch_seconds) && row.close_usd_per_btc > 0)
+      .sort((a, b) => a.candle_start_epoch_seconds - b.candle_start_epoch_seconds);
+    const currentHourStart = Math.floor(Date.now() / 3600000) * 3600;
+    const closed = candles.filter(row => row.candle_start_epoch_seconds < currentHourStart);
+    if (closed.length < 169) throw new Error("Kraken OHLC response has fewer than 169 closed hourly candles");
+    const end = closed[closed.length - 1];
+    const targetStart = end.candle_start_epoch_seconds - 7 * 24 * 3600;
+    const start = closed.reduce((best, row) => Math.abs(row.candle_start_epoch_seconds - targetStart) < Math.abs(best.candle_start_epoch_seconds - targetStart) ? row : best, closed[0]);
+    return {
+      pair_key: pairKey,
+      requested_pair: "XBTUSD",
+      quote_unit: "USD/BTC",
+      interval_minutes: 60,
+      candle_count: candles.length,
+      closed_candle_count: closed.length,
+      latest_closed_candle: end,
+      seven_day_reference_candle: start,
+      seven_day_reference_delta_seconds: end.candle_start_epoch_seconds - start.candle_start_epoch_seconds,
+      seven_day_close_to_close_return_pct: (end.close_usd_per_btc / start.close_usd_per_btc - 1) * 100,
+      methodology: "kraken-xbtusd-hourly-closed-candle-close-to-close-7d-v1",
+      methodology_version: "1",
+      source_row_key: `XBTUSD:OHLC:60:${start.candle_start_epoch_seconds}:${end.candle_start_epoch_seconds}`,
+      source_row_identity_status: "derived_from_provider_candle_timestamps",
+      note: "Review-only historical return. Uses latest completed hourly candle versus the completed candle nearest seven days earlier; this is not the same as current trade versus exactly seven days ago."
+    };
+  }
+});
+
 await capture({
   name: "binance-btcusdt-trades",
   metricId: "market.spot_price",
