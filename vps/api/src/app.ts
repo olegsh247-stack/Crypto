@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { assessBtcScenarioReadiness, createSqlClient } from "@crypto/vps-runtime";
 import { calculateResearchStatus } from "./research-status.js";
 
@@ -11,8 +12,9 @@ function getPairId(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]
 function getPairHistorySymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/history\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
 function getPairTickerSymbol(pathname:string){const m=pathname.match(/^\/api\/pairs\/([^/]+)\/ticker\/?$/);return m?decodeURIComponent(m[1]).toUpperCase():null}
 function getCommodityId(pathname:string){const m=pathname.match(/^\/api\/commodities\/([^/]+)\/?$/);return m?decodeURIComponent(m[1]):null}
-function isAdmin(request:Request,env:Env){return !!env.ADMIN_TOKEN&&request.headers.get("Authorization")===`Bearer ${env.ADMIN_TOKEN}`}
-function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);if(!isAdmin(request,env))return json({status:"error",error:"admin_auth_required"},401);return null}
+const adminAuthFailures=new Map<string,{count:number;resetAt:number}>();
+function isAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return false;const authorization=request.headers.get("Authorization")??"";const supplied=authorization.startsWith("Bearer ")?authorization.slice(7):"";const a=Buffer.from(supplied),b=Buffer.from(env.ADMIN_TOKEN);return a.length===b.length&&timingSafeEqual(a,b)}
+function requireAdmin(request:Request,env:Env){if(!env.ADMIN_TOKEN)return json({status:"error",error:"admin_auth_not_configured"},503);const address=request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim()??"unknown";const now=Date.now();const previous=adminAuthFailures.get(address);if(previous&&previous.resetAt>now&&previous.count>=10)return json({status:"error",error:"admin_auth_rate_limited"},429);if(!isAdmin(request,env)){adminAuthFailures.set(address,{count:previous&&previous.resetAt>now?previous.count+1:1,resetAt:previous&&previous.resetAt>now?previous.resetAt:now+15*60*1000});return json({status:"error",error:"admin_auth_required"},401)}adminAuthFailures.delete(address);return null}
 
 const tickerCache=new Map<string,{expiresAt:number;value:{price:number;timestamp:string;source:string}}>();
 const TICKER_CACHE_TTL_MS=60_000;
