@@ -72,6 +72,24 @@ services:
       - backend
       - edge
 
+  web:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      CRYPTO_API_URL: http://api:8080
+      CRYPTO_ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env.production}
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    expose:
+      - "3000"
+    depends_on:
+      - api
+    networks:
+      - backend
+      - edge
+
   worker:
     build:
       context: .
@@ -101,6 +119,7 @@ services:
       - caddy-config:/config
     depends_on:
       - api
+      - web
     networks:
       - edge
 
