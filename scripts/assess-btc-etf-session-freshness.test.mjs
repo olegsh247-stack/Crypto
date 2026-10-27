@@ -4,6 +4,16 @@ import { readFile } from "node:fs/promises";
 import { latestCompletedUsEtfSession, assessEtfSessionFreshness } from "./assess-btc-etf-session-freshness.mjs";
 
 const calendar = JSON.parse(await readFile(new URL("../data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json", import.meta.url), "utf8"));
+const publicationPolicy = JSON.parse(await readFile(new URL("../data/CryptoDataModel/calendars/btc-etf-publication-freshness-policy.json", import.meta.url), "utf8"));
+
+test("reviewed policy encodes a conservative overnight grace and explicit source priority", () => {
+  assert.equal(publicationPolicy.status, "reviewed_operational_threshold");
+  assert.equal(publicationPolicy.grace_period_minutes, 720);
+  assert.equal(publicationPolicy.max_session_lag, 1);
+  assert.match(publicationPolicy.publication_evidence.limitation, /not a guaranteed publication deadline/);
+  assert.equal(publicationPolicy.priority_source, "farside-btc-etf-all-data-page");
+  assert.deepEqual(publicationPolicy.comparison_only_sources, ["sosovalue-btc-etf-flows"]);
+});
 
 test("uses New York session close, not UTC midnight, to determine the latest completed session", () => {
   assert.equal(latestCompletedUsEtfSession("2026-10-27T19:59:00Z", calendar).session_date, "2026-10-26");
