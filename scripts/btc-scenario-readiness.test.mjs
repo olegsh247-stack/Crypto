@@ -322,3 +322,15 @@ test("asset-list lifecycle treats N/A blocks as resolved and requires all blocks
   assert.ok(apiSource.includes("count(*) filter(where rb.status in ('complete','n_a')) as resolved"));
   assert.ok(apiSource.includes("coalesce(b.resolved,0)<15"));
 });
+
+
+test("ETF latest row is selected by report session date, not retrieval timestamp", () => {
+  const inputs = completeInputs();
+  const priorSession = inputs.find(x => x.metric_id === "institutional.etf_net_flow" && String(x.period_start).startsWith("2026-10-11"));
+  assert.ok(priorSession);
+  priorSession.observed_at = now.toISOString();
+  priorSession.retrieved_at = now.toISOString();
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].day, "2026-10-12");
+});
