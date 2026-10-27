@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "vps/**"
+      - "web/**"
       - ".github/workflows/vps-docker-image-build.yml"
   pull_request:
     paths:
@@ -32,4 +33,4 @@ jobs:
       - name: Validate Compose configuration
         run: docker compose -f vps/docker-compose.production.yml config --quiet
       - name: Build API and Worker images
-        run: docker compose -f vps/docker-compose.production.yml build api worker
+        run: docker compose -f vps/docker-compose.production.yml build api worker web
