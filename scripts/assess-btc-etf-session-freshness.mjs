@@ -74,7 +74,7 @@ export function assessEtfSessionFreshness({ now, calendar, rows, publicationPoli
     row?.status === "REPORTED_CANDIDATE"
     && row?.fund_values_complete === true
     && row?.reconciliation_status === "MATCHES_DISPLAY_ROUNDING"
-    && /^\\d{4}-\\d{2}-\\d{2}$/.test(String(row?.period_start ?? ""))
+    && /^\d{4}-\d{2}-\d{2}$/.test(String(row?.period_start ?? ""))
     && row.period_start <= latestSession.session_date
   ).map(row => row.period_start));
   const ordered = [...completeDates].sort().reverse();
