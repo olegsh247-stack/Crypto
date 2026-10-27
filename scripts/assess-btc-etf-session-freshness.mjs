@@ -75,11 +75,14 @@ export function assessEtfSessionFreshness({ now, calendar, rows, publicationPoli
   const currentMinutes = Number(currentLocal.hour) * 60 + Number(currentLocal.minute);
   const graceMinutes = Number.isInteger(publicationPolicy.grace_period_minutes)
     ? publicationPolicy.grace_period_minutes : 0;
-  if (latestSession.session_date === currentDate
-      && currentMinutes >= (Number(latestSession.close_time_local.split(":")[0]) * 60
-        + Number(latestSession.close_time_local.split(":")[1]))
-      && currentMinutes < (Number(latestSession.close_time_local.split(":")[0]) * 60
-        + Number(latestSession.close_time_local.split(":")[1]) + graceMinutes)) {
+  const closeMinutes = Number(latestSession.close_time_local.split(":")[0]) * 60
+    + Number(latestSession.close_time_local.split(":")[1]);
+  const elapsedSinceClose = latestSession.session_date === currentDate
+    ? currentMinutes - closeMinutes
+    : latestSession.session_date === previousDate(currentDate)
+      ? (1440 - closeMinutes) + currentMinutes
+      : Number.POSITIVE_INFINITY;
+  if (elapsedSinceClose >= 0 && elapsedSinceClose < graceMinutes) {
     return {
       status: "AWAITING_EXPECTED_PUBLICATION_WINDOW",
       expected_session_date: latestSession.session_date,
