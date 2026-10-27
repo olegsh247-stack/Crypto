@@ -40,7 +40,7 @@ test("fresh traceable spot and five current ETF sessions allow review-only rule 
   value_numeric:68000,unit:"USD/BTC",expected_unit:"USD/BTC"};
  const values=[23.2,524.8,-635.6,-137.9,110.3];
  const report=calculateBtcReviewScenario(manifest,{candidates:[spot],etf_review_rows:dates.map((d,i)=>row(d,values[i]))});
- assert.equal(report.readiness_status,"ready_for_rule_evaluation");
+ assert.equal(report.readiness_status,"ready_for_rule_evaluation",JSON.stringify(report.readiness_blockers));
  assert.equal(report.output.status,"evaluated");
  assert.equal(report.safety.database_writes_performed,false);
  assert.equal(report.safety.can_persist_scenario_state,false);
