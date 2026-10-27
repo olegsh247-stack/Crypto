@@ -66,13 +66,25 @@ test("failed readiness gate never evaluates", () => {
   assert.equal(r.can_persist_scenario_state, false);
 });
 
-test("missing required values fail closed without throwing or scoring", () => {
-  const r = evaluateBtcScenarioV1({ ...ready, hashrate_change_7d_pct: null });
+test("missing required spot or ETF inputs fail closed without scoring", () => {
+  const r = evaluateBtcScenarioV1({ ...ready, etf_net_flow_5d_usd_millions: null });
   assert.equal(r.status, "not_evaluable");
-  assert.deepEqual(r.missing_required_inputs, ["hashrate_change_7d_pct"]);
+  assert.deepEqual(r.missing_required_inputs, ["etf_net_flow_5d_usd_millions"]);
   assert.equal(r.can_persist_scenario_state, false);
   assert.equal(r.baseline_probabilities_changed, false);
   assert.throws(() => evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: -0.1 }), /cannot be negative/);
+});
+
+test("missing hashrate and fee/subsidy do not block the base rule", () => {
+  const r = evaluateBtcScenarioV1({ ...ready, hashrate_change_7d_pct: null, fee_subsidy_ratio: null });
+  assert.equal(r.status, "evaluated");
+  assert.equal(r.scenario_type, "base");
+  assert.equal(r.directional_score, 0);
+  assert.equal(r.context.hashrate_included, false);
+  assert.equal(r.context.fee_subsidy_ratio, null);
+  assert.equal(r.context.fee_subsidy_ratio_used_as_directional_signal, false);
+  assert.equal(r.signals.some(s => s.input === "hashrate_change_7d_pct"), false);
+  assert.equal(r.can_persist_scenario_state, false);
 });
 
 test("fee ratio is context only", () => {
