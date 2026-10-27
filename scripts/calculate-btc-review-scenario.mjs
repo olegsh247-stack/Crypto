@@ -37,11 +37,20 @@ export function calculateBtcReviewScenario(manifest, candidates) {
   const sessions = [...distinct.values()].sort((a,b) => a.period_start.localeCompare(b.period_start)).slice(-5);
   if (sessions.length !== 5) throw new Error("ETF rule requires five distinct sessions");
   const etfSum = sessions.reduce((sum, r) => sum + r.value_numeric, 0);
+  const hashrateSource = sources.find(s => s.name === "mempool-hashrate-1m" && s.status === "CAPTURED");
+  // A mathematically reproducible source candidate is not automatically an accepted
+  // rule input. Keep it out of scoring until its freshness and methodology are accepted.
+  const acceptedHashrateChange = hashrateSource?.hashrate_change_status === "ACCEPTED"
+    && num(hashrateSource.hashrate_change_7d_pct)
+    && hashrateSource.seven_day_reference_delta_seconds === 604800
+    ? hashrateSource.hashrate_change_7d_pct : null;
   const result = evaluateBtcScenarioV1({
     readiness_status: "ready_for_rule_evaluation",
     price_return_7d_pct: priceReturn,
     etf_net_flow_5d_usd_millions: etfSum,
-    // Hashrate and DXY are omitted unless this capture supplies verified period changes.
+    hashrate_change_7d_pct: acceptedHashrateChange,
+    // The per-block fee window must pass confirmation/reorg and version checks before
+    // it can be supplied as an accepted input to this scenario rule.
     fee_subsidy_ratio: null
   });
   return {
@@ -56,6 +65,23 @@ export function calculateBtcReviewScenario(manifest, candidates) {
         unit: "USD/BTC", methodology: btc.methodology, methodology_version: btc.methodology_version,
         start_candle: start, end_candle: end, interval_seconds: 604800,
         formula: "(end_close / start_close - 1) * 100", value_pct: priceReturn
+      },
+      hashrate: {
+        source_id: hashrateSource?.source_id ?? "network.primary",
+        source_url: hashrateSource?.url ?? "https://mempool.space/api/v1/mining/hashrate/1m",
+        source_payload_sha256: hashrateSource?.source_payload_sha256 ?? hashrateSource?.body_sha256 ?? null,
+        unit: "EH/s",
+        methodology: "mempool-daily-hashrate-series-exact-7d-change-v1",
+        latest_series_timestamp: hashrateSource?.latest_series_timestamp ?? null,
+        latest_period_start: hashrateSource?.latest_period_start ?? null,
+        latest_period_end: hashrateSource?.latest_period_end ?? null,
+        latest_series_value_eh_s: hashrateSource?.latest_series_value_eh_s ?? null,
+        seven_day_reference_timestamp: hashrateSource?.seven_day_reference_timestamp ?? null,
+        seven_day_reference_value_eh_s: hashrateSource?.seven_day_reference_value_eh_s ?? null,
+        seven_day_reference_delta_seconds: hashrateSource?.seven_day_reference_delta_seconds ?? null,
+        candidate_change_7d_pct: hashrateSource?.hashrate_change_7d_pct ?? null,
+        acceptance_status: hashrateSource?.hashrate_change_status ?? "BLOCKED_SOURCE_NOT_CAPTURED",
+        value_used_for_scoring: acceptedHashrateChange
       },
       etf_net_flow: {
         source_id: etfSource, fallback_reason: fallbackReason, unit: "USD million/session",
@@ -75,6 +101,7 @@ export function calculateBtcReviewScenario(manifest, candidates) {
       etf_net_flow_5d_usd_millions:etfSum,
       etf_score:result.signals?.find(s=>s.input==="etf_net_flow_5d_usd_millions")?.score ?? null,
       directional_score:result.directional_score ?? null,
+      hashrate_change_7d_pct_candidate:hashrateSource?.hashrate_change_7d_pct ?? null,
       missing_required_inputs:result.missing_required_inputs ?? []
     },
     output:result,
