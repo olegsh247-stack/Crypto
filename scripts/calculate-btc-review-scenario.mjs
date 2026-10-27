@@ -59,7 +59,18 @@ export function calculateBtcReviewScenario(manifest, candidates) {
       && row?.reconciliation_status !== "UNREPORTED")
     .map(row => ({ ...row, freshness: "CURRENT", expected_unit: row.expected_unit ?? row.unit,
       source_registered: row.source_registered === true }));
-  const readiness = assessBtcScenarioReadiness([...spotRows, ...readinessEtfRows], new Date());
+  // Evaluate freshness as of this captured evidence set, not wall-clock "now".
+  // Historical/review calculations must remain reproducible; only production launch
+  // should require a newly captured spot observation.
+  const captureTimes = [manifest?.retrieved_at,
+    ...spotRows.map(row => row?.retrieved_at),
+    ...readinessEtfRows.map(row => row?.retrieved_at)]
+    .map(value => Date.parse(value ?? ""))
+    .filter(value => Number.isFinite(value));
+  const readinessAsOf = captureTimes.length
+    ? new Date(Math.max(...captureTimes))
+    : new Date(Number.NaN);
+  const readiness = assessBtcScenarioReadiness([...spotRows, ...readinessEtfRows], readinessAsOf);
   const result = evaluateBtcScenarioV1({
     readiness_status: readiness.status,
     price_return_7d_pct: priceReturn,
