@@ -1583,3 +1583,12 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Result:** offline readiness assessment returned `ready_for_rule_evaluation`, blockers empty, selected inputs contain spot price and ETF flows. The ETF provider publication timestamp remains unknown and is kept null; readiness freshness uses recent retrieval plus explicit session date. All relevant CI checks passed on head `2feff18655d6314d4d9669635cc0468b254095c8`: readiness gate, source catalog, VPS API build rehearsal, seed idempotency, release workflow validation and read-only capture.
 
 **Boundary:** this establishes readiness for rule evaluation only; no scenario direction/probabilities, persisted scenario state, production ingestion, DB writes, deployment or merge.
+
+## 2026-10-27 — BTC review-capture stability checks
+
+**Change:** Added a read-only comparison tool for two BTC review reports. It separately identifies BTC price input changes, ETF session/value/source revisions, and scenario-output changes. The staging workflow now tests the comparator and recalculates the same captured inputs a second time, requiring byte-identical output.
+
+**Purpose:** distinguish genuine market/source revisions from calculation instability; preserve the prior report as an optional input for an explicit two-capture comparison. No prior capture is silently inferred or substituted.
+
+**Safety boundary:** artifact-only and deterministic local calculation. No database access/write, scenario-state persistence, baseline probability change, production ingestion approval, deployment, or merge. Multi-capture comparison is available when a prior report is supplied; the current workflow's default run only proves same-input determinism.
+
