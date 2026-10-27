@@ -1647,3 +1647,9 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Caveat:** Nasdaq's exact-response hash differed between two captures three minutes apart at the same body size. This is byte-level volatility, not proof that the calendar itself changed. The dedicated direct Farside request returned HTTP 403; that denial response's hash is explicitly excluded as ETF source-payload evidence.
 
 **Verification/boundary:** ETF policy/calendar tests passed. The overall staging workflow failed later at the separate BTC fee/subsidy audit (`tip changed or behind window`). No ingestion or production changes. ETF remains blocked on real provider-revision evidence and durable self-hosted archive/read-back/restore.
+
+## 2026-10-27 — Correction: actual ETF row revision already exists
+
+The existing two-snapshot acceptance report already contains a real Farside row transition: 2026-10-20 changed from an unreported placeholder to +23.2 USDm between snapshots. This is sufficient as the real revision-policy example; do not repeat the same two-snapshot task. The direct landing page can return HTTP 403, so source-hash capture was corrected to target the canonical all-data endpoint `https://farside.co.uk/bitcoin-etf-flow-all-data/`. The denial response is not valid ETF payload evidence.
+
+Remaining blockers: verify successful canonical all-data capture/hash and prove durable self-hosted archive/read-back/restore. Production ingestion remains disabled.
