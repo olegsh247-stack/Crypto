@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { withSqlTransaction } from "@crypto/vps-runtime";
 
 export type ObservationFreshness = "CURRENT" | "STALE";
@@ -8,6 +9,9 @@ export interface BtcObservationCandidate {
   valueNumeric: number;
   unit: string;
   observedAt: Date;
+  retrievedAt: Date;
+  sourceRowKey: string;
+  sourcePayloadSha256: string;
   periodStart: Date | null;
   periodEnd: Date | null;
   methodology: string;
@@ -22,7 +26,7 @@ export interface CandidateCollection {
 }
 type Fetcher = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
-const BINANCE_URL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT";
+const KRAKEN_TRADES_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
 const HASHRATE_URL = "https://mempool.space/api/v1/mining/hashrate/1w";
 const REWARD_STATS_URL = "https://mempool.space/api/v1/mining/reward-stats/144";
 const FARSIDE_URL = "https://farside.co.uk/btc/";
@@ -52,12 +56,61 @@ async function responseText(fetchImpl: Fetcher, url: string): Promise<string> {
   if (!response.ok) throw new Error(`http_${response.status}`);
   return response.text();
 }
-async function responseJson(fetchImpl: Fetcher, url: string): Promise<any> {
+function sha256(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+async function responseTextWithHash(fetchImpl: Fetcher, url: string): Promise<{ text: string; sha256: string }> {
   const text = await responseText(fetchImpl, url);
-  try { return JSON.parse(text); } catch { throw new Error("invalid_json_response"); }
+  return { text, sha256: sha256(text) };
+}
+async function responseJsonWithHash(fetchImpl: Fetcher, url: string): Promise<{ payload: any; sha256: string }> {
+  const result = await responseTextWithHash(fetchImpl, url);
+  try { return { payload: JSON.parse(result.text), sha256: result.sha256 }; } catch { throw new Error("invalid_json_response"); }
+}
+async function responseJson(fetchImpl: Fetcher, url: string): Promise<any> {
+  return (await responseJsonWithHash(fetchImpl, url)).payload;
+}
+function hashJson(payload: unknown): string {
+  return sha256(JSON.stringify(payload));
 }
 
-export function parseHashratePayload(payload: unknown, now: Date): BtcObservationCandidate | null {
+
+export function parseKrakenSpotPricePayload(payload: unknown, now: Date, sourcePayloadSha256 = hashJson(payload)): BtcObservationCandidate {
+  const result = (payload as any)?.result;
+  const pairKey = Object.keys(result ?? {}).find(key => key !== "last");
+  const trades = pairKey ? result[pairKey] : null;
+  if (!Array.isArray(trades)) throw new Error("kraken_trades_missing");
+  const valid = trades.map((trade: any) => {
+    const price = finitePositive(trade?.[0]);
+    const observedAt = toDateFromSeconds(trade?.[2]);
+    if (!price || !observedAt || observedAt > now) return null;
+    return { trade, price, observedAt };
+  }).filter((row: any) => row !== null).sort((a: any, b: any) => b.observedAt.getTime() - a.observedAt.getTime());
+  const latest = valid[0];
+  if (!latest) throw new Error("kraken_latest_trade_missing");
+  const tradeId = latest.trade?.[6] == null ? "" : String(latest.trade[6]).trim();
+  const sourceRowKey = tradeId
+    ? `kraken:XBTUSD:trade:${tradeId}`
+    : `kraken:XBTUSD:${latest.observedAt.toISOString()}:${latest.price}`;
+  return {
+    metricId: "market.spot_price",
+    sourceId: "market.kraken",
+    sourceUrl: KRAKEN_TRADES_URL,
+    valueNumeric: latest.price,
+    unit: "USD/BTC",
+    observedAt: latest.observedAt,
+    retrievedAt: now,
+    sourceRowKey,
+    sourcePayloadSha256,
+    periodStart: null,
+    periodEnd: null,
+    methodology: "Kraken public XBTUSD Trades endpoint; latest valid trade price and provider trade timestamp; retrieved_at records capture time.",
+    status: "NORMAL",
+    freshness: freshnessFor(latest.observedAt, now, 60 * 60 * 1000),
+  };
+}
+
+export function parseHashratePayload(payload: unknown, now: Date, sourcePayloadSha256 = hashJson(payload)): BtcObservationCandidate | null {
   const rows = (payload as any)?.hashrates;
   if (!Array.isArray(rows)) throw new Error("hashrate_series_missing");
   const mapped: Array<BtcObservationCandidate | null> = rows.map((row: any) => {
@@ -76,6 +129,9 @@ export function parseHashratePayload(payload: unknown, now: Date): BtcObservatio
       valueNumeric: rawHashrate / 1e18,
       unit: "EH/s",
       observedAt,
+      retrievedAt: now,
+      sourceRowKey: `mempool:hashrate:${periodStart.toISOString()}`,
+      sourcePayloadSha256,
       periodStart,
       periodEnd,
       methodology: "Mempool.space trailing-week hashrate series; latest fully closed UTC daily bucket; avgHashrate converted from H/s to EH/s.",
@@ -92,7 +148,8 @@ export function parseRewardStatsPayload(
   payload: unknown,
   startBlockAt: Date,
   endBlockAt: Date,
-  now: Date
+  now: Date,
+  sourcePayloadSha256 = hashJson(payload)
 ): BtcObservationCandidate {
   const stats = payload as any;
   const totalReward = finitePositive(stats?.totalReward);
@@ -115,6 +172,9 @@ export function parseRewardStatsPayload(
     valueNumeric: ratio,
     unit: "ratio",
     observedAt: endBlockAt,
+    retrievedAt: now,
+    sourceRowKey: `mempool:reward-stats:144:${startBlock}-${endBlock}`,
+    sourcePayloadSha256,
     periodStart: startBlockAt,
     periodEnd: endBlockAt,
     methodology: `Mempool.space reward-stats/144; fee/subsidy ratio = totalFee / (totalReward - totalFee) over block heights ${startBlock}-${endBlock}; timestamps verified from block-height endpoints.`,
@@ -155,7 +215,7 @@ function parseFlowNumber(value: string): number | null {
   return negative ? -n : n;
 }
 
-export function parseFarsideBtcFlows(html: string, now: Date): BtcObservationCandidate[] {
+export function parseFarsideBtcFlows(html: string, now: Date, sourcePayloadSha256 = sha256(html)): BtcObservationCandidate[] {
   const rows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(match =>
     [...match[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(cell => decodeHtml(cell[1]))
   );
@@ -167,13 +227,14 @@ export function parseFarsideBtcFlows(html: string, now: Date): BtcObservationCan
   const candidates: BtcObservationCandidate[] = [];
   for (const cells of rows.slice(headerIndex + 1)) {
     if (cells.length <= totalIndex) continue;
-    const observedAt = parseFarsideDate(cells[0]);
-    if (!observedAt || observedAt.getTime() > now.getTime() || now.getTime() - observedAt.getTime() > FOURTEEN_DAYS_MS) continue;
+    const reportDate = parseFarsideDate(cells[0]);
+    if (!reportDate || reportDate.getTime() > now.getTime() || now.getTime() - reportDate.getTime() > FOURTEEN_DAYS_MS) continue;
     const fundCells = cells.slice(1, totalIndex);
     if (fundCells.length === 0 || fundCells.every(cell => parseFlowNumber(cell) === null)) continue;
     const valueNumeric = parseFlowNumber(cells[totalIndex]);
     if (valueNumeric === null) continue;
-    const periodEnd = new Date(observedAt.getTime() + 24 * 60 * 60 * 1000);
+    const observedAt = now;
+    const periodEnd = new Date(reportDate.getTime() + 24 * 60 * 60 * 1000);
     candidates.push({
       metricId: "institutional.etf_net_flow",
       sourceId: "institutional.primary",
@@ -181,20 +242,23 @@ export function parseFarsideBtcFlows(html: string, now: Date): BtcObservationCan
       valueNumeric,
       unit: "USD million/day",
       observedAt,
-      periodStart: observedAt,
+      retrievedAt: now,
+      sourceRowKey: `farside:btc-etf-flow:${reportDate.toISOString().slice(0, 10)}`,
+      sourcePayloadSha256,
+      periodStart: reportDate,
       periodEnd,
-      methodology: "Farside Investors BTC ETF table Total column; reporting date represented as UTC day; rows with no reported fund values are skipped.",
+      methodology: "Farside Investors BTC ETF table Total column; observed_at is capture time because per-row publication time is unavailable; report date is stored in period_start; rows with no reported fund values are skipped.",
       status: "NORMAL",
       freshness: freshnessFor(observedAt, now),
     });
   }
   const unique = new Map<number, BtcObservationCandidate>();
   for (const candidate of candidates) {
-    const key = candidate.observedAt.getTime();
+    const key = candidate.periodStart!.getTime();
     const existing = unique.get(key);
     if (!existing) unique.set(key, candidate);
   }
-  return [...unique.values()].sort((a, b) => a.observedAt.getTime() - b.observedAt.getTime());
+  return [...unique.values()].sort((a, b) => a.periodStart!.getTime() - b.periodStart!.getTime());
 }
 
 async function fetchBlockTimestamp(fetchImpl: Fetcher, height: number): Promise<Date> {
