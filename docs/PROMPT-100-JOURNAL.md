@@ -1621,3 +1621,11 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Remaining blockers:** hash exact upstream NYSE/Nasdaq calendar payloads; review Farside publication-window convention; retain evidence for an actual provider revision; prove durable archive, independent retrieval and backup/restore on self-hosted infrastructure.
 
 **Boundary:** No production DB writes, live ingestion, source-priority/runtime changes, scenario state/probability persistence, deployment, or merge. Farside remains priority; SoSoValue is cross-check only; no averaging or silent fallback.
+
+## 2026-10-27 — ETF freshness CI verification
+
+**Verification:** BTC Public Source Staging [#40531601122](https://github.com/olegsh247-stack/Crypto/actions/runs/40531601122) passed the Farside snapshot revision tests, calendar validator, and all six new session-freshness tests after fixing an over-escaped date regex.
+
+**Unrelated full-workflow blocker:** The run then stopped at the BTC fee/subsidy audit with `BLOCKED_PER_BLOCK_FEE_SUBSIDY_AUDIT` / `tip changed or behind window`. ETF tests themselves passed; no ingestion occurred. Recheck that fee window as a separate BTC capture task.
+
+**ETF status:** Still blocked from production ingestion pending reviewed Farside publication timing, hashes of exact upstream exchange-calendar payloads, evidence from a real provider revision, and durable self-hosted archive/read-back/restore.
