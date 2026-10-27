@@ -1639,3 +1639,11 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Still blocked:** Verify the CI artifact contains successful upstream hashes; obtain evidence from an actual provider revision; prove durable storage, independent read-back and backup restore on self-hosted infrastructure. Synthetic tests do not replace real revision evidence. ETF remains unapproved for production ingestion.
 
 **Safety:** No production DB writes, live ingestion, registry/runtime source-priority changes, scenario state/probability persistence, deployment, or merge. Farside priority; SoSoValue cross-check only; TFTC supplemental; no averaging or automatic substitution.
+
+## 2026-10-27 — ETF upstream calendar hashes captured
+
+**Result:** Read-only CI run [#40535074201](https://github.com/olegsh247-stack/Crypto/actions/runs/40535074201) captured successful HTTP 200 response hashes for NYSE hours page, Nasdaq equity calendar page, and NYSE 2026 calendar PDF. The calendar fixture now stores hashes, retrieval timestamp and run reference; its validator checks these fields.
+
+**Caveat:** Nasdaq's exact-response hash differed between two captures three minutes apart at the same body size. This is byte-level volatility, not proof that the calendar itself changed. The dedicated direct Farside request returned HTTP 403; that denial response's hash is explicitly excluded as ETF source-payload evidence.
+
+**Verification/boundary:** ETF policy/calendar tests passed. The overall staging workflow failed later at the separate BTC fee/subsidy audit (`tip changed or behind window`). No ingestion or production changes. ETF remains blocked on real provider-revision evidence and durable self-hosted archive/read-back/restore.
