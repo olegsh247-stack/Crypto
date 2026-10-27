@@ -2,7 +2,6 @@ import { closePool, createSqlClient } from "@crypto/vps-runtime";
 
 export interface WorkerEnv { DATABASE_URL: string; }
 
-const COINGECKO_IDS:Record<string,string>={BTC:"bitcoin",DASH:"dash",ETH:"ethereum",SOL:"solana",CAKE:"pancakeswap-token",BCH:"bitcoin-cash",LTC:"litecoin",XRP:"ripple",TRX:"tron"};
 const KRAKEN_USD_PAIRS:Record<string,string>={BTC:"XBTUSD",ETH:"ETHUSD",LTC:"LTCUSD",BCH:"BCHUSD",XRP:"XRPUSD",SOL:"SOLUSD"};
 
 async function binanceKlines(symbol:string,interval:string,limit:number){
