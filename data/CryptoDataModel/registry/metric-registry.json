@@ -11,8 +11,8 @@
       "unit": "USD/BTC",
       "update_mode": "AUTO",
       "frequency": "event-driven",
-      "freshness_window": "1h",
-      "freshness_policy_id": "btc.market.spot_price.max-age.v1",
+      "freshness_window": "6h",
+      "freshness_policy_id": "btc.market.spot_price.max-age.v2",
       "source_priority": [
         "market.kraken"
       ],

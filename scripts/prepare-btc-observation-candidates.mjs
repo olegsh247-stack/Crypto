@@ -18,6 +18,13 @@ if (!btcSpotMetric?.freshness_policy_id || !freshnessWindow) {
 }
 const BTC_SPOT_MAX_AGE_SECONDS = Number(freshnessWindow[1]) * ({ s: 1, m: 60, h: 3600, d: 86400 }[freshnessWindow[2]]);
 const BTC_SPOT_FRESHNESS_POLICY_ID = btcSpotMetric.freshness_policy_id;
+const etfSessionCalendar = JSON.parse(readFileSync(new URL("../data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json", import.meta.url), "utf8"));
+const fullClosureDates = new Set((etfSessionCalendar.full_closures ?? []).map(item => item.date));
+function isEtfSessionDate(date) {
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const day = new Date(date + "T12:00:00Z").getUTCDay();
+  return day !== 0 && day !== 6 && !fullClosureDates.has(date);
+}
 
 function validIso(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value))
@@ -144,13 +151,16 @@ export function prepareBtcObservationCandidates(manifest) {
           // The parser's page-level digest identifies the captured response, not a provider row revision.
           // Publication/observation timestamps and provider finalization/revision remain unknown.
           etfReviewRows.push({
-            candidate_state: "REVIEW_ONLY_BLOCKED",
+            candidate_state: reported && reconciliationAcceptableForReview ? "REVIEW_ONLY" : "REVIEW_ONLY_BLOCKED",
             persistable: false,
             asset_id: "btc",
             metric_id: "institutional.etf_net_flow",
             value_numeric: reported ? row.reported_total_usd_million : null,
             value_integer: null,
             unit: "USD million/day",
+            expected_unit: "USD million/day",
+            source_registered: true,
+            observation_timestamp_semantics: "provider publication timestamp unavailable; reporting date is explicit",
             period_start: date,
             period_end: date,
             observed_at: null,
@@ -175,6 +185,99 @@ export function prepareBtcObservationCandidates(manifest) {
             reconciliation_status: row.reconciliation_status ?? "INCOMPLETE",
             row_status: row.status ?? "UNRESOLVED_ROW",
             reasons: [...reasons, "provider_observation_or_publication_timestamp_unverified", "provider_revision_and_finalization_unverified"],
+            raw_body_file: source.body_file ?? null
+          });
+        }
+      } else if (source?.status === "CAPTURED" && Array.isArray(source.latest_rows)
+        && ["institutional.sosovalue", "institutional.cryptoetf_today"].includes(String(source?.source_id))) {
+        const sourceId = String(source.source_id);
+        const expectedUrl = sourceId === "institutional.sosovalue"
+          ? "https://openapi.sosovalue.com/openapi/v1/etfs/summary-history"
+          : "https://mcp.cryptoetf.today/api/mcp";
+        const bodyHash = source.source_payload_sha256 ?? source.body_sha256 ?? null;
+        const sosoSource = sources.find(item => item?.source_id === "institutional.sosovalue"
+          && item?.status === "CAPTURED" && Array.isArray(item.latest_rows));
+        const sosoLatestDate = sosoSource
+          ? sosoSource.latest_rows.map(item => item?.date).filter(date => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).sort().reverse()[0]
+          : null;
+        for (const row of source.latest_rows) {
+          const date = typeof row?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date : null;
+          const value = sourceId === "institutional.sosovalue" ? row?.total_net_inflow_usd_million : row?.net_flow_usd_million;
+          const dateMs = date ? Date.parse(date + "T00:00:00Z") : NaN;
+          const retrievedMs = Date.parse(String(source.retrieved_at ?? manifest?.retrieved_at ?? ""));
+          const isConfirmedSession = sourceId === "institutional.sosovalue" || (sosoLatestDate && date <= sosoLatestDate);
+          const valid = date && Number.isFinite(dateMs) && Number.isFinite(retrievedMs)
+            && dateMs <= retrievedMs && retrievedMs - dateMs <= 14 * 24 * 3600000
+            && isEtfSessionDate(date) && isConfirmedSession && typeof value === "number" && Number.isFinite(value);
+          const reasons = [];
+          if (!date) reasons.push("provider_reporting_date_missing_or_invalid");
+          if (!isEtfSessionDate(date)) reasons.push("date_is_not_an_ETF_trading_session; placeholder_not_accepted");
+          if (!isConfirmedSession) reasons.push("session_not_confirmed_by_date-bearing_reference; placeholder_not_accepted");
+          if (typeof value !== "number" || !Number.isFinite(value)) reasons.push("aggregate_flow_missing_or_invalid");
+          if (source.url !== expectedUrl && !String(source.url ?? "").startsWith(expectedUrl)) reasons.push("source_url_does_not_match_registered_adapter");
+          if (!valid || (source.url !== expectedUrl && !String(source.url ?? "").startsWith(expectedUrl))) {
+            etfReviewRows.push({
+              candidate_state: "REVIEW_ONLY_BLOCKED", persistable: false, asset_id: "btc",
+              metric_id: "institutional.etf_net_flow", value_numeric: null, value_integer: null,
+              unit: "USD million/day", expected_unit: "USD million/day", source_registered: true,
+              period_start: date, period_end: date, observed_at: null,
+              observation_timestamp_semantics: "provider supplies trading/reporting date only; publication timestamp unavailable",
+              retrieved_at: source.retrieved_at ?? manifest?.retrieved_at ?? null,
+              source_id: sourceId, source_url: source.url ?? null,
+              source_row_key: date ? sourceId + ":" + date : null,
+              source_payload_sha256: typeof bodyHash === "string" && SHA256_RE.test(bodyHash) ? bodyHash.toLowerCase() : null,
+              source_payload_hash_scope: "full_http_response_body_not_individual_row",
+              revision_identity_status: "provider_revision_unknown", finalization_status: "unknown",
+              reconciliation_status: "UNRESOLVED", row_status: "UNRESOLVED_ROW", reasons,
+              raw_body_file: source.body_file ?? null
+            });
+            continue;
+          }
+          etfReviewRows.push({
+            candidate_state: "REVIEW_ONLY", persistable: false, asset_id: "btc",
+            metric_id: "institutional.etf_net_flow", value_numeric: value, value_integer: null,
+            unit: "USD million/day", expected_unit: "USD million/day", source_registered: true,
+            period_start: date, period_end: date, observed_at: null,
+            observation_timestamp_semantics: "provider supplies trading/reporting date only; publication timestamp unavailable",
+            source_updated_at: source.source_updated_at ?? source.updated_at ?? null,
+            retrieved_at: source.retrieved_at ?? manifest?.retrieved_at ?? null,
+            source_id: sourceId, source_url: source.url,
+            source_row_key: sourceId + ":" + date,
+            source_payload_sha256: typeof bodyHash === "string" && SHA256_RE.test(bodyHash) ? bodyHash.toLowerCase() : null,
+            source_payload_hash_scope: "full_http_response_body_not_individual_row",
+            provider_revision: null, revision_identity_status: "provider_revision_unknown", finalization_status: "unknown",
+            fund_values_complete: null, reconciliation_status: "AGGREGATE_ONLY", row_status: "AGGREGATE_ONLY",
+            reasons: ["aggregate-only source; does not prove per-fund panel completeness", "provider publication timestamp and finality/revision semantics unknown"],
+            raw_body_file: source.body_file ?? null
+          });
+        }
+      } else if (source?.source_id === "institutional.tftc" && source?.status === "CAPTURED"
+        && Array.isArray(source.recent_days_in_last_14_days)) {
+        const bodyHash = source.source_payload_sha256 ?? source.body_sha256 ?? null;
+        for (const row of source.recent_days_in_last_14_days) {
+          const date = typeof row?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date : null;
+          const value = typeof row?.netFlowUsd === "number" ? row.netFlowUsd / 1_000_000 : NaN;
+          const retrievedMs = Date.parse(String(source.retrieved_at ?? manifest?.retrieved_at ?? ""));
+          const dateMs = date ? Date.parse(date + "T00:00:00Z") : NaN;
+          const valid = date && Number.isFinite(dateMs) && Number.isFinite(retrievedMs) && dateMs <= retrievedMs
+            && retrievedMs - dateMs <= 14 * 24 * 3600000 && isEtfSessionDate(date) && Number.isFinite(value);
+          if (!valid) continue;
+          etfReviewRows.push({
+            candidate_state: "REVIEW_ONLY", persistable: false, asset_id: "btc",
+            metric_id: "institutional.etf_net_flow", value_numeric: value, value_integer: null,
+            unit: "USD million/day", expected_unit: "USD million/day", source_registered: true,
+            period_start: date, period_end: date, observed_at: null,
+            observation_timestamp_semantics: "provider supplies reporting date only; source lineage includes SoSoValue; publication timestamp unavailable",
+            source_updated_at: source.dateModified ?? source.updated_through ?? null,
+            retrieved_at: source.retrieved_at ?? manifest?.retrieved_at ?? null,
+            source_id: source.source_id, source_url: source.url,
+            source_row_key: "institutional.tftc:" + date,
+            source_payload_sha256: typeof bodyHash === "string" && SHA256_RE.test(bodyHash) ? bodyHash.toLowerCase() : null,
+            source_payload_hash_scope: "full_http_response_body_not_individual_row",
+            provider_revision: null, revision_identity_status: "provider_revision_unknown", finalization_status: "unknown",
+            fund_values_complete: row.perEtfUsd && typeof row.perEtfUsd === "object" ? Object.values(row.perEtfUsd).every(v => typeof v === "number" && Number.isFinite(v)) : null,
+            reconciliation_status: "AGGREGATE_ONLY", row_status: "AGGREGATE_ONLY",
+            reasons: ["TFTC aggregate lineage includes SoSoValue; not independent confirmation", "provider publication timestamp and finality/revision semantics unknown"],
             raw_body_file: source.body_file ?? null
           });
         }

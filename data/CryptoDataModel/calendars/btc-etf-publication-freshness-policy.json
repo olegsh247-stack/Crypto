@@ -1,0 +1,19 @@
+{
+  "policy_id": "farside-btc-etf-publication-freshness",
+  "policy_version": "1.0.0",
+  "status": "reviewed_operational_threshold",
+  "priority_source": "farside-btc-etf-all-data-page",
+  "comparison_only_sources": ["sosovalue-btc-etf-flows"],
+  "supplemental_sources": ["tftc-btc-etf-flows"],
+  "publication_evidence": {
+    "url": "https://farside.co.uk/page/2/",
+    "reviewed_at": "2026-10-27",
+    "statement_summary": "Farside says ETF data is updated in real time and updates typically occur in the evening and night US time.",
+    "limitation": "This describes typical behavior; it is not a guaranteed publication deadline and does not establish an exact observed_at timestamp."
+  },
+  "grace_period_minutes": 720,
+  "max_session_lag": 1,
+  "freshness_rule": "Use the latest completed US ETF trading session. Allow a 12-hour post-close publication grace period spanning midnight US time. After that, require a complete reconciled Farside row no more than one actual scheduled trading session behind. Missing/incomplete rows are never treated as zero.",
+  "source_priority_rule": "Farside is the priority research source; SoSoValue is comparison-only; TFTC is supplemental. Never average sources or automatically substitute a different source.",
+  "acceptance_boundary": "Research/test contract only. This policy does not approve production ingestion, prove provider finality, or grant storage/retention rights."
+}

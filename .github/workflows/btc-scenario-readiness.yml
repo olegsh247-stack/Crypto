@@ -8,6 +8,9 @@ on:
       - "scripts/btc-scenario-readiness.test.mjs"
       - "scripts/btc-scenario-direction.mjs"
       - "scripts/btc-scenario-direction.test.mjs"
+      - "scripts/calculate-btc-review-scenario.mjs"
+      - "scripts/calculate-btc-review-scenario.test.mjs"
+      - "scripts/capture-btc-public-sources.mjs"
       - "scripts/run-btc-offline-scenario.mjs"
       - "fixtures/btc-offline-scenario-v1.json"
       - "scripts/run-btc-offline-scenario.mjs"
@@ -27,6 +30,9 @@ on:
       - "scripts/btc-scenario-readiness.test.mjs"
       - "scripts/btc-scenario-direction.mjs"
       - "scripts/btc-scenario-direction.test.mjs"
+      - "scripts/calculate-btc-review-scenario.mjs"
+      - "scripts/calculate-btc-review-scenario.test.mjs"
+      - "scripts/capture-btc-public-sources.mjs"
       - "scripts/prepare-btc-observation-candidates.mjs"
       - "scripts/prepare-btc-observation-candidates.test.mjs"
       - "vps/shared/src/btc-scenario-readiness.ts"
@@ -53,5 +59,7 @@ jobs:
         run: npm install && npm run build
       - name: Test scenario input-quality and directional rules
         run: node scripts/validate-crypto-registries.mjs && node --test scripts/btc-scenario-readiness.test.mjs scripts/btc-scenario-direction.test.mjs scripts/prepare-btc-observation-candidates.test.mjs
+      - name: Test review-only BTC calculation fails closed on missing inputs
+        run: node --test scripts/calculate-btc-review-scenario.test.mjs
       - name: Run reproducible offline BTC scenario fixture
         run: node scripts/run-btc-offline-scenario.mjs

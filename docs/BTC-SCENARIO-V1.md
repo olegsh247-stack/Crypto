@@ -113,19 +113,19 @@ The next implementation step is a fail-closed input gate, not a scenario predict
 
 | Input | Requirement before evaluation |
 |---|---|
-| BTC spot price | Numeric, source-linked, marked CURRENT, observed within 24 hours |
-| Network hashrate | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| Fee-market / security economics | Numeric, source-linked, marked CURRENT, observed within 7 days |
-| DXY macro proxy | Numeric, source-linked, marked CURRENT, observed within 5 days |
-| US spot ETF net flows | At least 5 distinct recent daily observations, each source-linked and CURRENT; latest within 48 hours |
+| BTC spot price / 7-day return | Required directional input; source-linked and must pass the current readiness freshness/provenance contract |
+| US spot ETF net flows | Required directional input; five distinct recent sessions, source-linked, reconciled, and accepted by the current ETF freshness/revision contract |
+| Network hashrate | Optional supporting input; may contribute a directional vote only when the candidate is explicitly accepted and its calculation window is valid. Missing/unaccepted hashrate does not block Rule v1. |
+| Fee-market / security economics | Optional context only; not a directional vote and not a Rule v1 blocker. If supplied, retain source, units, block window, confirmation/reorg status and API version evidence. |
+| DXY macro proxy | Optional only; if supplied, it must be source-linked and pass its approved freshness policy. If absent or unapproved, omit it; do not substitute zero or another USD index. |
 
-All observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. A missing required metric is a blocker, not an implicit neutral signal.
+All supplied observation timestamps must be valid and not in the future. A value with a URL but a `STALE` freshness flag is not accepted. Duplicate rows for the same ETF-flow day count only once. Missing required spot/ETF evidence blocks evaluation; missing hashrate, fee/subsidy or DXY does not.
 
 The new pure function `scripts/btc-scenario-readiness.mjs` returns either `not_evaluable` with explicit blockers or `ready_for_rule_evaluation` with selected inputs and provenance. It always returns `can_persist_scenario_state: false`: passing the input gate is not the same as having an approved directional scoring rule.
 
 ### Current live-data implications
 
-The read-only audit already establishes that the current spot price, hashrate and ETF-flow observations are stale. The audit also did not find a numeric fee-market observation in the BTC input set. Therefore the live dataset must fail this gate today. That is the intended outcome: no stale-value fallback, no guessed refresh, no fabricated Base/Bull/Bear state.
+The current captured BTC spot/ETF values remain review-only until the accepted-observation freshness/provenance gate and ETF publication-time/finality/revision contract pass. Therefore the live review capture remains `not_evaluable` today. Missing hashrate or fee/subsidy must not be used as a substitute blocker; they are optional supporting/context fields under Rule v1. No stale-value fallback, guessed refresh, fabricated scenario state, or persistence is allowed.
 
 ### Automated checks
 
@@ -176,7 +176,7 @@ Each directional signal contributes +1, 0, or −1. The result is Bull at a scor
 
 The fee/subsidy ratio (`security.fee_subsidy_ratio`) is a required security-economics context input, but is not a directional vote in v1: a higher ratio alone can reflect stronger fee demand or temporary congestion.
 
-These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale inputs block evaluation before this rule is called. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
+These are explicit initial engineering guard bands, not statistically calibrated probabilities or a claim of predictive edge. Before production use, validate them against historical snapshots and review threshold suitability. Derived percentages must come from timestamped, source-linked inputs with consistent UTC windows. Missing or stale required inputs block evaluation before this rule is called; DXY is optional context and is omitted when unavailable or unapproved. Even after an evaluation result is produced in tests, `can_persist_scenario_state` remains false; persistence requires a separate reviewed integration and approved release.
 
 
 ## Dry-run of the directional rule against source-reviewed inputs — 2026-10-12

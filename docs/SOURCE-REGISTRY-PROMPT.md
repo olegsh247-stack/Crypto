@@ -1,0 +1,72 @@
+# Промт источников Crypto — рабочие правила и реестр кандидатов
+
+**Назначение:** единые инструкции для работы с источниками данных Crypto. Этот файл — рабочий промт источников, а не разрешение на ingestion и не замена Плану 100.
+
+## 1. Главные правила
+
+1. Работать по `docs/PLAN-100.md`; текущий приоритет — довести один воспроизводимый BTC-путь.
+2. Включение источника в список/каталог означает только регистрацию кандидата. Оно **не** добавляет его в `metric-registry.json`, `source_priority`, runtime, production ingestion или readiness.
+3. Не смешивать разные показатели: **ETF flows** — дневной чистый денежный приток/отток в USD; **holdings** — количество BTC у фонда. Holdings не заменяют flows и наоборот.
+4. Не считать прочерк, отсутствующую строку, `null` или placeholder нулём. Ноль допустим только когда источник явно опубликовал наблюдаемое нулевое значение.
+5. **Fallback между зарегистрированными источниками одного показателя разрешён.** Если приоритетный источник недоступен, устарел или неполон, выбирай лучший пригодный резервный источник. Записывай факт замены, исходный и выбранный источник, дату/сессию, единицы, полноту и расхождения. Не усредняй поставщиков и не скрывай расхождения.
+6. Для каждой выгрузки сохранять source URL/endpoint, время получения `retrieved_at`, фактическое время наблюдения/публикации только если оно сообщено источником, логическую дату/сессию отдельно, единицы, метод нормализации, исходный payload и SHA-256.
+7. Не выводить `observed_at` из времени получения. Если публикационное время, revision/finality или происхождение неизвестны, явно писать `UNKNOWN`/null и не выдавать их за подтверждённые.
+8. Источники с неполными строками могут быть контрольными, но не исправляют пропуск в другом источнике без конкретного подтверждения той же строки/фонда/даты.
+9. Не обходить HTTP 403/451, ограничения доступа или авторизацию. Не добавлять секреты, API-ключи и токены в каталог, prompt, URL или логи.
+10. Сначала проверять основной источник и 1–2 уместных альтернативы. Если конкретная строка всё ещё недоступна — фиксировать ограничение и продолжать следующий пункт Плана 100, не повторяя бесконечно один поиск.
+11. Все действия с публичными источниками — read-only staging/review. Никаких production DB writes, live ingestion, изменения source priority/runtime, scenario state/probabilities, deployment или merge без отдельного явного разрешения.
+12. После содержательного изменения обновить этот prompt при необходимости, `docs/PLAN-100.md` и `docs/PROMPT-100-JOURNAL.md`, выполнить доступную проверку и указать точный commit/PR и реальные CI-результаты.
+
+## 1.1. Динамическая свежесть и fallback для BTC
+
+- Цена BTC не должна блокировать проект бесконечным требованием свежести. Перед запуском сценария сначала запрашивай новую котировку; окно review-readiness — до 6 часов от времени наблюдения. Если снимок старше, повторяй capture, а не прекращай работу.
+- Для цены использовать сопоставимую пару BTC/USD в USD/BTC. BTC/USDT не подставлять как BTC/USD без отдельного проверенного контракта конвертации.
+- ETF flows можно заменять данными SoSoValue, CryptoETF.today, CoinPulseHQ, BitTradeScanner или TFTC за ту же отчётную сессию, если есть явное числовое значение, USD million/day, источник/URL, время наблюдения и получения, ключ строки и хеш payload.
+- Выбирать самую новую доступную сессию. Если Farside неполон, разрешён fallback на пригодную альтернативу за ту же сессию; не откатываться молча на старую сессию. Bitcoin Almanack подтверждает только статус сессии; holdings-источники не заменяют flows.
+- Fallback для review/readiness сам по себе не меняет metric-registry, production source_priority, ingestion или права на запись.
+
+## 2. ETF flows: установленная политика
+
+- **Приоритет:** Farside Investors — основной исследовательский источник flows.
+- **Контрольные источники:** SoSoValue и TFTC. TFTC не считать независимым подтверждением текущих значений там, где его методология использует SoSoValue.
+- **Дополнительные cross-check:** CryptoETF.today, CoinPulseHQ, BitTradeScanner.
+- **Статус сессии:** Bitcoin Almanack может помогать проверить, считает ли трекер сессию подтверждённой или предварительной, но не заменяет per-fund flow rows.
+- Не использовать среднее между источниками. Если Farside недоступен, устарел или неполон, разрешён явный fallback на пригодный зарегистрированный источник за ту же сессию. Сначала сравнить дату, единицы, полноту, происхождение, время получения и признаки исправлений; записать выбранный источник и причину.
+- Агрегат может совпадать, даже если per-fund строки неполны. Проверка агрегата не доказывает полноту каждой строки.
+- Неизвестные provider publication timestamps, revision/finality semantics или aggregate-only completeness оставляют данные review-only для production ingestion. При этом readiness для офлайн-проверки правил может пройти на свежем capture с явной session date, retrieval timestamp и provenance; это не означает автоматического scenario evaluation или production approval.
+
+## 3. Holdings BTC: отдельный контур
+
+- Дополнительные источники сверки holdings: Bitbo и BitcoinTreasuries.net.
+- Хранить holdings как BTC на фонд/дату; не трактовать изменение holdings как дневной денежный flow без отдельной проверенной методики.
+- Для каждого значения сохранять тикер фонда, reporting/session date, единицы BTC, URL/происхождение, время получения, исходное значение и checksum.
+- Приоритет отдавать явным issuer/filing evidence, если оно доступно и соответствует дате. Данные агрегатора — контрольный кандидат, пока происхождение и полнота не подтверждены.
+- Не восстанавливать holdings через AUM / BTC price, не переносить старые значения вперёд и не заполнять пропуски автоматически.
+
+## 4. Добавленные кандидаты (26 октября 2026)
+
+| Source ID | Источник | Роль | URL | Ограничение |
+|---|---|---|---|---|
+| `institutional.primary` | Farside Investors | приоритетный исследовательский flows | https://farside.co.uk/bitcoin-etf-flow-all-data/ | Время публикации, revision/finality и полнота строки должны быть доказаны |
+| `institutional.sosovalue` | SoSoValue | cross-check flows | https://openapi.sosovalue.com/openapi/v1/etfs/summary-history | Доступ по ключу; timestamp/revision semantics не подтверждены |
+| `institutional.tftc` | TFTC | cross-check/mirror | https://www.tftc.io/bitcoin-etf-flows/data.json | Проверять зависимость от SoSoValue; не считать автоматически независимым |
+| `institutional.cryptoetf_today` | CryptoETF.today | дополнительный flows cross-check | https://cryptoetf.today/en/bitcoin-etf-flows | Агрегат не доказывает per-fund completeness |
+| `institutional.coinpulse` | CoinPulseHQ | дополнительный flows cross-check | https://coinpulsehq.com/bitcoin-etf-flows/ | Проверить покрытие, lineage и дату каждой строки |
+| `institutional.bittradescanner` | BitTradeScanner | вспомогательный flows cross-check | https://bittradescanner.com/ | Может расходиться и иметь пропуски; не подменять приоритетный источник |
+| `institutional.bitcoin_almanack` | Bitcoin Almanack | статус/сессия cross-check | https://bitcoinalmanack.com/etfs/bitcoin-etf-flow-tracker/ | Сохранять метки preliminary/unfinalized; не заменяет фондовые строки |
+| `holdings.bitbo` | Bitbo | holdings BTC cross-check | https://bitbo.io/treasuries/latest-changes/ | Holdings-only; проверять тикер, дату и lineage |
+| `holdings.bitcointreasuries` | BitcoinTreasuries.net | holdings BTC cross-check | https://bitcointreasuries.net/ | Holdings-only; проверять единицы, дату и первичное подтверждение |
+
+## 5. Что означает результат по 23 октября 2026
+
+В capture от 26 октября 2026 Farside all-data вернул за 23 октября полный per-fund ряд: IBIT −110.3, FBTC −31.8, MSBT +4.2 USDm, остальные строки включая HODL явно представлены нулями; сумма −137.9 USDm, `fund_values_complete=true`, reconciliation `MATCHES_DISPLAY_ROUNDING`. SoSoValue сообщил −137.93636481 USDm, CryptoETF.today — −137.9 USDm. Этот новый снимок закрывает прежний конкретный пропуск HODL за 23 октября; он не доказывает наличие timestamp/finality guarantees у поставщика. Если в будущем появится отсутствующая строка, нельзя превращать её в ноль: допускается fallback на конкретное проверяемое значение того же фонда и сессии либо aggregate-only fallback для самой метрики net flow с явной маркировкой, что per-fund полнота не подтверждена.
+
+Holdings за 23 октября фиксировать отдельно от flows. Обновления holdings на трекерах не закрывают контракт дневных flows.
+
+## 6. Следующий порядок работы
+
+1. Проверить source catalog validator и CI на exact commit после добавления кандидатов.
+2. Убедиться, что новые источники отсутствуют в активном metric source priority и не меняют readiness/runtime.
+3. Выполнить только разрешённый read-only review capture, если соответствующий workflow доступен; проверить свежесть, payload hashes и per-fund полноту.
+4. Если новый источник не даёт проверяемую строку, сохранить его статус/ограничение и двигаться к следующему незакрытому входу BTC.
+5. На review-only capture от 26 октября 2026 readiness впервые вернул `ready_for_rule_evaluation` без блокеров. Это означает только, что текущие входы пригодны для проверки правил; это не утверждение о рассчитанном направлении/вероятностях сценария и не разрешение на production ingestion или запись scenario state.

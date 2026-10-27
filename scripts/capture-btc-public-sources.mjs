@@ -34,10 +34,11 @@ const manifest = {
   ]
 };
 
-async function capture({ name, metricId, sourceId, url, parse }) {
+async function capture({ name, metricId, candidateMetricId, sourceId, url, parse }) {
   const item = {
     name,
     metric_id: metricId,
+    ...(candidateMetricId ? { candidate_metric_id: candidateMetricId } : {}),
     source_id: sourceId,
     url,
     retrieved_at: new Date().toISOString(),
@@ -116,6 +117,58 @@ await capture({
 
 // These exchange feeds are corroboration candidates only. BTC/USDT is not BTC/USD;
 // keep the unit and venue separate, and never merge these rows into the canonical quote.
+// Historical hourly candles are captured separately from the latest-trade quote.
+// They provide a reproducible ~7-day comparison point without treating a USDT quote as USD.
+await capture({
+  name: "kraken-xbtusd-ohlc-1h-history",
+  metricId: null,
+  candidateMetricId: "market.spot_price_history_review",
+  sourceId: "market.kraken",
+  url: "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=60",
+  parse: body => {
+    const data = JSON.parse(body);
+    if (Array.isArray(data.error) && data.error.length) throw new Error(`Kraken OHLC API error: ${data.error.join(", ")}`);
+    const result = data.result ?? {};
+    const pairKey = Object.keys(result).find(key => key !== "last");
+    const rows = result[pairKey];
+    if (!pairKey || !Array.isArray(rows) || rows.length < 170) throw new Error("Kraken OHLC response has insufficient hourly history");
+    const candles = rows.map(row => ({
+      candle_start_epoch_seconds: Number(row[0]),
+      open_usd_per_btc: Number(row[1]),
+      high_usd_per_btc: Number(row[2]),
+      low_usd_per_btc: Number(row[3]),
+      close_usd_per_btc: Number(row[4]),
+      vwap_usd_per_btc: Number(row[5]),
+      volume_btc: Number(row[6]),
+      trade_count: Number(row[7])
+    })).filter(row => Number.isFinite(row.candle_start_epoch_seconds) && row.close_usd_per_btc > 0)
+      .sort((a, b) => a.candle_start_epoch_seconds - b.candle_start_epoch_seconds);
+    const currentHourStart = Math.floor(Date.now() / 3600000) * 3600;
+    const closed = candles.filter(row => row.candle_start_epoch_seconds < currentHourStart);
+    if (closed.length < 169) throw new Error("Kraken OHLC response has fewer than 169 closed hourly candles");
+    const end = closed[closed.length - 1];
+    const targetStart = end.candle_start_epoch_seconds - 7 * 24 * 3600;
+    const start = closed.reduce((best, row) => Math.abs(row.candle_start_epoch_seconds - targetStart) < Math.abs(best.candle_start_epoch_seconds - targetStart) ? row : best, closed[0]);
+    return {
+      pair_key: pairKey,
+      requested_pair: "XBTUSD",
+      quote_unit: "USD/BTC",
+      interval_minutes: 60,
+      candle_count: candles.length,
+      closed_candle_count: closed.length,
+      latest_closed_candle: end,
+      seven_day_reference_candle: start,
+      seven_day_reference_delta_seconds: end.candle_start_epoch_seconds - start.candle_start_epoch_seconds,
+      seven_day_close_to_close_return_pct: (end.close_usd_per_btc / start.close_usd_per_btc - 1) * 100,
+      methodology: "kraken-xbtusd-hourly-closed-candle-close-to-close-7d-v1",
+      methodology_version: "1",
+      source_row_key: `XBTUSD:OHLC:60:${start.candle_start_epoch_seconds}:${end.candle_start_epoch_seconds}`,
+      source_row_identity_status: "derived_from_provider_candle_timestamps",
+      note: "Review-only historical return. Uses latest completed hourly candle versus the completed candle nearest seven days earlier; this is not the same as current trade versus exactly seven days ago."
+    };
+  }
+});
+
 await capture({
   name: "binance-btcusdt-trades",
   metricId: "market.spot_price",
@@ -267,11 +320,12 @@ manifest.sources.push({
 });
 
 // Blockchain.com public chart reports total mined bitcoins ("in circulation") by daily timestamp.
-// Treat this as an external candidate only: it is not admitted by the current metric source-priority
-// contract, and total issued supply is not a measure of economically spendable coins.
+// This is total issuance, not the product's economic circulating-supply metric. Keep it unlinked
+// from the canonical registry until a separate protocol-issued-supply metric is explicitly approved.
 await capture({
   name: "blockchaincom-total-bitcoins-supply",
-  metricId: "monetary.circulating_supply",
+  metricId: null,
+  candidateMetricId: "monetary.protocol_issued_supply",
   sourceId: "analytics",
   url: "https://api.blockchain.info/charts/total-bitcoins?timespan=all&format=json",
   parse: body => {
@@ -298,6 +352,52 @@ await capture({
 });
 
 
+// CoinGecko exposes a provider-defined circulating_supply field. Keep this as a
+// candidate until its supply timestamp semantics and freshness contract are proven.
+await capture({
+  name: "coingecko-bitcoin-circulating-supply",
+  metricId: null,
+  candidateMetricId: "monetary.circulating_supply",
+  sourceId: "market.coingecko",
+  url: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin",
+  parse: body => {
+    const rows = JSON.parse(body);
+    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.id !== "bitcoin") {
+      throw new Error("CoinGecko markets response must contain exactly the bitcoin row");
+    }
+    const row = rows[0];
+    const circulating = Number(row.circulating_supply);
+    const total = row.total_supply == null ? null : Number(row.total_supply);
+    const maximum = row.max_supply == null ? null : Number(row.max_supply);
+    if (!(circulating > 0) || !Number.isFinite(circulating)) {
+      throw new Error("CoinGecko circulating_supply is missing or invalid");
+    }
+    if (total !== null && (!Number.isFinite(total) || circulating > total)) {
+      throw new Error("CoinGecko circulating_supply exceeds or conflicts with total_supply");
+    }
+    if (maximum !== null && (!Number.isFinite(maximum) || maximum <= 0 || (total !== null && total > maximum))) {
+      throw new Error("CoinGecko total/max supply relationship is invalid");
+    }
+    const providerLastUpdated = row.last_updated ?? null;
+    return {
+      provider_asset_id: row.id,
+      symbol: row.symbol,
+      asset_name: row.name,
+      circulating_supply_btc: circulating,
+      total_supply_btc: total,
+      max_supply_btc: maximum,
+      provider_last_updated: providerLastUpdated,
+      observed_at: null,
+      unit: "BTC",
+      methodology: "coingecko-provider-defined-circulating-supply-candidate-v1",
+      methodology_version: "1",
+      acceptance_status: "REVIEW_ONLY_SUPPLY_TIMESTAMP_SEMANTICS",
+      note: "Candidate only. Do not treat last_updated as the supply observation timestamp unless its field semantics are confirmed. No canonical metric_id and no ingestion."
+    };
+  }
+});
+
+
 /**
  * Review-only supply derivation from a consistency-checked Mempool tip.
  * Recheck height and block hash at the end to reject a moving/reorganized tip.
@@ -309,7 +409,10 @@ async function captureMempoolProtocolSupply() {
   const blockUrl = hash => `https://mempool.space/api/block/${hash}`;
   const item = {
     name,
-    metric_id: "monetary.circulating_supply",
+    // This is consensus-scheduled issuance, not economic circulating supply.
+    // No protocol-issued-supply metric is registered yet, so do not label it canonical.
+    metric_id: null,
+    candidate_metric_id: "monetary.protocol_issued_supply",
     source_id: "network.primary",
     url: tipHeightUrl,
     related_urls: [ "https://mempool.space/api/block-height/{height}", "https://mempool.space/api/block/{hash}" ],
@@ -400,31 +503,47 @@ async function captureMempoolProtocolSupply() {
 await captureMempoolProtocolSupply();
 
 await capture({
-  name: "mempool-hashrate-1w",
+  name: "mempool-hashrate-1m",
   metricId: "security.hashrate",
   sourceId: "network.primary",
-  url: "https://mempool.space/api/v1/mining/hashrate/1w",
+  url: "https://mempool.space/api/v1/mining/hashrate/1m",
   parse: body => {
     const data = JSON.parse(body);
-    const rows = Array.isArray(data) ? data
+    const rawRows = Array.isArray(data) ? data
       : Array.isArray(data.hashrates) ? data.hashrates
       : Array.isArray(data.data) ? data.data
       : [];
-    const latest = rows.reduce((best, row) =>
-      !best || Number(row.timestamp) > Number(best.timestamp) ? row : best, null);
-    const epochSeconds = latest ? Number(latest.timestamp) : NaN;
-    const hashrate = latest ? Number(latest.avgHashrate ?? latest.hashrate ?? latest.value) : NaN;
+    const rows = rawRows.map(row => ({
+      timestamp: Number(row.timestamp),
+      hashrate: Number(row.avgHashrate ?? row.hashrate ?? row.value)
+    })).filter(row => Number.isFinite(row.timestamp) && Number.isFinite(row.hashrate) && row.hashrate > 0)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    const latest = rows.at(-1);
+    const targetTimestamp = latest ? latest.timestamp - 7 * 86400 : NaN;
+    const reference = rows.find(row => row.timestamp === targetTimestamp);
+    const sevenDayChangePct = latest && reference
+      ? (latest.hashrate / reference.hashrate - 1) * 100
+      : null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
       row_count: rows.length,
-      latest_series_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-      latest_period_start: Number.isFinite(epochSeconds) ? new Date((epochSeconds - 86400) * 1000).toISOString() : null,
-      latest_period_end: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-      latest_series_value_eh_s: Number.isFinite(hashrate) ? hashrate / 1e18 : null,
+      latest_series_timestamp: latest ? new Date(latest.timestamp * 1000).toISOString() : null,
+      latest_period_start: latest ? new Date((latest.timestamp - 86400) * 1000).toISOString() : null,
+      latest_period_end: latest ? new Date(latest.timestamp * 1000).toISOString() : null,
+      latest_series_value_eh_s: latest ? latest.hashrate / 1e18 : null,
+      seven_day_reference_timestamp: reference ? new Date(reference.timestamp * 1000).toISOString() : null,
+      seven_day_reference_period_start: reference ? new Date((reference.timestamp - 86400) * 1000).toISOString() : null,
+      seven_day_reference_period_end: reference ? new Date(reference.timestamp * 1000).toISOString() : null,
+      seven_day_reference_value_eh_s: reference ? reference.hashrate / 1e18 : null,
+      seven_day_reference_delta_seconds: latest && reference ? latest.timestamp - reference.timestamp : null,
+      hashrate_change_7d_pct: sevenDayChangePct,
+      hashrate_change_status: sevenDayChangePct === null
+        ? "BLOCKED_NO_EXACT_SEVEN_DAY_REFERENCE"
+        : "REVIEW_ONLY_EXACT_SEVEN_DAY_SERIES_POINTS",
       aggregation_window_seconds: 86400,
-      aggregation_method: "mempool-daily-hashrate-series-point; interval [timestamp-86400s, timestamp)",
-      note: "Raw response retained. This is a daily estimated hashrate bucket, not instantaneous currentHashrate or a weekly rolling average. Period boundaries are recorded explicitly; verify endpoint parity and freshness before acceptance."
+      aggregation_method: "mempool-daily-hashrate-series-point; exact timestamp delta 604800 seconds",
+      note: "Daily estimated hashrate buckets, not instantaneous hashrate. Change is calculated only from two positive finite observations exactly 604800 seconds apart; source semantics and freshness still require acceptance."
     };
   }
 });
@@ -708,11 +827,18 @@ console.log(JSON.stringify({
   sources: manifest.sources.map(({
     name, status, http_status, error, pair, pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
-    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role,
+    source_payload_sha256, retrieved_at, latest_reported_date, page_generated_date,
+    latest_reported_row
   }) => ({
     name, status, http_status, error, pair: pair ?? pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
-    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role,
+    ...(name === "farside-btc-etf-all-data-page" ? {
+      source_payload_sha256, retrieved_at, latest_reported_date, page_generated_date,
+      latest_row_total_usd_million: latest_reported_row?.reported_total_usd_million ?? null,
+      latest_row_reconciliation_status: latest_reported_row?.reconciliation_status ?? null
+    } : {})
   })),
   unresolved: manifest.unresolved
 }, null, 2));

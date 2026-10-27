@@ -8,6 +8,19 @@ function canonical(value) {
   return value;
 }
 
+function normalizedFundCompleteness(row) {
+  if (typeof row.fund_values_complete === "boolean") return row.fund_values_complete;
+  // Older captured manifests used these equivalent completeness fields.
+  if (row.fund_completeness_status === "ALL_FUNDS_REPORTED"
+      && Number.isInteger(row.funds_expected_count)
+      && row.funds_reported_count === row.funds_expected_count
+      && Array.isArray(row.missing_funds)
+      && row.missing_funds.length === 0) return true;
+  if (row.fund_completeness_status === "INCOMPLETE"
+      || (Array.isArray(row.missing_funds) && row.missing_funds.length > 0)) return false;
+  return null;
+}
+
 function rowSignature(row) {
   return JSON.stringify(canonical({
     fund_flows: row.fund_flows,
@@ -16,7 +29,7 @@ function rowSignature(row) {
     fund_sum_minus_reported_total_usd_million: row.fund_sum_minus_reported_total_usd_million,
     reconciliation_status: row.reconciliation_status,
     status: row.status,
-    fund_values_complete: row.fund_values_complete
+    fund_values_complete: normalizedFundCompleteness(row)
   }));
 }
 
@@ -55,13 +68,19 @@ export function compareFarsideSnapshots(olderManifest, newerManifest) {
         fund_flows: oldRow.fund_flows,
         reported_total_usd_million: oldRow.reported_total_usd_million,
         reconciliation_status: oldRow.reconciliation_status,
-        status: oldRow.status
+        status: oldRow.status,
+        source_row_key: oldRow.source_row_key ?? null,
+        fund_values_complete: normalizedFundCompleteness(oldRow),
+        enclosing_payload_sha256: older.source.source_payload_sha256
       },
       newer: {
         fund_flows: newRow.fund_flows,
         reported_total_usd_million: newRow.reported_total_usd_million,
         reconciliation_status: newRow.reconciliation_status,
-        status: newRow.status
+        status: newRow.status,
+        source_row_key: newRow.source_row_key ?? null,
+        fund_values_complete: normalizedFundCompleteness(newRow),
+        enclosing_payload_sha256: newer.source.source_payload_sha256
       }
     });
   }

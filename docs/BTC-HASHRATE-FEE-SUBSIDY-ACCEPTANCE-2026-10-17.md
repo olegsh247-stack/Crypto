@@ -73,3 +73,20 @@ The source-staging workflow is read-only with respect to production: it captures
 - Raw response, per-block evidence and provenance manifest are retained in the seven-day CI artifact. New window JSON is inside that artifact; artifact archive SHA-256 is recorded above.
 - **Remaining acceptance blocker:** deployed API/runtime version parity is not established. Repository code and CI do not prove which immutable build is running; this review environment could not independently retrieve the public Worker endpoint, and the legacy Worker URL is not sufficient deployment evidence. The VPS target is not yet provisioned. Do not infer runtime parity from sample `api_version`, source `main`, or a green CI run.
 - Acceptance status: per-block coverage, units/arithmetic reconciliation, formula, stable capture and pairwise overlap policy are verified for this evidence pair. Final acceptance remains **BLOCKED** pending verified deployment-target/build identity tied to the reviewed fee implementation. No production database access or writes, ingestion, runtime/registry change, deployment, or scenario evaluation occurred.
+
+
+### Follow-up confirmed window — 2026-10-23 08:10 UTC
+
+- Follow-up BTC Public Source Staging [run #39922803413](https://github.com/olegsh247-stack/Crypto/actions/runs/39922803413), artifact 12487238469, succeeded in read-only mode.
+- New 144-block window: heights 972596–972739; total fees 258,009,739 sats (2.58009739 BTC); protocol subsidy 45,000,000,000 sats (450 BTC); ratio 0.0057335497556 (about 0.573355%). Tip height/hash were stable before and after capture at 972739 / `0000000000000000000071977ba12083b0e6ad3c20ed23bfaa818dd51fc5139a`.
+- Compared against the prior window 972593–972736 from run #39921752769, artifact 12486659972. The overlap is 141 block heights (972596–972736); all 141 matched block hash, parent hash and per-block fee values. No overlapping-row differences were found.
+- Previous fee-window JSON SHA-256: `bb0e9d1ec0980fe0d003c135f503be4254a3d8dc86c4e9a881e6e71a9c548ffa`; new fee-window JSON SHA-256: `22c2a349a8c0a56cfb52091336ee32c5f60b8e4ccb833b628c8da32c68f94ce8`.
+- This is stronger re-capture/reorg-consistency evidence, but not a guarantee of permanent finality and not deployed API version parity. The metric remains review-only until the deployed implementation/version can be attested and all method/source acceptance gates pass. No production ingestion or runtime change.
+
+
+### Fresh 144-block recapture — 2026-10-24 14:46 UTC
+
+- BTC Public Source Staging [run #40103950724](https://github.com/olegsh247-stack/Crypto/actions/runs/40103950724), artifact 12563807727, captured a verified 144-block window **972791–972934**.
+- Total fees: **202,056,851 sats = 2.02056851 BTC**; protocol subsidy: **45,000,000,000 sats = 450 BTC**; fee/subsidy ratio **0.00449015224444** (about **0.449015%**).
+- All 144 block records were collected; the aggregate reward-stats endpoint matched the block-window calculation. The tip and boundary hashes were unchanged before/after capture at height 972934, hash `000000000000000000004fa9b3242a1c8984474c5cac2bab01abe57368ef0724`. Window JSON SHA-256: `e897c849cb22dc5a2b5cd92b52213a1deee113ef4af3d2336283b34eac949f7a`.
+- Previous captured window ended at 972739, so these two 144-block windows do **not** overlap; no pairwise cross-window comparison is claimed. The new window is internally consistent and tip-stable, but reorg/finality and deployed API-version parity remain unproven. Fee/subsidy remains review-only.

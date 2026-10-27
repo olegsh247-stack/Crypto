@@ -72,3 +72,33 @@ test("rejects reversed timestamps and a noncanonical source URL", () => {
     changedUrl
   ), /same source URL/);
 });
+
+test("normalizes legacy fund-completeness fields across parser schema versions", () => {
+  const older = manifest({ retrievedAt: "2026-10-17T18:00:00Z", hash: "old" });
+  const newer = manifest({ retrievedAt: "2026-10-18T18:00:00Z", hash: "new" });
+  const oldRow = older.sources[0].latest_rows[0];
+  delete oldRow.fund_values_complete;
+  oldRow.fund_completeness_status = "ALL_FUNDS_REPORTED";
+  oldRow.funds_expected_count = 2;
+  oldRow.funds_reported_count = 2;
+  oldRow.missing_funds = [];
+  const result = compareFarsideSnapshots(older, newer);
+  assert.deepEqual(result.changed_rows, []);
+  assert.deepEqual(result.unchanged_row_dates, ["2026-10-16"]);
+  assert.equal(result.comparison_status, "TWO_SNAPSHOT_COMPARISON_COMPLETE_NO_ROW_REVISIONS_DETECTED");
+});
+
+
+test("revision evidence carries old/new completeness, row keys, and enclosing payload hashes", () => {
+  const older = manifest({ retrievedAt: "2026-10-17T18:00:00Z", hash: "a" });
+  const newer = manifest({ retrievedAt: "2026-10-18T18:00:00Z", hash: "b", total: -90, ibit: -79.4 });
+  older.sources[0].latest_rows[0].source_row_key = "farside:2026-10-16";
+  newer.sources[0].latest_rows[0].source_row_key = "farside:2026-10-16";
+  const result = compareFarsideSnapshots(older, newer);
+  assert.equal(result.changed_rows[0].older.enclosing_payload_sha256, "a");
+  assert.equal(result.changed_rows[0].newer.enclosing_payload_sha256, "b");
+  assert.equal(result.changed_rows[0].older.source_row_key, "farside:2026-10-16");
+  assert.equal(result.changed_rows[0].newer.source_row_key, "farside:2026-10-16");
+  assert.equal(result.changed_rows[0].older.fund_values_complete, true);
+  assert.equal(result.changed_rows[0].newer.fund_values_complete, true);
+});

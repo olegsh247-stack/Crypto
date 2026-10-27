@@ -74,3 +74,32 @@ The two-snapshot/row-revision gate is complete for this pair. Remaining blockers
 Official pages reviewed:
 - https://farside.co.uk/
 - https://farside.co.uk/privacy-policy/
+
+## 2026-10-23 — установленный приоритет при конфликте источников
+
+По итогам оценки стабильности и проверяемости **Farside Investors остаётся приоритетным источником** агрегированного дневного потока BTC spot ETF (institutional.etf_net_flow). Это согласуется с действующим metric registry и readiness contract; runtime-приоритет менять не требуется.
+
+- При валидных, но различающихся значениях за одну отчётную дату выбирать Farside. Не усреднять значения и не спрашивать пользователя повторно.
+- SoSoValue использовать как контрольную сверку; TFTC — только как дополнительный контроль, учитывая возможное пересечение происхождения данных с SoSoValue/Farside.
+- Если Farside недоступен или последняя строка неполна/является placeholder, не подменять значение SoSoValue/TFTC автоматически: оставить вход заблокированным до нового валидного Farside-снимка.
+- Расхождение 2026-10-21: Farside +524.8 USDm, SoSoValue +528.40023714 USDm, разница около +3.60023714 USDm (SoSoValue минус Farside). Для выбранного исследовательского значения используется +524.8 USDm; обе исходные цифры и разница остаются в аудите. Для 2026-10-20 SoSoValue +23.16242251 USDm согласуется с округлённым Farside +23.2 USDm; для 2026-10-19 +526.59599803 USDm согласуется с округлённым Farside +526.7 USDm.
+- Выбор приоритета не снимает отдельных блокеров: timestamp/finality/revision contract, freshness относительно последней завершённой US-сессии и правила долговременного хранения/reuse.
+
+## 2026-10-22 — обновлённый ETF-снимок и контрольная сверка SoSoValue
+
+Сравнение Farside all-data snapshots: baseline retrieved_at 2026-10-20T21:21:35.339Z и новый snapshot retrieved_at 2026-10-22T16:21:07.086Z; интервал около 42.99 часа, то есть больше 24 часов.
+
+- Совпали 712 датированных строк; добавлены строки за 21 Oct 2026 и 22 Oct 2026; удалённых строк нет.
+- В строке 20 Oct 2026 старый снимок содержал placeholder (пустые значения фондов и отображаемый ноль), а новый содержит заполненную строку с итогом +23.2 USDm. Это изменение полноты/публикации строки, а не основание считать предыдущий placeholder подтверждённым нулём.
+- За 21 Oct 2026 SoSoValue сообщает +528.40023714 USDm, Farside +524.8 USDm. По закреплённому правилу приоритета выбирается Farside; расхождение ~3.60023714 USDm сохраняется как контрольное наблюдение. TFTC совпадает с SoSoValue, но его заявленная lineage использует SoSoValue и потому не считается независимым подтверждением.
+- Снимок SoSoValue за 20 Oct 2026: +23.16242251 USDm, согласуется с округлённой строкой Farside +23.2 USDm. За 19 Oct 2026 SoSoValue: +526.59599803 USDm, Farside: +526.7 USDm.
+- Это read-only research comparison. Оно не утверждает, что источник никогда не пересматривает историю, и не снимает оставшиеся требования к session-aware freshness, timestamp semantics и source lineage. Не выполнять production ingestion.
+
+
+## 2026-10-23 — third Farside snapshot and latest-session reconciliation
+
+- New read-only capture: [BTC Public Source Staging #39921382976](https://github.com/olegsh247-stack/Crypto/actions/runs/39921382976), artifact 12487067719, retrieved 2026-10-23T07:58:54.536Z. Farside all-data endpoint returned HTTP 200; its page-generated date is 2026-10-23 and latest reported session is 2026-10-22. The separate Farside landing page returned HTTP 403, so this capture relies on the all-data endpoint only.
+- Compare the baseline snapshot retrieved 2026-10-20T21:21:46.598Z with the new snapshot: elapsed 58.62 hours (>24h). Of the 712 dated rows present in the baseline, the new snapshot retains them; 2 newer rows are added (2026-10-21 and 2026-10-22). One overlapping row changed: 2026-10-20 went from an unreported placeholder displayed as zero to a complete reported +23.2 USDm row. No overlapping dated row was removed. Do not interpret the old placeholder as a confirmed zero.
+- Latest row 2026-10-22: Farside -635.6 USDm; all 12 fund fields are present and the fund sum reconciles to the displayed total. SoSoValue reports -635.492639395 USDm, a difference of about 0.107361 USDm. Keep both source values and payload hashes for audit; Farside remains the selected research value by the established priority rule, with no averaging. This small difference still must be retained rather than silently normalized.
+- 2026-10-21 remains Farside +524.8 USDm vs SoSoValue +528.40023714 USDm (difference ~3.600237 USDm). TFTC is not independent corroboration where its source lineage points to SoSoValue/Farside.
+- Despite two snapshots >24h apart and row-level revision comparison, ETF is still review-only: Farside supplies reporting dates but no exact row publication/observation timestamp. Retrieval time and HTTP Date are preserved as retrieval/transport evidence, not relabelled as metric `observed_at`. Session-aware freshness policy, revision/finality interpretation, and durable retention/reuse remain acceptance gates. No production ingestion.
