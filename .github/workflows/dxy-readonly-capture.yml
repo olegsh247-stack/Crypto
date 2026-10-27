@@ -1,5 +1,6 @@
 name: DXY Read-Only Public Data Capture
 
+# Repeat-capture validation: retain timestamps and hashes for source comparison.
 on:
   push:
     paths:
