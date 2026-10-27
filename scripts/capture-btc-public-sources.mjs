@@ -503,31 +503,47 @@ async function captureMempoolProtocolSupply() {
 await captureMempoolProtocolSupply();
 
 await capture({
-  name: "mempool-hashrate-1w",
+  name: "mempool-hashrate-1m",
   metricId: "security.hashrate",
   sourceId: "network.primary",
-  url: "https://mempool.space/api/v1/mining/hashrate/1w",
+  url: "https://mempool.space/api/v1/mining/hashrate/1m",
   parse: body => {
     const data = JSON.parse(body);
-    const rows = Array.isArray(data) ? data
+    const rawRows = Array.isArray(data) ? data
       : Array.isArray(data.hashrates) ? data.hashrates
       : Array.isArray(data.data) ? data.data
       : [];
-    const latest = rows.reduce((best, row) =>
-      !best || Number(row.timestamp) > Number(best.timestamp) ? row : best, null);
-    const epochSeconds = latest ? Number(latest.timestamp) : NaN;
-    const hashrate = latest ? Number(latest.avgHashrate ?? latest.hashrate ?? latest.value) : NaN;
+    const rows = rawRows.map(row => ({
+      timestamp: Number(row.timestamp),
+      hashrate: Number(row.avgHashrate ?? row.hashrate ?? row.value)
+    })).filter(row => Number.isFinite(row.timestamp) && Number.isFinite(row.hashrate) && row.hashrate > 0)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    const latest = rows.at(-1);
+    const targetTimestamp = latest ? latest.timestamp - 7 * 86400 : NaN;
+    const reference = rows.find(row => row.timestamp === targetTimestamp);
+    const sevenDayChangePct = latest && reference
+      ? (latest.hashrate / reference.hashrate - 1) * 100
+      : null;
     return {
       response_shape: Array.isArray(data) ? "array" : typeof data,
       top_level_keys: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : [],
       row_count: rows.length,
-      latest_series_timestamp: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-      latest_period_start: Number.isFinite(epochSeconds) ? new Date((epochSeconds - 86400) * 1000).toISOString() : null,
-      latest_period_end: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-      latest_series_value_eh_s: Number.isFinite(hashrate) ? hashrate / 1e18 : null,
+      latest_series_timestamp: latest ? new Date(latest.timestamp * 1000).toISOString() : null,
+      latest_period_start: latest ? new Date((latest.timestamp - 86400) * 1000).toISOString() : null,
+      latest_period_end: latest ? new Date(latest.timestamp * 1000).toISOString() : null,
+      latest_series_value_eh_s: latest ? latest.hashrate / 1e18 : null,
+      seven_day_reference_timestamp: reference ? new Date(reference.timestamp * 1000).toISOString() : null,
+      seven_day_reference_period_start: reference ? new Date((reference.timestamp - 86400) * 1000).toISOString() : null,
+      seven_day_reference_period_end: reference ? new Date(reference.timestamp * 1000).toISOString() : null,
+      seven_day_reference_value_eh_s: reference ? reference.hashrate / 1e18 : null,
+      seven_day_reference_delta_seconds: latest && reference ? latest.timestamp - reference.timestamp : null,
+      hashrate_change_7d_pct: sevenDayChangePct,
+      hashrate_change_status: sevenDayChangePct === null
+        ? "BLOCKED_NO_EXACT_SEVEN_DAY_REFERENCE"
+        : "REVIEW_ONLY_EXACT_SEVEN_DAY_SERIES_POINTS",
       aggregation_window_seconds: 86400,
-      aggregation_method: "mempool-daily-hashrate-series-point; interval [timestamp-86400s, timestamp)",
-      note: "Raw response retained. This is a daily estimated hashrate bucket, not instantaneous currentHashrate or a weekly rolling average. Period boundaries are recorded explicitly; verify endpoint parity and freshness before acceptance."
+      aggregation_method: "mempool-daily-hashrate-series-point; exact timestamp delta 604800 seconds",
+      note: "Daily estimated hashrate buckets, not instantaneous hashrate. Change is calculated only from two positive finite observations exactly 604800 seconds apart; source semantics and freshness still require acceptance."
     };
   }
 });
