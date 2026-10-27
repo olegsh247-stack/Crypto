@@ -5,6 +5,7 @@ import { join } from "node:path";
 const targets = [
   { id: "nyse-hours-calendars", url: "https://www.nyse.com/trade/hours-calendars" },
   { id: "nasdaq-us-equity-calendar", url: "https://nasdaqtrader.com/Trader.aspx?id=Calendar" },
+  { id: "nyse-2026-yearly-trading-calendar-pdf", url: "https://www.nyse.com/publicdocs/nyse/ICE_NYSE_2026_Yearly_Trading_Calendar.pdf" },
   { id: "farside-btc-etf-flow-page", url: "https://farside.co.uk/btc/" }
 ];
 const outDir = "tmp/btc-source-review/calendar-source-evidence";
