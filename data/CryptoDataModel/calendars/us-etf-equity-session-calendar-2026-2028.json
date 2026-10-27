@@ -175,8 +175,8 @@
     "publication_window_policy": "Not defined by this calendar. Do not infer Farside publication timing from exchange session close.",
     "source_payload_hashes": {
       "status": "CAPTURED_READ_ONLY_CI",
-      "captured_at": "2026-10-27T15:51:19.184Z",
-      "workflow_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/40535074201",
+      "captured_at": "2026-10-27T15:53:32.262Z",
+      "workflow_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/40535442230",
       "algorithm": "SHA-256 over exact HTTP response body bytes before text decoding",
       "sources": [
         {
@@ -192,8 +192,8 @@
           "url": "https://nasdaqtrader.com/Trader.aspx?id=Calendar",
           "http_status": 200,
           "content_type": "text/html; charset=utf-8",
-          "body_bytes": 54629,
-          "sha256": "d4c2821e7ace417be850c4112e78669aa6db02717f2f24b118314480d193b44a",
+          "body_bytes": 54628,
+          "sha256": "730e08fc6bfabf4b13fcf10459c84f9fdf2d71a09a8f734e56a1a2c3ac9aedd9",
           "note": "Exact-response hash changed between two captures three minutes apart; byte-level volatility is not itself evidence that calendar dates changed."
         },
         {
@@ -205,11 +205,26 @@
           "sha256": "70f5577eb43e60a9dbbecaae3cec23d0f02028c05c7f175013bb3e97816d394f"
         }
       ],
-      "farside_capture": {
+      "farside_landing_page_probe": {
         "url": "https://farside.co.uk/btc/",
         "http_status": 403,
         "status": "NOT_A_SOURCE_PAYLOAD",
         "note": "The CI received an access-denial response. Its response hash is not accepted as a hash of Farside ETF data."
+      },
+      "canonical_farside_data_capture": {
+        "source_id": "farside-btc-etf-all-data-page",
+        "url": "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        "workflow_run": "https://github.com/olegsh247-stack/Crypto/actions/runs/40535963347",
+        "retrieved_at": "2026-10-27T15:56:53.261Z",
+        "http_status": 200,
+        "status": "CAPTURED",
+        "latest_reported_date": "2026-10-26",
+        "page_generated_date": "2026-10-27",
+        "latest_row_total_usd_million": 110.3,
+        "latest_row_reconciliation_status": "MATCHES_DISPLAY_ROUNDING",
+        "source_payload_sha256": "403a10014b89c99d41bfc2be4e1b17cfd4a5e0bc714f4d7cd153d04c8c2be7ff",
+        "hashing_method": "SHA-256 over UTF-8 encoding of response text in scripts/capture-btc-public-sources.mjs",
+        "note": "Canonical data endpoint succeeded in the standard read-only source capture; the standalone probe's 403 denial response is not used as ETF payload evidence."
       }
     }
   }
