@@ -6,7 +6,7 @@
  * evaluation. It never selects a scenario or authorizes persistence.
  */
 const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sourceIds: string[]; sourceUrlPrefixes: string[]; approvedMethodologyIds?: string[]; label: string }> = [
-  { metricId: "market.spot_price", maxAgeHours: 6, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
+  { metricId: "market.spot_price", maxAgeHours: 1, unit: "USD/BTC", sourceIds: ["market.kraken"], sourceUrlPrefixes: ["https://api.kraken.com/0/public/Trades?pair=XBTUSD"], label: "spot price" },
   // Hashrate is supporting network-health context, not a mandatory directional input
   // for the first institutional/macro BTC scenario. Validate it if/when a scenario rule uses it.
   // Fee/subsidy ratio is deferred: it is not required or calculated for this scenario.
