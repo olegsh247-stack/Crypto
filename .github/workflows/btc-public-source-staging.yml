@@ -3,7 +3,7 @@ name: BTC Public Source Staging (Read Only)
 # Manual runs and watched-file pushes run the same bounded review-only capture; no database or scenario-state writes occur.
 # A workflow-file-only change can refresh the capture when manual dispatch is unavailable.
 # Read-only recapture requested 2026-10-27: refresh BTC spot/ETF evidence and re-evaluate freshness.
-# ETF session freshness helper tests are research-only; provider publication-window policy remains fail-closed.
+# ETF session freshness helper and reviewed operational publication policy are research-only; no production approval is implied.
 # Readiness review policy: fresh capture may use registered fallback sources; this workflow never writes production state.
 on:
   push:
@@ -71,7 +71,7 @@ jobs:
         run: node --test scripts/compare-btc-etf-snapshots.test.mjs
       - name: Validate versioned US ETF session calendar baseline
         run: node scripts/validate-us-etf-session-calendar.mjs
-      - name: Test session-aware ETF freshness contract (publication timing remains fail-closed)
+      - name: Test session-aware ETF freshness contract (operational publication grace)
         run: node --test scripts/assess-btc-etf-session-freshness.test.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
