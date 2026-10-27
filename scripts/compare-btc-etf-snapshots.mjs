@@ -68,13 +68,19 @@ export function compareFarsideSnapshots(olderManifest, newerManifest) {
         fund_flows: oldRow.fund_flows,
         reported_total_usd_million: oldRow.reported_total_usd_million,
         reconciliation_status: oldRow.reconciliation_status,
-        status: oldRow.status
+        status: oldRow.status,
+        source_row_key: oldRow.source_row_key ?? null,
+        fund_values_complete: normalizedFundCompleteness(oldRow),
+        enclosing_payload_sha256: older.source.source_payload_sha256
       },
       newer: {
         fund_flows: newRow.fund_flows,
         reported_total_usd_million: newRow.reported_total_usd_million,
         reconciliation_status: newRow.reconciliation_status,
-        status: newRow.status
+        status: newRow.status,
+        source_row_key: newRow.source_row_key ?? null,
+        fund_values_complete: normalizedFundCompleteness(newRow),
+        enclosing_payload_sha256: newer.source.source_payload_sha256
       }
     });
   }
