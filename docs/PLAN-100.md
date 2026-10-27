@@ -2207,3 +2207,10 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - The existing `docs/BTC-ETF-TWO-SNAPSHOT-ACCEPTANCE-2026-10-17.md` already records a real Farside change between snapshots: the 2026-10-20 row changed from an unreported placeholder to a complete +23.2 USDm row. This satisfies the requirement to have at least one observed provider row-status/value transition as a revision-policy example; do not repeat the two-snapshot exercise.
 - Hash capture must target the canonical all-data URL `https://farside.co.uk/bitcoin-etf-flow-all-data/`, not the separate landing page endpoint that can return HTTP 403. The 403 response hash is not an ETF data payload hash.
 - Remaining operational blockers are canonical endpoint hash verification and durable self-hosted archive/read-back/restore. Production ingestion remains blocked.
+
+### 2026-10-27 — Canonical Farside payload captured successfully
+
+- Standard read-only BTC source capture succeeded for the canonical Farside all-data endpoint at `2026-10-27T15:56:53.261Z`, HTTP 200, payload SHA-256 `403a10014b89c99d41bfc2be4e1b17cfd4a5e0bc714f4d7cd153d04c8c2be7ff`. Latest reported session is 2026-10-26, displayed total +110.3 USDm, reconciliation `MATCHES_DISPLAY_ROUNDING`. At capture time the 27 Oct US session had not closed, so the row date matches the latest completed session.
+- Official NYSE hours page, Nasdaq calendar page and NYSE 2026 PDF returned HTTP 200 and their response hashes are stored in the calendar fixture. The Nasdaq page's exact-response hash is byte-variable between captures; do not interpret that alone as a trading-date change.
+- The actual 2026-10-20 placeholder-to-reported (+23.2 USDm) Farside row transition is already documented; revision example gate is covered.
+- Remaining ETF production blockers: durable self-hosted archive/read-back/restore and a reviewed allowed-retention approach. Full BTC staging also has a separate scenario test failure: `hashrate_change_7d_pct must be a finite number`, unrelated to ETF tests. No production ingestion.
