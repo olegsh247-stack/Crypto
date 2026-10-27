@@ -18,7 +18,10 @@ test("primary five-session calculation is reproducible and review-only",()=>{
  const report=calculateBtcReviewScenario(manifest,{etf_review_rows:dates.map((d,i)=>row(d,[23.2,524.8,-635.6,-137.9,110.3][i]))});
  assert.ok(Math.abs(report.intermediate_calculations.price_return_7d_pct+2)<1e-9);
  assert.ok(Math.abs(report.intermediate_calculations.etf_net_flow_5d_usd_millions+115.2)<1e-9);
- assert.equal(report.output.scenario_type,"base"); assert.equal(report.output.directional_score,0);
+ assert.equal(report.output.status,"not_evaluable");
+ assert.equal(report.output.scenario_type,undefined);
+ assert.equal(report.output.directional_score,undefined);
+ assert.deepEqual(report.output.missing_required_inputs,["hashrate_change_7d_pct","fee_subsidy_ratio"]);
  assert.equal(report.safety.database_writes_performed,false); assert.equal(report.safety.can_persist_scenario_state,false);
 });
 test("fallback to SoSoValue is explicit when Farside lacks five accepted rows",()=>{
