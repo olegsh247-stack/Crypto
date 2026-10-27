@@ -300,10 +300,10 @@ test("metric registry does not advertise a generic or unlicensed DXY source as c
   assert.match(ice.notes, /not in macro\.dxy source_priority/i);
 });
 
-test("official Farside all-data endpoint is accepted as the same canonical source", () => {
+test("official Farside all-data endpoint passes readiness without requiring DXY", () => {
   const inputs = completeInputs();
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
     && x.reason === "source_url_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
