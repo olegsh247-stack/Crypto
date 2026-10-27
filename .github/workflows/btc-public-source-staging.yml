@@ -23,6 +23,8 @@ on:
       - "scripts/compare-btc-etf-snapshots.mjs"
       - "scripts/compare-btc-etf-snapshots.test.mjs"
       - "scripts/validate-us-etf-session-calendar.mjs"
+      - "scripts/assess-btc-etf-session-freshness.mjs"
+      - "scripts/assess-btc-etf-session-freshness.test.mjs"
       - "data/CryptoDataModel/calendars/us-etf-equity-session-calendar-2026-2028.json"
       - "scripts/btc-protocol-supply.mjs"
       - "scripts/btc-protocol-supply.test.mjs"
@@ -66,6 +68,8 @@ jobs:
         run: node --test scripts/compare-btc-etf-snapshots.test.mjs
       - name: Validate versioned US ETF session calendar baseline
         run: node scripts/validate-us-etf-session-calendar.mjs
+      - name: Test session-aware ETF freshness contract (publication timing remains fail-closed)
+        run: node --test scripts/assess-btc-etf-session-freshness.test.mjs
       - name: Test BTC observation candidate normalization
         run: node --test scripts/prepare-btc-observation-candidates.test.mjs
       - name: Capture public source responses for review only
