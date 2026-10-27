@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "error", error: "admin_auth_not_configured" }, { status: 503 });
   }
 
-  const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const address = request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ?? "unknown";
   const now = Date.now();
   const attempt = failedAttempts.get(address);
   if (attempt && attempt.resetAt > now && attempt.count >= 5) {
