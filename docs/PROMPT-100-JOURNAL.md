@@ -1661,3 +1661,12 @@ The standard read-only source capture succeeded for the canonical Farside all-da
 Official NYSE/Nasdaq calendar response hashes and NYSE PDF hash are recorded in the calendar fixture. A direct probe can get HTTP 403 while the established source-capture workflow succeeds; do not use the probe's denial-body hash as source evidence. Actual Farside row revision evidence already exists (2026-10-20 placeholder -> +23.2 USDm).
 
 **Remaining ETF production blockers:** durable self-hosted archive/read-back/restore and reviewed allowed-retention approach. Broader BTC staging separately fails its offline scenario test because `hashrate_change_7d_pct` is not finite; ETF parser, session freshness and calendar hash checks passed. No production ingestion or merge.
+
+
+## 2026-10-27 — BTC rule fails closed; exact seven-day hashrate candidate
+
+- Fixed the scenario rule's missing-input path: missing/non-finite required inputs now return `not_evaluable` with named blockers instead of throwing and stopping CI. Added regression coverage; negative fee ratios still reject.
+- Changed Mempool hashrate capture from the one-week endpoint (which only recorded the latest point) to the one-month daily series. It now derives a 7-day change only when two positive finite points are exactly 604,800 seconds apart and records both timestamps, bucket boundaries, values and payload hash. This remains a review candidate until freshness/methodology are accepted.
+- The scenario calculator records the hashrate evidence but does not use it for scoring unless explicitly accepted. Fee/subsidy remains excluded until the reorg/confirmation and deployed-version gates pass. Missing required values must produce `not_evaluable`; no directional score is emitted.
+- Changes are on `fix/btc-readiness-mainline-2026-10-20`; latest code commits include `1845a55` (fail-closed rule), `5d97305` (hashrate series), and `affed8d` (calculator evidence/gating). CI verification of the resulting workflow is pending.
+- Safety: no production DB writes, ingestion, registry/source-priority changes, scenario state/probability persistence, deployment, or merge. ETF remains blocked on durable self-hosted archive/read-back/restore and reviewed retention.
