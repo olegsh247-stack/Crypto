@@ -1600,3 +1600,14 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 - **Scope decision:** BTC Rule v1 review-only scenario is complete. ETF provider publication timestamp and revision/finality policy remain required for production ingestion only; durable retention/restore belongs to future self-hosted operations. DXY, hashrate, fee/subsidy and supply are not blockers for Rule v1.
 - No production DB access/write, ingestion, runtime/source-priority change, scenario state/probability/monitoring persistence, deployment or merge. PR #84 remains open/draft.
 
+
+
+## 2026-10-27 — latest BTC public-source recapture and rule-v1 verification
+
+- Triggered read-only BTC Public Source Staging [#40471108936](https://github.com/olegsh247-stack/Crypto/actions/runs/40471108936), artifact `12718750633`, exact head `8ed46df441285a5341b1d0a346bf006083bd698b`. Raw responses and provenance are preserved in the artifact; detailed report: `docs/BTC-READONLY-CAPTURE-RESULT-2026-10-27-0805Z.md`.
+- Kraken latest trade: **79,795.50 USD/BTC** (observed 08:05:19.523Z, retrieved 08:05:22.106Z). Latest closed-hourly-candle method gives 7-day return **−2.199510%**. This replaces the earlier current-trade-based return as the declared candle methodology; the two calculations are not directly comparable.
+- Farside priority ETF sessions (20, 21, 22, 23, 26 Oct) sum to **−$115.2m**. New payload hash, same five-session values. Provider publication time and revision/finality semantics remain unknown; the series remains review-only for production ingestion.
+- New 144-block fee window 973226–973369: fees 227,281,372 sats, subsidy 45,000,000,000 sats, ratio 0.505070%; boundaries and tip matched before/after. Optional context only.
+- Offline Rule v1 remains **Base, directional score 0, low confidence**. Review readiness has zero blockers; repeat calculation is byte-identical. No scenario state is persisted and no probabilities changed.
+- Passed on exact head: staging #40471108936, readiness #40471113390, source catalog #40471113428, seed idempotency #40471113348, release workflow validation #40471113415, and VPS rehearsal #40471108869. Duplicate VPS rehearsal #40471113337 was still running at the time of this entry.
+- Remaining production acceptance: ETF publication-time/revision/finality policy and durable retention/restore on future self-hosted infrastructure. DXY is optional. No production DB access/write, ingestion, source priority/registry change, scenario-state/probability/monitoring persistence, deployment or merge.
