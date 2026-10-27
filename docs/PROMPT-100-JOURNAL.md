@@ -1629,3 +1629,13 @@ Re-downloaded and extracted artifacts 12565600908 and 12574657927. ZIP integrity
 **Unrelated full-workflow blocker:** The run then stopped at the BTC fee/subsidy audit with `BLOCKED_PER_BLOCK_FEE_SUBSIDY_AUDIT` / `tip changed or behind window`. ETF tests themselves passed; no ingestion occurred. Recheck that fee window as a separate BTC capture task.
 
 **ETF status:** Still blocked from production ingestion pending reviewed Farside publication timing, hashes of exact upstream exchange-calendar payloads, evidence from a real provider revision, and durable self-hosted archive/read-back/restore.
+
+## 2026-10-27 — ETF publication freshness policy and calendar source hashes
+
+**Decision:** Farside's public page says data is updated in real time, typically in the evening/night US time. This is not a guaranteed deadline. Added an explicit local operational threshold: 12-hour post-close grace (including overnight), then accept only a complete reconciled row no more than one scheduled US trading session behind. Do not synthesize `observed_at`; never treat missing/incomplete rows as zero.
+
+**Changes:** Added `data/CryptoDataModel/calendars/btc-etf-publication-freshness-policy.json`, added policy/grace regression tests, and added a read-only script that captures exact HTTP response-body SHA-256 plus retrieval metadata for official NYSE/Nasdaq calendar pages and Farside's ETF page into the CI artifact.
+
+**Still blocked:** Verify the CI artifact contains successful upstream hashes; obtain evidence from an actual provider revision; prove durable storage, independent read-back and backup restore on self-hosted infrastructure. Synthetic tests do not replace real revision evidence. ETF remains unapproved for production ingestion.
+
+**Safety:** No production DB writes, live ingestion, registry/runtime source-priority changes, scenario state/probability persistence, deployment, or merge. Farside priority; SoSoValue cross-check only; TFTC supplemental; no averaging or automatic substitution.
