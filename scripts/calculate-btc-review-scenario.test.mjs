@@ -14,7 +14,7 @@ const dates=["2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26"];
 const row=(d,v,s="institutional.primary")=>({metric_id:"institutional.etf_net_flow",source_id:s,
  source_url:s==="institutional.sosovalue"?"https://openapi.sosovalue.com/openapi/v1/etfs/summary-history":"https://farside.co.uk/bitcoin-etf-flow-all-data/",
  source_registered:true,unit:"USD million/day",expected_unit:"USD million/day",freshness:"CURRENT",
- observed_at:null,retrieved_at:new Date().toISOString(),candidate_state:"REVIEW_ONLY",
+ observed_at:null,retrieved_at:new Date(Date.now()-60_000).toISOString(),candidate_state:"REVIEW_ONLY",
  period_start:d,period_end:d,value_numeric:v,row_status:"REPORTED_CANDIDATE",
  reconciliation_status:"MATCHES_DISPLAY_ROUNDING",source_row_key:s+":"+d,source_payload_sha256:"b".repeat(64)});
 test("primary five-session calculation is reproducible and review-only",()=>{
@@ -32,7 +32,7 @@ test("primary five-session calculation is reproducible and review-only",()=>{
 });
 
 test("fresh traceable spot and five current ETF sessions allow review-only rule evaluation",()=>{
- const now=new Date().toISOString();
+ const now=new Date(Date.now()-60_000).toISOString();
  const spot={metric_id:"market.spot_price",candidate_state:"REVIEW_ONLY",freshness_status:"CURRENT",
   observed_at:now,retrieved_at:now,source_id:"market.kraken",
   source_url:"https://api.kraken.com/0/public/Trades?pair=XBTUSD",source_registered:true,
