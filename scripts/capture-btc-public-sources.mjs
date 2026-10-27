@@ -811,11 +811,18 @@ console.log(JSON.stringify({
   sources: manifest.sources.map(({
     name, status, http_status, error, pair, pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
-    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role,
+    source_payload_sha256, retrieved_at, latest_reported_date, page_generated_date,
+    latest_reported_row
   }) => ({
     name, status, http_status, error, pair: pair ?? pair_key, quote_unit,
     latest_trade_observed_at, latest_trade_price_usd_per_btc,
-    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role
+    latest_trade_price_usdt_per_btc, trade_rows_in_response, row_count, role,
+    ...(name === "farside-btc-etf-all-data-page" ? {
+      source_payload_sha256, retrieved_at, latest_reported_date, page_generated_date,
+      latest_row_total_usd_million: latest_reported_row?.reported_total_usd_million ?? null,
+      latest_row_reconciliation_status: latest_reported_row?.reconciliation_status ?? null
+    } : {})
   })),
   unresolved: manifest.unresolved
 }, null, 2));
