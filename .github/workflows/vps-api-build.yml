@@ -30,10 +30,7 @@ jobs:
       - name: Install VPS API dependencies
         working-directory: vps/api
         run: npm install
-      - name: Build VPS worker
-        working-directory: vps/worker
-        run: npm install && npm run build
-      - name: Test VPS Worker London day boundaries
+      - name: Test VPS Worker UTC candle boundaries and finalization
         working-directory: vps/worker
         run: npm test
       - name: Build VPS API
