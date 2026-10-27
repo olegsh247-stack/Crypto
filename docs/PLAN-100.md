@@ -2187,3 +2187,10 @@ Read-only staging was rerun via [BTC Public Source Staging #40107313213, attempt
 - BTC Public Source Staging run [#40531601122](https://github.com/olegsh247-stack/Crypto/actions/runs/40531601122): Farside snapshot revision tests, calendar validator, and all six session-freshness tests passed after the date-regex fix.
 - The full staging workflow still ended blocked at the independent BTC fee/subsidy audit: `BLOCKED_PER_BLOCK_FEE_SUBSIDY_AUDIT`, reason `tip changed or behind window`. This is not an ETF test failure and no ingestion occurred; recapture/recheck the fee window separately when continuing the broader BTC capture.
 - ETF production ingestion remains blocked on the documented publication-window policy, upstream calendar payload hashes, real revision evidence, and self-hosted durable retention/restore.
+
+### 2026-10-27 — ETF publication policy and upstream hash capture
+
+- Reviewed Farside's public explanation: ETF flow data is updated in real time and updates typically occur in the evening/night US time. This is typical timing, not a guaranteed deadline or exact observation timestamp.
+- Added `data/CryptoDataModel/calendars/btc-etf-publication-freshness-policy.json`: 12-hour post-close grace period across midnight, then a complete reconciled Farside row may be at most one scheduled US trading session behind. Missing/incomplete values never become zero. Farside remains priority; SoSoValue cross-check only; TFTC supplemental; no averaging or auto-substitution.
+- Added read-only CI capture of raw response-body SHA-256 and provenance for the official NYSE calendar page, Nasdaq calendar page, and Farside ETF page. CI artifact must be inspected to confirm actual hashes; capture errors are non-fatal to the separate BTC workflow and remain explicit in the artifact/logs.
+- Added tests for policy invariants and overnight grace. Production ETF approval remains blocked on actual CI hash evidence, a real observed provider revision, and durable archive/read-back/restore on self-hosted infrastructure. No production writes, registry/runtime changes, deployment, or merge.
