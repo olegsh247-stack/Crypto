@@ -66,8 +66,12 @@ test("failed readiness gate never evaluates", () => {
   assert.equal(r.can_persist_scenario_state, false);
 });
 
-test("missing required values and negative fee ratio are rejected", () => {
-  assert.throws(() => evaluateBtcScenarioV1({ ...ready, price_return_7d_pct: null }), /finite number/);
+test("missing required values fail closed without throwing or scoring", () => {
+  const r = evaluateBtcScenarioV1({ ...ready, hashrate_change_7d_pct: null });
+  assert.equal(r.status, "not_evaluable");
+  assert.deepEqual(r.missing_required_inputs, ["hashrate_change_7d_pct"]);
+  assert.equal(r.can_persist_scenario_state, false);
+  assert.equal(r.baseline_probabilities_changed, false);
   assert.throws(() => evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: -0.1 }), /cannot be negative/);
 });
 
