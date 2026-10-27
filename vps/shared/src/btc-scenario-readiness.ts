@@ -12,8 +12,8 @@ const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sou
   // Fee/subsidy ratio is deferred: it is not required or calculated for this scenario.
   // Keep its source/method contract in the metric registry for future research, but do not
   // block current scenario readiness on a metric that has no approved method or current use.
-  // No specific DXY feed has been approved. Empty identity/URL allowlists fail closed.
-  { metricId: "macro.dxy", maxAgeHours: 48, unit: "index", sourceIds: [], sourceUrlPrefixes: [], label: "macro liquidity proxy (DXY)" },
+  // DXY is optional supporting context and must not block the first BTC scenario.
+
 ];
 
 function dateMs(value: unknown): number {
