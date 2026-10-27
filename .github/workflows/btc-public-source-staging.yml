@@ -3,6 +3,7 @@ name: BTC Public Source Staging (Read Only)
 # Manual runs and watched-file pushes run the same bounded review-only capture; no database or scenario-state writes occur.
 # A workflow-file-only change can refresh the capture when manual dispatch is unavailable.
 # Read-only recapture requested 2026-10-27: refresh BTC spot/ETF evidence and re-evaluate freshness.
+# ETF session freshness helper tests are research-only; provider publication-window policy remains fail-closed.
 # Readiness review policy: fresh capture may use registered fallback sources; this workflow never writes production state.
 on:
   push:
