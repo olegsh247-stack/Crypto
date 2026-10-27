@@ -30,6 +30,20 @@ export function evaluateBtcScenarioV1(input) {
     return { status: "not_evaluable", reason: "input_quality_gate_not_passed",
       methodology_version: RULE.methodology_version, can_persist_scenario_state: false };
   }
+  const missingRequiredInputs = ["price_return_7d_pct", "etf_net_flow_5d_usd_millions",
+    "hashrate_change_7d_pct", "fee_subsidy_ratio"].filter(key =>
+      input[key] === null || input[key] === undefined || input[key] === ""
+      || !Number.isFinite(Number(input[key])));
+  if (missingRequiredInputs.length) {
+    return {
+      status: "not_evaluable",
+      reason: "required_rule_inputs_missing_or_invalid",
+      missing_required_inputs: missingRequiredInputs,
+      methodology_version: RULE.methodology_version,
+      can_persist_scenario_state: false,
+      baseline_probabilities_changed: false
+    };
+  }
   const price = number(input.price_return_7d_pct, "price_return_7d_pct");
   const flows = number(input.etf_net_flow_5d_usd_millions, "etf_net_flow_5d_usd_millions");
   const hashrate = number(input.hashrate_change_7d_pct, "hashrate_change_7d_pct");
