@@ -32,7 +32,7 @@ function resolveBackendPath(path: string[], method: string) {
   if (path.length < 1 || path.length > 2) return null;
   const [resource, id] = path;
   if (!["assets", "pairs", "commodities"].includes(resource)) return null;
-  if (id !== undefined && !/^[A-Za-z0-9._~-]+$/.test(id)) return null;
+  if (id !== undefined && !/^[A-Za-z0-9_-]{1,128}$/.test(id)) return null;
   if (method === "POST" && id === undefined) return "/api/" + resource;
   if (method === "DELETE" && id !== undefined) return "/api/" + resource + "/" + id;
   return null;
