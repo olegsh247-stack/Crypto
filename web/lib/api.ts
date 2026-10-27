@@ -69,14 +69,34 @@ export type AssetDetailResponse = {
 
 const API_BASE = process.env.CRYPTO_API_URL ?? "http://localhost:8787";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(API_BASE + path, { ...init, cache: "no-store", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
+  const isAdminMutation = path.startsWith("/api/admin/");
+  const requestUrl = isAdminMutation && typeof window !== "undefined" ? path : API_BASE + path;
+  const requestInit: RequestInit = { ...init, cache: "no-store", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } };
+  let res = await fetch(requestUrl, requestInit);
+
+  if (isAdminMutation && typeof window !== "undefined" && res.status === 401) {
+    const accessKey = window.prompt("Admin access key");
+    if (!accessKey) throw new Error("Admin authentication required");
+    const login = await fetch("/api/admin/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessKey }),
+      cache: "no-store",
+    });
+    const loginData = await login.json().catch(() => ({}));
+    if (!login.ok) throw new Error(loginData?.error ?? "Admin authentication failed");
+    res = await fetch(requestUrl, requestInit);
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error ?? "Crypto API failed: " + res.status);
   return data as T;
 }
+export type AssetType = { asset_type_id: string; code: string; name: string; description?: string | null };
+export async function getAssetTypes(): Promise<{ items: AssetType[]; count: number }> { return api<{ items: AssetType[]; count: number }>("/api/asset-types"); }
 export async function getAssets(): Promise<Asset[]> { const data = await api<{ assets?: Asset[] }>("/api/assets"); return data.assets ?? []; }
 export async function getAsset(assetId: string): Promise<AssetDetailResponse> { return api<AssetDetailResponse>("/api/assets/" + encodeURIComponent(assetId)); }
-export async function createAsset(input: { symbol: string; name: string }): Promise<AdminMutationResponse<Asset>> { return api<AdminMutationResponse<Asset>>("/api/admin/assets", { method: "POST", body: JSON.stringify(input) }); }
+export async function createAsset(input: { symbol: string; name: string; category: string; research_tier: string; primary_asset_type_id: string; enabled: boolean }): Promise<AdminMutationResponse<Asset>> { return api<AdminMutationResponse<Asset>>("/api/admin/assets", { method: "POST", body: JSON.stringify(input) }); }
 export async function disableAsset(assetId: string): Promise<AdminMutationResponse<Asset>> { return api<AdminMutationResponse<Asset>>("/api/admin/assets/" + encodeURIComponent(assetId), { method: "DELETE" }); }
 export async function getPairs(): Promise<PairsResponse> { return api<PairsResponse>("/api/pairs"); }
 export async function createPair(input: { base: string; quote: string; exchange?: string }): Promise<AdminMutationResponse<MarketPair>> { return api<AdminMutationResponse<MarketPair>>("/api/admin/pairs", { method: "POST", body: JSON.stringify({ symbol: input.base + "/" + input.quote, exchange: input.exchange }) }); }
