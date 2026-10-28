@@ -17,6 +17,21 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+      - name: Generate VPS package lockfiles for review
+        run: |
+          set -euo pipefail
+          for package in shared worker api; do
+            npm install --package-lock-only --ignore-scripts --prefix "vps/$package"
+          done
+      - name: Upload generated VPS package lockfiles
+        uses: actions/upload-artifact@v4
+        with:
+          name: vps-package-lockfiles
+          path: |
+            vps/shared/package-lock.json
+            vps/worker/package-lock.json
+            vps/api/package-lock.json
+          if-no-files-found: error
       - name: Verify repository is VPS-only
         run: node scripts/check-vps-only-repository.mjs
       - name: Build VPS shared runtime
@@ -39,6 +54,16 @@ jobs:
       - name: Test VPS API response contracts
         working-directory: vps/api
         run: npm test
+      - name: Build VPS API and Worker Docker images
+        run: |
+          set -euo pipefail
+          docker build --file vps/api/Dockerfile --tag crypto-api-vps:ci vps
+          docker build --file vps/worker/Dockerfile --tag crypto-worker-vps:ci vps
+      - name: Verify shared runtime resolves in both final images
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint node crypto-api-vps:ci --input-type=module -e "await import('@crypto/vps-runtime'); console.log('API_SHARED_RUNTIME_OK')"
+          docker run --rm --entrypoint node crypto-worker-vps:ci --input-type=module -e "await import('@crypto/vps-runtime'); console.log('WORKER_SHARED_RUNTIME_OK')"
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
