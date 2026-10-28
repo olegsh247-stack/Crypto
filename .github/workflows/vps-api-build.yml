@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-e2e:
@@ -48,6 +48,17 @@ jobs:
             vps/worker/package-lock.json
             vps/api/package-lock.json
           if-no-files-found: error
+      - name: Commit generated npm lockfiles
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/btc-observation-pipeline-mainline'
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add vps/shared/package-lock.json vps/worker/package-lock.json vps/api/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build: pin VPS npm dependencies'
+            git push origin HEAD:fix/btc-observation-pipeline-mainline
+          fi
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
