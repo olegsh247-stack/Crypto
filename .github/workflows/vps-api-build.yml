@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-e2e:
@@ -21,10 +21,10 @@ jobs:
         run: node scripts/check-vps-only-repository.mjs
       - name: Build VPS shared runtime
         working-directory: vps/shared
-        run: npm install --install-links && npm run build
+        run: npm ci --install-links && npm run build
       - name: Build VPS worker
         working-directory: vps/worker
-        run: npm install && npm run build
+        run: npm ci --install-links && npm run build
       - name: BTC source collector parser tests
         run: node --test scripts/btc-observation-collectors.test.mjs
       - name: Install VPS API dependencies
@@ -33,32 +33,6 @@ jobs:
       - name: Test VPS Worker UTC candle boundaries and finalization
         working-directory: vps/worker
         run: npm test
-      - name: Generate deterministic npm lockfiles
-        run: |
-          set -euo pipefail
-          (cd vps/shared && npm install --package-lock-only --install-links)
-          (cd vps/worker && npm install --package-lock-only --install-links)
-          (cd vps/api && npm install --package-lock-only --install-links)
-      - name: Upload generated npm lockfiles for review
-        uses: actions/upload-artifact@v6
-        with:
-          name: vps-npm-lockfiles
-          path: |
-            vps/shared/package-lock.json
-            vps/worker/package-lock.json
-            vps/api/package-lock.json
-          if-no-files-found: error
-      - name: Commit generated npm lockfiles
-        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/btc-observation-pipeline-mainline'
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add vps/shared/package-lock.json vps/worker/package-lock.json vps/api/package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'build: pin VPS npm dependencies'
-            git push origin HEAD:fix/btc-observation-pipeline-mainline
-          fi
       - name: Build VPS API
         working-directory: vps/api
         run: npm run build
