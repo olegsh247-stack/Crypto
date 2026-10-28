@@ -1904,3 +1904,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Validation on commit `2742173`: BTC Scenario Readiness Gate passed. Full CI for collector integration commit `9a7d171` is running; do not mark this change validated until all relevant checks finish.
 - Still open within current scope: a single deterministic offline test does not yet exercise the full collector-to-normalized-input-to-scenario-output chain. Existing collector parser tests, database idempotency rehearsal and offline scenario fixture test cover separate segments. Next step is to connect these segments in a no-network/no-production-write integration test.
 - Deferred beyond current architecture/test scope: live Farside publication/finality semantics and the definition/methodology of `monetary.circulating_supply`. Neither is used to block the historical preliminary scenario result.
+
+
+### BTC preliminary rule contract correction, 2026-10-28
+
+- Fixed a mismatch in `scripts/btc-scenario-direction.mjs`: the rule previously required `fee_subsidy_ratio` even though the readiness contract explicitly defers it and the rule uses it only as context. The ratio is now optional; if absent, evaluation proceeds and the output records that context as unavailable. If present, a negative value is still rejected.
+- Added a regression test for evaluation without fee/subsidy ratio. This does not change directional scoring, baseline probabilities, scenario persistence, or ingestion approval.
+- Relevant checks for the latest code are pending in GitHub Actions; do not treat the fix as validated until the build/test run completes.
