@@ -118,12 +118,15 @@ export async function runScheduledIngestion(env:WorkerEnv){
     const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
     const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
     const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+    const ingestionFailures=ingestionResults.flatMap((result,index)=>result.status==="rejected"
+      ? [{asset_id:assets[index].asset_id,symbol:assets[index].symbol,reason:result.reason instanceof Error?result.reason.message:"candle_ingestion_failed"}]
+      : []);
     // Review deadlines are independent of whether a market candle was fetched successfully.
     try{await refreshResearchReviewStatus(sql);}catch{}
     const btcObservations = env.BTC_OBSERVATION_INGESTION_ENABLED === "true"
       ? await refreshBtcObservationInputs(env.DATABASE_URL)
       : {status:"disabled",candidate_count:0,inserted:0,revised:0,unchanged:0,failures:[],unresolved_metrics:[]};
-    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0),btc_observations:btcObservations};
+    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0),candle_ingestion:{failures:ingestionFailures},btc_observations:btcObservations};
   } finally {
     await closePool();
   }
