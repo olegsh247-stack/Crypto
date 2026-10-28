@@ -71,11 +71,22 @@ test("missing required values and negative fee ratio are rejected", () => {
   assert.throws(() => evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: -0.1 }), /cannot be negative/);
 });
 
+test("missing fee/subsidy ratio does not block evaluation because it is deferred context", () => {
+  const { fee_subsidy_ratio: _unused, ...withoutFeeRatio } = ready;
+  const r = evaluateBtcScenarioV1(withoutFeeRatio);
+  assert.equal(r.status, "evaluated");
+  assert.equal(r.context.fee_subsidy_ratio, null);
+  assert.equal(r.context.fee_subsidy_ratio_available, false);
+  assert.equal(r.context.fee_subsidy_ratio_used_as_directional_signal, false);
+  assert.equal(r.directional_score, 0);
+});
+
 test("fee ratio is context only", () => {
   const a = evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: 0.001 });
   const b = evaluateBtcScenarioV1({ ...ready, fee_subsidy_ratio: 0.9 });
   assert.equal(a.directional_score, b.directional_score);
   assert.equal(b.context.fee_subsidy_ratio_used_as_directional_signal, false);
+  assert.equal(b.context.fee_subsidy_ratio_available, true);
 });
 
 test("source-reviewed October 12 fixture remains Base under rule v1", () => {
