@@ -56,7 +56,9 @@ export function mergeRecentDailyCandleRows(binanceRows:DailyCandleRow[],krakenRo
  return [...rowsByOpenTime.entries()].sort((a,b)=>a[0]-b[0]).map(([,row])=>row);
 }
 
-async function ingestAssetDaily(sql:any, asset:any){
+interface CandleIngestionResult { asset_id:string; rows:number; source:string|null; fetch_failures:Array<{source:string;reason:string}>; }
+
+async function ingestAssetDaily(sql:any, asset:any):Promise<CandleIngestionResult>{
  const assetSymbol=String(asset.symbol).toUpperCase();
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
  const now=new Date();
@@ -120,10 +122,18 @@ export async function runScheduledIngestion(env:WorkerEnv){
   try {
     const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
     const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
-    const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null;fetch_failures?:Array<{source:string;reason:string}>}> => result.status==="fulfilled" && result.value.rows>0);
-    const ingestionFailures=ingestionResults.flatMap((result,index)=>result.status==="rejected"
-      ? [{asset_id:assets[index].asset_id,symbol:assets[index].symbol,source:"database",reason:result.reason instanceof Error?result.reason.message:"candle_ingestion_failed"}]
-      : result.value.fetch_failures.map(failure=>({asset_id:assets[index].asset_id,symbol:assets[index].symbol,...failure})));
+    const successfulIngestion: Array<PromiseFulfilledResult<CandleIngestionResult>> = [];
+    const ingestionFailures:Array<{asset_id:string;symbol:string;source:string;reason:string}> = [];
+    ingestionResults.forEach((result,index)=>{
+      if(result.status==="rejected"){
+        ingestionFailures.push({asset_id:assets[index].asset_id,symbol:assets[index].symbol,source:"database",reason:result.reason instanceof Error?result.reason.message:"candle_ingestion_failed"});
+        return;
+      }
+      if(result.value.rows>0)successfulIngestion.push(result);
+      for(const failure of result.value.fetch_failures){
+        ingestionFailures.push({asset_id:assets[index].asset_id,symbol:assets[index].symbol,...failure});
+      }
+    });
     // Review deadlines are independent of whether a market candle was fetched successfully.
     try{await refreshResearchReviewStatus(sql);}catch{}
     const btcObservations = env.BTC_OBSERVATION_INGESTION_ENABLED === "true"
