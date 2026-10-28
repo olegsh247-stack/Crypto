@@ -33,33 +33,43 @@ async function krakenUsdKlines(asset:string){
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export interface DailyCandleRow { time:string; open:number; high:number; low:number; close:number; volume:number; sourceId?:string; sourceSymbol?:string; }
+
+export function mergeRecentDailyCandleRows(binanceRows:DailyCandleRow[],krakenRows:DailyCandleRow[],assetSymbol:string,binanceSymbol:string,now:Date){
+ const expectedOpenTimes=Array.from({length:8},(_,index)=>utcDayBoundary(now).getTime()-(index+1)*DAY_MS);
+ const rowsByOpenTime=new Map<number,DailyCandleRow>();
+ for(const row of binanceRows){
+  const openAt=utcDayBoundary(new Date(row.time));
+  if(isClosedUtcDailyCandle(openAt,now)&&expectedOpenTimes.includes(openAt.getTime()))rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_binance",sourceSymbol:binanceSymbol});
+ }
+ // Fill only dates missing from Binance. Binance remains the preferred source for overlapping dates.
+ const missingDays=expectedOpenTimes.filter(openTime=>!rowsByOpenTime.has(openTime));
+ const krakenPair=KRAKEN_USD_PAIRS[assetSymbol];
+ if(krakenPair){
+  for(const row of krakenRows){
+   const openAt=utcDayBoundary(new Date(row.time));
+   if(isClosedUtcDailyCandle(openAt,now)&&missingDays.includes(openAt.getTime())&&!rowsByOpenTime.has(openAt.getTime())){
+    rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_kraken",sourceSymbol:krakenPair});
+   }
+  }
+ }
+ return [...rowsByOpenTime.entries()].sort((a,b)=>a[0]-b[0]).map(([,row])=>row);
+}
+
 async function ingestAssetDaily(sql:any, asset:any){
  const assetSymbol=String(asset.symbol).toUpperCase();
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
  const now=new Date();
+ let binanceRows:DailyCandleRow[]=[];
+ try{binanceRows=await binanceKlines(binanceSymbol,"1d",10);}catch{}
+ const binanceTimes=new Set(binanceRows.filter(row=>isClosedUtcDailyCandle(new Date(row.time),now)).map(row=>utcDayBoundary(new Date(row.time)).getTime()));
  const expectedOpenTimes=Array.from({length:8},(_,index)=>utcDayBoundary(now).getTime()-(index+1)*DAY_MS);
- const rowsByOpenTime=new Map<number,any>();
- try{
-  const binanceRows=(await binanceKlines(binanceSymbol,"1d",10)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));
-  for(const row of binanceRows){
-   const openAt=utcDayBoundary(new Date(row.time));
-   if(expectedOpenTimes.includes(openAt.getTime()))rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_binance",sourceSymbol:binanceSymbol});
-  }
- }catch{}
- // A partial Binance response must not silently leave holes in the recent finalized history.
- const missingDays=expectedOpenTimes.filter(openTime=>!rowsByOpenTime.has(openTime));
- if(missingDays.length&&KRAKEN_USD_PAIRS[assetSymbol]){
-  try{
-   const krakenRows=(await krakenUsdKlines(assetSymbol)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));
-   for(const row of krakenRows){
-    const openAt=utcDayBoundary(new Date(row.time));
-    if(missingDays.includes(openAt.getTime())&&!rowsByOpenTime.has(openAt.getTime())){
-     rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_kraken",sourceSymbol:KRAKEN_USD_PAIRS[assetSymbol]});
-    }
-   }
-  }catch{}
+ const missingDays=expectedOpenTimes.some(openTime=>!binanceTimes.has(openTime));
+ let krakenRows:DailyCandleRow[]=[];
+ if(missingDays&&KRAKEN_USD_PAIRS[assetSymbol]){
+  try{krakenRows=await krakenUsdKlines(assetSymbol);}catch{}
  }
- const rows=[...rowsByOpenTime.entries()].sort((a,b)=>a[0]-b[0]).map(([,row])=>row);
+ const rows=mergeRecentDailyCandleRows(binanceRows,krakenRows,assetSymbol,binanceSymbol,now);
  if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
  let written=0;
  const writtenSources=new Set<string>();
@@ -77,11 +87,10 @@ async function ingestAssetDaily(sql:any, asset:any){
     where (case when excluded.source_id='market_binance' then 2 else 1 end)
       >= (case when market_daily_candles.source_id='market_binance' then 2 else 1 end)`;
   written++;
-  writtenSources.add(row.sourceId);
+  writtenSources.add(row.sourceId??"unknown");
  }
  return {asset_id:asset.asset_id,rows:written,source:writtenSources.size===1?[...writtenSources][0]:[...writtenSources].sort().join("+")};
 }
-
 export function utcDayBoundary(input:Date){
  return new Date(Date.UTC(input.getUTCFullYear(),input.getUTCMonth(),input.getUTCDate()));
 }
