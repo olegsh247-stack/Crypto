@@ -136,3 +136,93 @@ console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload
 NODE
 
 echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"
+
+# End-to-end historical test: persist synthetic collector-shaped observations, read them
+# back from disposable PostgreSQL, derive metrics from those stored rows, then evaluate
+# the pure preliminary rule. This never targets a non-crypto_test database.
+DATABASE_URL="$DATABASE_URL" node --input-type=module <<'NODE'
+import assert from "node:assert/strict";
+import { withSqlTransaction } from "./vps/shared/dist/index.js";
+import { persistBtcObservation } from "./vps/worker/dist/btc-observations.js";
+import { assessBtcScenarioReadiness } from "./vps/shared/dist/btc-scenario-readiness.js";
+import { evaluateBtcScenarioV1 } from "./scripts/btc-scenario-direction.mjs";
+
+const databaseUrl = process.env.DATABASE_URL;
+const dbName = await withSqlTransaction(databaseUrl, async client => {
+  const result = await client.query("SELECT current_database() AS name");
+  return result.rows[0].name;
+});
+assert.equal(dbName, "crypto_test", "integration rehearsal must only use disposable crypto_test");
+const now = new Date();
+const hash = "c".repeat(64);
+const daysAgo = n => new Date(now.getTime() - n * 24 * 60 * 60 * 1000);
+const day = d => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+const make = (metricId, sourceId, sourceUrl, valueNumeric, unit, observedAt, sourceRowKey, periodStart = null, periodEnd = null) => ({
+  metricId, sourceId, sourceUrl, valueNumeric, unit, observedAt, retrievedAt: now,
+  sourceRowKey, sourcePayloadSha256: hash, periodStart, periodEnd,
+  methodology: "Synthetic historical DB-to-scenario integration fixture; not market data.",
+  status: "NORMAL", freshness: "CURRENT",
+});
+const spotUrl = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
+const hashUrl = "https://mempool.space/api/v1/mining/hashrate/1w";
+const etfUrl = "https://farside.co.uk/btc/";
+const candidates = [
+  make("market.spot_price","market.kraken",spotUrl,83679.46,"USD/BTC",new Date(now.getTime()-10_000),"btc-e2e:spot:current"),
+  make("market.spot_price","market.kraken",spotUrl,80000,"USD/BTC",daysAgo(7),"btc-e2e:spot:anchor",day(daysAgo(7)),day(daysAgo(6))),
+  make("security.hashrate","network.primary",hashUrl,260,"EH/s",day(daysAgo(1)),"btc-e2e:hashrate:current",day(daysAgo(1)),day(now)),
+  make("security.hashrate","network.primary",hashUrl,247.5,"EH/s",day(daysAgo(8)),"btc-e2e:hashrate:anchor",day(daysAgo(8)),day(daysAgo(7))),
+];
+const flows = [-89.8,118.8,-484.9,-244.1,21.1];
+for (let i=0;i<5;i++) {
+  const reportDay = day(daysAgo(4-i));
+  candidates.push(make("institutional.etf_net_flow","institutional.primary",etfUrl,flows[i],"USD million/day",
+    new Date(now.getTime()-5_000),`btc-e2e:etf:${reportDay.toISOString().slice(0,10)}`,reportDay,new Date(reportDay.getTime()+86400000)));
+}
+for (const candidate of candidates) await persistBtcObservation(databaseUrl,candidate);
+
+const stored = await withSqlTransaction(databaseUrl, async client => {
+  const result = await client.query(`
+    SELECT o.metric_id,o.asset_id,o.value_numeric,o.value_integer,o.unit,
+      o.observed_at,o.source_updated_at,o.retrieved_at,o.period_start,o.period_end,
+      o.source_id,o.source_url,o.source_row_key,o.source_payload_sha256,
+      o.methodology,o.methodology_version,o.freshness,o.revision,
+      EXISTS (SELECT 1 FROM sources s WHERE s.source_id=o.source_id) AS source_registered
+    FROM observations o
+    WHERE o.asset_id='btc' AND o.source_row_key LIKE 'btc-e2e:%'
+    ORDER BY o.observed_at,o.period_start
+  `);
+  return result.rows;
+});
+assert.equal(stored.length,candidates.length,"all synthetic candidates must be read back from PostgreSQL");
+const rows = stored.map(row => ({...row, expected_unit:row.unit}));
+const readiness = assessBtcScenarioReadiness(rows,now);
+assert.equal(readiness.status,"ready_for_rule_evaluation",JSON.stringify(readiness.blockers));
+
+const spots = rows.filter(row=>row.metric_id==="market.spot_price").sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at));
+const hashrates = rows.filter(row=>row.metric_id==="security.hashrate").sort((a,b)=>Date.parse(b.period_end)-Date.parse(a.period_end));
+const etfByDay = new Map();
+for (const row of rows.filter(row=>row.metric_id==="institutional.etf_net_flow").sort((a,b)=>Date.parse(b.period_start)-Date.parse(a.period_start))) {
+  const reportDay = new Date(row.period_start).toISOString().slice(0,10);
+  if (!etfByDay.has(reportDay)) etfByDay.set(reportDay,row);
+}
+const latestSpot = spots[0];
+const anchorSpot = spots.find(row=>Date.parse(row.observed_at)<=now.getTime()-6.5*86400000);
+const latestHashrate = hashrates[0];
+const anchorHashrate = hashrates.find(row=>Date.parse(row.period_end)<=now.getTime()-6.5*86400000);
+const latestFiveEtf = [...etfByDay.values()].slice(0,5);
+assert.ok(latestSpot && anchorSpot && latestHashrate && anchorHashrate);
+assert.equal(latestFiveEtf.length,5);
+const inputs = {
+  readiness_status: readiness.status,
+  price_return_7d_pct: (Number(latestSpot.value_numeric)/Number(anchorSpot.value_numeric)-1)*100,
+  etf_net_flow_5d_usd_millions: latestFiveEtf.reduce((sum,row)=>sum+Number(row.value_numeric),0),
+  hashrate_change_7d_pct: (Number(latestHashrate.value_numeric)/Number(anchorHashrate.value_numeric)-1)*100,
+  // DXY and fee/subsidy are intentionally optional context.
+};
+const result = evaluateBtcScenarioV1(inputs);
+assert.equal(result.status,"evaluated");
+assert.equal(result.scenario_type,"base");
+assert.equal(result.baseline_probabilities_changed,false);
+assert.equal(result.can_persist_scenario_state,false);
+console.log(JSON.stringify({test:"BTC_DB_TO_PRELIMINARY_RESULT_OK",stored_observations:stored.length,derived_inputs:inputs,result:{scenario_type:result.scenario_type,directional_score:result.directional_score,can_persist_scenario_state:result.can_persist_scenario_state},database_access:"disposable crypto_test only"}));
+NODE
