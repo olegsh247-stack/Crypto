@@ -59,6 +59,9 @@ export function mergeRecentDailyCandleRows(binanceRows:DailyCandleRow[],krakenRo
 interface CandleIngestionResult { asset_id:string; rows:number; source:string|null; fetch_failures:Array<{source:string;reason:string}>; }
 
 async function ingestAssetDaily(sql:any, asset:any):Promise<CandleIngestionResult>{
+ // USDT is the quote/stablecoin asset in this registry, not a tradable USDTUSDT market.
+ // Do not request or report a candle-source failure for this non-market asset.
+ if(String(asset.asset_id).toLowerCase()==="usdt")return {asset_id:asset.asset_id,rows:0,source:null,fetch_failures:[]};
  const assetSymbol=String(asset.symbol).toUpperCase();
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
  const now=new Date();
