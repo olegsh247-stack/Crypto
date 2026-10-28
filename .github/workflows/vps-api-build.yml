@@ -66,7 +66,7 @@ jobs:
           docker run --rm --entrypoint node crypto-vps-worker:ci -e "import('@crypto/vps-runtime').then(()=>console.log('WORKER_RUNTIME_IMPORT_OK'))"
           cleanup() { docker rm -f crypto-vps-api-smoke crypto-vps-worker-smoke >/dev/null 2>&1 || true; }
           trap cleanup EXIT
-          docker run -d --name crypto-vps-api-smoke -e DATABASE_URL= -e PORT=8080 -e HOST=0.0.0.0 -p 127.0.0.1:18080:8080 crypto-vps-api:ci
+          docker run -d --name crypto-vps-api-smoke -e DATABASE_URL=postgresql://crypto:crypto@127.0.0.1:5432/crypto -e PORT=8080 -e HOST=0.0.0.0 -p 127.0.0.1:18080:8080 crypto-vps-api:ci
           for _ in $(seq 1 20); do
             if curl --fail --silent http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'; then
               echo "VPS_API_CONTAINER_START_OK"
