@@ -352,9 +352,8 @@ export async function persistBtcObservation(databaseUrl: string, candidate: BtcO
       `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,source_url,source_row_key,methodology,status,freshness
        FROM observations
        WHERE asset_id='btc' AND metric_id=$1 AND source_id=$2 AND source_row_key=$3
-         AND period_start IS NOT DISTINCT FROM $4::timestamptz
        ORDER BY revision DESC LIMIT 1 FOR UPDATE`,
-      [candidate.metricId, candidate.sourceId, candidate.sourceRowKey, candidate.periodStart]
+      [candidate.metricId, candidate.sourceId, candidate.sourceRowKey]
     );
     const latest = existing.rows[0];
     if (latest && samePayload(latest, candidate)) {
