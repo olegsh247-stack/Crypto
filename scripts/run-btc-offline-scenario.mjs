@@ -37,6 +37,8 @@ for (const [key, expected] of Object.entries(fixture.expected)) {
   assert.equal(result[key], expected, "unexpected scenario output for " + key);
 }
 console.log(JSON.stringify({
+  mode: "historical_test",
+  fresh_market_data_required: false,
   fixture_id: fixture.fixture_id,
   fixture_type: fixture.fixture_type,
   live_data_used: false,
@@ -45,5 +47,5 @@ console.log(JSON.stringify({
   scenario_state_persisted: false,
   monitoring_events_written: false,
   output: result,
-  note: "Deterministic historical offline rehearsal only. It does not establish current input freshness or current BTC scenario readiness."
+  note: "Historical test data is intentionally not fresh. This deterministic offline rehearsal does not establish current input freshness or current BTC scenario readiness; do not fetch fresh market data to satisfy this test."
 }, null, 2));
