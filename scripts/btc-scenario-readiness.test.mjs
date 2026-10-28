@@ -168,7 +168,7 @@ test("registered but unapproved ETF mirror cannot pass canonical-source gate", (
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "latest_report_session_must_be_a_recent_weekday_and_observation_current_traceable_within_36_hours"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
 });
 
@@ -235,7 +235,7 @@ test("registered SoSoValue ETF candidate cannot bypass the canonical Farside sou
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "latest_report_session_must_be_a_recent_weekday_and_observation_current_traceable_within_36_hours"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"], undefined);
 });
 
@@ -249,7 +249,7 @@ test("ETF observation timestamp cannot substitute for a missing reporting date",
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
   assert.ok(result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
-    && x.reason === "latest_observation_must_be_current_traceable_and_within_36_hours"));
+    && x.reason === "latest_report_session_must_be_a_recent_weekday_and_observation_current_traceable_within_36_hours"));
   assert.ok(!result.selected_inputs["institutional.etf_net_flow"]);
 });
 
