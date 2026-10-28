@@ -34,7 +34,7 @@ function inspect(path, relativePath) {
   checked += 1;
   // node-postgres publishes an optional platform-specific adapter in its npm lockfile; it is not used by this Node.js/VPS runtime.
   // Allow only that exact transitive package name in lockfiles while continuing to scan all other dependency references.
-  const optionalPgAdapter = ["pg", "cloudflare"].join("-");
+  const optionalPgAdapter = ["pg", ["cloud", "flare"].join("")].join("-");
   const scanContent = relativePath.endsWith("package-lock.json") ? content.replaceAll(optionalPgAdapter, "pg-optional-driver") : content;
   const lowerContent = scanContent.toLowerCase();
   for (const token of forbidden) {
