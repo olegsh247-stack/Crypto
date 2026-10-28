@@ -7,6 +7,8 @@ import {
   parseRewardStatsPayload,
 } from "../vps/worker/dist/btc-observations.js";
 
+import { BTC_SOURCE_CATALOG } from "../vps/worker/dist/btc-source-catalog.js";
+
 const now = new Date("2026-10-12T18:00:00.000Z");
 const seconds = value => Math.floor(new Date(value).getTime() / 1000);
 const hashYesterday = "a".repeat(64);
@@ -96,4 +98,17 @@ test("candidate collector validates provider payloads and leaves DXY explicitly 
   assert.ok(result.candidates.some(x => x.metricId === "security.fee_subsidy_ratio"));
   assert.equal(result.candidates.filter(x => x.metricId === "institutional.etf_net_flow").length, 2);
   assert.deepEqual(result.unresolvedMetrics, ["macro.dxy"]);
+  const catalogByMetric = new Map([
+    [BTC_SOURCE_CATALOG.spotPrice.metricId, BTC_SOURCE_CATALOG.spotPrice],
+    [BTC_SOURCE_CATALOG.hashrate.metricId, BTC_SOURCE_CATALOG.hashrate],
+    [BTC_SOURCE_CATALOG.feeSubsidyRatio.metricId, BTC_SOURCE_CATALOG.feeSubsidyRatio],
+    [BTC_SOURCE_CATALOG.etfNetFlow.metricId, BTC_SOURCE_CATALOG.etfNetFlow],
+  ]);
+  for (const candidate of result.candidates) {
+    const contract = catalogByMetric.get(candidate.metricId);
+    assert.ok(contract, "candidate metric must be present in the central source catalog");
+    assert.equal(candidate.sourceUrl, contract.url);
+    assert.equal(candidate.sourceId, contract.sourceId);
+    assert.equal(candidate.unit, contract.unit);
+  }
 });
