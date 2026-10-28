@@ -1918,3 +1918,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - The test explicitly states its boundary: historical anchor values are fixture inputs, and it does **not** claim a database-observation-to-scenario bridge. No network access, real market data, PostgreSQL, production writes, scenario-state persistence, monitoring writes or probability changes are used.
 - Exact test commit `6ec70f6fbd7fd4dca8f01312f835bc6796fa2620`: collector/parser + integration test passed; BTC Scenario Readiness Gate, VPS API Build Rehearsal, Seed observation idempotency rehearsal and Validate VPS Release Workflow passed.
 - Remaining boundary in current scope: the complete path is now exercised through normalized candidates and the readiness/rule contracts, but **persisted database observations are not read back into the derived-metric calculation in this test**. Do not describe it as a full DB-to-result integration. Production ingestion remains disabled and BTC live readiness remains separate.
+
+
+### BTC disposable PostgreSQL-to-result integration — 2026-10-28
+
+- Extended `scripts/test-btc-observation-idempotency.sh` with a deterministic end-to-end rehearsal restricted to database name `crypto_test`: synthetic collector-shaped BTC spot, hashrate and five ETF-session observations are persisted through the real `persistBtcObservation` path, read back from PostgreSQL, checked by the read-only readiness contract, converted into derived price return / five-session ETF flow sum / hashrate change, and passed to the pure preliminary rule.
+- The test asserts that all inserted observations are read back, readiness allows rule evaluation, the deterministic result is `base`, and scenario persistence/probability changes remain disabled. It uses synthetic fixtures only; no live sources or production database.
+- CI for commit `238c0c8703a5d23850a20e280e866f66476c5c33` is running. Do not call the DB-to-result chain validated until the disposable PostgreSQL rehearsal and the full VPS API build/E2E complete successfully.
