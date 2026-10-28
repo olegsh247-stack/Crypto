@@ -1867,3 +1867,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Removed a duplicate path entry from the disposable PostgreSQL idempotency workflow trigger.
 - Verification on commit `4f17c715582888c269f0da736e184c7e264b517a`: VPS API Build Rehearsal #2736 passed, Seed observation idempotency rehearsal #271 passed, and Validate VPS Release Workflow #427 passed. Checks cover Worker/API builds and tests, VPS-only repository scan, PostgreSQL migration/bootstrap, BTC input provenance, idempotency/duplicate reconciliation, backup/restore, and API/Worker E2E.
 - These checks validate the isolated rehearsal only. They do not approve production ingestion or change the BTC `not_evaluable` gate.
+
+
+### BTC test mode — historical data is expected, 2026-10-28
+
+- Offline BTC scenario tests intentionally use a committed historical fixture. Its values are expected to be stale; do not repeatedly recapture live prices or ETF flows merely to make an offline test pass.
+- Test mode validates deterministic calculations and rule behavior only. Historical test output must be labeled test-only and cannot count as live readiness.
+- Live readiness continues to reject stale/untraceable required inputs (not_evaluable). Test mode performs no DB writes, source ingestion, scenario-state/monitoring writes, or probability changes.
