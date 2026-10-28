@@ -8,6 +8,8 @@ import {
 } from "../vps/worker/dist/btc-observations.js";
 
 import { BTC_SOURCE_CATALOG } from "../vps/worker/dist/btc-source-catalog.js";
+import { assessBtcScenarioReadiness } from "../vps/shared/dist/btc-scenario-readiness.js";
+import { evaluateBtcScenarioV1 } from "./btc-scenario-direction.mjs";
 
 const now = new Date("2026-10-12T18:00:00.000Z");
 const seconds = value => Math.floor(new Date(value).getTime() / 1000);
@@ -111,4 +113,99 @@ test("candidate collector validates provider payloads and leaves DXY explicitly 
     assert.equal(candidate.sourceId, contract.sourceId);
     assert.equal(candidate.unit, contract.unit);
   }
+});
+
+
+test("integrated historical BTC path: mocked source payloads -> normalized candidates -> readiness -> derived inputs -> preliminary result", async () => {
+  const fixture = JSON.parse(await (await import("node:fs/promises")).readFile(
+    new URL("../fixtures/btc-offline-scenario-v1.json", import.meta.url), "utf8"
+  ));
+  const now = new Date("2026-10-12T18:00:00.000Z");
+  const secs = value => Math.floor(new Date(value).getTime() / 1000);
+  const rows = [
+    ["09 Oct 2026", -89.8],
+    ["08 Oct 2026", 118.8],
+    ["07 Oct 2026", -484.9],
+    ["06 Oct 2026", -244.1],
+    ["05 Oct 2026", 21.1],
+  ];
+  const html = `<table><tr><th>Date</th><th>Fund A</th><th>Total</th></tr>${
+    rows.map(([date, total]) => `<tr><td>${date}</td><td>${total}</td><td>${total}</td></tr>`).join("")
+  }</table>`;
+  const fetchImpl = async input => {
+    const url = String(input);
+    if (url === BTC_SOURCE_CATALOG.spotPrice.url) return new Response(JSON.stringify({
+      error: [], result: { XXBTZUSD: [
+        ["83679.46", "0.01", secs("2026-10-12T17:59:50Z"), "b", "l", ""]
+      ], last: "123" }
+    }), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.hashrate.url) return new Response(JSON.stringify({ hashrates: [
+      { timestamp: secs("2026-10-10T12:00:00Z"), avgHashrate: 2.475247524752475e20 },
+      { timestamp: secs("2026-10-11T12:00:00Z"), avgHashrate: 2.5e20 },
+      { timestamp: secs("2026-10-12T12:00:00Z"), avgHashrate: 2.6e20 }
+    ] }), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.feeSubsidyRatio.url) return new Response(JSON.stringify({
+      startBlock: 100, endBlock: 243, totalReward: 3.1379, totalFee: 0.0129
+    }), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.blockByHeightUrl(100)) return new Response("a".repeat(64), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.blockByHeightUrl(243)) return new Response("b".repeat(64), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.blockByHashUrl("a".repeat(64))) return new Response(JSON.stringify({ timestamp: secs("2026-10-10T00:00:00Z") }), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.blockByHashUrl("b".repeat(64))) return new Response(JSON.stringify({ timestamp: secs("2026-10-12T10:00:00Z") }), { status: 200 });
+    if (url === BTC_SOURCE_CATALOG.etfNetFlow.url) return new Response(html, { status: 200 });
+    throw new Error("unexpected_url:" + url);
+  };
+
+  // This is an intentionally historical/mock capture, not live market data or DB observations.
+  const collected = await collectBtcObservationCandidates({ fetchImpl, now });
+  assert.deepEqual(collected.failures, []);
+  const spot = collected.candidates.find(x => x.metricId === "market.spot_price");
+  const hashrate = collected.candidates.find(x => x.metricId === "security.hashrate");
+  const fee = collected.candidates.find(x => x.metricId === "security.fee_subsidy_ratio");
+  const etf = collected.candidates.filter(x => x.metricId === "institutional.etf_net_flow");
+  assert.ok(spot && hashrate && fee);
+  assert.equal(etf.length, 5);
+
+  const toReadinessRow = candidate => ({
+    metric_id: candidate.metricId,
+    value_numeric: candidate.valueNumeric,
+    unit: candidate.unit,
+    expected_unit: candidate.unit,
+    observed_at: candidate.observedAt.toISOString(),
+    retrieved_at: candidate.retrievedAt.toISOString(),
+    period_start: candidate.periodStart?.toISOString() ?? null,
+    period_end: candidate.periodEnd?.toISOString() ?? null,
+    source_id: candidate.sourceId,
+    source_url: candidate.sourceUrl,
+    source_row_key: candidate.sourceRowKey,
+    source_payload_sha256: candidate.sourcePayloadSha256,
+    methodology: candidate.methodology,
+    freshness: candidate.freshness,
+    source_registered: true,
+    revision: 1,
+  });
+  const readinessRows = [toReadinessRow(spot), ...etf.map(toReadinessRow)];
+  const readiness = assessBtcScenarioReadiness(readinessRows, now);
+  assert.equal(readiness.status, "ready_for_rule_evaluation", JSON.stringify(readiness.blockers));
+
+  // The 7-day anchor is a reviewed historical fixture value; the current endpoint
+  // capture is mocked. The test explicitly does not claim a DB-to-scenario bridge.
+  const priceReturn = (spot.valueNumeric / fixture.provenance.btc_spot_close_start_usd - 1) * 100;
+  const etfFlow5d = etf.reduce((sum, row) => sum + row.valueNumeric, 0);
+  const hashrateChange = (hashrate.valueNumeric / 247.5247524752475 - 1) * 100;
+  const dxyChange = (fixture.provenance.dxy_close_end / fixture.provenance.dxy_close_start - 1) * 100;
+  const feeRatio = fee.valueNumeric;
+  const result = evaluateBtcScenarioV1({
+    readiness_status: readiness.status,
+    price_return_7d_pct: priceReturn,
+    etf_net_flow_5d_usd_millions: etfFlow5d,
+    hashrate_change_7d_pct: hashrateChange,
+    dxy_change_5d_pct: dxyChange,
+    fee_subsidy_ratio: feeRatio,
+  });
+  assert.equal(result.status, "evaluated");
+  assert.equal(result.scenario_type, fixture.expected.scenario_type);
+  assert.equal(result.directional_score, fixture.expected.directional_score);
+  assert.equal(result.baseline_probabilities_changed, false);
+  assert.equal(result.can_persist_scenario_state, false);
+  assert.equal(readiness.can_persist_scenario_state, false);
 });
