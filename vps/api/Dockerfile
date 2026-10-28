@@ -3,7 +3,7 @@ WORKDIR /app
 COPY api/package.json ./api/
 COPY shared ./shared
 RUN cd shared && npm install && npm run build
-RUN cd api && npm install
+RUN cd api && npm install --install-links
 COPY api/tsconfig.json ./api/
 COPY api/src ./api/src
 RUN cd api && npm run build

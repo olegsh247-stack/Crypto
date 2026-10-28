@@ -3,7 +3,7 @@ WORKDIR /app
 COPY worker/package.json ./worker/
 COPY shared ./shared
 RUN cd shared && npm install && npm run build
-RUN cd worker && npm install
+RUN cd worker && npm install --install-links
 COPY worker/tsconfig.json ./worker/
 COPY worker/src ./worker/src
 RUN cd worker && npm run build
