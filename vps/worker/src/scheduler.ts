@@ -79,15 +79,20 @@ async function ingestAssetDaily(sql:any, asset:any){
   const openPrice=Number(row.open),high=Number(row.high),low=Number(row.low),close=Number(row.close),volume=Number(row.volume);
   if(![openAt.getTime(),closeAt.getTime(),openPrice,high,low,close,volume].every(Number.isFinite))continue;
   if(openPrice<=0||high<=0||low<=0||close<=0||volume<0)continue;
-  await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
+  const upserted = await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
     values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${openPrice},${high},${low},${close},${volume},${row.sourceId},${row.sourceSymbol})
     on conflict(asset_id,candle_open_at) do update set
       candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
       source_id=excluded.source_id,source_symbol=excluded.source_symbol
     where (case when excluded.source_id='market_binance' then 2 else 1 end)
-      >= (case when market_daily_candles.source_id='market_binance' then 2 else 1 end)`;
-  written++;
-  writtenSources.add(row.sourceId??"unknown");
+      >= (case when market_daily_candles.source_id='market_binance' then 2 else 1 end)
+    returning asset_id`;
+  // PostgreSQL returns no row when the conflict precedence rule intentionally skips the update.
+  // Count only rows actually inserted or updated, not attempted upserts.
+  if (upserted.length > 0) {
+    written++;
+    writtenSources.add(row.sourceId??"unknown");
+  }
  }
  return {asset_id:asset.asset_id,rows:written,source:writtenSources.size===1?[...writtenSources][0]:[...writtenSources].sort().join("+")};
 }
