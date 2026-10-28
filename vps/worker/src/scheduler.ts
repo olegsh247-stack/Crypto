@@ -61,16 +61,19 @@ async function ingestAssetDaily(sql:any, asset:any){
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
  const now=new Date();
  let binanceRows:DailyCandleRow[]=[];
- try{binanceRows=await binanceKlines(binanceSymbol,"1d",10);}catch{}
+ const fetchFailures:Array<{source:string;reason:string}>=[];
+ try{binanceRows=await binanceKlines(binanceSymbol,"1d",10);}
+ catch(error){fetchFailures.push({source:"market_binance",reason:error instanceof Error?error.message:"binance_fetch_failed"});}
  const binanceTimes=new Set(binanceRows.filter(row=>isClosedUtcDailyCandle(new Date(row.time),now)).map(row=>utcDayBoundary(new Date(row.time)).getTime()));
  const expectedOpenTimes=Array.from({length:8},(_,index)=>utcDayBoundary(now).getTime()-(index+1)*DAY_MS);
  const missingDays=expectedOpenTimes.some(openTime=>!binanceTimes.has(openTime));
  let krakenRows:DailyCandleRow[]=[];
  if(missingDays&&KRAKEN_USD_PAIRS[assetSymbol]){
-  try{krakenRows=await krakenUsdKlines(assetSymbol);}catch{}
+  try{krakenRows=await krakenUsdKlines(assetSymbol);}
+  catch(error){fetchFailures.push({source:"market_kraken",reason:error instanceof Error?error.message:"kraken_fetch_failed"});}
  }
  const rows=mergeRecentDailyCandleRows(binanceRows,krakenRows,assetSymbol,binanceSymbol,now);
- if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
+ if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null,fetch_failures:fetchFailures};
  let written=0;
  const writtenSources=new Set<string>();
  for(const row of rows){
@@ -94,7 +97,7 @@ async function ingestAssetDaily(sql:any, asset:any){
     writtenSources.add(row.sourceId??"unknown");
   }
  }
- return {asset_id:asset.asset_id,rows:written,source:writtenSources.size===1?[...writtenSources][0]:[...writtenSources].sort().join("+")};
+ return {asset_id:asset.asset_id,rows:written,source:writtenSources.size===1?[...writtenSources][0]:[...writtenSources].sort().join("+"),fetch_failures:fetchFailures};
 }
 export function utcDayBoundary(input:Date){
  return new Date(Date.UTC(input.getUTCFullYear(),input.getUTCMonth(),input.getUTCDate()));
@@ -117,10 +120,10 @@ export async function runScheduledIngestion(env:WorkerEnv){
   try {
     const assets=await sql`select asset_id,symbol,binance_symbol from assets where enabled=true order by symbol`;
     const ingestionResults=await Promise.allSettled(assets.map(async asset=>ingestAssetDaily(sql,asset)));
-    const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null}> => result.status==="fulfilled" && result.value.rows>0);
+    const successfulIngestion=ingestionResults.filter((result): result is PromiseFulfilledResult<{asset_id:string;rows:number;source:string|null;fetch_failures?:Array<{source:string;reason:string}>}> => result.status==="fulfilled" && result.value.rows>0);
     const ingestionFailures=ingestionResults.flatMap((result,index)=>result.status==="rejected"
-      ? [{asset_id:assets[index].asset_id,symbol:assets[index].symbol,reason:result.reason instanceof Error?result.reason.message:"candle_ingestion_failed"}]
-      : []);
+      ? [{asset_id:assets[index].asset_id,symbol:assets[index].symbol,source:"database",reason:result.reason instanceof Error?result.reason.message:"candle_ingestion_failed"}]
+      : result.value.fetch_failures.map(failure=>({asset_id:assets[index].asset_id,symbol:assets[index].symbol,...failure})));
     // Review deadlines are independent of whether a market candle was fetched successfully.
     try{await refreshResearchReviewStatus(sql);}catch{}
     const btcObservations = env.BTC_OBSERVATION_INGESTION_ENABLED === "true"
