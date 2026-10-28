@@ -1901,8 +1901,7 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 - Added `vps/worker/src/btc-source-catalog.ts` as the single runtime adapter map for the BTC collector's endpoint URLs, canonical metric IDs, source IDs and units. The collector now consumes this catalog rather than declaring provider URLs in its implementation.
 - This is an architecture refactor only. It does not approve sources for production ingestion, alter readiness policy, or change the historical fixture/scenario result.
-- Validation on commit `2742173`: BTC Scenario Readiness Gate passed. Full CI for collector integration commit `9a7d171` is running; do not mark this change validated until all relevant checks finish.
-- Still open within current scope: a single deterministic offline test does not yet exercise the full collector-to-normalized-input-to-scenario-output chain. Existing collector parser tests, database idempotency rehearsal and offline scenario fixture test cover separate segments. Next step is to connect these segments in a no-network/no-production-write integration test.
+- Validation: the catalog-to-candidate contract test and the deterministic integration test below pass on the current PR head. The full collector/build/E2E CI is tracked against the exact commit and must be rechecked after this documentation update.
 - Deferred beyond current architecture/test scope: live Farside publication/finality semantics and the definition/methodology of `monetary.circulating_supply`. Neither is used to block the historical preliminary scenario result.
 
 
@@ -1910,4 +1909,12 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 - Fixed a mismatch in `scripts/btc-scenario-direction.mjs`: the rule previously required `fee_subsidy_ratio` even though the readiness contract explicitly defers it and the rule uses it only as context. The ratio is now optional; if absent, evaluation proceeds and the output records that context as unavailable. If present, a negative value is still rejected.
 - Added a regression test for evaluation without fee/subsidy ratio. This does not change directional scoring, baseline probabilities, scenario persistence, or ingestion approval.
-- Relevant checks for the latest code are pending in GitHub Actions; do not treat the fix as validated until the build/test run completes.
+- Validation on code/test commit `6ec70f6`: BTC Scenario Readiness Gate, VPS API Build Rehearsal, Seed observation idempotency rehearsal and Validate VPS Release Workflow all passed. The rule remains pure and does not change probabilities or persist scenario state.
+
+
+### BTC historical pipeline integration test — 2026-10-28
+
+- Added an offline integration test to `scripts/btc-observation-collectors.test.mjs`: mocked provider payloads pass through the real collector parsers into normalized candidates; required spot/ETF candidates are mapped into the read-only readiness contract; historical anchor values and captured candidates produce derived price return, five-session ETF sum, hashrate change and optional DXY/fee context; the pure preliminary rule emits the expected deterministic result.
+- The test explicitly states its boundary: historical anchor values are fixture inputs, and it does **not** claim a database-observation-to-scenario bridge. No network access, real market data, PostgreSQL, production writes, scenario-state persistence, monitoring writes or probability changes are used.
+- Exact test commit `6ec70f6fbd7fd4dca8f01312f835bc6796fa2620`: collector/parser + integration test passed; BTC Scenario Readiness Gate, VPS API Build Rehearsal, Seed observation idempotency rehearsal and Validate VPS Release Workflow passed.
+- Remaining boundary in current scope: the complete path is now exercised through normalized candidates and the readiness/rule contracts, but **persisted database observations are not read back into the derived-metric calculation in this test**. Do not describe it as a full DB-to-result integration. Production ingestion remains disabled and BTC live readiness remains separate.
