@@ -224,5 +224,9 @@ assert.equal(result.status,"evaluated");
 assert.equal(result.scenario_type,"base");
 assert.equal(result.baseline_probabilities_changed,false);
 assert.equal(result.can_persist_scenario_state,false);
+// Keep this integration fixture isolated from subsequent E2E checks sharing the same disposable DB.
+await withSqlTransaction(databaseUrl, async client => {
+  await client.query("DELETE FROM observations WHERE asset_id='btc' AND source_row_key LIKE 'btc-e2e:%'");
+});
 console.log(JSON.stringify({test:"BTC_DB_TO_PRELIMINARY_RESULT_OK",stored_observations:stored.length,derived_inputs:inputs,result:{scenario_type:result.scenario_type,directional_score:result.directional_score,can_persist_scenario_state:result.can_persist_scenario_state},database_access:"disposable crypto_test only"}));
 NODE
