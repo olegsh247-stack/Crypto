@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { withSqlTransaction } from "@crypto/vps-runtime";
+import { BTC_SOURCE_CATALOG } from "./btc-source-catalog.js";
 
 export type ObservationFreshness = "CURRENT" | "STALE";
 export interface BtcObservationCandidate {
@@ -26,10 +27,6 @@ export interface CandidateCollection {
 }
 type Fetcher = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
-const KRAKEN_TRADES_URL = "https://api.kraken.com/0/public/Trades?pair=XBTUSD";
-const HASHRATE_URL = "https://mempool.space/api/v1/mining/hashrate/1w";
-const REWARD_STATS_URL = "https://mempool.space/api/v1/mining/reward-stats/144";
-const FARSIDE_URL = "https://farside.co.uk/btc/";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
@@ -93,11 +90,11 @@ export function parseKrakenSpotPricePayload(payload: unknown, now: Date, sourceP
     ? `kraken:XBTUSD:trade:${tradeId}`
     : `kraken:XBTUSD:${latest.observedAt.toISOString()}:${latest.price}`;
   return {
-    metricId: "market.spot_price",
-    sourceId: "market.kraken",
-    sourceUrl: KRAKEN_TRADES_URL,
+    metricId: BTC_SOURCE_CATALOG.spotPrice.metricId,
+    sourceId: BTC_SOURCE_CATALOG.spotPrice.sourceId,
+    sourceUrl: BTC_SOURCE_CATALOG.spotPrice.url,
     valueNumeric: latest.price,
-    unit: "USD/BTC",
+    unit: BTC_SOURCE_CATALOG.spotPrice.unit,
     observedAt: latest.observedAt,
     retrievedAt: now,
     sourceRowKey,
@@ -123,11 +120,11 @@ export function parseHashratePayload(payload: unknown, now: Date, sourcePayloadS
     // The endpoint includes a partial current UTC day. Only use closed daily buckets.
     if (periodEnd.getTime() > now.getTime()) return null;
     return {
-      metricId: "security.hashrate",
-      sourceId: "network.primary",
-      sourceUrl: HASHRATE_URL,
+      metricId: BTC_SOURCE_CATALOG.hashrate.metricId,
+      sourceId: BTC_SOURCE_CATALOG.hashrate.sourceId,
+      sourceUrl: BTC_SOURCE_CATALOG.hashrate.url,
       valueNumeric: rawHashrate / 1e18,
-      unit: "EH/s",
+      unit: BTC_SOURCE_CATALOG.hashrate.unit,
       observedAt,
       retrievedAt: now,
       sourceRowKey: `mempool:hashrate:${periodStart.toISOString()}`,
@@ -166,11 +163,11 @@ export function parseRewardStatsPayload(
   const ratio = totalFee / subsidy;
   if (!Number.isFinite(ratio) || ratio < 0) throw new Error("invalid_fee_subsidy_ratio");
   return {
-    metricId: "security.fee_subsidy_ratio",
-    sourceId: "network.primary",
-    sourceUrl: REWARD_STATS_URL,
+    metricId: BTC_SOURCE_CATALOG.feeSubsidyRatio.metricId,
+    sourceId: BTC_SOURCE_CATALOG.feeSubsidyRatio.sourceId,
+    sourceUrl: BTC_SOURCE_CATALOG.feeSubsidyRatio.url,
     valueNumeric: ratio,
-    unit: "ratio",
+    unit: BTC_SOURCE_CATALOG.feeSubsidyRatio.unit,
     observedAt: endBlockAt,
     retrievedAt: now,
     sourceRowKey: `mempool:reward-stats:144:${startBlock}-${endBlock}`,
@@ -236,11 +233,11 @@ export function parseFarsideBtcFlows(html: string, now: Date, sourcePayloadSha25
     const observedAt = now;
     const periodEnd = new Date(reportDate.getTime() + 24 * 60 * 60 * 1000);
     candidates.push({
-      metricId: "institutional.etf_net_flow",
-      sourceId: "institutional.primary",
-      sourceUrl: FARSIDE_URL,
+      metricId: BTC_SOURCE_CATALOG.etfNetFlow.metricId,
+      sourceId: BTC_SOURCE_CATALOG.etfNetFlow.sourceId,
+      sourceUrl: BTC_SOURCE_CATALOG.etfNetFlow.url,
       valueNumeric,
-      unit: "USD million/day",
+      unit: BTC_SOURCE_CATALOG.etfNetFlow.unit,
       observedAt,
       retrievedAt: now,
       sourceRowKey: `farside:btc-etf-flow:${reportDate.toISOString().slice(0, 10)}`,
@@ -262,9 +259,9 @@ export function parseFarsideBtcFlows(html: string, now: Date, sourcePayloadSha25
 }
 
 async function fetchBlockTimestamp(fetchImpl: Fetcher, height: number): Promise<Date> {
-  const hash = (await responseText(fetchImpl, `https://mempool.space/api/block-height/${height}`)).trim();
+  const hash = (await responseText(fetchImpl, BTC_SOURCE_CATALOG.blockByHeightUrl(height))).trim();
   if (!/^[0-9a-f]{64}$/i.test(hash)) throw new Error("invalid_block_hash_response");
-  const block = await responseJson(fetchImpl, `https://mempool.space/api/block/${hash}`);
+  const block = await responseJson(fetchImpl, BTC_SOURCE_CATALOG.blockByHashUrl(hash));
   const timestamp = toDateFromSeconds(block?.timestamp);
   if (!timestamp) throw new Error("block_timestamp_missing");
   return timestamp;
@@ -291,17 +288,17 @@ export async function collectBtcObservationCandidates(options: {
 
   await Promise.all([
     collect("market.spot_price", async () => {
-      const result = await responseJsonWithHash(fetchImpl, KRAKEN_TRADES_URL);
+      const result = await responseJsonWithHash(fetchImpl, BTC_SOURCE_CATALOG.spotPrice.url);
       return parseKrakenSpotPricePayload(result.payload, now, result.sha256);
     }),
     collect("security.hashrate", async () => {
-      const result = await responseJsonWithHash(fetchImpl, HASHRATE_URL);
+      const result = await responseJsonWithHash(fetchImpl, BTC_SOURCE_CATALOG.hashrate.url);
       const candidate = parseHashratePayload(result.payload, now, result.sha256);
       if (!candidate) throw new Error("no_complete_hashrate_day");
       return candidate;
     }),
     collect("security.fee_subsidy_ratio", async () => {
-      const result = await responseJsonWithHash(fetchImpl, REWARD_STATS_URL);
+      const result = await responseJsonWithHash(fetchImpl, BTC_SOURCE_CATALOG.feeSubsidyRatio.url);
       const stats = result.payload;
       const startBlock = Number(stats?.startBlock);
       const endBlock = Number(stats?.endBlock);
@@ -313,7 +310,7 @@ export async function collectBtcObservationCandidates(options: {
       return parseRewardStatsPayload(stats, startBlockAt, endBlockAt, now, result.sha256);
     }),
     collect("institutional.etf_net_flow", async () => {
-      const result = await responseTextWithHash(fetchImpl, FARSIDE_URL);
+      const result = await responseTextWithHash(fetchImpl, BTC_SOURCE_CATALOG.etfNetFlow.url);
       return parseFarsideBtcFlows(result.text, now, result.sha256);
     }),
   ]);
