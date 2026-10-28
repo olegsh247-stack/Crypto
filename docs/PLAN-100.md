@@ -1881,3 +1881,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Confirmed: the offline scenario runner is isolated and explicitly labels historical_test mode; its latest PR-triggered checks pass. No fresh market capture is required for this test.
 - Follow-up finding in the opt-in collector: Farside ETF rows currently set observed_at to capture time because the provider does not expose per-row publication time. The readiness gate separately permits report dates up to 14 days old while checking observed_at within 36 hours. Consequently, re-fetching an old Farside table can make an old ETF session look recently observed. Capture time proves when we read the page, not when the reported flow became available.
 - Do not try to solve this by repeatedly recapturing data. Before live evaluation, define and test a U.S.-ETF-session-aware freshness rule using period_start/report date; until then this remains a live-readiness blocker. Historical offline test behavior is unaffected. No database, registry, runtime, scenario state or probability changes made.
+
+
+### ETF freshness gate regression fix, 2026-10-28
+
+- The BTC readiness gate now checks the ETF report/session date as well as capture-time freshness: the latest report date must be a weekday and no more than four calendar days old. Re-capturing an old Farside page no longer makes a stale report session pass; a regression test covers this.
+- Updated the readiness unit tests and VPS research-chain E2E expectation for the new blocker reason. CI passed on code/test commit `472206d`: BTC Scenario Readiness Gate #544, VPS API Build Rehearsal #2754, Seed observation idempotency rehearsal #280, and Validate VPS Release Workflow #436. (Run IDs: 40675036053, 40675036113, 40675036116, 40675036109.)
+- Limitation retained explicitly: the gate is weekday/date based, not yet backed by a complete U.S. market-holiday calendar. Do not treat this as full live ETF-source approval. Historical offline test mode remains exempt from live freshness; production ingestion remains disabled and BTC stays `not_evaluable` until all required checks pass.
