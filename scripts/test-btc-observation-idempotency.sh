@@ -98,7 +98,11 @@ DELETE FROM observations o USING ranked r
 WHERE o.observation_id=r.observation_id AND r.row_rank>1;
 SQL
 
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-15-btc-source-row-key-idempotency.sql
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+CREATE UNIQUE INDEX IF NOT EXISTS observations_btc_source_row_revision_uq
+ON observations (metric_id, source_id, source_row_key)
+WHERE asset_id = 'btc' AND source_row_key IS NOT NULL;
+SQL
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-13-btc-observation-natural-key.sql
 index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_natural_key_revision_uq') IS NOT NULL")"
 test "$index_exists" = "t"
