@@ -1859,3 +1859,11 @@ Verification boundary: GitHub combined status returned no checks and the availab
 3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
 4. Дождаться результата VPS API Build Rehearsal #39382019208 на текущем PR head. После этого повторно проверить mergeability/base divergence и решить, нужно ли разделить 94-файловый PR на меньшие reviewable части. Registry/runtime/seed изменения остаются отдельным reviewed этапом.
 
+### VPS BTC pipeline — regression fix and verification, 2026-10-28
+
+- PR #90 remains open/draft; no merge, deployment, production DB write, or live BTC ingestion was performed. BTC scenario readiness remains unchanged.
+- Fixed daily candle ingestion so a partial Binance response no longer silently leaves gaps in the latest eight finalized UTC days: Kraken fills only missing dates for supported USD pairs; Binance retains priority on overlapping dates. Each persisted candle keeps its actual source.
+- Added deterministic regression tests for missing-day fallback, Binance source priority, unsupported fallback pairs, and exclusion of open/out-of-window candles.
+- Removed a duplicate path entry from the disposable PostgreSQL idempotency workflow trigger.
+- Verification on commit `4f17c715582888c269f0da736e184c7e264b517a`: VPS API Build Rehearsal #2736 passed, Seed observation idempotency rehearsal #271 passed, and Validate VPS Release Workflow #427 passed. Checks cover Worker/API builds and tests, VPS-only repository scan, PostgreSQL migration/bootstrap, BTC input provenance, idempotency/duplicate reconciliation, backup/restore, and API/Worker E2E.
+- These checks validate the isolated rehearsal only. They do not approve production ingestion or change the BTC `not_evaluable` gate.
