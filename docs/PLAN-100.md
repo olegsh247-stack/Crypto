@@ -1895,3 +1895,12 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Current priority is the architecture and end-to-end path for source acquisition, normalization/provenance, preliminary deterministic calculations, and result output. Historical test fixtures are expected and are not expected to represent current market conditions or a precise forecast.
 - Deferred live-data issue: Farside collection currently sets `observed_at` to capture time because per-row publication time is unavailable. A re-fetch can therefore make a report row look recently observed. Do not solve this now with a U.S. holiday calendar or repeated captures; do not treat live ETF readiness as approved. The temporary weekday/four-day gate was removed as out of scope; the existing 14-day live gate remains provisional and is not evidence that ETF freshness semantics are solved.
 - Next audit scope: verify the complete architecture and reproducible historical path (source adapters -> normalized candidates -> provenance/idempotency storage path -> derived metrics -> preliminary scenario result), identify any missing link, and test it offline. No production ingestion, DB writes, deployment, merge, scenario-state persistence, or probability changes.
+
+
+### BTC runtime source contract centralization, 2026-10-28
+
+- Added `vps/worker/src/btc-source-catalog.ts` as the single runtime adapter map for the BTC collector's endpoint URLs, canonical metric IDs, source IDs and units. The collector now consumes this catalog rather than declaring provider URLs in its implementation.
+- This is an architecture refactor only. It does not approve sources for production ingestion, alter readiness policy, or change the historical fixture/scenario result.
+- Validation on commit `2742173`: BTC Scenario Readiness Gate passed. Full CI for collector integration commit `9a7d171` is running; do not mark this change validated until all relevant checks finish.
+- Still open within current scope: a single deterministic offline test does not yet exercise the full collector-to-normalized-input-to-scenario-output chain. Existing collector parser tests, database idempotency rehearsal and offline scenario fixture test cover separate segments. Next step is to connect these segments in a no-network/no-production-write integration test.
+- Deferred beyond current architecture/test scope: live Farside publication/finality semantics and the definition/methodology of `monetary.circulating_supply`. Neither is used to block the historical preliminary scenario result.
