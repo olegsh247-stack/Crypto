@@ -37,32 +37,49 @@ async function ingestAssetDaily(sql:any, asset:any){
  const assetSymbol=String(asset.symbol).toUpperCase();
  const binanceSymbol=String(asset.binance_symbol||assetSymbol+"USDT").toUpperCase();
  const now=new Date();
- let rows:any[]=[];
- let sourceId="market_binance";
- try{rows=(await binanceKlines(binanceSymbol,"1d",10)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));}catch{}
- if(!rows.length){
-  try{rows=(await krakenUsdKlines(assetSymbol)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));sourceId="market_kraken";}catch{}
+ const expectedOpenTimes=Array.from({length:8},(_,index)=>utcDayBoundary(now).getTime()-(index+1)*DAY_MS);
+ const rowsByOpenTime=new Map<number,any>();
+ try{
+  const binanceRows=(await binanceKlines(binanceSymbol,"1d",10)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));
+  for(const row of binanceRows){
+   const openAt=utcDayBoundary(new Date(row.time));
+   if(expectedOpenTimes.includes(openAt.getTime()))rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_binance",sourceSymbol:binanceSymbol});
+  }
+ }catch{}
+ // A partial Binance response must not silently leave holes in the recent finalized history.
+ const missingDays=expectedOpenTimes.filter(openTime=>!rowsByOpenTime.has(openTime));
+ if(missingDays.length&&KRAKEN_USD_PAIRS[assetSymbol]){
+  try{
+   const krakenRows=(await krakenUsdKlines(assetSymbol)).filter((row:any)=>isClosedUtcDailyCandle(new Date(row.time),now));
+   for(const row of krakenRows){
+    const openAt=utcDayBoundary(new Date(row.time));
+    if(missingDays.includes(openAt.getTime())&&!rowsByOpenTime.has(openAt.getTime())){
+     rowsByOpenTime.set(openAt.getTime(),{...row,sourceId:"market_kraken",sourceSymbol:KRAKEN_USD_PAIRS[assetSymbol]});
+    }
+   }
+  }catch{}
  }
+ const rows=[...rowsByOpenTime.entries()].sort((a,b)=>a[0]-b[0]).map(([,row])=>row);
  if(!rows.length)return {asset_id:asset.asset_id,rows:0,source:null};
  let written=0;
- const sourceSymbol=sourceId==="market_kraken"?(KRAKEN_USD_PAIRS[assetSymbol]??binanceSymbol):binanceSymbol;
- for(const row of rows.slice(-8)){
+ const writtenSources=new Set<string>();
+ for(const row of rows){
   const openAt=utcDayBoundary(new Date(row.time));
   const closeAt=new Date(openAt.getTime()+DAY_MS);
   const openPrice=Number(row.open),high=Number(row.high),low=Number(row.low),close=Number(row.close),volume=Number(row.volume);
   if(![openAt.getTime(),closeAt.getTime(),openPrice,high,low,close,volume].every(Number.isFinite))continue;
   if(openPrice<=0||high<=0||low<=0||close<=0||volume<0)continue;
   await sql`insert into market_daily_candles(asset_id,candle_open_at,candle_close_at,open_price,high_price,low_price,close_price,volume,source_id,source_symbol)
-    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${openPrice},${high},${low},${close},${volume},${sourceId},${sourceSymbol})
+    values(${asset.asset_id},${openAt.toISOString()},${closeAt.toISOString()},${openPrice},${high},${low},${close},${volume},${row.sourceId},${row.sourceSymbol})
     on conflict(asset_id,candle_open_at) do update set
-      candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,
-      low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
+      candle_close_at=excluded.candle_close_at,open_price=excluded.open_price,high_price=excluded.high_price,low_price=excluded.low_price,close_price=excluded.close_price,volume=excluded.volume,
       source_id=excluded.source_id,source_symbol=excluded.source_symbol
     where (case when excluded.source_id='market_binance' then 2 else 1 end)
       >= (case when market_daily_candles.source_id='market_binance' then 2 else 1 end)`;
   written++;
+  writtenSources.add(row.sourceId);
  }
- return {asset_id:asset.asset_id,rows:written,source:sourceId};
+ return {asset_id:asset.asset_id,rows:written,source:writtenSources.size===1?[...writtenSources][0]:[...writtenSources].sort().join("+")};
 }
 
 export function utcDayBoundary(input:Date){
