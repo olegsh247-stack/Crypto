@@ -16,6 +16,13 @@ const REQUIRED: Array<{ metricId: string; maxAgeHours: number; unit: string; sou
 
 ];
 
+const ETF_LATEST_MAX_AGE_DAYS = 4;
+
+function isWeekendUtc(dateMsValue: number): boolean {
+  const day = new Date(dateMsValue).getUTCDay();
+  return day === 0 || day === 6;
+}
+
 function dateMs(value: unknown): number {
   const n = Date.parse(value == null ? "" : String(value));
   return Number.isFinite(n) ? n : NaN;
@@ -120,11 +127,12 @@ export function assessBtcScenarioReadiness(observations: unknown, now: Date | st
   if (!latestEtf
       || !Number.isFinite(latestEtfPeriodMs)
       || latestEtfPeriodMs > nowMs
-      || nowMs - latestEtfPeriodMs > 14 * 24 * 3600000
+      || isWeekendUtc(latestEtfPeriodMs)
+      || nowMs - latestEtfPeriodMs > ETF_LATEST_MAX_AGE_DAYS * 24 * 3600000
       || !validObservation(latestEtf, nowMs, 36, "USD million/day", ["institutional.primary"], ["https://farside.co.uk/btc/", "https://farside.co.uk/bitcoin-etf-flow-all-data/"])) {
     blockers.push({
       metric_id: "institutional.etf_net_flow",
-      reason: "latest_observation_must_be_current_traceable_and_within_36_hours",
+      reason: "latest_report_session_must_be_a_recent_weekday_and_observation_current_traceable_within_36_hours",
     });
   }
 
