@@ -1874,3 +1874,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Offline BTC scenario tests intentionally use a committed historical fixture. Its values are expected to be stale; do not repeatedly recapture live prices or ETF flows merely to make an offline test pass.
 - Test mode validates deterministic calculations and rule behavior only. Historical test output must be labeled test-only and cannot count as live readiness.
 - Live readiness continues to reject stale/untraceable required inputs (not_evaluable). Test mode performs no DB writes, source ingestion, scenario-state/monitoring writes, or probability changes.
+
+
+### BTC freshness audit — ETF reporting date vs capture time, 2026-10-28
+
+- Confirmed: the offline scenario runner is isolated and explicitly labels historical_test mode; its latest PR-triggered checks pass. No fresh market capture is required for this test.
+- Follow-up finding in the opt-in collector: Farside ETF rows currently set observed_at to capture time because the provider does not expose per-row publication time. The readiness gate separately permits report dates up to 14 days old while checking observed_at within 36 hours. Consequently, re-fetching an old Farside table can make an old ETF session look recently observed. Capture time proves when we read the page, not when the reported flow became available.
+- Do not try to solve this by repeatedly recapturing data. Before live evaluation, define and test a U.S.-ETF-session-aware freshness rule using period_start/report date; until then this remains a live-readiness blocker. Historical offline test behavior is unaffected. No database, registry, runtime, scenario state or probability changes made.
