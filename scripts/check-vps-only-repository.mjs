@@ -32,7 +32,8 @@ function inspect(path, relativePath) {
   if (bytes.includes(0)) return;
   const content = bytes.toString("utf8");
   checked += 1;
-  // node-postgres ships pg-cloudflare as an optional transport adapter; it is not an active platform integration.\n  const lowerContent = content.toLowerCase().replaceAll("pg-cloudflare", "");
+  // node-postgres ships pg-cloudflare as an optional transport adapter; it is not an active platform integration.
+  const lowerContent = content.toLowerCase().replaceAll("pg-cloudflare", "");
   for (const token of forbidden) {
     if (lowerContent.includes(token)) {
       violations.push({ file: relativePath });
