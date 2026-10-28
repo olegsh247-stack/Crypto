@@ -8,7 +8,7 @@ if [[ "$actual_database" != "crypto_test" ]]; then
   exit 2
 fi
 
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq'
 # Insert a deterministic fixture because clean seed data intentionally has no live numeric BTC inputs.
 base_id="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq <<'SQL'
 INSERT INTO observations (
@@ -52,7 +52,7 @@ remaining="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "
 test "$remaining" = "0"
 
 # Verify conflicting payloads are not automatically reconciled.
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq'
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS observations_btc_natural_key_revision_uq; DROP INDEX IF EXISTS observations_btc_source_row_revision_uq'
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -v base_id="$base_id" <<'SQL'
 INSERT INTO observations (
   metric_id, asset_id, value_numeric, value_integer, value_boolean, value_text, value_json,
@@ -98,6 +98,7 @@ DELETE FROM observations o USING ranked r
 WHERE o.observation_id=r.observation_id AND r.row_rank>1;
 SQL
 
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-15-btc-source-row-key-idempotency.sql
 psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f infrastructure/postgres/migrations/2026-10-13-btc-observation-natural-key.sql
 index_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atq -c "SELECT to_regclass('public.observations_btc_natural_key_revision_uq') IS NOT NULL")"
 test "$index_exists" = "t"
