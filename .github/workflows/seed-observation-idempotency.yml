@@ -20,7 +20,6 @@ on:
       - "scripts/test-seed-observation-idempotency.sh"
       - "scripts/test-btc-observation-idempotency.sh"
       - ".github/workflows/seed-observation-idempotency.yml"
-      - ".github/workflows/seed-observation-idempotency.yml"
   workflow_dispatch:
 
 permissions:
