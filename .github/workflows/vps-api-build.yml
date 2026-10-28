@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-e2e:
@@ -17,47 +17,19 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - name: Generate VPS package lockfiles for review
-        run: |
-          set -euo pipefail
-          for package in shared worker api; do
-            npm install --package-lock-only --ignore-scripts --prefix "vps/$package"
-          done
-      - name: Upload generated VPS package lockfiles
-        uses: actions/upload-artifact@v4
-        with:
-          name: vps-package-lockfiles
-          path: |
-            vps/shared/package-lock.json
-            vps/worker/package-lock.json
-            vps/api/package-lock.json
-          if-no-files-found: error
-      - name: Bootstrap tracked lockfiles on the dedicated fix branch
-        if: github.ref == 'refs/heads/fix/vps-docker-runtime-and-lockfiles'
-        run: |
-          set -euo pipefail
-          if git ls-files --error-unmatch vps/shared/package-lock.json >/dev/null 2>&1; then
-            echo "VPS lockfiles are already tracked; no bootstrap commit needed."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add vps/shared/package-lock.json vps/worker/package-lock.json vps/api/package-lock.json
-          git commit -m "build: lock VPS package dependencies"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Verify repository is VPS-only
         run: node scripts/check-vps-only-repository.mjs
       - name: Build VPS shared runtime
         working-directory: vps/shared
-        run: npm install && npm run build
+        run: npm ci && npm run build
       - name: Build VPS worker
         working-directory: vps/worker
-        run: npm install && npm run build
+        run: npm ci && npm run build
       - name: BTC source collector parser tests
         run: node --test scripts/btc-observation-collectors.test.mjs
       - name: Install VPS API dependencies
         working-directory: vps/api
-        run: npm install
+        run: npm ci
       - name: Test VPS Worker UTC candle boundaries and finalization
         working-directory: vps/worker
         run: npm test
