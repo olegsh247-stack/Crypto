@@ -74,7 +74,12 @@ jobs:
             fi
             sleep 1
           done
-          curl --fail --silent http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'
+          if ! curl --fail --silent http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'; then
+            echo "VPS_API_CONTAINER_HEALTH_FAILED"
+            docker logs crypto-vps-api-smoke || true
+            docker inspect crypto-vps-api-smoke --format '{{json .State}}' || true
+            exit 1
+          fi
           docker run -d --name crypto-vps-worker-smoke -e DATABASE_URL= -e WORKER_SCHEDULE_UTC=23:59 crypto-vps-worker:ci
           for _ in $(seq 1 10); do
             if docker logs crypto-vps-worker-smoke 2>&1 | grep -q '"status":"scheduled"'; then
