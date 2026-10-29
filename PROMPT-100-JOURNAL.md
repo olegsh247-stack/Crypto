@@ -315,3 +315,6 @@
 - API now returns explicit consistency statuses and exposes observation-side source/provenance separately. Web EvidenceRecord type and fixture were added; Dashboard displays lineage status, both source identities, observed/retrieved times, method, row key and hash prefix.
 - Commits: API `6d9ba34044ef50f29db1ad8def5d4b5d341c54f5` and `26f9e7ecce5861f4c8bdece99b0ec2544f2e4752`; Web type `9741f36e98f10a5d9daf1efeb5b89b748da3c173`; fixture `5200dc9efd197a7d4f39da0546664134bce1b83b`; Dashboard `1d27bae540d96973e653d84d8d9b922b8a8f4c55`.
 - Live PostgreSQL rows were not queried; actual mismatch/null/duplicate rates remain unknown. No migration before anomaly counts. Exact-HEAD CI is not confirmed. Production and main were not changed.
+
+
+- Added `scripts/audit-evidence-lineage.sql` as a read-only psql audit (explicit READ ONLY transaction; SELECT only) for nullable links, block/snapshot and domain/block alignment, source mismatch, observation/snapshot asset mismatch, missing URLs, duplicate-like groups and non-published snapshot evidence. Not run against live DB; no results inferred. Commit `00eba258d538726396564a7e797e1eb8889db30a`.
