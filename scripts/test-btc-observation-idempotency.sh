@@ -154,6 +154,22 @@ assert.deepEqual(
   await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
   { action: "unchanged", revision: 4 },
 );
+// Concurrent first/correction writes for the same natural key but different periods
+// must serialize and produce two revisions instead of racing into a duplicate INSERT.
+const concurrentWrites = await Promise.all([
+  persistBtcObservation(process.env.DATABASE_URL, {
+    ...periodCorrected,
+    valueNumeric: 80002,
+    periodStart: new Date(timestampCorrected.observedAt.getTime() - 120_000),
+  }),
+  persistBtcObservation(process.env.DATABASE_URL, {
+    ...periodCorrected,
+    valueNumeric: 80003,
+    periodStart: new Date(timestampCorrected.observedAt.getTime() - 180_000),
+  }),
+]);
+assert.deepEqual(concurrentWrites.map(result => result.action), ["revised", "revised"]);
+assert.deepEqual(concurrentWrites.map(result => result.revision).sort((a, b) => a - b), [5, 6]);
 const etfCandidate = {
   ...candidate,
   metricId: "institutional.etf_net_flow",
@@ -181,7 +197,7 @@ assert.deepEqual(
   }),
   { action: "unchanged", revision: 1 },
 );
-console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
+console.log("BTC_OBSERVATION_REVISION_OK initial=1 value_correction=2 timestamp_correction=3 period_correction=4 concurrent_period_corrections=5,6 repeated_payload=unchanged");
 NODE
 
 echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"
