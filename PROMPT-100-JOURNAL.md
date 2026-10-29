@@ -308,3 +308,10 @@
 
 - Завершена UI parity: Dashboard получил отдельный раздел Metric data с observation/retrieval/provider timestamps, source registration/name/type, row key, methodology/version, hash prefix, revision, raw freshness classification и source link. Интерфейс прямо указывает, что freshness — сохранённая ingestion-time оценка, а не обещание свежести на текущую минуту.
 - Dashboard commit: f89893387a4de84015598f60e03f8c7ad5a100bd. Следующий этап — Evidence lineage audit. Live API/DB и CI на актуальном HEAD пока не подтверждены.
+
+## 2026-10-30 — Evidence lineage static audit
+
+- Schema review found independent nullable FKs for Evidence snapshot, research block, domain, observation and source. The DB does not guarantee block/snapshot alignment, domain/block association or equality between Evidence source and observation source.
+- API now returns explicit consistency statuses and exposes observation-side source/provenance separately. Web EvidenceRecord type and fixture were added; Dashboard displays lineage status, both source identities, observed/retrieved times, method, row key and hash prefix.
+- Commits: API `6d9ba34044ef50f29db1ad8def5d4b5d341c54f5` and `26f9e7ecce5861f4c8bdece99b0ec2544f2e4752`; Web type `9741f36e98f10a5d9daf1efeb5b89b748da3c173`; fixture `5200dc9efd197a7d4f39da0546664134bce1b83b`; Dashboard `1d27bae540d96973e653d84d8d9b922b8a8f4c55`.
+- Live PostgreSQL rows were not queried; actual mismatch/null/duplicate rates remain unknown. No migration before anomaly counts. Exact-HEAD CI is not confirmed. Production and main were not changed.
