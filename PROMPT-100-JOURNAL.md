@@ -298,3 +298,10 @@
 - Commits: API `4899abe8518df1514bafb31e0b29564c9fd0362e`; Web types `0721d72e853b58979df1786256359d9ef251601f`; Dashboard `dc9378445b5207663e5f3245ceba2a0a5aec0b72`; contract test `d13f9e29d8fea9bcb0f284f5bf1b980aa4cc651a`; audit doc `2a153cb41a221fd9cd2359534efd193fedc9a09e`.
 - Осталось: live read-only проверки фактических строк, null rates, cross-asset relationship anomalies и temporal consistency после появления целевого VPS; сквозная UI/API проверка. Snapshot ID для signals/events намеренно не добавлялся — схема не поддерживает прямую привязку, миграция не создавалась.
 - Production DB, signal/event rows, monitoring refresh, probabilities, deployment, main и merge/rebase не затрагивались.
+## 2026-10-30 — Metric-level freshness/provenance API correction
+
+- Static audit found that the asset-detail API queried provenance fields for BTC readiness but omitted them from the ordinary metrics response. The Web metrics field was an untyped generic record and had no fixture.
+- Corrected the metric query/normalizer to return source registration/name/type, retrieved_at, nullable source_updated_at, source_row_key, SHA-256, methodology/version, created_at, revision and raw freshness_status. Added the explicit Web MetricObservation type and a fixture including UNCLASSIFIED and nullable metadata.
+- Stored freshness is an ingestion-time assessment, not a dynamic now-age guarantee. The API retains the raw enum; no freshness gate was added for offline/test mode. Collector currently leaves source_updated_at and methodology_version null; do not synthesize these fields.
+- Commits: API feb6fe0f32c30831bccedf7cadcc02ae483260a6; Web type ee46a674f1023e46bc982bdc5afab46ddcc9bf83; fixture d2c8234f4cc261a6add4c28d741fbd8d7b651b71.
+- Next: finish Dashboard display parity for metric provenance, then audit Evidence links from observation/source through research block and published snapshot. No live DB/API test or CI result claimed; no production writes, live capture, registry/runtime, scenario, monitoring, probability, deployment, merge/rebase or main changes.
