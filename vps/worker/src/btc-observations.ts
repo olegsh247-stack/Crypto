@@ -263,7 +263,15 @@ export function parseFarsideBtcFlows(html: string, now: Date, sourcePayloadSha25
   for (const candidate of candidates) {
     const key = candidate.periodStart!.getTime();
     const existing = unique.get(key);
-    if (!existing) unique.set(key, candidate);
+    if (!existing) {
+      unique.set(key, candidate);
+      continue;
+    }
+    // Identical repeated rows are safe to collapse; conflicting report totals or
+    // units are ambiguous and must fail closed instead of depending on HTML order.
+    if (existing.valueNumeric !== candidate.valueNumeric || existing.unit !== candidate.unit) {
+      throw new Error("farside_duplicate_reporting_date_conflict");
+    }
   }
   return [...unique.values()].sort((a, b) => a.periodStart!.getTime() - b.periodStart!.getTime());
 }

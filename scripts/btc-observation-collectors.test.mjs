@@ -89,6 +89,14 @@ test("Farside parser reads the Total column, parentheses as negative and skips n
   assert.equal(candidates[1].periodStart.toISOString(), "2026-10-12T00:00:00.000Z");
 });
 
+test("Farside parser deduplicates identical report dates but rejects conflicting totals", () => {
+  const sameDay = total => `<tr><td>12 Oct 2026</td><td>5.0</td><td>${total}</td></tr>`;
+  const identical = `<table><tr><th>Date</th><th>Fund A</th><th>Total</th></tr>${sameDay("5.0")}${sameDay("5.0")}</table>`;
+  assert.equal(parseFarsideBtcFlows(identical, now).length, 1);
+  const conflicting = `<table><tr><th>Date</th><th>Fund A</th><th>Total</th></tr>${sameDay("5.0")}${sameDay("4.0")}</table>`;
+  assert.throws(() => parseFarsideBtcFlows(conflicting, now), /farside_duplicate_reporting_date_conflict/);
+});
+
 test("Farside parser fails closed when the Total column is missing", () => {
   assert.throws(() => parseFarsideBtcFlows("<table><tr><th>Date</th><th>Fund A</th></tr></table>", now), /farside_total_column_missing/);
 });
