@@ -407,3 +407,10 @@ The Dashboard previously said Monitoring starts from the exact published Researc
 - The API does not recompute age against registry freshness windows on every read. The returned classification is the stored assessment, not a guarantee that a row is fresh at the time a user opens the page. This is intentionally not made a blocking condition for offline/test mode.
 
 No production DB writes, live capture/ingestion, runtime registry changes, scenario-state/monitoring/probability changes, deployment, merge/rebase or main-branch changes were performed.
+
+### Metric provenance Dashboard parity — 2026-10-30
+
+- Added a Metric data section to the asset Dashboard and navigation. It displays the latest per-metric value/unit, raw stored freshness classification, observed/retrieved/provider-update timestamps, revision, source registration/name/type, row key, methodology/version, payload-hash prefix and source link.
+- The UI explicitly labels freshness as an ingestion-time classification, not a live age guarantee; absent provider timestamps and provenance remain visibly unavailable rather than being fabricated.
+- Dashboard commit: f89893387a4de84015598f60e03f8c7ad5a100bd.
+- Remaining: static review of Evidence observation/source/snapshot lineage; live API/DB and CI remain unverified for this exact branch head.
