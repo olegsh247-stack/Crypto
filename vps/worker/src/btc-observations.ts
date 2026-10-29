@@ -333,6 +333,12 @@ export async function collectBtcObservationCandidates(options: {
   };
 }
 
+function sameTimestamp(existing: unknown, candidate: Date | null): boolean {
+  if (existing == null || candidate == null) return existing == null && candidate == null;
+  const value = existing instanceof Date ? existing : new Date(String(existing));
+  return Number.isFinite(value.getTime()) && value.getTime() === candidate.getTime();
+}
+
 function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
   const existingNumeric = row.value_numeric === null || row.value_numeric === undefined ? null : Number(row.value_numeric);
   return existingNumeric === candidate.valueNumeric
@@ -343,6 +349,9 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
     && row.unit === candidate.unit
     && row.source_url === candidate.sourceUrl
     && row.source_row_key === candidate.sourceRowKey
+    && sameTimestamp(row.observed_at, candidate.observedAt)
+    && sameTimestamp(row.period_start, candidate.periodStart)
+    && sameTimestamp(row.period_end, candidate.periodEnd)
     && row.methodology === candidate.methodology
     && row.status === candidate.status
     && row.freshness === candidate.freshness;
@@ -356,7 +365,7 @@ export async function persistBtcObservation(databaseUrl: string, candidate: BtcO
     ].join("|");
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [lockKey]);
     const existing = await client.query(
-      `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,source_url,source_row_key,methodology,status,freshness
+      `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,observed_at,period_start,period_end,source_url,source_row_key,methodology,status,freshness
        FROM observations
        WHERE asset_id='btc' AND metric_id=$1 AND source_id=$2 AND source_row_key=$3
        ORDER BY revision DESC LIMIT 1 FOR UPDATE`,
