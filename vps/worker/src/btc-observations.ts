@@ -349,7 +349,9 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
     && row.unit === candidate.unit
     && row.source_url === candidate.sourceUrl
     && row.source_row_key === candidate.sourceRowKey
-    && sameTimestamp(row.observed_at, candidate.observedAt)
+    // ETF observed_at intentionally records capture time, not the report's logical date.
+    // A repeated capture must remain idempotent even when that capture timestamp advances.
+    && (candidate.metricId === "institutional.etf_net_flow" || sameTimestamp(row.observed_at, candidate.observedAt))
     && sameTimestamp(row.period_start, candidate.periodStart)
     && sameTimestamp(row.period_end, candidate.periodEnd)
     && row.methodology === candidate.methodology
