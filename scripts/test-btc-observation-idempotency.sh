@@ -132,6 +132,28 @@ const revised = await persistBtcObservation(process.env.DATABASE_URL, { ...candi
 assert.deepEqual(revised, { action: "revised", revision: 2 });
 const unchanged = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
 assert.deepEqual(unchanged, { action: "unchanged", revision: 2 });
+const timestampCorrected = {
+  ...candidate,
+  valueNumeric: 80001,
+  observedAt: new Date(candidate.observedAt.getTime() + 1000),
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, timestampCorrected),
+  { action: "revised", revision: 3 },
+);
+const periodCorrected = {
+  ...timestampCorrected,
+  periodStart: new Date(timestampCorrected.observedAt.getTime() - 60_000),
+  periodEnd: timestampCorrected.observedAt,
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
+  { action: "revised", revision: 4 },
+);
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
+  { action: "unchanged", revision: 4 },
+);
 console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
 NODE
 
