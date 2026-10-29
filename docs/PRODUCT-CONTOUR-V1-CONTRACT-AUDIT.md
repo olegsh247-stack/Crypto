@@ -414,3 +414,26 @@ No production DB writes, live capture/ingestion, runtime registry changes, scena
 - The UI explicitly labels freshness as an ingestion-time classification, not a live age guarantee; absent provider timestamps and provenance remain visibly unavailable rather than being fabricated.
 - Dashboard commit: f89893387a4de84015598f60e03f8c7ad5a100bd.
 - Remaining: static review of Evidence observation/source/snapshot lineage; live API/DB and CI remain unverified for this exact branch head.
+## Evidence lineage — static contract audit and API/UI correction (2026-10-30)
+
+### Schema findings
+
+- evidence.snapshot_id is required and references research_snapshots; research_block_id, research_domain_id, observation_id and source_id are independently nullable foreign keys with ON DELETE SET NULL for the optional links.
+- The schema does not enforce that research_block_id belongs to the same snapshot_id as the evidence row, nor that research_domain_id is linked to that block, nor that evidence.source_id equals observations.source_id.
+- Therefore the foreign keys prove that referenced rows exist, but not that the complete evidence chain is internally consistent.
+
+### Correction applied
+
+- The asset-detail evidence query now returns block/snapshot consistency, domain/block association and evidence-source versus observation-source consistency statuses.
+- It separately exposes the observation source identity/type/URL, observation and retrieval timestamps, row key, payload hash and methodology/version. Evidence source metadata remains separately represented.
+- Web now has an explicit EvidenceRecord contract; the compile-time fixture covers a fully linked record.
+- Dashboard Evidence rows now display snapshot, block/domain linkage statuses, both source identities, source-link status, observed/retrieved times, methodology, row key and a payload-hash prefix.
+- API commit: 6d9ba34044ef50f29db1ad8def5d4b5d341c54f5; Web type commit: 9741f36e98f10a5d9daf1efeb5b89b748da3c173; fixture commit: 5200dc9efd197a7d4f39da0546664134bce1b83b; Dashboard commit: 1d27bae540d96973e653d84d8d9b922b8a8f4c55; API source URL separation commit: 26f9e7ecce5861f4c8bdece99b0ec2544f2e4752.
+
+### Remaining verification
+
+- Static source review only: no live PostgreSQL rows were inspected, so actual cross-snapshot mismatches, source mismatches, orphan/null rates and duplicate evidence rows are not measured.
+- No CI result/status is confirmed for these exact commits. The working branch remains diverged from main; do not merge/rebase as part of this audit.
+- No schema migration was added. A future integrity migration should be considered only after live read-only anomaly counts establish whether existing rows satisfy the intended composite relationships.
+
+No production writes, live ingestion, registry/runtime changes, scenario/monitoring/probability changes, deployment, merge/rebase or main-branch changes were performed.
