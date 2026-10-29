@@ -5,17 +5,17 @@
 **Актуальность снимка:** 30 октября 2026 года (Europe/Riga) — исторические записи ниже сохраняются как журнал решений; актуальный статус задаётся этим блоком.  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
-**Последние проверенные CI-свидетельства (14 октября 2026):** BTC Scenario Readiness Gate #203 passed on code SHA `ffeff5686dda5df6f4e5a4dae859671be6a0ec91` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38617960879)); BTC Public Source Staging #69 passed on code SHA `6dbe6b48a55afb60c3a8176483fbf9bb9d0dcf74`, including the official Binance market-data-only endpoint ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618817154)); VPS Build Rehearsal #1194 passed on documentation commit `7338953755c3714e5a13a84f4e70101d70fd4610` ([run](https://github.com/olegsh247-stack/Crypto/actions/runs/38618134185)). Rehearsals triggered by the newer cross-check/documentation commits are tracked separately and must not be called passed until complete. ETF timestamps/revision semantics and DXY remain blockers.  
+**Исторические CI-свидетельства:** перечисленные ниже runs относятся к октябрю и не подтверждают текущий HEAD. Последний подтверждённый набор проверок для BTC pipeline — HEAD `5fada1b` (runs `40945996740`, `40945996611`, `40945996600`, `40945996609`). Для более новых коммитов требуется отдельное подтверждение; пустые workflow/status ответы не считаются успешным CI. Исторические замечания об ETF/DXY ниже не являются текущими блокерами BTC Rule v1.  
 **Документ в репозитории:** `docs/PLAN-100.md`  
 **Назначение:** единый рабочий план от текущего состояния до полной готовности продукта, self-hosted hosting, безопасного cutover и операционной устойчивости.
 > **ТЕКУЩЕЕ СОСТОЯНИЕ НА 30.10.2026 — ПРИОРИТЕТ НАД ИСТОРИЧЕСКИМИ ЗАПИСЯМИ НИЖЕ**
 >
-> - BTC Rule v1 / исследовательский сценарий завершён: входная готовность и воспроизводимый сценарий подтверждены; historical test pipeline проходит collectors → normalized candidates → disposable PostgreSQL persistence/readback → readiness → derived metrics → pure rule result.
-> - Последний проверенный HEAD рабочей ветки: `5fada1bfe99d7d2f55ad5a08dfc79c4352940741` (`fix/btc-observation-pipeline-mainline`). На нём успешно прошли BTC Scenario Readiness Gate #586, VPS API Build Rehearsal #2871, Seed observation idempotency #321 и Validate VPS Release Workflow #473.
-> - Сравнение с `main` (`48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`): рабочая ветка ahead 84 / behind 2 от общего предка `03f4a08ec6c533556b655319e358d476359b4cf4`. Два коммита `main` — PR #87 и PR #92. Смысловые изменения PR #87 уже присутствуют в рабочей ветке; исправляется недостающий tie-breaker ETF API ordering: `period_start`, затем `observed_at`, затем `revision`. PR #92 уже реализован в рабочей ветке собственной историей; повторно переносить его не нужно.
-> - DXY остаётся необязательным контекстом; historical/offline test mode использует исторические fixtures и не требует новых live captures.
+> - BTC Rule v1 / исследовательский сценарий завершён: readiness и воспроизводимый offline pipeline подтверждены. Не возвращаться к повторному сбору BTC-данных; DXY необязателен.
+> - Текущий HEAD рабочей ветки: `30b065be60438ca209589adba87f8a7eb7e172d0` (`fix/btc-observation-pipeline-mainline`). Новые CI runs и commit statuses для этого HEAD не обнаружены; успех CI не заявляется. Последние подтверждённые проверки относятся к предыдущему HEAD `5fada1bfe99d7d2f55ad5a08dfc79c4352940741`.
+> - Сравнение с `main` (`48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`): ahead 92 / behind 2 от общего предка `03f4a08ec6c533556b655319e358d476359b4cf4`. PR #87 и #92 не переносить повторно; merge/rebase не выполнялись.
+> - Исправлен API tie-breaker ETF ordering; начат Product Contour v1 audit. В текущем проходе подтверждены snapshot scoping factors/scores/scenarios и полнота source registry; исправлена передача `last_major_update_at` и `next_review_at` в list/detail freshness payload. Контрактный fixture расширен.
+> - Следующие пункты аудита: metric-level freshness/UI parity; operational semantics monitoring signals/events; повторная проверка CI на новых коммитах; live read-only acceptance только после появления целевого VPS.
 > - Production ingestion/capture, production DB writes, registry/runtime changes, scenario-state/monitoring writes, probability changes, deployment и merge в `main` не разрешены и не выполнялись.
-> - Следующий приоритет после фикса ordering и его CI: закончить сверку веток и затем перейти к Product Contour v1 audit по Плану 100. Не возвращаться к повторному сбору BTC-данных и старым задачам PR #83.
 
 
 ---
