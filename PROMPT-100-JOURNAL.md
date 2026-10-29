@@ -266,3 +266,12 @@
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
 - PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
+
+## 2026-10-30 — Сверка main с BTC observation pipeline branch и закрытие ETF ordering delta
+
+- Сравнение `main` с `fix/btc-observation-pipeline-mainline`: рабочая ветка ahead 84 / behind 2; общий предок `03f4a08ec6c533556b655319e358d476359b4cf4`. HEAD `main`: `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`; проверенный HEAD рабочей ветки: `5fada1bfe99d7d2f55ad5a08dfc79c4352940741`.
+- Два недостающих коммита `main`: PR #87 (`40ebe873d1114724b483711a04fab188f16bbe63`) и PR #92 (`48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`). В рабочей ветке уже присутствуют функциональные исправления PR #87: DXY optional, readiness query без starvation от `LIMIT 100`, lifecycle с учётом `n_a`, выбор ETF по report session date. PR #92 уже представлен собственной merge-историей ветки; повторный перенос создал бы дублирование.
+- Найдено одно реальное расхождение PR #87: API distinct ETF metric сортировал одинаковый report date по `revision` без промежуточного tie-breaker `observed_at`. Исправлено на порядок `period_start DESC, observed_at DESC, revision DESC`; обновлён regression test.
+- До этой правки текущий HEAD имел успешные BTC Scenario Readiness Gate #586, VPS API Build Rehearsal #2871, Seed observation idempotency #321 и Validate VPS Release Workflow #473 (runs `40945996740`, `40945996611`, `40945996600`, `40945996609`). Новые CI результаты после ordering fix должны быть проверены отдельно.
+- BTC Rule v1 / research completion остаётся закрытым. Historical offline test ожидаемо использует устаревшие fixture values; новый live capture не требуется. Disposable PostgreSQL integration уже проверяет persistence/readback 9 synthetic observations, derived inputs и pure rule result.
+- Production DB, live capture/ingestion, registry/runtime, scenario state, monitoring, probabilities, deployment и merge в `main` не затрагивались. Никакого merge/rebase `main` в рабочую ветку не выполнялось.
