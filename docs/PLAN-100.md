@@ -1955,3 +1955,5 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 
 - Added `scripts/audit-evidence-lineage.sql` for read-only PostgreSQL diagnostics covering block/snapshot, domain/block, source/source, observation/snapshot, source URL, duplicate-like groups and non-published snapshot evidence. Script uses a READ ONLY transaction and SELECT statements only; not run yet. Commit `00eba258d538726396564a7e797e1eb8889db30a`.
+
+- Evidence and observation source URLs are now separately typed and displayed (`evidence_source_url` vs `observation_source_url`), avoiding ambiguity from the legacy coalesced source URL. Commits `18bff6de438c49efe8df0beab5ac43ceede2cfd2`, `a3cf51cec3057754aa50de02c53a73d9d2033734`.
