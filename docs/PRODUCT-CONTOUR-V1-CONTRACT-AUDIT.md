@@ -437,3 +437,13 @@ No production DB writes, live capture/ingestion, runtime registry changes, scena
 - No schema migration was added. A future integrity migration should be considered only after live read-only anomaly counts establish whether existing rows satisfy the intended composite relationships.
 
 No production writes, live ingestion, registry/runtime changes, scenario/monitoring/probability changes, deployment, merge/rebase or main-branch changes were performed.
+
+## Evidence lineage audit (2026-10-30)
+
+Static schema review: Evidence has a required snapshot FK and independent nullable FKs to research block, domain, observation and source. The schema does not enforce that the block belongs to the Evidence snapshot, the domain is linked to that block, or the Evidence source matches the observation source.
+
+The API now returns explicit block/snapshot, domain/block and source-link consistency statuses, plus observation-side source identity and provenance. Web has an explicit EvidenceRecord type and fixture; Dashboard displays lineage statuses, both source identities, observation/retrieval times, method, row key and payload-hash prefix.
+
+Commits: API `6d9ba34044ef50f29db1ad8def5d4b5d341c54f5`, API source URL `26f9e7ecce5861f4c8bdece99b0ec2544f2e4752`, Web type `9741f36e98f10a5d9daf1efeb5b89b748da3c173`, fixture `5200dc9efd197a7d4f39da0546664134bce1b83b`, Dashboard `1d27bae540d96973e653d84d8d9b922b8a8f4c55`.
+
+No live rows were queried, so actual mismatch/null/duplicate rates remain unknown. No migration was added before measuring real rows. Exact-HEAD CI remains unconfirmed. No production writes, deployment, merge/rebase or main changes.
