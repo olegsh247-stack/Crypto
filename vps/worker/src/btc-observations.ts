@@ -73,10 +73,20 @@ function hashJson(payload: unknown): string {
 
 
 export function parseKrakenSpotPricePayload(payload: unknown, now: Date, sourcePayloadSha256 = hashJson(payload)): BtcObservationCandidate {
-  const result = (payload as any)?.result;
-  const pairKey = Object.keys(result ?? {}).find(key => key !== "last");
-  const trades = pairKey ? result[pairKey] : null;
-  if (!Array.isArray(trades)) throw new Error("kraken_trades_missing");
+  const response = payload as any;
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    throw new Error("kraken_invalid_response");
+  }
+  if (!Array.isArray(response.error)) throw new Error("kraken_error_field_missing");
+  if (response.error.length > 0) throw new Error("kraken_api_error");
+  const result = response.result;
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    throw new Error("kraken_result_missing");
+  }
+  // This endpoint explicitly requests XBT/USD. Do not silently accept another
+  // market if Kraken changes the response shape or adds extra result fields.
+  const trades = result.XXBTZUSD;
+  if (!Array.isArray(trades)) throw new Error("kraken_xbtusd_trades_missing");
   const valid = trades.map((trade: any) => {
     const price = finitePositive(trade?.[0]);
     const observedAt = toDateFromSeconds(trade?.[2]);
@@ -323,6 +333,12 @@ export async function collectBtcObservationCandidates(options: {
   };
 }
 
+function sameTimestamp(existing: unknown, candidate: Date | null): boolean {
+  if (existing == null || candidate == null) return existing == null && candidate == null;
+  const value = existing instanceof Date ? existing : new Date(String(existing));
+  return Number.isFinite(value.getTime()) && value.getTime() === candidate.getTime();
+}
+
 function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
   const existingNumeric = row.value_numeric === null || row.value_numeric === undefined ? null : Number(row.value_numeric);
   return existingNumeric === candidate.valueNumeric
@@ -333,6 +349,11 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
     && row.unit === candidate.unit
     && row.source_url === candidate.sourceUrl
     && row.source_row_key === candidate.sourceRowKey
+    // ETF observed_at intentionally records capture time, not the report's logical date.
+    // A repeated capture must remain idempotent even when that capture timestamp advances.
+    && (candidate.metricId === "institutional.etf_net_flow" || sameTimestamp(row.observed_at, candidate.observedAt))
+    && sameTimestamp(row.period_start, candidate.periodStart)
+    && sameTimestamp(row.period_end, candidate.periodEnd)
     && row.methodology === candidate.methodology
     && row.status === candidate.status
     && row.freshness === candidate.freshness;
@@ -346,7 +367,7 @@ export async function persistBtcObservation(databaseUrl: string, candidate: BtcO
     ].join("|");
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [lockKey]);
     const existing = await client.query(
-      `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,source_url,source_row_key,methodology,status,freshness
+      `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,observed_at,period_start,period_end,source_url,source_row_key,methodology,status,freshness
        FROM observations
        WHERE asset_id='btc' AND metric_id=$1 AND source_id=$2 AND source_row_key=$3
        ORDER BY revision DESC LIMIT 1 FOR UPDATE`,
