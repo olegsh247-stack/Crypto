@@ -275,3 +275,14 @@
 - До этой правки текущий HEAD имел успешные BTC Scenario Readiness Gate #586, VPS API Build Rehearsal #2871, Seed observation idempotency #321 и Validate VPS Release Workflow #473 (runs `40945996740`, `40945996611`, `40945996600`, `40945996609`). Новые CI результаты после ordering fix должны быть проверены отдельно.
 - BTC Rule v1 / research completion остаётся закрытым. Historical offline test ожидаемо использует устаревшие fixture values; новый live capture не требуется. Disposable PostgreSQL integration уже проверяет persistence/readback 9 synthetic observations, derived inputs и pure rule result.
 - Production DB, live capture/ingestion, registry/runtime, scenario state, monitoring, probabilities, deployment и merge в `main` не затрагивались. Никакого merge/rebase `main` в рабочую ветку не выполнялось.
+
+
+## 2026-10-30 — Product Contour v1: static contract audit continuation
+
+- Проверена текущая реализация API/Web относительно `docs/PRODUCT-CONTOUR-V1-CONTRACT-AUDIT.md`.
+- Подтверждено: completed/resolved semantics общие; factors и scores ограничены последним опубликованным snapshot; scenario definitions/states имеют общий snapshot scope; Dashboard не должен смешивать состояние с чужим snapshot; source registry объединяет источники observations и Evidence.
+- Найден дефект: API загружал `last_major_update_at` и `next_review_at`, но не передавал их в `research_freshness`. Исправлено в API для asset list и asset detail (commit `ff27970ab1567eb4214aa08c9c8db51633faa83d`).
+- Добавлен compile-time Web contract fixture для полного freshness payload (commit `9d6b7baea40d53a9c725a8ae0ec92572c106e83a`).
+- Аудитный документ дополнен фактическими результатами и открытыми границами проверки (commit `05033b44775ec3135ddd17b013210ff996f20c8d`).
+- Открыто: полный UI parity для metric-level freshness; отдельная проверка operational semantics monitoring signals/events; live API/DB read-only acceptance после доступности целевого VPS; CI на новых коммитах пока не подтверждён.
+- Никаких production DB writes, live captures, registry/runtime changes, scenario-state/event/probability changes, deployments, merge/rebase или main-branch changes не выполнялось.
