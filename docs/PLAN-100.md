@@ -1926,3 +1926,36 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - The test asserts that all inserted observations are read back, readiness allows rule evaluation, the deterministic result is `base`, and scenario persistence/probability changes remain disabled. It uses synthetic fixtures only; no live sources or production database.
 - The first CI attempt exposed test-fixture leakage: synthetic BTC rows remained in the shared disposable DB and caused the later API research-chain E2E to see `ready_for_rule_evaluation` instead of its expected clean-baseline `not_evaluable`. Added explicit cleanup of `btc-e2e:%` fixture rows after the DB-to-result assertions; no production data was involved.
 - Validation on exact code head `bc741a3413666291e82cd36d31d85fa079bf6706`: BTC Scenario Readiness Gate, Seed observation idempotency rehearsal, Validate VPS Release Workflow and both VPS API Build Rehearsal runs passed. The PostgreSQL test confirmed 9 synthetic observations were persisted and read back, derived inputs were calculated (`price_return_7d_pct=4.5993`, `etf_net_flow_5d_usd_millions=-678.9`, `hashrate_change_7d_pct=5.0505`), and the pure rule returned `scenario_type=base`, `directional_score=0`, `can_persist_scenario_state=false`. The fixture rows are deleted before the later E2E checks run.
+
+
+---
+
+## Mainline status reconciliation — 2026-10-30
+
+**Canonical main:** `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`.
+
+### BTC Rule v1 — research implementation complete
+
+- BTC Rule v1 historical/research calculation is complete and reproducible. Historical test fixtures are intentionally not current market data; do not repeatedly recapture spot or ETF inputs to make offline tests pass.
+- PR #87 (optional DXY/readiness corrections) and PR #97 (opt-in BTC observation pipeline with provenance/idempotency and UTC-complete candles) are merged into `main`.
+- PR #97 exact-main CI passed: Web build, VPS API/Worker/PostgreSQL/backup/E2E rehearsal, static validation, disposable PostgreSQL, unit tests and build/E2E.
+- BTC observation ingestion remains disabled by default. Enabling it requires `BTC_OBSERVATION_INGESTION_ENABLED=true`; no live ingestion, production writes, scenario-state/probability changes or deployment are implied by the merged code.
+- DXY remains optional context. Mempool remains the protocol-issuance reference. Historical test mode is separate from live readiness.
+- ETF provider publication-time/finality/retention acceptance remains a future production-ingestion control; it does not reopen the completed offline Rule v1 research task.
+
+### Branch and PR reconciliation
+
+- PR #97 is the canonical merged BTC observation pipeline.
+- PR #69 is an older alternative collector branch superseded by #97; do not merge it.
+- PR #84 remains an old, divergent Draft. Do not merge wholesale. Its 6-hour BTC spot freshness change conflicts with the canonical 1-hour rule on current `main`; no freshness-policy change is authorized by this status entry.
+- PR #88's UTC candle work is substantially superseded by the richer current-main Worker implementation, which also handles missing-day fallback and source precedence. Do not port the old branch wholesale.
+- PR #86 contains potentially useful admin-session/security and self-hosted Docker/Caddy work. It requires a current-mainline security and runtime review before any integration or VPS deployment.
+- PR #89's dashboard/input correctness fixes have been ported as a clean, current-mainline Draft PR #99. PR #99 is not merged and must pass exact-head CI/review before merge consideration.
+- No stale PR is merged or closed by this reconciliation. No branches are mass-deleted.
+
+### Next ordered work
+
+1. Continue the self-hosted architecture audit and isolate the safe, required parts of PR #86; VPS provisioning/cutover remains a separate explicitly approved operation.
+2. Complete the Product Contour v1 contract audit against the current mainline, distinguishing implemented API/UI capability from per-asset research acceptance.
+3. Expand to ETH only after those gates; SOL/CAKE remain later work.
+4. Keep production ingestion, DB writes/migrations, deployment, scenario publication and probability changes behind separate explicit approval.
