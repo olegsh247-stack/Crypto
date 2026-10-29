@@ -1859,3 +1859,70 @@ Verification boundary: GitHub combined status returned no checks and the availab
 3. Довести PR #83 до exact-head readiness CI и reviewable/mergeable состояния; не merge автоматически.
 4. Дождаться результата VPS API Build Rehearsal #39382019208 на текущем PR head. После этого повторно проверить mergeability/base divergence и решить, нужно ли разделить 94-файловый PR на меньшие reviewable части. Registry/runtime/seed изменения остаются отдельным reviewed этапом.
 
+### VPS BTC pipeline — regression fix and verification, 2026-10-28
+
+- PR #90 remains open/draft; no merge, deployment, production DB write, or live BTC ingestion was performed. BTC scenario readiness remains unchanged.
+- Fixed daily candle ingestion so a partial Binance response no longer silently leaves gaps in the latest eight finalized UTC days: Kraken fills only missing dates for supported USD pairs; Binance retains priority on overlapping dates. Each persisted candle keeps its actual source.
+- Added deterministic regression tests for missing-day fallback, Binance source priority, unsupported fallback pairs, and exclusion of open/out-of-window candles.
+- Removed a duplicate path entry from the disposable PostgreSQL idempotency workflow trigger.
+- Verification on commit `4f17c715582888c269f0da736e184c7e264b517a`: VPS API Build Rehearsal #2736 passed, Seed observation idempotency rehearsal #271 passed, and Validate VPS Release Workflow #427 passed. Checks cover Worker/API builds and tests, VPS-only repository scan, PostgreSQL migration/bootstrap, BTC input provenance, idempotency/duplicate reconciliation, backup/restore, and API/Worker E2E.
+- These checks validate the isolated rehearsal only. They do not approve production ingestion or change the BTC `not_evaluable` gate.
+
+
+### BTC test mode — historical data is expected, 2026-10-28
+
+- Offline BTC scenario tests intentionally use a committed historical fixture. Its values are expected to be stale; do not repeatedly recapture live prices or ETF flows merely to make an offline test pass.
+- Test mode validates deterministic calculations and rule behavior only. Historical test output must be labeled test-only and cannot count as live readiness.
+- Live readiness continues to reject stale/untraceable required inputs (not_evaluable). Test mode performs no DB writes, source ingestion, scenario-state/monitoring writes, or probability changes.
+
+
+### BTC freshness audit — ETF reporting date vs capture time, 2026-10-28
+
+- Confirmed: the offline scenario runner is isolated and explicitly labels historical_test mode; its latest PR-triggered checks pass. No fresh market capture is required for this test.
+- Follow-up finding in the opt-in collector: Farside ETF rows currently set observed_at to capture time because the provider does not expose per-row publication time. The readiness gate separately permits report dates up to 14 days old while checking observed_at within 36 hours. Consequently, re-fetching an old Farside table can make an old ETF session look recently observed. Capture time proves when we read the page, not when the reported flow became available.
+- Do not try to solve this by repeatedly recapturing data. Before live evaluation, define and test a U.S.-ETF-session-aware freshness rule using period_start/report date; until then this remains a live-readiness blocker. Historical offline test behavior is unaffected. No database, registry, runtime, scenario state or probability changes made.
+
+
+### ETF freshness gate regression fix, 2026-10-28
+
+- The BTC readiness gate now checks the ETF report/session date as well as capture-time freshness: the latest report date must be a weekday and no more than four calendar days old. Re-capturing an old Farside page no longer makes a stale report session pass; a regression test covers this.
+- Updated the readiness unit tests and VPS research-chain E2E expectation for the new blocker reason. CI passed on code/test commit `472206d`: BTC Scenario Readiness Gate #544, VPS API Build Rehearsal #2754, Seed observation idempotency rehearsal #280, and Validate VPS Release Workflow #436. (Run IDs: 40675036053, 40675036113, 40675036116, 40675036109.)
+- Limitation retained explicitly: the gate is weekday/date based, not yet backed by a complete U.S. market-holiday calendar. Do not treat this as full live ETF-source approval. Historical offline test mode remains exempt from live freshness; production ingestion remains disabled and BTC stays `not_evaluable` until all required checks pass.
+
+
+### Scope correction — BTC architecture and historical test mode, 2026-10-28
+
+- Current priority is the architecture and end-to-end path for source acquisition, normalization/provenance, preliminary deterministic calculations, and result output. Historical test fixtures are expected and are not expected to represent current market conditions or a precise forecast.
+- Deferred live-data issue: Farside collection currently sets `observed_at` to capture time because per-row publication time is unavailable. A re-fetch can therefore make a report row look recently observed. Do not solve this now with a U.S. holiday calendar or repeated captures; do not treat live ETF readiness as approved. The temporary weekday/four-day gate was removed as out of scope; the existing 14-day live gate remains provisional and is not evidence that ETF freshness semantics are solved.
+- Next audit scope: verify the complete architecture and reproducible historical path (source adapters -> normalized candidates -> provenance/idempotency storage path -> derived metrics -> preliminary scenario result), identify any missing link, and test it offline. No production ingestion, DB writes, deployment, merge, scenario-state persistence, or probability changes.
+
+
+### BTC runtime source contract centralization, 2026-10-28
+
+- Added `vps/worker/src/btc-source-catalog.ts` as the single runtime adapter map for the BTC collector's endpoint URLs, canonical metric IDs, source IDs and units. The collector now consumes this catalog rather than declaring provider URLs in its implementation.
+- This is an architecture refactor only. It does not approve sources for production ingestion, alter readiness policy, or change the historical fixture/scenario result.
+- Validation: the catalog-to-candidate contract test and the deterministic integration test below pass on the current PR head. The full collector/build/E2E CI is tracked against the exact commit and must be rechecked after this documentation update.
+- Deferred beyond current architecture/test scope: live Farside publication/finality semantics and the definition/methodology of `monetary.circulating_supply`. Neither is used to block the historical preliminary scenario result.
+
+
+### BTC preliminary rule contract correction, 2026-10-28
+
+- Fixed a mismatch in `scripts/btc-scenario-direction.mjs`: the rule previously required `fee_subsidy_ratio` even though the readiness contract explicitly defers it and the rule uses it only as context. The ratio is now optional; if absent, evaluation proceeds and the output records that context as unavailable. If present, a negative value is still rejected.
+- Added a regression test for evaluation without fee/subsidy ratio. This does not change directional scoring, baseline probabilities, scenario persistence, or ingestion approval.
+- Validation on code/test commit `6ec70f6`: BTC Scenario Readiness Gate, VPS API Build Rehearsal, Seed observation idempotency rehearsal and Validate VPS Release Workflow all passed. The rule remains pure and does not change probabilities or persist scenario state.
+
+
+### BTC historical pipeline integration test — 2026-10-28
+
+- Added an offline integration test to `scripts/btc-observation-collectors.test.mjs`: mocked provider payloads pass through the real collector parsers into normalized candidates; required spot/ETF candidates are mapped into the read-only readiness contract; historical anchor values and captured candidates produce derived price return, five-session ETF sum, hashrate change and optional DXY/fee context; the pure preliminary rule emits the expected deterministic result.
+- The test explicitly states its boundary: historical anchor values are fixture inputs, and it does **not** claim a database-observation-to-scenario bridge. No network access, real market data, PostgreSQL, production writes, scenario-state persistence, monitoring writes or probability changes are used.
+- Exact test commit `6ec70f6fbd7fd4dca8f01312f835bc6796fa2620`: collector/parser + integration test passed; BTC Scenario Readiness Gate, VPS API Build Rehearsal, Seed observation idempotency rehearsal and Validate VPS Release Workflow passed.
+- Remaining boundary in current scope: the complete path is now exercised through normalized candidates and the readiness/rule contracts, but **persisted database observations are not read back into the derived-metric calculation in this test**. Do not describe it as a full DB-to-result integration. Production ingestion remains disabled and BTC live readiness remains separate.
+
+
+### BTC disposable PostgreSQL-to-result integration — 2026-10-28
+
+- Extended `scripts/test-btc-observation-idempotency.sh` with a deterministic end-to-end rehearsal restricted to database name `crypto_test`: synthetic collector-shaped BTC spot, hashrate and five ETF-session observations are persisted through the real `persistBtcObservation` path, read back from PostgreSQL, checked by the read-only readiness contract, converted into derived price return / five-session ETF flow sum / hashrate change, and passed to the pure preliminary rule.
+- The test asserts that all inserted observations are read back, readiness allows rule evaluation, the deterministic result is `base`, and scenario persistence/probability changes remain disabled. It uses synthetic fixtures only; no live sources or production database.
+- The first CI attempt exposed test-fixture leakage: synthetic BTC rows remained in the shared disposable DB and caused the later API research-chain E2E to see `ready_for_rule_evaluation` instead of its expected clean-baseline `not_evaluable`. Added explicit cleanup of `btc-e2e:%` fixture rows after the DB-to-result assertions; no production data was involved.
+- Validation on exact code head `bc741a3413666291e82cd36d31d85fa079bf6706`: BTC Scenario Readiness Gate, Seed observation idempotency rehearsal, Validate VPS Release Workflow and both VPS API Build Rehearsal runs passed. The PostgreSQL test confirmed 9 synthetic observations were persisted and read back, derived inputs were calculated (`price_return_7d_pct=4.5993`, `etf_net_flow_5d_usd_millions=-678.9`, `hashrate_change_7d_pct=5.0505`), and the pure rule returned `scenario_type=base`, `directional_score=0`, `can_persist_scenario_state=false`. The fixture rows are deleted before the later E2E checks run.

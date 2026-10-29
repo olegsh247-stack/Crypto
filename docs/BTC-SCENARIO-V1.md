@@ -269,3 +269,15 @@ The canonical CI workflow builds the shared readiness runtime, runs registry/rea
 
 **Current status:** BTC remains `not_evaluable` for a live evaluation. No production DB access/writes, ingestion, registry/runtime changes, scenario-state writes, monitoring-event writes, deployment or merge were performed by this recheck.
 
+
+
+## Test mode: historical inputs are intentional
+
+The offline BTC scenario rehearsal runs in historical_test mode against the committed fixture. It is expected that its market values are **not fresh**: the test validates deterministic calculations, provenance shape, rule behavior and regression handling—not the current market state. Do not repeatedly fetch or request fresh market data just to make this offline test pass.
+
+Rules:
+- Offline fixture tests may use explicitly labeled historical inputs without passing live freshness windows.
+- Historical test results must be labeled as test-only and must never be represented as current market evidence or live readiness.
+- The production/live readiness gate remains unchanged: stale or untraceable required observations still yield not_evaluable.
+- Test mode must not write to a database, ingest sources, persist scenario state, write monitoring events, or change probabilities.
+- A live evaluation is a separate, explicitly authorized operation and requires its own source/freshness checks.

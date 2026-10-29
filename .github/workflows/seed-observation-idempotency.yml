@@ -18,6 +18,7 @@ on:
       - "infrastructure/postgres/migrations/**"
       - "scripts/migrate-postgres.sh"
       - "scripts/test-seed-observation-idempotency.sh"
+      - "scripts/test-btc-observation-idempotency.sh"
       - ".github/workflows/seed-observation-idempotency.yml"
   workflow_dispatch:
 
@@ -31,6 +32,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build VPS shared runtime for BTC persistence test
+        working-directory: vps/shared
+        run: npm install && npm run build
+
+      - name: Build VPS worker for BTC persistence test
+        working-directory: vps/worker
+        run: npm install && npm run build
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client

@@ -33,8 +33,12 @@ export function evaluateBtcScenarioV1(input) {
   const price = number(input.price_return_7d_pct, "price_return_7d_pct");
   const flows = number(input.etf_net_flow_5d_usd_millions, "etf_net_flow_5d_usd_millions");
   const hashrate = number(input.hashrate_change_7d_pct, "hashrate_change_7d_pct");
-  const feeRatio = number(input.fee_subsidy_ratio, "fee_subsidy_ratio");
-  if (feeRatio < 0) throw new RangeError("fee_subsidy_ratio cannot be negative");
+  // Fee/subsidy ratio is optional context, not a required or directional input.
+  const hasFeeRatio = input.fee_subsidy_ratio !== null
+    && input.fee_subsidy_ratio !== undefined
+    && input.fee_subsidy_ratio !== "";
+  const feeRatio = hasFeeRatio ? number(input.fee_subsidy_ratio, "fee_subsidy_ratio") : null;
+  if (feeRatio !== null && feeRatio < 0) throw new RangeError("fee_subsidy_ratio cannot be negative");
 
   const signals = [
     { input: "price_return_7d_pct", value: price, score: direction(price, 5, -5) },
@@ -62,7 +66,7 @@ export function evaluateBtcScenarioV1(input) {
     status: "evaluated", methodology_version: RULE.methodology_version,
     scenario_type: scenario, directional_score: score,
     confidence_band: Math.abs(score) === 4 ? "high" : Math.abs(score) === 3 ? "medium" : "low",
-    signals, context: { fee_subsidy_ratio: feeRatio, fee_subsidy_ratio_used_as_directional_signal: false,
+    signals, context: { fee_subsidy_ratio: feeRatio, fee_subsidy_ratio_available: hasFeeRatio, fee_subsidy_ratio_used_as_directional_signal: false,
       dxy_included: hasDxy },
     baseline_probabilities_changed: false, can_persist_scenario_state: false,
   };
