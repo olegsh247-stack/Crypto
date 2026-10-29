@@ -286,3 +286,15 @@
 - Аудитный документ дополнен фактическими результатами и открытыми границами проверки (commit `05033b44775ec3135ddd17b013210ff996f20c8d`).
 - Открыто: полный UI parity для metric-level freshness; отдельная проверка operational semantics monitoring signals/events; live API/DB read-only acceptance после доступности целевого VPS; CI на новых коммитах пока не подтверждён.
 - Никаких production DB writes, live captures, registry/runtime changes, scenario-state/event/probability changes, deployments, merge/rebase или main-branch changes не выполнялось.
+
+
+## 2026-10-30 — Monitoring / Events lineage and lifecycle audit
+
+- Проверена модель `monitoring_signals`: записи принадлежат активу, прямого `snapshot_id` нет; optional `critical_factor_id` позволяет определить snapshot через связанный factor. У сигнала также есть optional `metric_id`, `monitoring_event_id`, threshold, status, direction, thesis impact, confidence и `last_updated_at`. Уникальность — `(asset_id, name)`.
+- Проверена API-выдача событий: события asset-scoped, возвращаются с `observed_at`, `created_at`, `closed_at`, severity, status и details; Dashboard сортирует их по времени наблюдения.
+- Проверен Worker scheduler: в текущем scheduler source нет записи в `monitoring_signals` и нет обновления `last_updated_at` как побочного эффекта ingestion.
+- Исправлена неточная фраза Dashboard о том, что весь Monitoring начинается от Research Snapshot. Теперь интерфейс отделяет snapshot-контекст исследования от asset-level Signals и Events; для signal показывает связанный factor/snapshot и `last_updated_at`; для event — observed/recorded/closed timestamps.
+- API расширен `critical_factor_name` и `critical_factor_snapshot_id` для signal rows; Web MonitoringSignal/MonitoringEvent получили явные типы; добавлены compile-time fixtures.
+- Commits: API `4899abe8518df1514bafb31e0b29564c9fd0362e`; Web types `0721d72e853b58979df1786256359d9ef251601f`; Dashboard `dc9378445b5207663e5f3245ceba2a0a5aec0b72`; contract test `d13f9e29d8fea9bcb0f284f5bf1b980aa4cc651a`; audit doc `2a153cb41a221fd9cd2359534efd193fedc9a09e`.
+- Осталось: live read-only проверки фактических строк, null rates, cross-asset relationship anomalies и temporal consistency после появления целевого VPS; сквозная UI/API проверка. Snapshot ID для signals/events намеренно не добавлялся — схема не поддерживает прямую привязку, миграция не создавалась.
+- Production DB, signal/event rows, monitoring refresh, probabilities, deployment, main и merge/rebase не затрагивались.
