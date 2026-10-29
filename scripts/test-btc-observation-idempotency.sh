@@ -132,7 +132,72 @@ const revised = await persistBtcObservation(process.env.DATABASE_URL, { ...candi
 assert.deepEqual(revised, { action: "revised", revision: 2 });
 const unchanged = await persistBtcObservation(process.env.DATABASE_URL, { ...candidate, valueNumeric: 80001 });
 assert.deepEqual(unchanged, { action: "unchanged", revision: 2 });
-console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
+const timestampCorrected = {
+  ...candidate,
+  valueNumeric: 80001,
+  observedAt: new Date(candidate.observedAt.getTime() + 1000),
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, timestampCorrected),
+  { action: "revised", revision: 3 },
+);
+const periodCorrected = {
+  ...timestampCorrected,
+  periodStart: new Date(timestampCorrected.observedAt.getTime() - 60_000),
+  periodEnd: timestampCorrected.observedAt,
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
+  { action: "revised", revision: 4 },
+);
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
+  { action: "unchanged", revision: 4 },
+);
+// Concurrent first/correction writes for the same natural key but different periods
+// must serialize and produce two revisions instead of racing into a duplicate INSERT.
+const concurrentWrites = await Promise.all([
+  persistBtcObservation(process.env.DATABASE_URL, {
+    ...periodCorrected,
+    valueNumeric: 80002,
+    periodStart: new Date(timestampCorrected.observedAt.getTime() - 120_000),
+  }),
+  persistBtcObservation(process.env.DATABASE_URL, {
+    ...periodCorrected,
+    valueNumeric: 80003,
+    periodStart: new Date(timestampCorrected.observedAt.getTime() - 180_000),
+  }),
+]);
+assert.deepEqual(concurrentWrites.map(result => result.action), ["revised", "revised"]);
+assert.deepEqual(concurrentWrites.map(result => result.revision).sort((a, b) => a - b), [5, 6]);
+const etfCandidate = {
+  ...candidate,
+  metricId: "institutional.etf_net_flow",
+  sourceId: "institutional.primary",
+  sourceUrl: "https://farside.co.uk/btc/",
+  valueNumeric: 3,
+  unit: "USD million/day",
+  observedAt: new Date("2026-10-12T18:00:00.000Z"),
+  retrievedAt: new Date("2026-10-12T18:00:00.000Z"),
+  sourceRowKey: "farside:btc-etf-flow:test-idempotency",
+  periodStart: new Date("2026-10-12T00:00:00.000Z"),
+  periodEnd: new Date("2026-10-13T00:00:00.000Z"),
+  methodology: "Disposable ETF idempotency test fixture",
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, etfCandidate),
+  { action: "inserted", revision: 1 },
+);
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, {
+    ...etfCandidate,
+    observedAt: new Date("2026-10-12T18:05:00.000Z"),
+    retrievedAt: new Date("2026-10-12T18:05:00.000Z"),
+    sourcePayloadSha256: "d".repeat(64),
+  }),
+  { action: "unchanged", revision: 1 },
+);
+console.log("BTC_OBSERVATION_REVISION_OK initial=1 value_correction=2 timestamp_correction=3 period_correction=4 concurrent_period_corrections=5,6 repeated_payload=unchanged");
 NODE
 
 echo "BTC_OBSERVATION_IDEMPOTENCY_OK exact_duplicates_removed=1 conflicting_payloads_rejected=1 unique_index=present"

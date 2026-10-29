@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   collectBtcObservationCandidates,
+  parseKrakenSpotPricePayload,
   parseFarsideBtcFlows,
   parseHashratePayload,
   parseRewardStatsPayload,
@@ -15,6 +16,31 @@ const now = new Date("2026-10-12T18:00:00.000Z");
 const seconds = value => Math.floor(new Date(value).getTime() / 1000);
 const hashYesterday = "a".repeat(64);
 const hashEnd = "b".repeat(64);
+
+
+test("Kraken spot parser rejects API errors and malformed response envelopes", () => {
+  assert.throws(() => parseKrakenSpotPricePayload({
+    error: ["EQuery:Unknown asset pair"], result: { XXBTZUSD: [] }
+  }, now), /kraken_api_error/);
+  assert.throws(() => parseKrakenSpotPricePayload({
+    result: { XXBTZUSD: [] }
+  }, now), /kraken_error_field_missing/);
+  assert.throws(() => parseKrakenSpotPricePayload({
+    error: [], result: []
+  }, now), /kraken_result_missing/);
+  assert.throws(() => parseKrakenSpotPricePayload({
+    error: [], result: { last: "123", XXBTZUSD: "not-a-trade-array" }
+  }, now), /kraken_xbtusd_trades_missing/);
+});
+
+test("Kraken spot parser does not silently accept a different market key", () => {
+  assert.throws(() => parseKrakenSpotPricePayload({
+    error: [], result: {
+      XXBTZUSD_WRONG: [["81000", "0.01", seconds("2026-10-12T17:59:50Z"), "b", "l", ""]],
+      last: "123"
+    }
+  }, now), /kraken_xbtusd_trades_missing/);
+});
 
 test("hashrate parser chooses the latest complete UTC day and converts H/s to EH/s", () => {
   const candidate = parseHashratePayload({
