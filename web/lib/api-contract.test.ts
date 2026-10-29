@@ -1,5 +1,13 @@
 import type { AssetDetailResponse, BtcScenarioReadiness, ResearchScenario } from "./api";
 
+const freshnessContract: NonNullable<AssetDetailResponse["asset"]["research_freshness"]> = {
+  status: "current",
+  reason: null,
+  last_research_at: "2026-10-30T00:00:00Z",
+  last_major_update_at: "2026-10-20T00:00:00Z",
+  next_review_at: "2026-11-07T00:00:00Z",
+};
+
 // Compile-time contract fixture: the Web build must accept the response fields
 // emitted by the API, including BTC readiness and scenario snapshot lineage.
 const researchProgress: AssetDetailResponse["research_progress"] = {
@@ -32,3 +40,4 @@ const detail: Pick<AssetDetailResponse, "research_progress" | "scenario_readines
 };
 
 void detail;
+void freshnessContract;
