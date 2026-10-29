@@ -318,3 +318,5 @@
 
 
 - Added `scripts/audit-evidence-lineage.sql` as a read-only psql audit (explicit READ ONLY transaction; SELECT only) for nullable links, block/snapshot and domain/block alignment, source mismatch, observation/snapshot asset mismatch, missing URLs, duplicate-like groups and non-published snapshot evidence. Not run against live DB; no results inferred. Commit `00eba258d538726396564a7e797e1eb8889db30a`.
+
+- Разделены URL источника Evidence и URL источника observation: API возвращает `evidence_source_url` и `observation_source_url`, интерфейс показывает две отдельные ссылки. Так не скрывается расхождение за одним coalesce URL. Commits `18bff6de438c49efe8df0beab5ac43ceede2cfd2`, `a3cf51cec3057754aa50de02c53a73d9d2033734`.
