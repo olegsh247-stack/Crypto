@@ -447,3 +447,10 @@ The API now returns explicit block/snapshot, domain/block and source-link consis
 Commits: API `6d9ba34044ef50f29db1ad8def5d4b5d341c54f5`, API source URL `26f9e7ecce5861f4c8bdece99b0ec2544f2e4752`, Web type `9741f36e98f10a5d9daf1efeb5b89b748da3c173`, fixture `5200dc9efd197a7d4f39da0546664134bce1b83b`, Dashboard `1d27bae540d96973e653d84d8d9b922b8a8f4c55`.
 
 No live rows were queried, so actual mismatch/null/duplicate rates remain unknown. No migration was added before measuring real rows. Exact-HEAD CI remains unconfirmed. No production writes, deployment, merge/rebase or main changes.
+
+
+### Evidence lineage diagnostics script (2026-10-30)
+
+Added `scripts/audit-evidence-lineage.sql`, an explicitly `BEGIN TRANSACTION READ ONLY` PostgreSQL/psql audit. It reports nullable-link coverage, block/snapshot mismatches, domain/block mismatches, Evidence-vs-observation source mismatches, observation/snapshot asset mismatches, missing source URLs, duplicate-looking Evidence groups and Evidence on non-published snapshots. It performs SELECTs only and does not repair, delete, update or insert records.
+
+Script commit: `00eba258d538726396564a7e797e1eb8889db30a`. It has not been run against a live database; therefore no anomaly counts or data-integrity pass are claimed.
