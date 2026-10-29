@@ -305,3 +305,6 @@
 - Stored freshness is an ingestion-time assessment, not a dynamic now-age guarantee. The API retains the raw enum; no freshness gate was added for offline/test mode. Collector currently leaves source_updated_at and methodology_version null; do not synthesize these fields.
 - Commits: API feb6fe0f32c30831bccedf7cadcc02ae483260a6; Web type ee46a674f1023e46bc982bdc5afab46ddcc9bf83; fixture d2c8234f4cc261a6add4c28d741fbd8d7b651b71.
 - Next: finish Dashboard display parity for metric provenance, then audit Evidence links from observation/source through research block and published snapshot. No live DB/API test or CI result claimed; no production writes, live capture, registry/runtime, scenario, monitoring, probability, deployment, merge/rebase or main changes.
+
+- Завершена UI parity: Dashboard получил отдельный раздел Metric data с observation/retrieval/provider timestamps, source registration/name/type, row key, methodology/version, hash prefix, revision, raw freshness classification и source link. Интерфейс прямо указывает, что freshness — сохранённая ingestion-time оценка, а не обещание свежести на текущую минуту.
+- Dashboard commit: f89893387a4de84015598f60e03f8c7ad5a100bd. Следующий этап — Evidence lineage audit. Live API/DB и CI на актуальном HEAD пока не подтверждены.
