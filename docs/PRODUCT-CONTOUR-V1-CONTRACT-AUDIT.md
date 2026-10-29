@@ -350,3 +350,34 @@ The API loaded `last_major_update_at` and `next_review_at` from `research_status
 - A fresh CI result for the new commits is not yet confirmed. Older green runs do not validate these commits.
 
 No production database, runtime registry, live ingestion, scenario state, monitoring event, probability, deployment, or main-branch merge was changed.
+
+
+## Monitoring and Events — lineage and lifecycle contract (2026-10-30)
+
+### Schema facts confirmed
+
+- `monitoring_signals` is asset-scoped: it has `asset_id`, optional foreign keys to `critical_factors`, `metric_definitions` and `monitoring_events`, and `last_updated_at`; it has no `snapshot_id` column.
+- `monitoring_signals` status is constrained to `active`, `watch`, `triggered` or `disabled`; direction and thesis impact have explicit allowed values.
+- A uniqueness migration enforces one signal per `(asset_id, name)`.
+- `monitoring_events` is queried by `asset_id` and ordered by `observed_at`; the API returns `event_id`, metric, event type, severity, observed time, details, status, creation time and closure time.
+- The Worker scheduler source currently contains no `monitoring_signals` write or timestamp refresh. This static check does not prove the absence of every external/manual writer.
+
+### Contract defect corrected
+
+The Dashboard previously said Monitoring starts from the exact published Research Snapshot. That was too strong: the schema does not give signals or events snapshot ownership. A signal may be related to a research factor through `critical_factor_id`; the factor's own `snapshot_id` is the available lineage. Events are asset-level history and are not implicitly assigned to a research snapshot.
+
+- API signal query now joins the linked critical factor and returns `critical_factor_snapshot_id` and `critical_factor_name` alongside the existing signal data.
+- Web types now describe the full MonitoringSignal shape, including factor/snapshot/event references, threshold and `last_updated_at`; MonitoringEvent now has an explicit event payload type.
+- Dashboard labels signals as asset-level operational records, shows linked factor and factor snapshot (or explicitly says lineage is unavailable), and displays the signal update timestamp.
+- Event history is labeled asset-level, shows observed and recorded times, and displays closure time when present.
+- Compile-time contract fixtures now cover both MonitoringSignal lineage and MonitoringEvent lifecycle fields.
+- Commits: API `4899abe`; Web types `0721d72`; Dashboard `dc93784`; contract fixture `d13f9e2`.
+
+### Remaining limitations
+
+- No live API/PostgreSQL rows were queried, so actual signal/event counts, null rates, cross-asset reference anomalies and temporal consistency remain unverified.
+- The schema does not bind signals/events to a snapshot directly. Factor linkage is optional; signals without a linked factor cannot be attributed to a research snapshot.
+- The schema/API has a signal-to-event foreign key, but no explicit inverse collection of events per signal in the Dashboard; event history remains asset-wide.
+- No migration was added: this correction clarifies and exposes the existing relationship rather than changing persistence semantics.
+- No production writes, monitoring refresh, event creation/closure, deployment or merge was performed.
+
