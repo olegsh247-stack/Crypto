@@ -76,3 +76,14 @@ const monitoringEvent: MonitoringEvent = {
 
 void monitoringSignal;
 void monitoringEvent;
+
+const metricObservation: AssetDetailResponse["metrics"][number] = {
+  metric_id: "market.spot_price", value: 68123.45, unit: "USD/BTC",
+  observed_at: "2026-10-30T00:00:00Z", period_start: null,
+  source_id: "market.kraken", source_name: "Kraken", source_type: "exchange", source_registered: true,
+  source_url: "https://example.invalid/market", status: "NORMAL", freshness: "unknown", freshness_status: "UNCLASSIFIED",
+  retrieved_at: "2026-10-30T00:01:00Z", source_updated_at: null, source_row_key: "kraken:trade:123",
+  source_payload_sha256: "a".repeat(64), methodology: "Latest valid trade", methodology_version: null,
+  created_at: "2026-10-30T00:01:00Z", revision: 1,
+};
+void metricObservation;
