@@ -381,3 +381,29 @@ The Dashboard previously said Monitoring starts from the exact published Researc
 - No migration was added: this correction clarifies and exposes the existing relationship rather than changing persistence semantics.
 - No production writes, monitoring refresh, event creation/closure, deployment or merge was performed.
 
+
+## Metric-level freshness and provenance — API contract correction (2026-10-30)
+
+### Confirmed before correction
+
+- The asset-detail metrics query selected the latest observation per metric and returned value, unit, observation time, period, source ID/URL, status, a simplified freshness label and revision.
+- The same API handler separately selected retrieved_at, source_updated_at, source_row_key, payload SHA-256, methodology, methodology version and source-registration state for the BTC readiness calculation, but discarded those fields from the ordinary metrics response.
+- The Web contract typed metrics as Array<Record<string, unknown>>; no compile-time fixture protected the metric observation payload.
+- The Worker persists retrieved_at, source_row_key, payload SHA-256 and methodology. source_updated_at and methodology_version are nullable schema fields and are not currently populated by this collector; the API preserves them as null rather than infer values.
+- Stored freshness is a classification captured at ingestion time. Returning CURRENT as a permanent claim of present-time freshness would be misleading; the API now exposes the raw classification and preserves UNCLASSIFIED distinctly. It does not impose a new online freshness gate on offline/test research.
+
+### Correction applied
+
+- The ordinary metric query now joins the registered source and returns source name/type/registration, retrieval time, source-updated time, source-row key, payload hash, methodology/version, creation time, revision and raw freshness classification.
+- The normalized metric payload preserves null metadata and maps CURRENT/STALE to the existing display compatibility field while mapping EXPIRED and UNCLASSIFIED to unknown; the raw enum remains available as freshness_status.
+- Added an explicit Web MetricObservation type and compile-time fixture covering registered source metadata, hash, row key, methodology, nullable provider timestamp/version and UNCLASSIFIED semantics.
+- API commit: feb6fe0f32c30831bccedf7cadcc02ae483260a6; Web type commit: ee46a674f1023e46bc982bdc5afab46ddcc9bf83; contract fixture commit: d2c8234f4cc261a6add4c28d741fbd8d7b651b71.
+
+### Remaining audit boundary
+
+- Dashboard rendering of the full metric provenance payload is still to be checked/implemented; API/type parity alone is not full UI parity.
+- No live API/PostgreSQL rows were queried. Null rates and actual historical classifications remain unverified.
+- No CI run/status has yet been confirmed for these exact commits.
+- The API does not recompute age against registry freshness windows on every read. The returned classification is the stored assessment, not a guarantee that a row is fresh at the time a user opens the page. This is intentionally not made a blocking condition for offline/test mode.
+
+No production DB writes, live capture/ingestion, runtime registry changes, scenario-state/monitoring/probability changes, deployment, merge/rebase or main-branch changes were performed.
