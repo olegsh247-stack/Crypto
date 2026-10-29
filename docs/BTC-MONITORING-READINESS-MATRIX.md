@@ -61,7 +61,7 @@ No price forecast, buy/sell signal, entry/exit recommendation, position sizing, 
 
 ## API exposure — 2026-10-12
 
-The VPS API now returns a read-only `scenario_readiness` object for BTC, computed from persisted observations for the canonical metric IDs. It reports blockers and selected provenance, but always sets `can_persist_scenario_state: false`; it does not choose Bull/Base/Bear or write state/events. The disposable-database E2E asserts that the current seeded data fails closed because fee/subsidy and DXY observations are missing and the latest ETF-flow row is stale. This API response is the input-quality gate only, not a scenario evaluation.
+The VPS API now returns a read-only `scenario_readiness` object for BTC, computed from persisted observations for the canonical metric IDs. It reports blockers and selected provenance, but always sets `can_persist_scenario_state: false`; it does not choose Bull/Base/Bear or write state/events. The disposable-database E2E asserts that seeded data fails closed when required spot-price or ETF-flow inputs fail freshness, reporting-period or provenance checks. DXY is optional context; fee/subsidy is supporting data, not a required readiness gate. This API response is the input-quality gate only, not a scenario evaluation.
 
 
 ## Provenance/unit validation hardening — 2026-10-12

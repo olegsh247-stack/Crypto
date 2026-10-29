@@ -48,11 +48,12 @@ function completeInputs() {
   ];
 }
 
-test("fresh inputs still block while no canonical DXY source is approved", () => {
+test("fresh required inputs pass even when DXY source is not approved", () => {
   const result = assessBtcScenarioReadiness(completeInputs(), now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.equal(result.can_persist_scenario_state, false);
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
+  assert.equal(result.selected_inputs["macro.dxy"], undefined);
   assert.equal(result.selected_inputs["market.spot_price"].source_id, "market.kraken");
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
@@ -64,22 +65,22 @@ test("historical ETF sessions count toward the five-day series even when they ar
       ? { ...x, freshness: "STALE" }
       : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy" && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
 });
 
 test("deferred fee/subsidy ratio is not required for the first BTC scenario", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.fee_subsidy_ratio");
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "security.fee_subsidy_ratio"));
 });
 
 test("supporting hashrate is not a mandatory directional input", () => {
   const inputs = completeInputs().filter(x => x.metric_id !== "security.hashrate");
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "security.hashrate"));
 });
 
@@ -134,12 +135,13 @@ test("future-dated observations are rejected", () => {
   assert.ok(result.blockers.some(x => x.metric_id === "market.spot_price"));
 });
 
-test("untraceable observations are rejected", () => {
+test("untraceable optional DXY context is ignored and does not block readiness", () => {
   const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
     ? { ...x, source_url: null } : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
+  assert.equal(result.selected_inputs["macro.dxy"], undefined);
 });
 
 
@@ -206,7 +208,7 @@ for (const [sourceId, sourceUrl] of [
 }
 
 
-test("registered ICE DXY candidate cannot bypass the unapproved DXY source contract", () => {
+test("registered ICE DXY candidate remains optional and is not selected without source approval", () => {
   const inputs = completeInputs().map(x => x.metric_id === "macro.dxy"
     ? {
         ...x,
@@ -216,9 +218,8 @@ test("registered ICE DXY candidate cannot bypass the unapproved DXY source contr
       }
     : x);
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
-  assert.ok(result.blockers.some(x => x.metric_id === "macro.dxy"
-    && x.reason === "source_not_approved_for_metric"));
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.ok(!result.blockers.some(x => x.metric_id === "macro.dxy"));
   assert.equal(result.selected_inputs["macro.dxy"], undefined);
 });
 
@@ -299,11 +300,37 @@ test("metric registry does not advertise a generic or unlicensed DXY source as c
   assert.match(ice.notes, /not in macro\.dxy source_priority/i);
 });
 
-test("official Farside all-data endpoint is accepted as the same canonical source", () => {
+test("official Farside all-data endpoint passes readiness without requiring DXY", () => {
   const inputs = completeInputs();
   const result = assessBtcScenarioReadiness(inputs, now);
-  assert.equal(result.status, "not_evaluable");
+  assert.equal(result.status, "ready_for_rule_evaluation");
   assert.ok(!result.blockers.some(x => x.metric_id === "institutional.etf_net_flow"
     && x.reason === "source_url_not_approved_for_metric"));
   assert.equal(result.selected_inputs["institutional.etf_net_flow"].length, 5);
+});
+
+
+test("readiness capture cannot let ETF history starve the latest non-ETF inputs", () => {
+  const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
+  assert.ok(apiSource.includes("o.observation_id=(select o2.observation_id"));
+  assert.ok(apiSource.includes("o.period_start >= current_date - interval '14 days'"));
+  assert.ok(!apiSource.includes("order by o.metric_id,o.observed_at desc nulls first,o.revision desc,o.created_at desc limit 100"));
+});
+
+test("asset-list lifecycle treats N/A blocks as resolved and requires all blocks for monitoring", () => {
+  const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
+  assert.ok(apiSource.includes("count(*) filter(where rb.status in ('complete','n_a')) as resolved"));
+  assert.ok(apiSource.includes("coalesce(b.resolved,0)<15"));
+});
+
+
+test("ETF latest row is selected by report session date, not retrieval timestamp", () => {
+  const inputs = completeInputs();
+  const priorSession = inputs.find(x => x.metric_id === "institutional.etf_net_flow" && String(x.period_start).startsWith("2026-10-11"));
+  assert.ok(priorSession);
+  priorSession.observed_at = now.toISOString();
+  priorSession.retrieved_at = now.toISOString();
+  const result = assessBtcScenarioReadiness(inputs, now);
+  assert.equal(result.status, "ready_for_rule_evaluation");
+  assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].day, "2026-10-12");
 });
