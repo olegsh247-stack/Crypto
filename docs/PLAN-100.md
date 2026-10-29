@@ -1942,3 +1942,6 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Stored CURRENT is an ingestion-time classification, not a live guarantee; EXPIRED and UNCLASSIFIED remain distinguishable in the raw freshness_status. Offline/test research is not blocked by an age gate.
 - Commits: API feb6fe0f32c30831bccedf7cadcc02ae483260a6; Web type ee46a674f1023e46bc982bdc5afab46ddcc9bf83; fixture d2c8234f4cc261a6add4c28d741fbd8d7b651b71.
 - Remaining: finish Dashboard rendering audit, then Evidence lineage audit. No live DB/API acceptance or CI result is claimed for these commits. Production and main remain untouched.
+
+- Dashboard parity completed for metric observations: the asset page now exposes the stored freshness classification and available provenance fields, while explicitly avoiding a live-freshness guarantee. Commit f89893387a4de84015598f60e03f8c7ad5a100bd.
+- Next audit: Evidence lineage and null/relationship semantics. Live API/DB acceptance and CI for the exact updated head remain unverified.
