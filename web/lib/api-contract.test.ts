@@ -1,4 +1,4 @@
-import type { AssetDetailResponse, BtcScenarioReadiness, ResearchScenario } from "./api";
+import type { AssetDetailResponse, BtcScenarioReadiness, MonitoringEvent, MonitoringSignal, ResearchScenario } from "./api";
 
 const freshnessContract: NonNullable<AssetDetailResponse["asset"]["research_freshness"]> = {
   status: "current",
@@ -41,3 +41,38 @@ const detail: Pick<AssetDetailResponse, "research_progress" | "scenario_readines
 
 void detail;
 void freshnessContract;
+
+const monitoringSignal: MonitoringSignal = {
+  monitoring_signal_id: "signal-1",
+  asset_id: "btc",
+  critical_factor_id: "factor-1",
+  critical_factor_name: "Network security",
+  critical_factor_snapshot_id: "BTC-2026-10-07-v1",
+  metric_id: "security.hashrate",
+  monitoring_event_id: "event-1",
+  name: "Network security",
+  current_value: { value: 1 },
+  previous_value: { value: 0.9 },
+  threshold: { value: 0.8 },
+  threshold_type: "below",
+  direction: "improving",
+  thesis_impact: "positive",
+  status: "active",
+  confidence: 0.8,
+  last_updated_at: "2026-10-30T00:00:00Z",
+};
+
+const monitoringEvent: MonitoringEvent = {
+  event_id: "event-1",
+  metric_id: "security.hashrate",
+  event_type: "threshold_crossed",
+  severity: "info",
+  observed_at: "2026-10-30T00:00:00Z",
+  details: { description: "Fixture only." },
+  status: "open",
+  created_at: "2026-10-30T00:00:00Z",
+  closed_at: null,
+};
+
+void monitoringSignal;
+void monitoringEvent;
