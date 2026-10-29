@@ -21,14 +21,16 @@ jobs:
         run: node scripts/check-vps-only-repository.mjs
       - name: Build VPS shared runtime
         working-directory: vps/shared
-        run: npm install && npm run build
-      - name: Install VPS API dependencies
-        working-directory: vps/api
-        run: npm install
+        run: npm ci --install-links && npm run build
       - name: Build VPS worker
         working-directory: vps/worker
-        run: npm install && npm run build
-      - name: Test VPS Worker London day boundaries
+        run: npm ci --install-links && npm run build
+      - name: BTC source collector parser tests
+        run: node --test scripts/btc-observation-collectors.test.mjs
+      - name: Install VPS API dependencies
+        working-directory: vps/api
+        run: npm ci --install-links
+      - name: Test VPS Worker UTC candle boundaries and finalization
         working-directory: vps/worker
         run: npm test
       - name: Build VPS API
@@ -55,6 +57,38 @@ jobs:
           assert services['worker']['environment']['WORKER_SCHEDULE_UTC']=='00:30'
           print('VPS_PRODUCTION_COMPOSE_OK public_ports=80,443 postgres_private=1 api_private=1 worker_private=1')
           PY
+      - name: Build VPS API and Worker Docker images
+        run: |
+          set -euo pipefail
+          docker build -f vps/api/Dockerfile -t crypto-vps-api:ci vps
+          docker build -f vps/worker/Dockerfile -t crypto-vps-worker:ci vps
+          docker run --rm --entrypoint node crypto-vps-api:ci -e "import('@crypto/vps-runtime').then(()=>console.log('API_RUNTIME_IMPORT_OK'))"
+          docker run --rm --entrypoint node crypto-vps-worker:ci -e "import('@crypto/vps-runtime').then(()=>console.log('WORKER_RUNTIME_IMPORT_OK'))"
+          cleanup() { docker rm -f crypto-vps-api-smoke crypto-vps-worker-smoke >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker run -d --name crypto-vps-api-smoke -e DATABASE_URL=postgresql://crypto:crypto@127.0.0.1:5432/crypto -e PORT=8080 -e HOST=0.0.0.0 -p 127.0.0.1:18080:8080 crypto-vps-api:ci
+          for _ in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'; then
+              echo "VPS_API_CONTAINER_START_OK"
+              break
+            fi
+            sleep 1
+          done
+          if ! curl --fail --silent http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'; then
+            echo "VPS_API_CONTAINER_HEALTH_FAILED"
+            docker logs crypto-vps-api-smoke || true
+            docker inspect crypto-vps-api-smoke --format '{{json .State}}' || true
+            exit 1
+          fi
+          docker run -d --name crypto-vps-worker-smoke -e DATABASE_URL= -e WORKER_SCHEDULE_UTC=23:59 crypto-vps-worker:ci
+          for _ in $(seq 1 10); do
+            if docker logs crypto-vps-worker-smoke 2>&1 | grep -q '"status":"scheduled"'; then
+              echo "VPS_WORKER_CONTAINER_START_OK"
+              break
+            fi
+            sleep 1
+          done
+          docker logs crypto-vps-worker-smoke 2>&1 | grep -q '"status":"scheduled"'
       - name: Start PostgreSQL rehearsal
         id: postgres
         run: |

@@ -42,8 +42,8 @@ function completeInputs() {
     row("security.fee_subsidy_ratio", "2026-10-11T00:00:00.000Z", 0.2),
     row("macro.dxy", "2026-10-11T00:00:00.000Z", 99),
     ...[
-      ["2026-10-12", 10], ["2026-10-11", 20], ["2026-10-10", -5],
-      ["2026-10-09", 8], ["2026-10-08", 2],
+      ["2026-10-12", 10], ["2026-10-09", 20], ["2026-10-08", -5],
+      ["2026-10-07", 8], ["2026-10-06", 2],
     ].map(([day, value]) => row("institutional.etf_net_flow", day+"T00:00:00.000Z", value)),
   ];
 }
@@ -104,7 +104,7 @@ test("ETF flows need five distinct recent days", () => {
   inputs.push(
     row("institutional.etf_net_flow", "2026-10-12T01:00:00.000Z", 10),
     row("institutional.etf_net_flow", "2026-10-12T02:00:00.000Z", 20),
-    row("institutional.etf_net_flow", "2026-10-11T00:00:00.000Z", 3),
+    row("institutional.etf_net_flow", "2026-10-09T00:00:00.000Z", 3),
   );
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "not_evaluable");
@@ -115,10 +115,10 @@ test("stale latest ETF flow blocks instead of falling back to five older current
   const inputs = completeInputs().filter(x => x.metric_id !== "institutional.etf_net_flow");
   inputs.push(
     row("institutional.etf_net_flow", "2026-10-12T01:00:00.000Z", 10),
-    row("institutional.etf_net_flow", "2026-10-11T01:00:00.000Z", 20),
-    row("institutional.etf_net_flow", "2026-10-10T01:00:00.000Z", 30),
-    row("institutional.etf_net_flow", "2026-10-09T01:00:00.000Z", 40),
-    row("institutional.etf_net_flow", "2026-10-08T01:00:00.000Z", 50),
+    row("institutional.etf_net_flow", "2026-10-09T01:00:00.000Z", 20),
+    row("institutional.etf_net_flow", "2026-10-08T01:00:00.000Z", 30),
+    row("institutional.etf_net_flow", "2026-10-07T01:00:00.000Z", 40),
+    row("institutional.etf_net_flow", "2026-10-06T01:00:00.000Z", 50),
     { ...row("institutional.etf_net_flow", "2026-10-12T02:00:00.000Z", 60), freshness: "STALE" },
   );
   const result = assessBtcScenarioReadiness(inputs, now);
@@ -326,11 +326,20 @@ test("asset-list lifecycle treats N/A blocks as resolved and requires all blocks
 
 test("ETF latest row is selected by report session date, not retrieval timestamp", () => {
   const inputs = completeInputs();
-  const priorSession = inputs.find(x => x.metric_id === "institutional.etf_net_flow" && String(x.period_start).startsWith("2026-10-11"));
+  const priorSession = inputs.find(x => x.metric_id === "institutional.etf_net_flow" && String(x.period_start).startsWith("2026-10-09"));
   assert.ok(priorSession);
   priorSession.observed_at = now.toISOString();
   priorSession.retrieved_at = now.toISOString();
   const result = assessBtcScenarioReadiness(inputs, now);
   assert.equal(result.status, "ready_for_rule_evaluation");
   assert.equal(result.selected_inputs["institutional.etf_net_flow"][0].day, "2026-10-12");
+});
+
+
+test("API ETF metric uses report date then revision, matching scenario readiness", () => {
+  const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
+  assert.ok(apiSource.includes("o.period_start,o.source_id"));
+  assert.ok(apiSource.includes("case when o.metric_id='institutional.etf_net_flow' then o.period_start end desc nulls last"));
+  assert.ok(apiSource.includes("case when o.metric_id='institutional.etf_net_flow' then o.revision end desc nulls last"));
+  assert.ok(apiSource.includes("period_start:m.period_start??null"));
 });

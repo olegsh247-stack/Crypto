@@ -11,7 +11,12 @@ function getPool(databaseUrl: string) {
       connectionString: databaseUrl,
       max: Number(process.env.PGPOOL_MAX ?? 10),
       idleTimeoutMillis: Number(process.env.PGPOOL_IDLE_TIMEOUT_MS ?? 30000),
-      connectionTimeoutMillis: Number(process.env.PGPOOL_CONNECTION_TIMEOUT_MS ?? 10000)
+      connectionTimeoutMillis: Number(process.env.PGPOOL_CONNECTION_TIMEOUT_MS ?? 10000),
+      statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT_MS ?? 15000),
+      query_timeout: Number(process.env.PG_QUERY_TIMEOUT_MS ?? 20000)
+    });
+    pool.on("error", (error: Error) => {
+      console.error(JSON.stringify({ status: "error", service: "crypto-db-pool", error: "idle_client_error", name: error.name }));
     });
   }
   return pool;
@@ -39,5 +44,31 @@ export async function closePool() {
   if (pool) {
     await pool.end();
     pool = null;
+  }
+}
+
+
+export interface SqlTransactionClient {
+  query(text: string, values?: any[]): Promise<{ rows: any[] }>;
+  release(): void;
+}
+
+/** Run related observation reads/writes on one PostgreSQL connection and transaction. */
+export async function withSqlTransaction<T>(
+  databaseUrl: string,
+  callback: (client: SqlTransactionClient) => Promise<T>
+): Promise<T> {
+  if (!databaseUrl) throw new Error("DATABASE_URL is required");
+  const client = await getPool(databaseUrl).connect();
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    try { await client.query("ROLLBACK"); } catch {}
+    throw error;
+  } finally {
+    client.release();
   }
 }
