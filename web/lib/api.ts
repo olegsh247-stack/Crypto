@@ -81,7 +81,7 @@ export type EvidenceRecord = {
   observation_observed_at?: string | null; observation_retrieved_at?: string | null; observation_source_id?: string | null;
   observation_source_name?: string | null; observation_source_type?: string | null; observation_source_url?: string | null;
   source_row_key?: string | null; source_payload_sha256?: string | null; methodology?: string | null; methodology_version?: string | null;
-  source_id?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null;
+  source_id?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null; evidence_source_url?: string | null;
   source_link_status: "no_observation" | "evidence_source_missing" | "observation_source_missing" | "match" | "mismatch";
   evidence_type: "fact" | "calculation" | "assessment" | "hypothesis"; claim: string; data_summary?: string | null;
   signal: "improving" | "stable" | "deteriorating" | "mixed" | "unknown"; assessment?: string | null; confidence?: number | null;
