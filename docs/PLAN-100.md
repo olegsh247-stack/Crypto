@@ -11,10 +11,10 @@
 > **ТЕКУЩЕЕ СОСТОЯНИЕ НА 30.10.2026 — ПРИОРИТЕТ НАД ИСТОРИЧЕСКИМИ ЗАПИСЯМИ НИЖЕ**
 >
 > - BTC Rule v1 / исследовательский сценарий завершён: readiness и воспроизводимый offline pipeline подтверждены. Не возвращаться к повторному сбору BTC-данных; DXY необязателен.
-> - Последняя кодовая точка аудита: `30b065be60438ca209589adba87f8a7eb7e172d0` (`fix/btc-observation-pipeline-mainline`); затем обновлён сам План 100 (документационный commit `52612874f100f5f189c67147d8e56bcaf94d270a`). Новые CI runs и commit statuses для кодовой точки не обнаружены; успех CI не заявляется. Последние подтверждённые проверки относятся к предыдущему code HEAD `5fada1bfe99d7d2f55ad5a08dfc79c4352940741`.
-> - Сравнение с `main` (`48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`): ahead 93 / behind 2 от общего предка `03f4a08ec6c533556b655319e358d476359b4cf4`. PR #87 и #92 не переносить повторно; merge/rebase не выполнялись.
-> - Исправлен API tie-breaker ETF ordering; начат Product Contour v1 audit. В текущем проходе подтверждены snapshot scoping factors/scores/scenarios и полнота source registry; исправлена передача `last_major_update_at` и `next_review_at` в list/detail freshness payload. Контрактный fixture расширен.
-> - Следующие пункты аудита: metric-level freshness/UI parity; operational semantics monitoring signals/events; повторная проверка CI на новых коммитах; live read-only acceptance только после появления целевого VPS.
+> - Последняя кодовая точка Product Contour audit: `d13f9e29d8fea9bcb0f284f5bf1b980aa4cc651a` (Web contract fixture); далее обновлены audit document и journal. Новые CI runs и commit statuses для новых кодовых коммитов не обнаружены; успех CI не заявляется. Последние подтверждённые проверки относятся к предыдущему code HEAD `5fada1bfe99d7d2f55ad5a08dfc79c4352940741`.
+> - Сравнение с `main` (`48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`): ahead 100 / behind 2 от общего предка `03f4a08ec6c533556b655319e358d476359b4cf4`. PR #87 и #92 не переносить повторно; merge/rebase не выполнялись.
+> - Исправлен API tie-breaker ETF ordering. Product Contour v1 static audit подтвердил snapshot scoping factors/scores/scenarios и полноту source registry; freshness timestamps передаются list/detail; Monitoring signals/events явно описаны как asset-scoped, а signal показывает lineage связанного factor и `last_updated_at`. Web contract fixtures покрывают freshness и Monitoring/Event shapes.
+> - Следующие пункты аудита: metric-level freshness/UI parity; Evidence completeness/lineage review; CI на новых коммитах; live read-only acceptance (counts/null rates/lineage) только после появления целевого VPS.
 > - Production ingestion/capture, production DB writes, registry/runtime changes, scenario-state/monitoring writes, probability changes, deployment и merge в `main` не разрешены и не выполнялись.
 
 
