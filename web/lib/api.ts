@@ -30,9 +30,18 @@ export type CriticalFactor = {
 };
 
 export type MonitoringSignal = {
-  monitoring_signal_id: string; critical_factor_id?: string | null; metric_id?: string | null; name: string; current_value?: unknown; previous_value?: unknown;
-  direction?: "improving" | "stable" | "deteriorating" | "mixed" | "unknown" | null; thesis_impact?: "positive" | "neutral" | "negative" | "mixed" | null;
+  monitoring_signal_id: string; asset_id: string; critical_factor_id?: string | null; critical_factor_name?: string | null;
+  critical_factor_snapshot_id?: string | null; metric_id?: string | null; monitoring_event_id?: string | null;
+  name: string; current_value?: unknown; previous_value?: unknown; threshold?: unknown; threshold_type?: string | null;
+  direction?: "improving" | "stable" | "deteriorating" | "mixed" | "unknown" | null;
+  thesis_impact?: "positive" | "neutral" | "negative" | "mixed" | null;
   status: "active" | "watch" | "triggered" | "disabled"; confidence?: number | null; last_updated_at: string;
+};
+
+export type MonitoringEvent = {
+  event_id: string; metric_id?: string | null; event_type?: string | null; severity?: string | null;
+  observed_at: string; details?: Record<string, unknown> | null; status?: string | null;
+  created_at: string; closed_at?: string | null;
 };
 
 export type ResearchScenario = {
@@ -62,7 +71,7 @@ export type AssetDetailResponse = {
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   scenario_readiness?: BtcScenarioReadiness;
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
-  monitoring_signals: MonitoringSignal[]; monitoring_events: Array<Record<string, unknown>>;
+  monitoring_signals: MonitoringSignal[]; monitoring_events: MonitoringEvent[];
   sources: Array<{ source_id: string; name: string; source_type: string; base_url?: string | null; trust_level?: string | null }>;
   evidence: Array<{ evidence_id: string; research_block_id?: string | null; research_domain_id?: string | null; observation_id?: string | null; source_id?: string | null; evidence_type: "fact" | "calculation" | "assessment" | "hypothesis"; claim: string; data_summary?: string | null; signal: "improving" | "stable" | "deteriorating" | "mixed" | "unknown"; assessment?: string | null; confidence?: number | null; thesis_impact: "positive" | "neutral" | "negative" | "mixed"; status: "strong" | "watch" | "weak" | "unknown"; as_of?: string | null; metric_id?: string | null; observation_value?: number | null; observation_text?: string | null; observation_unit?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null }>;
 };
