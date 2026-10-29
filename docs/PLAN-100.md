@@ -1945,3 +1945,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 
 - Dashboard parity completed for metric observations: the asset page now exposes the stored freshness classification and available provenance fields, while explicitly avoiding a live-freshness guarantee. Commit f89893387a4de84015598f60e03f8c7ad5a100bd.
 - Next audit: Evidence lineage and null/relationship semantics. Live API/DB acceptance and CI for the exact updated head remain unverified.
+
+### Product Contour v1 — Evidence lineage audit, 2026-10-30
+
+- Evidence has independent nullable foreign keys to research block, domain, observation and source; the schema does not guarantee block/snapshot alignment, domain/block association or equality of Evidence and observation sources.
+- API now reports consistency statuses and exposes observation provenance separately. Web has an explicit EvidenceRecord type/fixture; Dashboard shows lineage and provenance.
+- Commits: API `6d9ba34044ef50f29db1ad8def5d4b5d341c54f5` and `26f9e7ecce5861f4c8bdece99b0ec2544f2e4752`; Web type `9741f36e98f10a5d9daf1efeb5b89b748da3c173`; fixture `5200dc9efd197a7d4f39da0546664134bce1b83b`; Dashboard `1d27bae540d96973e653d84d8d9b922b8a8f4c55`.
+- Remaining: live read-only anomaly counts and exact-HEAD CI. No migration was added pending real-row counts; no production writes or deployment.
