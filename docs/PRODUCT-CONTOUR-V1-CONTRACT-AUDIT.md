@@ -321,3 +321,32 @@ The remaining source-level Web response type gaps from the previous section have
 - VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
 
 This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
+
+
+## Product Contour v1 — follow-up static audit (2026-10-30)
+
+### Confirmed in the current working branch
+
+- Research progress uses the shared completed/resolved semantics: N/A blocks count as resolved, not completed.
+- Critical factors and research scores are restricted to the latest published snapshot.
+- Research scenario definitions and scenario states are both restricted to the latest published snapshot. The Dashboard only merges a state with the matching scenario definition; absent a state, it labels the Base definition as a published baseline.
+- The top-level source registry includes sources referenced by observations and by Evidence in the latest published snapshot.
+- The current API returns monitoring signals and events separately from snapshot-bound research content; these are asset-level operational collections, not part of the snapshot-bound factor/score/scenario baseline.
+
+### Defect found and corrected
+
+The API loaded `last_major_update_at` and `next_review_at` from `research_status` but omitted both from the `research_freshness` object returned to Web. The Web type already allowed these fields, so the response silently discarded available review metadata.
+
+- The asset-list query now selects both timestamps and includes them in each asset's `research_freshness` object.
+- The asset-detail freshness payload now includes both timestamps.
+- The compile-time Web API contract fixture now exercises `status`, `reason`, `last_research_at`, `last_major_update_at` and `next_review_at` together.
+- Code commits: API `ff27970`; Web contract fixture `9d6b7ba`.
+
+### Still not verified / remaining audit boundary
+
+- No live API endpoint or live PostgreSQL payload was queried. This remains a static repository audit only.
+- Metric-level freshness/provenance is returned in the detail payload, but a complete UI parity audit for every metric and every screen remains open.
+- Monitoring signals/events are asset-scoped; their operational lifecycle and the semantics of their timestamps need a separate focused contract review before treating them as snapshot research evidence.
+- A fresh CI result for the new commits is not yet confirmed. Older green runs do not validate these commits.
+
+No production database, runtime registry, live ingestion, scenario state, monitoring event, probability, deployment, or main-branch merge was changed.
