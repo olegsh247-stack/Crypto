@@ -154,6 +154,33 @@ assert.deepEqual(
   await persistBtcObservation(process.env.DATABASE_URL, periodCorrected),
   { action: "unchanged", revision: 4 },
 );
+const etfCandidate = {
+  ...candidate,
+  metricId: "institutional.etf_net_flow",
+  sourceId: "institutional.primary",
+  sourceUrl: "https://farside.co.uk/btc/",
+  valueNumeric: 3,
+  unit: "USD million/day",
+  observedAt: new Date("2026-10-12T18:00:00.000Z"),
+  retrievedAt: new Date("2026-10-12T18:00:00.000Z"),
+  sourceRowKey: "farside:btc-etf-flow:test-idempotency",
+  periodStart: new Date("2026-10-12T00:00:00.000Z"),
+  periodEnd: new Date("2026-10-13T00:00:00.000Z"),
+  methodology: "Disposable ETF idempotency test fixture",
+};
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, etfCandidate),
+  { action: "inserted", revision: 1 },
+);
+assert.deepEqual(
+  await persistBtcObservation(process.env.DATABASE_URL, {
+    ...etfCandidate,
+    observedAt: new Date("2026-10-12T18:05:00.000Z"),
+    retrievedAt: new Date("2026-10-12T18:05:00.000Z"),
+    sourcePayloadSha256: "d".repeat(64),
+  }),
+  { action: "unchanged", revision: 1 },
+);
 console.log("BTC_OBSERVATION_REVISION_OK initial=1 correction=2 repeated_payload=unchanged");
 NODE
 
