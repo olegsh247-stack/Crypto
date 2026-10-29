@@ -321,3 +321,84 @@ The remaining source-level Web response type gaps from the previous section have
 - VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
 
 This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
+
+
+---
+
+## Current-main read-only reconciliation — 2026-10-30
+
+**Code baseline:** `main` at `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`.  
+**Method:** static source inspection only. No live API call, database query, migration, build, deployment, or data mutation was performed.
+
+### Previously reported contract gaps now closed in current source
+
+The following findings from the October 9–13 audit are no longer open in the inspected mainline:
+
+- **Research progress semantics:** API and Web both count `complete` as completed and `complete + n_a` as resolved; both calculate progress from resolved blocks out of 15. The shared research-status contract defines these semantics.
+- **Factor and score snapshot scope:** the asset-detail API filters both collections to the latest published snapshot.
+- **Scenario lineage:** scenario definitions and scenario states are both selected for the latest published snapshot; the Dashboard matches a state to its definition by scenario ID and snapshot.
+- **Evidence/source completeness:** evidence is selected for the active published snapshot; the top-level source registry includes both observation-linked sources and sources referenced directly by active-snapshot evidence.
+
+These are source-level confirmations, not a fresh database payload audit.
+
+### Remaining current-main product/API findings
+
+**P1 — Dashboard still infers thesis and monitoring conclusions.**
+
+The current Dashboard derives a positive/negative thesis classification from fixed score cutoffs or counts of qualitative factors. It also treats every monitoring row with an `improving`/`deteriorating` direction as a directional signal, even when no numeric metric/threshold exists. This can turn descriptive research material into an apparent current signal.
+
+- A clean current-mainline correction is open as Draft PR #99.
+- PR #99 has a successful Web build; its VPS API Build Rehearsal was still running at the time of this audit.
+- Do not treat #99 as merged or validated until the exact-head checks finish.
+
+**P1 — Metric-level freshness and provenance are returned but not presented in the Dashboard.**
+
+The API returns a `metrics` collection with observation time, period, source, URL, status, revision and normalized freshness. The current Dashboard does not consume `data.metrics`. Consequently, the product UI cannot show users the input-level freshness/provenance contract even though the API provides it. The research-review freshness field is a separate concept and must not be presented as a substitute for metric freshness.
+
+**P2 — Market snapshot can include an unfinished candle and mislabels its time span.**
+
+The API returns an `is_finalized` flag for daily candles. The Dashboard currently ignores that flag when selecting the latest close. It also calculates the displayed “7d change” from the last seven rows, which represent six intervals when the rows are consecutive. The correction should select finalized candles only and calculate the return against an explicit UTC seven-day boundary, with a clear unavailable state when the baseline candle is missing.
+
+**P2 — Research freshness payload omits available review timestamps.**
+
+The asset-detail query selects `last_major_update_at` and `next_review_at`, but the returned `research_freshness` object currently includes only status, reason and `last_research_at`. The Web type permits the omitted fields, so this is not a compile-time failure, but it is an incomplete API contract. Keep research-review freshness distinct from metric-level freshness.
+
+**Live acceptance remains unverified.**
+
+The current source cannot prove what a deployed service returns. The own-VPS target has not been provisioned, and no live endpoint was tested in this audit. CI/rehearsal evidence does not establish deployed parity or live-data completeness.
+
+### PR #86 — selective port assessment
+
+PR #86 is open/Draft and based on an older mainline. Its branch compares as 29 commits ahead and 2 behind current `main`, with 15 changed files. Its recorded green checks refer to its old head, not to a rebased/current-main implementation. Do not merge it wholesale.
+
+**Keep as candidate current-mainline work:**
+
+1. Same-origin admin session endpoint and authenticated Next.js mutation proxy with a strict route/method allowlist, signed HttpOnly cookie, no-store responses and bounded request bodies.
+2. Constant-time comparison for the backend admin token.
+3. API HTTP server body-size limits, request/header/socket timeouts and safe structured request logging.
+4. Caddy routing: `/api/admin/*` to Web, other `/api/*` to API, and page requests to Web.
+5. A production Web container, API/Web healthchecks, Caddy startup after healthy dependencies, and a Docker image build workflow.
+6. API unknown routes returning 404 rather than a success-shaped fallback.
+7. Commodity UI reading the API's `items` response field.
+8. Asset creation validation: reject non-boolean `enabled` values and avoid overwriting an existing asset on duplicate creation.
+
+**Do not port without correction or separation:**
+
+- The login/API failed-attempt throttles are process-local maps. They reset on restart/replica changes and can grow with many distinct client keys. They are best-effort only, not a robust public-edge rate limit. The `X-Forwarded-For` client address is trustworthy only when the proxy chain is explicitly controlled.
+- The proposed Web Dockerfile uses `npm install` and does not copy/use the lockfile. Replace with deterministic `npm ci` and the committed lockfile.
+- Compose attaches Web to the database `backend` network even though Web only needs API access. Prefer Web on the edge network only; keep PostgreSQL on the private backend network.
+- Compose sets `CORS_ORIGIN=http://localhost:3000`; this must not be the production origin. Same-origin proxy routing should be the normal browser path, with explicit production CORS only if a separate origin is intentionally supported.
+- The Web API helper still builds an absolute `API_BASE` URL for ordinary browser GET requests. A server-only `CRYPTO_API_URL` is not a browser endpoint. Browser calls should use same-origin relative `/api/*` paths so the Caddy routing actually works; keep the internal API URL for server-side calls.
+- The admin access key and session-signing secret can fall back to the same backend token. Production configuration should support separate secrets and document rotation.
+- The Add Asset UI and asset-type endpoint are product functionality, not infrastructure. Keep them in a separate small change and do not create/enable assets as part of deployment or this audit.
+
+### Recommended implementation order
+
+1. Port the admin session/proxy and API server hardening onto current `main`, with the rate-limit and proxy-trust caveats above addressed or explicitly bounded.
+2. Port the Caddy/Web/Compose/Docker workflow as a separate self-hosted runtime change; make browser API calls same-origin and make image builds lockfile-deterministic.
+3. Port the commodity response fix and safe asset-creation behavior separately from infrastructure; retain explicit asset enablement and do not add ETH/SOL/CAKE data as part of this change.
+4. Complete PR #99 exact-head CI/review, then correct finalized-candle selection, exact seven-day calculation, and the freshness payload.
+5. Add Dashboard rendering for metric-level freshness/provenance, then run the Product Contour acceptance checks against disposable PostgreSQL and the built Web/API.
+6. Only after the own VPS is provisioned, perform approved read-only live endpoint verification. Production migration, data writes, ingestion, and deployment remain separate explicit approval gates.
+
+**No implementation changes are made by this audit entry.**
