@@ -266,3 +266,15 @@
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
 - PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
+
+
+## 2026-10-30 — mainline reconciliation after BTC Rule v1 completion
+
+- Canonical `main`: `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`.
+- BTC Rule v1 historical/research calculation is complete and reproducible. Historical fixtures are expected to be stale; do not recapture market inputs just to satisfy offline tests.
+- PR #87 and PR #97 are merged. PR #97 is the canonical opt-in BTC observation pipeline; ingestion remains disabled by default and no live production writes or deployment are authorized.
+- DXY remains optional; Mempool is the protocol-issuance reference. ETF publication-time/finality/retention semantics remain production-ingestion controls, not blockers for the completed offline research result.
+- PR #69 is superseded by #97. PR #84 is divergent and must not be merged wholesale; its 6h spot freshness conflicts with current main's 1h rule. PR #88's candle work is substantially superseded by the current Worker implementation. PR #86 needs a current-mainline security/runtime review.
+- PR #89's correctness fixes were ported onto current main as Draft PR #99; exact-head CI/review is pending. No PR was merged or closed and no branches were deleted.
+- Next focus follows Plan 100: self-hosted architecture review, then Product Contour v1 audit, then ETH; SOL/CAKE remain later.
+- No production DB writes, migrations, live ingestion, deployment, scenario-state/probability changes or publication.
