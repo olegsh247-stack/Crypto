@@ -87,3 +87,23 @@ const metricObservation: AssetDetailResponse["metrics"][number] = {
   created_at: "2026-10-30T00:01:00Z", revision: 1,
 };
 void metricObservation;
+
+const evidenceRecord: AssetDetailResponse["evidence"][number] = {
+  evidence_id: "evidence-1", snapshot_id: "BTC-2026-10-07-v1",
+  research_block_id: "block-1", block_number: 8, block_snapshot_status: "match",
+  research_domain_id: "domain-market", domain_code: "market", domain_block_status: "match",
+  observation_id: "observation-1", metric_id: "market.spot_price",
+  observation_value: "68123.45", observation_text: null, observation_unit: "USD/BTC",
+  observation_observed_at: "2026-10-30T00:00:00Z", observation_retrieved_at: "2026-10-30T00:01:00Z",
+  observation_source_id: "market.kraken", observation_source_name: "Kraken",
+  observation_source_type: "exchange", observation_source_url: "https://example.invalid/price",
+  source_row_key: "kraken:trade:123", source_payload_sha256: "b".repeat(64),
+  methodology: "Latest valid trade", methodology_version: null,
+  source_id: "market.kraken", source_name: "Kraken", source_type: "exchange",
+  source_url: "https://example.invalid/price", source_link_status: "match",
+  evidence_type: "fact", claim: "Fixture evidence", data_summary: "Fixture only",
+  signal: "stable", assessment: "Fixture assessment", confidence: 0.8,
+  thesis_impact: "neutral", status: "strong", as_of: "2026-10-30T00:00:00Z",
+  created_at: "2026-10-30T00:02:00Z",
+};
+void evidenceRecord;
