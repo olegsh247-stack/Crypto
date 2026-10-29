@@ -454,3 +454,6 @@ No live rows were queried, so actual mismatch/null/duplicate rates remain unknow
 Added `scripts/audit-evidence-lineage.sql`, an explicitly `BEGIN TRANSACTION READ ONLY` PostgreSQL/psql audit. It reports nullable-link coverage, block/snapshot mismatches, domain/block mismatches, Evidence-vs-observation source mismatches, observation/snapshot asset mismatches, missing source URLs, duplicate-looking Evidence groups and Evidence on non-published snapshots. It performs SELECTs only and does not repair, delete, update or insert records.
 
 Script commit: `00eba258d538726396564a7e797e1eb8889db30a`. It has not been run against a live database; therefore no anomaly counts or data-integrity pass are claimed.
+
+
+Evidence source URLs were also separated explicitly: API exposes `evidence_source_url` from the Evidence row's source registry record, while `observation_source_url` comes from the linked observation. Dashboard now offers separate links rather than a single coalesced URL that could conceal which source belongs to which side of the chain. Commits: Web contract `18bff6de438c49efe8df0beab5ac43ceede2cfd2`; Dashboard `a3cf51cec3057754aa50de02c53a73d9d2033734`.
