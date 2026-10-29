@@ -361,10 +361,9 @@ function samePayload(row: any, candidate: BtcObservationCandidate): boolean {
 
 export async function persistBtcObservation(databaseUrl: string, candidate: BtcObservationCandidate) {
   return withSqlTransaction(databaseUrl, async client => {
-    const lockKey = [
-      "btc", candidate.metricId, candidate.sourceId, candidate.sourceRowKey,
-      candidate.periodStart?.toISOString() ?? "", candidate.periodEnd?.toISOString() ?? "",
-    ].join("|");
+    // Lock on the stable natural key, not mutable payload fields such as period bounds.
+    // Different corrections for the same source row must serialize with each other.
+    const lockKey = JSON.stringify(["btc", candidate.metricId, candidate.sourceId, candidate.sourceRowKey]);
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [lockKey]);
     const existing = await client.query(
       `SELECT observation_id,revision,value_numeric,value_integer,value_boolean,value_text,value_json,unit,observed_at,period_start,period_end,source_url,source_row_key,methodology,status,freshness
