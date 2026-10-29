@@ -73,10 +73,20 @@ function hashJson(payload: unknown): string {
 
 
 export function parseKrakenSpotPricePayload(payload: unknown, now: Date, sourcePayloadSha256 = hashJson(payload)): BtcObservationCandidate {
-  const result = (payload as any)?.result;
-  const pairKey = Object.keys(result ?? {}).find(key => key !== "last");
-  const trades = pairKey ? result[pairKey] : null;
-  if (!Array.isArray(trades)) throw new Error("kraken_trades_missing");
+  const response = payload as any;
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    throw new Error("kraken_invalid_response");
+  }
+  if (!Array.isArray(response.error)) throw new Error("kraken_error_field_missing");
+  if (response.error.length > 0) throw new Error("kraken_api_error");
+  const result = response.result;
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    throw new Error("kraken_result_missing");
+  }
+  // This endpoint explicitly requests XBT/USD. Do not silently accept another
+  // market if Kraken changes the response shape or adds extra result fields.
+  const trades = result.XXBTZUSD;
+  if (!Array.isArray(trades)) throw new Error("kraken_xbtusd_trades_missing");
   const valid = trades.map((trade: any) => {
     const price = finitePositive(trade?.[0]);
     const observedAt = toDateFromSeconds(trade?.[2]);
