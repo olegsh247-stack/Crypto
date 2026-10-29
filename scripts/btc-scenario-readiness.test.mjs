@@ -336,10 +336,11 @@ test("ETF latest row is selected by report session date, not retrieval timestamp
 });
 
 
-test("API ETF metric uses report date then revision, matching scenario readiness", () => {
+test("API ETF metric uses report date, capture time, then revision, matching scenario readiness", () => {
   const apiSource = readFileSync("vps/api/src/app.ts", "utf8");
   assert.ok(apiSource.includes("o.period_start,o.source_id"));
   assert.ok(apiSource.includes("case when o.metric_id='institutional.etf_net_flow' then o.period_start end desc nulls last"));
+  assert.ok(apiSource.includes("case when o.metric_id='institutional.etf_net_flow' then o.observed_at end desc nulls last"));
   assert.ok(apiSource.includes("case when o.metric_id='institutional.etf_net_flow' then o.revision end desc nulls last"));
   assert.ok(apiSource.includes("period_start:m.period_start??null"));
 });
