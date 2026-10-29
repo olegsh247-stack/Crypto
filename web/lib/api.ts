@@ -72,6 +72,23 @@ export type ResearchScore = {
 
 export type ResearchSnapshot = { snapshot_id: string; research_version: string; methodology_version: string; research_date: string; title: string; content: Record<string, unknown>; status: "PUBLISHED" };
 
+export type EvidenceRecord = {
+  evidence_id: string; snapshot_id: string; research_block_id?: string | null; block_number?: number | null;
+  block_snapshot_status: "not_linked" | "missing" | "match" | "snapshot_mismatch";
+  research_domain_id?: string | null; domain_code?: string | null;
+  domain_block_status: "not_linked" | "not_checkable" | "match" | "not_linked_to_block";
+  observation_id?: string | null; metric_id?: string | null; observation_text?: string | null; observation_value?: string | null; observation_unit?: string | null;
+  observation_observed_at?: string | null; observation_retrieved_at?: string | null; observation_source_id?: string | null;
+  observation_source_name?: string | null; observation_source_type?: string | null; observation_source_url?: string | null;
+  source_row_key?: string | null; source_payload_sha256?: string | null; methodology?: string | null; methodology_version?: string | null;
+  source_id?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null;
+  source_link_status: "no_observation" | "evidence_source_missing" | "observation_source_missing" | "match" | "mismatch";
+  evidence_type: "fact" | "calculation" | "assessment" | "hypothesis"; claim: string; data_summary?: string | null;
+  signal: "improving" | "stable" | "deteriorating" | "mixed" | "unknown"; assessment?: string | null; confidence?: number | null;
+  thesis_impact: "positive" | "neutral" | "negative" | "mixed"; status: "strong" | "watch" | "weak" | "unknown";
+  as_of?: string | null; created_at?: string | null;
+};
+
 export type AssetDetailResponse = {
   api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: ResearchFreshness | null };
   research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: MetricObservation[]; history: Array<Record<string, unknown>>;
@@ -81,7 +98,7 @@ export type AssetDetailResponse = {
   critical_factors: CriticalFactor[]; scores: ResearchScore[]; research_scenarios: ResearchScenario[]; scenario_states: Array<Record<string, unknown>>;
   monitoring_signals: MonitoringSignal[]; monitoring_events: MonitoringEvent[];
   sources: Array<{ source_id: string; name: string; source_type: string; base_url?: string | null; trust_level?: string | null }>;
-  evidence: Array<{ evidence_id: string; research_block_id?: string | null; research_domain_id?: string | null; observation_id?: string | null; source_id?: string | null; evidence_type: "fact" | "calculation" | "assessment" | "hypothesis"; claim: string; data_summary?: string | null; signal: "improving" | "stable" | "deteriorating" | "mixed" | "unknown"; assessment?: string | null; confidence?: number | null; thesis_impact: "positive" | "neutral" | "negative" | "mixed"; status: "strong" | "watch" | "weak" | "unknown"; as_of?: string | null; metric_id?: string | null; observation_value?: number | null; observation_text?: string | null; observation_unit?: string | null; source_name?: string | null; source_type?: string | null; source_url?: string | null }>;
+  evidence: EvidenceRecord[];
 };
 
 const API_BASE = process.env.CRYPTO_API_URL ?? "http://localhost:8787";
