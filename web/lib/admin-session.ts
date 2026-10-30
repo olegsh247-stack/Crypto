@@ -43,6 +43,18 @@ export function validAdminSession(token: string | undefined): boolean {
   return safeEqual(supplied, signature(`${expiresText}.${nonce}`, key));
 }
 
+export function adminRouteAllowed(path: string[], method: string): boolean {
+  const route = path.join("/");
+  if (method === "GET") return route === "db-schema";
+  if (method === "POST") return ["assets", "pairs", "commodities"].includes(route);
+  if (method === "DELETE") {
+    return /^assets\\/[a-z0-9_-]{1,80}$/i.test(route)
+      || /^pairs\\/[0-9a-f-]{36}$/i.test(route)
+      || /^commodities\\/[0-9a-f-]{36}$/i.test(route);
+  }
+  return false;
+}
+
 export function csrfMatches(cookie: string | undefined, header: string | null): boolean {
   return !!cookie && !!header && safeEqual(cookie, header);
 }
