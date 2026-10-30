@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, createAdminSession, validAdminSession } from "../../../../lib/admin-session";
+import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, checkAdminLoginAttempt, createAdminSession, validAdminSession } from "../../../../lib/admin-session";
 
 export const runtime = "nodejs";
 
@@ -15,12 +15,22 @@ export async function POST(request: NextRequest) {
   try { body = await request.json(); } catch {
     return NextResponse.json({ status: "error", error: "invalid_json" }, { status: 400 });
   }
+  const forwarded = request.headers.get("x-forwarded-for");
+  const clientKey = forwarded?.split(",").map((value) => value.trim()).filter(Boolean).at(-1) ?? "unknown";
+  const attempt = checkAdminLoginAttempt(clientKey);
+  if (!attempt.allowed) {
+    const response = NextResponse.json({ status: "error", error: "admin_login_rate_limited" }, { status: 429 });
+    response.headers.set("Retry-After", String(attempt.retryAfterSeconds));
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  }
   const supplied = typeof body.secret === "string" ? body.secret : "";
   const a = Buffer.from(supplied);
   const b = Buffer.from(loginSecret);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
     return NextResponse.json({ status: "error", error: "admin_login_rejected" }, { status: 401 });
   }
+  checkAdminLoginAttempt(clientKey, true);
   const session = createAdminSession();
   if (!session) return NextResponse.json({ status: "error", error: "admin_session_not_configured" }, { status: 503 });
   const secure = process.env.CRYPTO_ADMIN_ORIGIN?.startsWith("https://") ?? true;
