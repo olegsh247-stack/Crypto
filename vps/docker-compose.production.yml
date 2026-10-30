@@ -65,8 +65,39 @@ services:
       HOST: 0.0.0.0
     expose:
       - "8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
+        condition: service_healthy
+    networks:
+      - backend
+      - edge
+
+  web:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      CRYPTO_API_URL: http://api:8080
+      CRYPTO_ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env.production}
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      api:
         condition: service_healthy
     networks:
       - backend
@@ -100,7 +131,10 @@ services:
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
     networks:
       - edge
 
