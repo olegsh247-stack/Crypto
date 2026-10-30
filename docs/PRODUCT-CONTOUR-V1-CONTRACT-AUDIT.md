@@ -344,3 +344,26 @@ This section supersedes the earlier open/closed status where current source code
 4. Keep production deployment and any live database access out of scope until explicitly authorized.
 
 No schema migration, production database access, data mutation, deployment, or scenario/probability change was performed.
+
+
+## Product Contour UI/API completion batch — 2026-10-31
+
+This batch extends the static contract audit into the dashboard and Deep Research presentation. It remains a source-level change only; no live database or production endpoint was accessed.
+
+### Corrections included in this branch
+
+- **Scores:** normalized score values against both declared scale bounds, so a 1–5 scale maps correctly to 0–100; dashboard now shows methodology version and calculation timestamp.
+- **Factors:** dashboard shows monitoring signals linked by `critical_factor_id`.
+- **Scenarios:** dashboard exposes the stored `supporting_evidence` text.
+- **Monitoring:** dashboard shows threshold, threshold type and last-updated timestamp. Descriptive baseline-only values no longer get summarized as a measured absence of directional change.
+- **Deep Research:** evidence linked by research-block ID (or returned block number) is shown inside its corresponding chapter.
+- **Fallback handling:** an empty `research_scenarios` array now falls back to scenario states instead of masking them.
+- **API/Web types:** monitoring threshold fields are declared; evidence observation values accept the API's text/number/boolean/null output; evidence lineage fields include snapshot and block identifiers.
+- **E2E contract coverage:** BTC, ETH, SOL and CAKE detail endpoints are checked for Product Contour collection contracts; populated snapshots are additionally checked for 15 blocks, six domains, score metadata, monitoring metadata, scenario evidence and evidence lineage. This checks payload shape, not the presence or quality of live research data.
+
+### Validation boundaries
+
+- Existing CI workflows must pass on the updated branch; API/Web build status is determined by those runs, not by this static edit.
+- Representative non-production database validation for BTC, ETH, SOL and CAKE remains **not run** until an approved non-production environment is available.
+- No synthetic asset records or fabricated research/evidence counts were introduced.
+- No production database access or writes, schema migrations, runtime registry changes, scenario/probability changes, Worker deployment, merge or production deployment were performed.
