@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, createAdminSession } from "../../../../lib/admin-session";
+import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, createAdminSession, validAdminSession } from "../../../../lib/admin-session";
 
 export const runtime = "nodejs";
 
@@ -37,6 +37,13 @@ export async function DELETE(request: NextRequest) {
   const response = NextResponse.json({ status: "ok" });
   response.cookies.set(adminSessionCookie, "", { httpOnly: true, secure, sameSite: "strict", path: "/api/admin", maxAge: 0 });
   response.cookies.set(adminCsrfCookie, "", { httpOnly: false, secure, sameSite: "strict", path: "/api/admin", maxAge: 0 });
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
+export async function GET(request: NextRequest) {
+  const authenticated = validAdminSession(request.cookies.get(adminSessionCookie)?.value);
+  const response = NextResponse.json({ status: "ok", authenticated });
   response.headers.set("Cache-Control", "no-store");
   return response;
 }
