@@ -69,7 +69,14 @@ export type AssetDetailResponse = {
 
 const API_BASE = process.env.CRYPTO_API_URL ?? "http://localhost:8787";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(API_BASE + path, { ...init, cache: "no-store", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
+  const isAdmin = path.startsWith("/api/admin/");
+  const browser = typeof window !== "undefined";
+  const csrfCookie = browser ? document.cookie.split("; ").find((part) => part.startsWith("crypto_admin_csrf="))?.split("=").slice(1).join("=") : undefined;
+  const headers = new Headers({ "Content-Type": "application/json" });
+  new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+  if (isAdmin && browser && init?.method && init.method !== "GET" && csrfCookie) headers.set("X-Crypto-Admin-CSRF", decodeURIComponent(csrfCookie));
+  const url = isAdmin && browser ? path : API_BASE + path;
+  const res = await fetch(url, { ...init, credentials: isAdmin ? "same-origin" : init?.credentials, cache: "no-store", headers });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error ?? "Crypto API failed: " + res.status);
   return data as T;
