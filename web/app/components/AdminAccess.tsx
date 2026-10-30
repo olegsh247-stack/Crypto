@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function AdminAccess() {
   const [open, setOpen] = useState(false);
@@ -8,6 +8,15 @@ export default function AdminAccess() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/session", { credentials: "same-origin", cache: "no-store" })
+      .then((response) => response.ok ? response.json() : { authenticated: false })
+      .then((data) => { if (active) setAuthenticated(data.authenticated === true); })
+      .catch(() => { if (active) setAuthenticated(false); });
+    return () => { active = false; };
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
