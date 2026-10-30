@@ -321,3 +321,49 @@ The remaining source-level Web response type gaps from the previous section have
 - VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
 
 This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
+
+
+## Re-audit against main — 2026-10-30
+
+This section supersedes the earlier open/closed status where current source code has changed since the initial audit. This is a static repository audit only; no live endpoint or PostgreSQL connection was available in this task.
+
+### Findings rechecked
+
+- **Research progress semantics — closed in current main.** Both API and Web count resolved blocks as `complete` + `n_a`, while preserving the separate completed count.
+- **Factor and score snapshot scoping — closed in current main.** The asset-detail API selects critical factors and scores for the latest published snapshot.
+- **Scenario-state lineage — query scoping closed in current main.** The API limits scenario states to the latest published snapshot, and the Web also checks snapshot identity before displaying a state. Runtime/data-level lineage still requires a disposable-PostgreSQL test with representative records.
+- **Evidence-linked source completeness — closed in current main.** The top-level source query unions sources referenced by observations and evidence.
+- **Freshness response contract — partially open; corrected in this PR.** The list API selects `last_major_update_at` and `next_review_at`, and the shared Web type declares them, but API serialization omitted those two values from both list and detail freshness objects. This patch preserves both fields. The values may legitimately be null if no review dates are recorded.
+- **Representative live payload / actual row counts — blocked pending an approved non-production API/database environment.** No production query or write is authorized by this audit. Do not substitute synthetic counts for live evidence.
+
+### Remaining acceptance gates
+
+1. Confirm this patch with API build, Web build, and disposable-PostgreSQL E2E/contract checks.
+2. Validate BTC, ETH, SOL and CAKE payloads read-only against a non-production database; record snapshot IDs, section row counts, null rates and source lineage.
+3. Verify source/freshness display end-to-end and confirm no cross-snapshot scenario state appears in the current dashboard.
+4. Keep production deployment and any live database access out of scope until explicitly authorized.
+
+No schema migration, production database access, data mutation, deployment, or scenario/probability change was performed.
+
+
+## Product Contour UI/API completion batch — 2026-10-31
+
+This batch extends the static contract audit into the dashboard and Deep Research presentation. It remains a source-level change only; no live database or production endpoint was accessed.
+
+### Corrections included in this branch
+
+- **Scores:** normalized score values against both declared scale bounds, so a 1–5 scale maps correctly to 0–100; dashboard now shows methodology version and calculation timestamp.
+- **Factors:** dashboard shows monitoring signals linked by `critical_factor_id`.
+- **Scenarios:** dashboard exposes the stored `supporting_evidence` text.
+- **Monitoring:** dashboard shows threshold, threshold type and last-updated timestamp. Descriptive baseline-only values no longer get summarized as a measured absence of directional change.
+- **Deep Research:** evidence linked by research-block ID (or returned block number) is shown inside its corresponding chapter.
+- **Fallback handling:** an empty `research_scenarios` array now falls back to scenario states instead of masking them.
+- **API/Web types:** monitoring threshold fields are declared; evidence observation values accept the API's text/number/boolean/null output; evidence lineage fields include snapshot and block identifiers.
+- **E2E contract coverage:** BTC, ETH, SOL and CAKE detail endpoints are checked for Product Contour collection contracts; populated snapshots are additionally checked for 15 blocks, six domains, score metadata, monitoring metadata, scenario evidence and evidence lineage. This checks payload shape, not the presence or quality of live research data.
+
+### Validation boundaries
+
+- Existing CI workflows must pass on the updated branch; API/Web build status is determined by those runs, not by this static edit.
+- Representative non-production database validation for BTC, ETH, SOL and CAKE remains **not run** until an approved non-production environment is available.
+- No synthetic asset records or fabricated research/evidence counts were introduced.
+- No production database access or writes, schema migrations, runtime registry changes, scenario/probability changes, Worker deployment, merge or production deployment were performed.
