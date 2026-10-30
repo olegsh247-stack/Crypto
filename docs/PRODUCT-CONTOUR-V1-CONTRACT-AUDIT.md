@@ -321,3 +321,26 @@ The remaining source-level Web response type gaps from the previous section have
 - VPS Build Rehearsal #491 passed, and Web Build #139 passed. Release Gate #203 was still running at the time of the audit update.
 
 This closes the identified type-declaration gap, not the wider metric-freshness parity question or live-endpoint verification. CI used the repository's isolated target stack; no production data or runtime was changed.
+
+
+## Re-audit against main — 2026-10-30
+
+This section supersedes the earlier open/closed status where current source code has changed since the initial audit. This is a static repository audit only; no live endpoint or PostgreSQL connection was available in this task.
+
+### Findings rechecked
+
+- **Research progress semantics — closed in current main.** Both API and Web count resolved blocks as `complete` + `n_a`, while preserving the separate completed count.
+- **Factor and score snapshot scoping — closed in current main.** The asset-detail API selects critical factors and scores for the latest published snapshot.
+- **Scenario-state lineage — query scoping closed in current main.** The API limits scenario states to the latest published snapshot, and the Web also checks snapshot identity before displaying a state. Runtime/data-level lineage still requires a disposable-PostgreSQL test with representative records.
+- **Evidence-linked source completeness — closed in current main.** The top-level source query unions sources referenced by observations and evidence.
+- **Freshness response contract — partially open; corrected in this PR.** The list API selects `last_major_update_at` and `next_review_at`, and the shared Web type declares them, but API serialization omitted those two values from both list and detail freshness objects. This patch preserves both fields. The values may legitimately be null if no review dates are recorded.
+- **Representative live payload / actual row counts — blocked pending an approved non-production API/database environment.** No production query or write is authorized by this audit. Do not substitute synthetic counts for live evidence.
+
+### Remaining acceptance gates
+
+1. Confirm this patch with API build, Web build, and disposable-PostgreSQL E2E/contract checks.
+2. Validate BTC, ETH, SOL and CAKE payloads read-only against a non-production database; record snapshot IDs, section row counts, null rates and source lineage.
+3. Verify source/freshness display end-to-end and confirm no cross-snapshot scenario state appears in the current dashboard.
+4. Keep production deployment and any live database access out of scope until explicitly authorized.
+
+No schema migration, production database access, data mutation, deployment, or scenario/probability change was performed.
