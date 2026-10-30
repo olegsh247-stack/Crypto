@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   adminOriginAllowed,
+  adminRouteAllowed,
   createAdminSession,
   csrfMatches,
   validAdminSession,
@@ -59,4 +60,18 @@ test("allows only the configured request origin", () => {
     headers: { origin: "https://attacker.example" },
   })), false);
   assert.equal(adminOriginAllowed(new Request("https://crypto.example.test/api/admin/assets")), false);
+});
+
+test("allows only explicitly approved admin route and method pairs", () => {
+  assert.equal(adminRouteAllowed(["db-schema"], "GET"), true);
+  assert.equal(adminRouteAllowed(["assets"], "POST"), true);
+  assert.equal(adminRouteAllowed(["pairs"], "POST"), true);
+  assert.equal(adminRouteAllowed(["commodities"], "POST"), true);
+  assert.equal(adminRouteAllowed(["assets", "btc"], "DELETE"), true);
+  assert.equal(adminRouteAllowed(["pairs", "123e4567-e89b-12d3-a456-426614174000"], "DELETE"), true);
+  assert.equal(adminRouteAllowed(["assets"], "GET"), false);
+  assert.equal(adminRouteAllowed(["db-schema"], "POST"), false);
+  assert.equal(adminRouteAllowed(["assets", "btc", "extra"], "DELETE"), false);
+  assert.equal(adminRouteAllowed(["unknown"], "POST"), false);
+  assert.equal(adminRouteAllowed(["assets", "btc"], "PUT"), false);
 });
