@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, csrfMatches, validAdminSession } from "../../../../lib/admin-session";
+import { adminCsrfCookie, adminOriginAllowed, adminRouteAllowed, adminSessionCookie, csrfMatches, validAdminSession } from "../../../../lib/admin-session";
 
 export const runtime = "nodejs";
 const API_BASE = process.env.CRYPTO_API_URL;
 const ADMIN_TOKEN = process.env.CRYPTO_ADMIN_TOKEN;
 
-function allowed(path: string[], method: string): boolean {
-  const route = path.join("/");
-  if (method === "GET") return route === "db-schema";
-  if (method === "POST") return ["assets", "pairs", "commodities"].includes(route);
-  if (method === "DELETE") {
-    return /^assets\/[a-z0-9_-]{1,80}$/i.test(route)
-      || /^pairs\/[0-9a-f-]{36}$/i.test(route)
-      || /^commodities\/[0-9a-f-]{36}$/i.test(route);
-  }
-  return false;
-}
-
 async function handle(request: NextRequest, path: string[]) {
-  if (!allowed(path, request.method)) {
+  if (!adminRouteAllowed(path, request.method)) {
     return NextResponse.json({ status: "error", error: "admin_route_not_allowed" }, { status: 404 });
   }
   if (!validAdminSession(request.cookies.get(adminSessionCookie)?.value)) {
