@@ -4,6 +4,32 @@ const SESSION_COOKIE = "crypto_admin_session";
 const CSRF_COOKIE = "crypto_admin_csrf";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 5;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+export function checkAdminLoginAttempt(key: string, success = false): { allowed: boolean; retryAfterSeconds: number } {
+  const now = Date.now();
+  if (success) {
+    loginAttempts.delete(key);
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+  for (const [candidate, state] of loginAttempts) {
+    if (state.resetAt <= now) loginAttempts.delete(candidate);
+  }
+  const current = loginAttempts.get(key);
+  if (!current || current.resetAt <= now) {
+    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+  if (current.count >= LOGIN_MAX_ATTEMPTS) {
+    return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000)) };
+  }
+  current.count += 1;
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+
 function secret(name: string): string | null {
   const value = process.env[name];
   return value && value.length >= 32 ? value : null;
