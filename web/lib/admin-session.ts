@@ -17,6 +17,10 @@ export function checkAdminLoginAttempt(key: string, success = false): { allowed:
   for (const [candidate, state] of loginAttempts) {
     if (state.resetAt <= now) loginAttempts.delete(candidate);
   }
+  if (loginAttempts.size > 5000) {
+    const oldest = loginAttempts.keys().next().value;
+    if (oldest !== undefined) loginAttempts.delete(oldest);
+  }
   const current = loginAttempts.get(key);
   if (!current || current.resetAt <= now) {
     loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
