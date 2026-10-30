@@ -103,7 +103,10 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const monitoringDeteriorating = monitoring.filter((m: any) => m.direction === "deteriorating");
   const monitoringImportant = monitoring.filter((m: any) => m.status === "triggered" || m.status === "watch" || m.thesis_impact === "negative");
   const monitoringRecentEvents = monitoringEvents.slice().sort((a: any, b: any) => new Date(b.observed_at ?? b.created_at ?? 0).getTime() - new Date(a.observed_at ?? a.created_at ?? 0).getTime()).slice(0, 10);
-  const hasDirectionalSignal = monitoring.some((m: any) => ["improving", "stable", "deteriorating", "mixed"].includes(m.direction));
+  const hasDirectionalSignal = monitoring.some((m: any) => {
+    const baselineOnly = m.current_value && typeof m.current_value === "object" && "description" in m.current_value && m.previous_value == null;
+    return !baselineOnly && m.current_value != null && ["improving", "stable", "deteriorating", "mixed"].includes(m.direction);
+  });
   const monitoringOverall = monitoringDeteriorating.length > monitoringImproving.length ? "Pressure is increasing" : monitoringImproving.length > monitoringDeteriorating.length ? "Support is increasing" : hasDirectionalSignal ? "No material directional change" : monitoring.length ? "Baseline recorded · no measured direction yet" : "Monitoring baseline is not populated";
 
   const history = Array.isArray(data.history) ? data.history : [];
