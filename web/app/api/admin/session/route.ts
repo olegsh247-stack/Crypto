@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   const secure = process.env.CRYPTO_ADMIN_ORIGIN?.startsWith("https://") ?? true;
   const response = NextResponse.json({ status: "ok", csrfToken: session.csrf });
   response.cookies.set(adminSessionCookie, session.token, { httpOnly: true, secure, sameSite: "strict", path: "/api/admin", maxAge: session.maxAge });
-  response.cookies.set(adminCsrfCookie, session.csrf, { httpOnly: false, secure, sameSite: "strict", path: "/api/admin", maxAge: session.maxAge });
+  response.cookies.set(adminCsrfCookie, session.csrf, { httpOnly: false, secure, sameSite: "strict", path: "/", maxAge: session.maxAge });
   response.headers.set("Cache-Control", "no-store");
   return response;
 }
@@ -36,7 +36,7 @@ export async function DELETE(request: NextRequest) {
   const secure = process.env.CRYPTO_ADMIN_ORIGIN?.startsWith("https://") ?? true;
   const response = NextResponse.json({ status: "ok" });
   response.cookies.set(adminSessionCookie, "", { httpOnly: true, secure, sameSite: "strict", path: "/api/admin", maxAge: 0 });
-  response.cookies.set(adminCsrfCookie, "", { httpOnly: false, secure, sameSite: "strict", path: "/api/admin", maxAge: 0 });
+  response.cookies.set(adminCsrfCookie, "", { httpOnly: false, secure, sameSite: "strict", path: "/", maxAge: 0 });
   response.headers.set("Cache-Control", "no-store");
   return response;
 }
