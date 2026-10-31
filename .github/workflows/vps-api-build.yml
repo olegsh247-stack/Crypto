@@ -25,12 +25,10 @@ jobs:
       - name: Build VPS worker
         working-directory: vps/worker
         run: npm ci --install-links && npm run build
-      - name: BTC source collector parser tests
-        run: node --test scripts/btc-observation-collectors.test.mjs
       - name: Install VPS API dependencies
         working-directory: vps/api
         run: npm ci --install-links
-      - name: Test VPS Worker UTC candle boundaries and finalization
+      - name: Test VPS Worker, BTC collector parsers and source contracts
         working-directory: vps/worker
         run: npm test
       - name: Build VPS API
