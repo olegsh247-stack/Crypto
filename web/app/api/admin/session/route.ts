@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server.js";
 import { timingSafeEqual } from "node:crypto";
 import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, checkAdminLoginAttempt, createAdminSession, validAdminSession } from "../../../../lib/admin-session";
 
