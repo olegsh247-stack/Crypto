@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server.js";
+import { NextRequest, NextResponse } from "next/server";
 import { adminCsrfCookie, adminOriginAllowed, adminRouteAllowed, adminSessionCookie, csrfMatches, validAdminSession } from "../../../../lib/admin-session";
 
 export const runtime = "nodejs";
