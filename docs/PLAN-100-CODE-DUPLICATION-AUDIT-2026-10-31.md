@@ -50,18 +50,26 @@
 | PR | Current observation | Disposition |
 |---|---|---|
 | #105 | Draft/open staging runbook; based on current main; VPS Build Rehearsal passed. | Keep as documentation candidate; no VPS is provisioned. |
-| #104 | Draft/open admin session/CSRF hardening; based on #102. | Review together with #102 and #86; do not treat as independent from its base branch. |
+| #104 | Draft/open admin session/CSRF hardening; based on #102; current head is mergeable relative to its declared base. | Integrate only after #102, then run the combined Web/admin security checks. It supersedes the older admin-proxy/session implementation in #86. |
 | #103 | Draft/open Product Contour UI/API contract work; current-main base; Web and VPS CI passed on its head. | Active product-contour candidate; still needs full diff review and later non-production payload validation. |
-| #102 | Draft/open self-hosted Web container/edge routing. | Its Dockerfile/Compose/Caddy/workflow changes overlap four files with #86; compare and select one canonical implementation. |
+| #102 | Draft/open self-hosted Web container/edge routing; current-main base and mergeable. | Select as canonical self-hosted Web/edge implementation. #104 is explicitly based on it. |
 | #101 | Draft/open Product Contour audit documentation. | Reconcile with the current audit doc and #103; do not keep parallel status narratives. |
 | #100 | Draft/open Plan 100 documentation reconciliation. | Superseded in scope by this Plan 100 update; compare before disposition. |
-| #99 / #89 | Same title and same two changed files. The Web asset-page patch is identical; API app patch differs. #99 is based on current main, #89 uses an older base. | Near-duplicate work. Review #99 as the newer candidate; do not merge both. |
-| #86 | Draft/open broad Web admin + VPS runtime patch. Four changed files overlap #102; admin routes overlap the later #104 hardening scope. | High overlap; split or supersede only after line-level review. |
+| #99 / #89 | Same title and same two changed files. The changed-line patches are identical in both files; blob SHAs differ because their bases differ. #99 is based on current main; #89 has an older main base. | Treat #99 as the single canonical candidate; #89 is duplicate work and must not also be merged. |
+| #86 | Draft/open broad Web admin + VPS runtime patch; based on old main SHA `03f4a08...`, GitHub currently reports `mergeable=false`. Four files overlap #102; five overlap #104. | Do not merge as-is. #102 + #104 are the newer canonical runtime/admin path. Audit its remaining unique API/server/db and UI changes individually; port only a still-needed behavior with tests. |
 | #84 | Draft/open BTC reconciliation branch with 263 commits and a very large diff; GitHub reports non-mergeable. | Do not merge wholesale. Extract only a specifically missing, tested change if one remains absent from main. |
 | #82 / #81 / #80 | Older BTC block-window, fee-window and freshness proposals on older bases. | Historical candidates; compare against main and #84 before considering any port. |
 | #69 | Older opt-in BTC collector PR on a stale base; current main already contains a BTC collector/catalog/persistence path. | Do not merge as a second collector path. Compare only for a missing, independently tested behavior. |
 
-PR #103, #104, #102, #86 and #99 also touch some common API/Web/runtime files. Their changes must be integrated in a deliberate order with one canonical implementation per concern. No PR was merged or closed by this audit.
+### Recommended integration order (subject to full review and CI)
+
+1. **#102** — canonical self-hosted Web container, Compose healthchecks and Caddy routing.
+2. **#104** — admin session/CSRF hardening on top of #102; validate the combined security flow before any deploy.
+3. **#99** — market input correctness; #89 is a duplicate and should not be integrated separately.
+4. **#103** — Product Contour v1; rebase/reconcile after #99 and #104 because it touches the same API asset-detail and Web API helper files. Keep Plan 100 Product Contour as the active workstream.
+5. **#86** — do not merge wholesale; inspect only its unique changes not covered by #102/#104 and not already present in main.
+
+#105 and #106 are documentation-only candidates and can be reviewed independently. #106 CI passed on head `cffb0859c1ea240385918aa8c9bb94604e4f0bb5`; this does not itself merge or publish the Plan 100 updates. No PR was merged or closed by this audit.
 
 ## Recommended next actions
 
