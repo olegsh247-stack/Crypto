@@ -266,3 +266,14 @@
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
 - PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
+## 2026-10-31 — сверка Plan 100 / Prompt 100 с текущим main
+
+- Контрольная база: `main` SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`; VPS API Build Rehearsal [#41179541901](https://github.com/olegsh247-stack/Crypto/actions/runs/41179541901) прошёл на этом SHA. Это CI/disposable PostgreSQL, не VPS deployment.
+- BTC Rule v1 research завершён на историческом воспроизводимом наборе: Base, directional score 0, low confidence. Это не live readiness и не разрешение ingestion. Не повторять captures ради тестового режима; production launch-time refresh — отдельный будущий gate.
+- DXY, hashrate и fee/subsidy — необязательный supporting context для Rule v1, не блокирующие inputs. Mempool остаётся приоритетной основой именно для protocol-scheduled issuance; не смешивать её с circulating supply.
+- Product Contour v1 остаётся в работе; PR #103 открыт/draft. Проверка реальных non-production payloads BTC/ETH/SOL/CAKE невозможна до появления staging DB.
+- VPS пока отсутствует. PR #105 содержит только runbook; staging API/DB, реальный restore и read-only GET acceptance ещё не выполнялись.
+- Worker нельзя считать read-only даже при выключенном BTC observation ingestion: scheduler пишет daily candles и обновляет research review status. Worker остаётся остановленным до отдельной staging-проверки и разрешения.
+- В Plan 100 удалён повторный старый блок разделов 0–7; устаревшая октябрьская статусная таблица помечена исторической и заменена актуальной контрольной точкой.
+- Code audit выявил: повторяющиеся entries в workflow path list (без изменения поведения); отдельные исторические ETH migrations с повторным обновлением классификации (не удалять из-за migration history); параллельные BTC source definitions между runtime catalog и standalone candidate-preparation script (проверить/свести через contract test, не делать слепое удаление); старые открытые PR/ветки с пересекающимся scope. Детали — в `docs/PLAN-100-CODE-DUPLICATION-AUDIT-2026-10-31.md`.
+- Никаких production writes, ingestion, runtime registry/state/probability changes, deployment, DNS или merge не выполнялось.
