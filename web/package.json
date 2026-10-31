@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "next": "15.5.27",
@@ -17,6 +17,7 @@
     "@types/node": "24.3.0",
     "@types/react": "19.1.10",
     "@types/react-dom": "19.1.7",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "tsx": "4.20.6"
   }
 }
