@@ -75,7 +75,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers({ "Content-Type": "application/json" });
   new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
   if (isAdmin && browser && init?.method && init.method !== "GET" && csrfCookie) headers.set("X-Crypto-Admin-CSRF", decodeURIComponent(csrfCookie));
-  const url = isAdmin && browser ? path : API_BASE + path;
+  const url = browser ? path : API_BASE + path;
   const res = await fetch(url, { ...init, credentials: isAdmin ? "same-origin" : init?.credentials, cache: "no-store", headers });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error ?? "Crypto API failed: " + res.status);
