@@ -10,8 +10,6 @@ on:
       - "scripts/btc-scenario-direction.test.mjs"
       - "scripts/run-btc-offline-scenario.mjs"
       - "fixtures/btc-offline-scenario-v1.json"
-      - "scripts/run-btc-offline-scenario.mjs"
-      - "fixtures/btc-offline-scenario-v1.json"
       - "scripts/prepare-btc-observation-candidates.mjs"
       - "scripts/prepare-btc-observation-candidates.test.mjs"
       - "scripts/validate-crypto-registries.mjs"
