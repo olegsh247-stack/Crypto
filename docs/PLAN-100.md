@@ -302,9 +302,9 @@
 - [ ] Build/typecheck/API/Worker/Web E2E прошли на целевой disposable среде.
 - [ ] Все остаточные дефекты записаны с приоритетом; критичные контракты закрыты до BTC evaluation.
 
-## Этап 4 — входные данные BTC: контракт и доказательства
+## Этап 4 — BTC inputs: исследовательский контракт закрыт; live-ingestion gates отложены
 
-**Цель:** собрать один проверяемый набор входов BTC без принятия неподтверждённых значений.
+**Статус:** Rule v1 research inputs и исторический evidence bundle приняты для offline/replay. Не повторять сборы данных и не считать live freshness или production ingestion блокером исследовательского результата. Любые будущие production ingestion gates — отдельная задача перед запуском production-версии.
 
 ### 4.1 Сформировать канонический реестр входов
 
@@ -322,19 +322,17 @@
 - трансформацию из raw value в canonical value;
 - способ независимого воспроизведения.
 
-### 4.2 Минимальные inputs и blockers
+### 4.2 Inputs для Rule v1 и optional context
 
-- BTC spot price: зарегистрированный market source, `USD/BTC`, observed time и retrieval time, проверка расхождения с независимым источником.
-- Hashrate: источник сети, `EH/s`, среднее окно, period end и timestamp. Не сравнивать суточное и недельное среднее как будто это одна метрика.
-- Fee/subsidy ratio: зафиксировать точную формулу и raw-unit semantics; согласовать fee/reward rows по height/time; исключить дубликаты; проверить границы окна; выполнить checker на реальном raw artifact.
-- US spot ETF net flow: использовать корректно опубликованные reporting days, `USD million/day` или иной явно утверждённый unit, source URL и revision; пустая ячейка не равна нулю; зеркало не считать canonical без решения.
-- DXY: выбрать разрешённый/доступный источник и documented timestamp; если нет надёжного источника, вход остаётся blocked/unknown, не заполнять догадкой.
-- Supply/subsidy: source lineage для supply; protocol constant и observed metric различать.
+- **Обязательные для Rule v1:** BTC spot price (`USD/BTC`) и пять distinct daily US spot ETF flow sessions (`USD million/day`) из зафиксированного research capture с source/provenance.
+- **Необязательный context:** hashrate (`EH/s`), fee/subsidy ratio и DXY. Их отсутствие не блокирует Rule v1 и не должно запускать повторный сбор ради теста.
+- **Supply:** Mempool protocol-scheduled issuance — приоритет для метрики протокольной эмиссии; economic circulating supply остаётся отдельной метрикой. Не смешивать и не усреднять.
+- Пустая ETF ячейка не равна нулю; Farside — приоритетный research source, SoSoValue/TFTC — сравнение/контроль, не молчаливая подмена.
 
-### 4.3 Freshness и provenance gate
+### 4.3 Разделение test/research и live freshness
 
-- Проверить freshness по времени выполнения проверки, а не по времени написания документа.
-- Последнее наблюдение stale означает blocker; нельзя fallback-нуться к старому значению, если новое не прошло валидацию.
+- Для offline/test replay freshness оценивается относительно зафиксированного evidence timestamp; исторические данные ожидаемы. Не требовать свежести относительно текущего wall-clock и не повторять capture ради теста.
+- Для будущего live/production launch действует отдельный gate: spot refresh на старте production версии; ETF session/report-date, publication/revision/finality и retention semantics должны быть утверждены до ingestion.
 - Проверить `observed_at` против `retrieved_at`, единицы, timezone, revision, source URL, source availability и plausibility.
 - Хранить raw evidence/fingerprint для воспроизводимости.
 - Любое преобразование документировать и тестировать.
@@ -347,27 +345,22 @@
 - Сохранять аудит удалённых/объединённых записей и исходный backup; не выполнять destructive cleanup на source production.
 - Добавлять uniqueness constraints только после доказательства, что существующие данные совместимы с ними.
 
-### 4.5 Fee/reward reconciliation
+### 4.5 Fee/reward и protocol supply — вне блокирующего Rule v1 scope
 
-- Скачать оригинальный артефакт конкретного workflow run и подтвердить, что это тот же artifact, fingerprints и schema.
-- Запустить `scripts/check-btc-fee-reward-reconciliation.mjs` на исходных JSON, не на вручную перепечатанных примерах.
-- Зафиксировать stdout, количество строк, диапазон высот, timestamp alignment, исключённые записи и raw units.
-- Независимо подтвердить единицы и формулу. Арифметический ratio не считается accepted input только потому, что программа рассчитала число.
-- Обновить candidate manifest и audit docs только после проверки raw artifacts; сохранить candidate status до formal acceptance.
+- Fee/subsidy ratio остаётся optional research context и не нужен для завершённого Rule v1.
+- Mempool protocol-scheduled issuance используется как база именно для protocol issuance; это не подтверждает economic circulating supply.
+- Любое будущее production metric acceptance требует отдельного versioned method/source contract и не должно переоткрывать завершённый Rule v1 research.
 
 ### 4.6 Выходные критерии этапа 4
 
-- [ ] Все обязательные BTC inputs перечислены с контрактом.
-- [ ] Каждый принятый input имеет source, unit, timestamps, period/revision и freshness pass.
-- [ ] Fee/subsidy ratio воспроизводим из raw artifact и семантика единиц подтверждена.
-- [ ] DXY и ETF flow не подменяются догадками/пустыми значениями.
-- [ ] Duplicate groups либо устранены по утверждённой процедуре на target copy, либо явно блокируют evaluation.
-- [ ] Manifest соответствует реальным raw evidence fingerprints.
-- [ ] Незакрытых конфликтов, влияющих на сценарий, нет; иначе этап остаётся blocked.
+- [x] Required Rule v1 inputs и source priority закреплены для historical research bundle.
+- [x] Optional context (DXY, hashrate, fee/subsidy) не блокирует Rule v1.
+- [x] Historical evidence используется для deterministic replay без повторных live captures.
+- [ ] Production ETF retention/archive/read-back и launch-time refresh остаются будущими operational gates, не блокерами research completion.
 
-## Этап 5 — воспроизводимая оценка одного сценария BTC
+## Этап 5 — воспроизводимая оценка одного сценария BTC (Rule v1 research COMPLETE)
 
-**Предусловия:** этапы 1–4 закрыты на уровне, необходимом для оценки; входы приняты; API/Worker/Evidence lineage подтверждены.
+**Статус:** исторический offline/research результат завершён и воспроизводим. Дальнейшие задачи относятся к Product Contour UI/API path и отдельным production controls, а не к повторному расчёту Rule v1.
 
 ### 5.1 Зафиксировать evaluation contract
 
@@ -400,9 +393,11 @@
 
 ### 5.5 Выходные критерии этапа 5
 
-- [ ] Evaluation воспроизводим и детерминирован.
-- [ ] Каждое derived value имеет трассировку к input/source.
-- [ ] Missing/stale/conflicting inputs блокируют неверную оценку.
+- [x] Historical Rule v1 evaluation воспроизводим и детерминирован.
+- [x] Required inputs и optional context разделены; optional metrics не блокируют расчёт.
+- [x] Same-input replay даёт одинаковый результат: Base, directional score 0, low confidence.
+- [x] Scenario state/probability persistence остаётся выключенной.
+- [ ] Полная пользовательская UI/API приёмка и representative non-production payload validation относятся к этапу 6.
 - [ ] Версия snapshot, методики и evaluator записана в артефакте результата.
 - [ ] Никакого непредусмотренного persisted state/event.
 - [ ] Пользователь рассмотрел результат и ограничения.
@@ -1344,3 +1339,13 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - The test asserts that all inserted observations are read back, readiness allows rule evaluation, the deterministic result is `base`, and scenario persistence/probability changes remain disabled. It uses synthetic fixtures only; no live sources or production database.
 - The first CI attempt exposed test-fixture leakage: synthetic BTC rows remained in the shared disposable DB and caused the later API research-chain E2E to see `ready_for_rule_evaluation` instead of its expected clean-baseline `not_evaluable`. Added explicit cleanup of `btc-e2e:%` fixture rows after the DB-to-result assertions; no production data was involved.
 - Validation on exact code head `bc741a3413666291e82cd36d31d85fa079bf6706`: BTC Scenario Readiness Gate, Seed observation idempotency rehearsal, Validate VPS Release Workflow and both VPS API Build Rehearsal runs passed. The PostgreSQL test confirmed 9 synthetic observations were persisted and read back, derived inputs were calculated (`price_return_7d_pct=4.5993`, `etf_net_flow_5d_usd_millions=-678.9`, `hashrate_change_7d_pct=5.0505`), and the pure rule returned `scenario_type=base`, `directional_score=0`, `can_persist_scenario_state=false`. The fixture rows are deleted before the later E2E checks run.
+
+### Current-main reconciliation and code duplication audit — 2026-10-31
+
+- Контрольная база: `main` SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`; exact-main VPS API Build Rehearsal [#41179541901](https://github.com/olegsh247-stack/Crypto/actions/runs/41179541901) passed.
+- Удалён повторный старый блок Plan 100 sections 0–7; устаревшая статусная таблица отмечена исторической. Embedded master prompt и этапы BTC 4–5 синхронизированы с Rule v1 research completion и historical test-mode policy.
+- Prompt 100 обновлён контрольной точкой 31 Oct. Отдельный code/branch audit: [PLAN-100-CODE-DUPLICATION-AUDIT-2026-10-31.md](./PLAN-100-CODE-DUPLICATION-AUDIT-2026-10-31.md).
+- Удалены повторяющиеся push path entries из `.github/workflows/btc-scenario-readiness.yml`; workflow semantics не менялись.
+- Подтверждены области пересечения PR #89/#99, #86/#102/#104 и общие API/Web файлы PR #103. Ни один PR не объединён и не закрыт.
+- Mainline Worker/API checks прошли на audited SHA; remaining code issues (source-catalog duplicate config, silent Worker status-refresh error, historical migration redundancy) документированы и требуют узких regression-tested fixes.
+- No production DB access/writes, live ingestion, Worker execution, runtime registry/state/probability changes, deployment, DNS, cutover or merge.
