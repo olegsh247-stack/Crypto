@@ -309,3 +309,11 @@
 - Закрыт source-catalog duplication gap: добавлен `scripts/validate-btc-source-endpoint-contract.test.mjs`, который проверяет соответствие Kraken spot URL, metric/source identity и USD/BTC unit между `vps/worker/src/btc-source-catalog.ts` и `scripts/prepare-btc-observation-candidates.mjs`.
 - Исправлена discoverability тестов: `vps/worker/package.json` теперь запускает через `npm test` scheduler tests, BTC collector/parser tests и новый endpoint contract test. Workflow вызывает один единый test command вместо отдельного parser run.
 - Все изменения добавлены в audit PR #106; CI запущен на новом head и должен завершиться до объявления полной проверки. Никаких merge/close, production writes, live capture/ingestion, Worker execution, registry/scenario changes или deployment не выполнялось.
+
+
+### PR #106 — финальная проверка нового Worker test command, 2026-10-31
+
+- Проверен exact head `cdd2a2bdecf064bc6a11f9c7ec63678bf1447d57`. Все три CI workflow завершились `SUCCESS`: BTC Scenario Readiness Gate [#41182376094](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376094), Validate VPS Release Workflow [#41182376060](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376060), VPS API Build Rehearsal [#41182376062](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376062).
+- VPS rehearsal полностью прошёл: Worker build; единый `npm test` (scheduler, BTC collector/parser и source endpoint contract); API build/contract tests; Docker image build; disposable PostgreSQL bootstrap/migrations; canonical BTC registry и read-only provenance audit; observation idempotency/duplicate reconciliation; backup/restore; API/Worker E2E и cleanup.
+- Контрактный тест подтвердил согласованность Kraken endpoint, metric/source identity и USD/BTC unit между runtime catalog и review candidate preparation. Worker test command теперь включает ранее отдельно запускавшиеся collector/parser tests.
+- PR #106 остаётся draft/open, не merged. Это CI rehearsal в disposable environment, не VPS deployment и не production acceptance. VPS ещё не provisioned; production DB writes, live ingestion/capture, Worker execution, registry/scenario changes, deploy, DNS/cutover не выполнялись.
