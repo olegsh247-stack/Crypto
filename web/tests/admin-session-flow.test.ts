@@ -1,8 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
-import { GET as proxyGet, POST as proxyPost } from "../app/api/admin/[...path]/route.ts";
-import { POST as login, DELETE as logout } from "../app/api/admin/session/route.ts";
 
 const env = {
   login: process.env.CRYPTO_ADMIN_LOGIN_SECRET,
@@ -23,6 +21,8 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
   process.env.CRYPTO_API_URL = "http://api:8080";
   process.env.CRYPTO_ADMIN_TOKEN = "integration-upstream-token";
 
+  const { GET: proxyGet, POST: proxyPost } = await import("../app/api/admin/[...path]/route.ts");
+  const { POST: login, DELETE: logout } = await import("../app/api/admin/session/route.ts");
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
   let upstreamAuthorization = "";
