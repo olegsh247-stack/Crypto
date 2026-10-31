@@ -1349,3 +1349,15 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Подтверждены области пересечения PR #89/#99, #86/#102/#104 и общие API/Web файлы PR #103. Ни один PR не объединён и не закрыт.
 - Mainline Worker/API checks прошли на audited SHA; remaining code issues (source-catalog duplicate config, silent Worker status-refresh error, historical migration redundancy) документированы и требуют узких regression-tested fixes.
 - No production DB access/writes, live ingestion, Worker execution, runtime registry/state/probability changes, deployment, DNS, cutover or merge.
+
+
+## Контрольная точка — 31.10.2026, завершение CI-проверки PR #106
+
+- На актуальном head PR #106 `92179342fb2a4f0715923357b44aa2582aebb6ff` все три проверки завершились SUCCESS: BTC Scenario Readiness Gate, VPS API Build Rehearsal (два независимых запуска). PR остаётся draft/open и не объединён.
+- На heads PR #102, #104, #99 и #103 все предусмотренные для них Web/VPS checks также SUCCESS. Это проверка отдельных веток, а не доказательство успешной сборки единого объединённого результата.
+- Пересечения подтверждены: #102/#104 имеют общие Docker workflow и Compose; #99/#103 имеют общие API `vps/api/src/app.ts` и Web asset-detail page; #103 также меняет `web/lib/api.ts`, пересекающийся с #104. Перед интеграцией #103 нужен повторный combined diff review после #99 и #104.
+- Порядок review/integration остаётся условным: #102 → #104 → #99 → #103. #86 не объединять wholesale; #89 не интегрировать отдельно от идентичного #99. Ни один PR не merge/close.
+- Ограничение PR #104: login rate limiter хранится в памяти процесса; приемлем только как ограниченный single-host interim control, не распределённая защита при нескольких инстансах/рестартах. Перед горизонтальным масштабированием нужен shared limiter и отдельный review.
+- VPS отсутствует. #105 — только runbook; staging DB, реальный backup/restore и read-only GET acceptance не выполнены. Worker не запускать на read-only acceptance.
+- Все проверки выполнены без production DB writes, live ingestion, Worker execution, runtime registry/scenario changes, deploy, DNS или cutover.
+- Подробная запись и CI run links добавлены в `PROMPT-100-JOURNAL.md`.
