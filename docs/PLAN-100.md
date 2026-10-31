@@ -1361,3 +1361,10 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - VPS отсутствует. #105 — только runbook; staging DB, реальный backup/restore и read-only GET acceptance не выполнены. Worker не запускать на read-only acceptance.
 - Все проверки выполнены без production DB writes, live ingestion, Worker execution, runtime registry/scenario changes, deploy, DNS или cutover.
 - Подробная запись и CI run links добавлены в `PROMPT-100-JOURNAL.md`.
+
+
+### Контракт BTC endpoint и единый запуск тестов Worker — 31.10.2026
+
+- Устранён ранее отмеченный риск расхождения Kraken spot endpoint между runtime catalog и review-only candidate-preparation script: добавлен regression test, сравнивающий endpoint, metric/source identity и USD/BTC unit.
+- `vps/worker/package.json` теперь включает в `npm test` не только scheduler tests, но и BTC collector/parser tests и проверку согласованности source endpoint. CI вызывает этот единый test command; отдельный повторный запуск parser suite удалён.
+- Проверка остаётся offline/review-only: не добавляет ingestion, сетевой capture, PostgreSQL или production writes.
