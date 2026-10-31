@@ -43,7 +43,7 @@
 
 ### Runtime safety finding
 
-`vps/worker/src/scheduler.ts` performs daily-candle upserts and updates expired `research_status` rows regardless of `BTC_OBSERVATION_INGESTION_ENABLED`. The flag controls only the BTC observation collector. The `refreshResearchReviewStatus` failure is currently swallowed by an empty catch, so a failed status refresh may not be visible in the Worker result. Keep Worker stopped during initial read-only staging acceptance; separately add an observable error result and regression test before enabling it in staging.
+`vps/worker/src/scheduler.ts` performs daily-candle upserts and updates expired `research_status` rows regardless of `BTC_OBSERVATION_INGESTION_ENABLED`. The flag controls only the BTC observation collector. The empty catch around `refreshResearchReviewStatus` was a real observability defect. **Fixed in this branch:** refresh failures are now returned as `research_status_refresh.status=failed`, the Worker reports a partial result, and a regression test verifies that database errors propagate to the scheduler's handler. Keep Worker stopped during initial read-only staging acceptance regardless of this fix.
 
 ## Open PR / branch overlap inventory
 
@@ -68,9 +68,8 @@ PR #103, #104, #102, #86 and #99 also touch some common API/Web/runtime files. T
 1. Run the checks triggered by this documentation/workflow cleanup and verify the exact branch head.
 2. Review the full diffs of #102/#104/#86 and #99/#89, then choose canonical PRs; do not merge overlapping branches together.
 3. Add a test that prevents the standalone BTC candidate-preparation endpoint from drifting from the runtime source catalog.
-4. Make Worker research-status refresh failures visible and test the partial/error result.
-5. Consolidate repeated API/Worker market transport logic only if tests prove behavior remains equivalent.
-6. After repository/CI work is complete, provision the isolated VPS staging environment; only then run real staging DB/API/backup/restore acceptance.
+4. Consolidate repeated API/Worker market transport logic only if tests prove behavior remains equivalent.
+5. After repository/CI work is complete, provision the isolated VPS staging environment; only then run real staging DB/API/backup/restore acceptance.
 
 ## Safety
 
