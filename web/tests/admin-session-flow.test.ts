@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { NextRequest } from "next/server.js";
+import { NextRequest } from "next/server";
 import { GET as proxyGet, POST as proxyPost } from "../app/api/admin/[...path]/route.ts";
 import { POST as login, DELETE as logout } from "../app/api/admin/session/route.ts";
 
