@@ -20,7 +20,8 @@ async function handle(request: NextRequest, path: string[]) {
   if (!API_BASE || !ADMIN_TOKEN) {
     return NextResponse.json({ status: "error", error: "admin_proxy_not_configured" }, { status: 503 });
   }
-  const url = new URL("/api/" + path.join("/"), API_BASE.endsWith("/") ? API_BASE : API_BASE + "/");
+  const upstreamPath = path[0] === "db-schema" ? "/api/admin/db-schema" : "/api/" + path.join("/");
+  const url = new URL(upstreamPath, API_BASE.endsWith("/") ? API_BASE : API_BASE + "/");
   const body = request.method === "GET" ? undefined : await request.text();
   const upstream = await fetch(url, {
     method: request.method,
