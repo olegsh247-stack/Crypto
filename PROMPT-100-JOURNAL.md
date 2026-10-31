@@ -300,3 +300,12 @@
 - #99/#103 пока не следует объединять автоматически: их API и asset-detail изменения затрагивают общие участки; нужен focused combined diff review и последующий CI на итоговом совмещённом head. #86 остаётся исключённым из wholesale merge; #89 остаётся дубликатом #99.
 - Рекомендованный порядок не меняется: #102 → #104 → #99 → #103; #86 — только точечный перенос при доказанном отсутствующем поведении. #105 — независимый runbook, VPS всё ещё не provisioned.
 - Никаких merge/close действий, production writes, ingestion, Worker execution, registry/scenario changes, deployment, DNS/cutover не выполнялось.
+
+
+## 2026-10-31 — устранение оставшихся небольших пробелов аудита
+
+- Последний PR #106 head `8055996ee40621f940f5aab2917d22b0f576c8fa`: BTC Scenario Readiness Gate [#41181888833](https://github.com/olegsh247-stack/Crypto/actions/runs/41181888833) и VPS API Build Rehearsal [#41181888871](https://github.com/olegsh247-stack/Crypto/actions/runs/41181888871) — SUCCESS. Unit tests и полный PostgreSQL/API/Worker rehearsal завершились успешно.
+- Проведён focused diff review PR #99/#103: изменения CoinGecko quote semantics/provider timestamp, validation days, stored history division safety и UUID validation в #99 логически отделены от Product Contour freshness/evidence/monitoring contract additions в #103. Совместные файлы `vps/api/src/app.ts`, `web/app/assets/[assetId]/page.tsx`, `web/lib/api.ts` требуют финального combined CI после последовательной интеграции; автоматически переписывать или объединять PR не следует.
+- Закрыт source-catalog duplication gap: добавлен `scripts/validate-btc-source-endpoint-contract.test.mjs`, который проверяет соответствие Kraken spot URL, metric/source identity и USD/BTC unit между `vps/worker/src/btc-source-catalog.ts` и `scripts/prepare-btc-observation-candidates.mjs`.
+- Исправлена discoverability тестов: `vps/worker/package.json` теперь запускает через `npm test` scheduler tests, BTC collector/parser tests и новый endpoint contract test. Workflow вызывает один единый test command вместо отдельного parser run.
+- Все изменения добавлены в audit PR #106; CI запущен на новом head и должен завершиться до объявления полной проверки. Никаких merge/close, production writes, live capture/ingestion, Worker execution, registry/scenario changes или deployment не выполнялось.
