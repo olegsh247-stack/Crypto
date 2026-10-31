@@ -52,7 +52,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
       headers: { origin: "https://crypto.example.test", "content-type": "application/json", "x-forwarded-for": "198.51.100.42" },
       body: JSON.stringify({ secret: "integration-login-secret-012345678901234567890123" }),
     }));
-    assert.equal(loggedIn.status, 200);
+    assert.equal(loggedIn.status, 200, await loggedIn.clone().text());
     const sessionCookie = loggedIn.cookies.get("crypto_admin_session")?.value;
     const csrfCookie = loggedIn.cookies.get("crypto_admin_csrf")?.value;
     assert.ok(sessionCookie);
