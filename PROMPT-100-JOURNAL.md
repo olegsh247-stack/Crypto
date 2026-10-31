@@ -278,3 +278,11 @@
 - Code audit выявил: повторяющиеся entries в workflow path list (без изменения поведения); отдельные исторические ETH migrations с повторным обновлением классификации (не удалять из-за migration history); параллельные BTC source definitions между runtime catalog и standalone candidate-preparation script (проверить/свести через contract test, не делать слепое удаление); старые открытые PR/ветки с пересекающимся scope. Детали — в `docs/PLAN-100-CODE-DUPLICATION-AUDIT-2026-10-31.md`.
 - Никаких production writes, ingestion, runtime registry/state/probability changes, deployment, DNS или merge не выполнялось.
 - Дополнительная code fix в текущей audit-ветке: Worker больше не скрывает ошибку обновления `research_status`; результат включает `research_status_refresh=failed`, Worker помечает запуск как partial, добавлен regression test. Worker всё равно остаётся выключенным до staging acceptance.
+
+## 2026-10-31 — CI PR #106 и порядок устранения пересечений
+
+- PR #106 head `cffb0859c1ea240385918aa8c9bb94604e4f0bb5`: BTC Scenario Readiness Gate [#41180866845](https://github.com/olegsh247-stack/Crypto/actions/runs/41180866845) и VPS API Build Rehearsal [#41180866852](https://github.com/olegsh247-stack/Crypto/actions/runs/41180866852) — оба SUCCESS. GitHub сообщает mergeable=true; PR остаётся draft/open и не объединён.
+- Перепроверены открытые PR: #86 основан на старом main `03f4a08...` и GitHub сообщает mergeable=false; #102 основан на текущем main; #104 зависит от #102; #89/#99 имеют одинаковые изменённые строки в обоих файлах, #99 основан на более новом main. Не объединять #89 и #99 одновременно.
+- Рекомендованный порядок интеграции после полного review: #102 → #104 → #99 → #103. #86 не объединять целиком; отдельно проверить его уникальные API/server/db/UI изменения и переносить только если они всё ещё отсутствуют в main. #103 повторно сверить после #99/#104 из-за общих API/Web файлов.
+- #102/#104/#99/#103 — пока review-кандидаты; перед каждым merge нужны полные diff review и успешные проверки соответствующей комбинации. Никаких merge/close действий не выполнялось.
+- Plan 100 остаётся главным источником последовательности; активный этап — Product Contour v1 + code/PR dedup audit. VPS provisioning и реальная staging DB остаются отложенными до завершения доступных репозиторных/CI проверок.
