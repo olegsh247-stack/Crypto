@@ -130,7 +130,8 @@ export async function GET(request: NextRequest) {
   }
   try {
     const result = await securityApi("/api/admin/security/sessions/" + encodeURIComponent(sessionId), "GET");
-    const response = NextResponse.json({ status: "ok", authenticated: result.response.ok && result.data.active === true });
+    if (!result.response.ok) throw new Error("admin_security_store_unavailable");
+    const response = NextResponse.json({ status: "ok", authenticated: result.data.active === true });
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch {
