@@ -58,7 +58,10 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ status: "error", error: "admin_security_store_unavailable" }, { status: 503 });
   }
-  if (!rate.response.ok || rate.data.allowed !== true) {
+  if (!rate.response.ok) {
+    return NextResponse.json({ status: "error", error: "admin_security_store_unavailable" }, { status: 503 });
+  }
+  if (rate.data.allowed !== true) {
     const retry = Math.max(1, Number(rate.data.retry_after_seconds) || 900);
     const response = NextResponse.json({ status: "error", error: "admin_login_rate_limited" }, { status: 429 });
     response.headers.set("Retry-After", String(retry));
