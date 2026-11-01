@@ -365,3 +365,13 @@
 - Docs PR #106 exact HEAD `a70667b809ddf18fee7cdc647525d52a2bcadcba`: три workflow #41344188239/#41344188241/#41344188246 — SUCCESS.
 - Остаются только реальные acceptance gates: metric-level freshness parity и read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging пока нет.
 - PR #103/#106/#107 Draft/Open; merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes не выполнялись.
+
+
+## 2026-11-01 — Evidence observation provenance и combined CI
+
+- Evidence API/UI теперь передаёт и показывает observed_at, retrieved_at, period_start, freshness и revision связанной observation; добавлены VPS E2E assertions для BTC/ETH/SOL/CAKE populated snapshots.
+- PR #103 exact HEAD `4e092465b0d7c851f72b2bf9893d5461ecc25c20`: Web #41345209542 и VPS API #41345209534 — SUCCESS.
+- Combined PR #107 exact HEAD `2b4078d60ea3805e603c36eb4a96696dcea74c4d`: 5/5 SUCCESS — Web #41345242196, Docker #41345242193, Release workflow #41345242120, Seed idempotency #41345242225, VPS API rehearsal #41345242080.
+- PR #106 docs exact HEAD `bfc5cc54876c1e83d06a7b8bbff9efb3153c39d6`: все три workflow #41344917390/#41344917447/#41344917468 — SUCCESS.
+- Дальше: полный metric-level freshness contract для metrics и read-only representative payload audit на approved non-production DB/API. VPS/staging нет; это не блокирует завершённую source-level CI работу, но остаётся acceptance gate.
+- Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
