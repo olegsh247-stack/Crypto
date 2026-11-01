@@ -17,7 +17,7 @@ function isFiniteNumberLike(value: unknown) {
   if (typeof value === "number") return Number.isFinite(value);
   return typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value));
 }
-function confidencePercent(value: unknown) {}
+function confidencePercent(value: unknown) {
   if (value == null) return null;
   const n = Number(value);
   return Number.isFinite(n) ? (n <= 1 ? n * 100 : n) : null;
