@@ -1368,3 +1368,13 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Устранён ранее отмеченный риск расхождения Kraken spot endpoint между runtime catalog и review-only candidate-preparation script: добавлен regression test, сравнивающий endpoint, metric/source identity и USD/BTC unit.
 - `vps/worker/package.json` теперь включает в `npm test` не только scheduler tests, но и BTC collector/parser tests и проверку согласованности source endpoint. CI вызывает этот единый test command; отдельный повторный запуск parser suite удалён.
 - Проверка остаётся offline/review-only: не добавляет ingestion, сетевой capture, PostgreSQL или production writes.
+
+
+## Контрольная точка — 2026-11-01, PR #99 regression coverage
+
+- PR #99 остаётся Draft/Open, не объединён. На exact HEAD `800f04ce4f19786f8d838b4907c69d52efeacc0c` добавлены отдельные unit tests для проверки `days`, семантики CoinGecko USD/provider timestamp и нормализации исторического base/quote ряда при нулевых, отсутствующих и некорректных значениях.
+- Для тестируемости чистые функции вынесены в `vps/api/src/market-input.ts`; API test script расширен на весь `dist/*.test.js`. В `app.ts` endpoint использует эти функции, сохраняя runtime semantics.
+- Web Build [#41338175202](https://github.com/olegsh247-stack/Crypto/actions/runs/41338175202) — SUCCESS. VPS API Build Rehearsal [#41338175171](https://github.com/olegsh247-stack/Crypto/actions/runs/41338175171) — SUCCESS (31/31 шагов; включая API build/tests, disposable PostgreSQL migrations, registry/provenance audit, duplicate/idempotency rehearsal, backup/restore и API/Worker E2E). Это CI rehearsal, не staging/live acceptance.
+- PR #106 exact HEAD `78e162c32ff33463a43f5dffe0550b5e8285f4d4`: BTC Scenario Readiness Gate, Validate VPS Release Workflow и VPS API Build Rehearsal — все SUCCESS.
+- Следующий пункт Плана 100: повторно сверить PR #103 с изменениями #99 и #104, разрешить пересечения API/Web/types на единой review-базе и провести combined CI. После этого закрывать оставшиеся Product Contour v1 contract gaps. Не выполнять merge/close без отдельного разрешения.
+- VPS/staging всё ещё отсутствует; representative non-production DB payload acceptance остаётся ожидающей VPS/staging. Production DB writes, live ingestion, Worker execution, runtime registry/scenario changes, deploy, DNS/cutover не выполнялись.
