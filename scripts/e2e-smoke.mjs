@@ -71,6 +71,7 @@ for (const id of ["btc", "eth", "sol", "cake"]) {
     assert(detail.monitoring_signals.every(s => Object.hasOwn(s, "threshold") && Object.hasOwn(s, "threshold_type") && s.last_updated_at), id + " monitoring metadata");
     assert(detail.research_scenarios.every(s => Object.hasOwn(s, "supporting_evidence")), id + " scenario evidence field");
     assert(detail.evidence.every(e => Object.hasOwn(e, "snapshot_id") && Object.hasOwn(e, "research_block_id") && Object.hasOwn(e, "block_number")), id + " evidence lineage fields");
+    assert(detail.evidence.every(e => Object.hasOwn(e, "observation_observed_at") && Object.hasOwn(e, "observation_retrieved_at") && Object.hasOwn(e, "observation_period_start") && Object.hasOwn(e, "observation_freshness") && Object.hasOwn(e, "observation_revision")), id + " evidence observation provenance fields");
     if (detail.asset?.research_freshness) {
       for (const field of ["last_research_at", "last_major_update_at", "next_review_at"]) {
         assert(Object.hasOwn(detail.asset.research_freshness, field), id + " detail freshness " + field);
