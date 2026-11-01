@@ -122,8 +122,6 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const weekEnd = weekRows.at(-1)?.close ?? null;
   const weekChange = weekStart && weekEnd ? ((weekEnd / weekStart) - 1) * 100 : null;
 
-  const positiveFactors = factors.filter((f: any) => f.thesis_impact === "positive").length;
-  const negativeFactors = factors.filter((f: any) => f.thesis_impact === "negative").length;
   const improvingSignals = monitoringImproving.length;
   const deterioratingSignals = monitoringDeteriorating.length;
   const thesisState = thesisPercent != null ? "Score recorded" : "Not evaluated";
