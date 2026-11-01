@@ -27,7 +27,31 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
   let upstreamAuthorization = "";
+  const activeSessions = new Set<string>();
+  const failedAttempts = new Map<string, number>();
   globalThis.fetch = (async (input: URL | RequestInfo, init?: RequestInit) => {
+    const url = new URL(String(input));
+    const payload = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
+    if (url.pathname === "/api/admin/security/login-attempt") {
+      const key = String(payload.key_hash);
+      if (payload.action === "attempt") {
+        const attempts = (failedAttempts.get(key) ?? 0) + 1;
+        failedAttempts.set(key, attempts);
+        return Response.json({ status: "ok", allowed: attempts <= 5, retry_after_seconds: 900 });
+      }
+      if (payload.action === "success") failedAttempts.delete(key);
+      return Response.json({ status: "ok", allowed: true });
+    }
+    if (url.pathname === "/api/admin/security/sessions" && init?.method === "POST") {
+      activeSessions.add(String(payload.session_id));
+      return Response.json({ status: "ok" }, { status: 201 });
+    }
+    const sessionMatch = url.pathname.match(/^\\/api\\/admin\\/security\\/sessions\\/([A-Za-z0-9_-]+)$/);
+    if (sessionMatch && init?.method === "GET") return Response.json({ status: "ok", active: activeSessions.has(sessionMatch[1]) });
+    if (sessionMatch && init?.method === "DELETE") {
+      activeSessions.delete(sessionMatch[1]);
+      return Response.json({ status: "ok" });
+    }
     upstreamUrl = String(input);
     upstreamAuthorization = new Headers(init?.headers).get("authorization") ?? "";
     return new Response(JSON.stringify({ status: "ok", read_only: true }), {
@@ -106,6 +130,17 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     assert.equal(loggedOut.status, 200);
     assert.equal(loggedOut.cookies.get("crypto_admin_session")?.maxAge, 0);
     assert.equal(loggedOut.cookies.get("crypto_admin_csrf")?.maxAge, 0);
+
+    const revokedDenied = await proxyGet(
+      new NextRequest("https://crypto.example.test/api/admin/db-schema", { headers: { cookie } }),
+      { params: Promise.resolve({ path: ["db-schema"] }) },
+    );
+    assert.equal(revokedDenied.status, 401, "a logged-out session must be rejected server-side");
+
+    const statusAfterLogout = await sessionStatus(new NextRequest("https://crypto.example.test/api/admin/session", {
+      headers: { cookie },
+    }));
+    assert.equal((await statusAfterLogout.json() as { authenticated: boolean }).authenticated, false);
 
     const revokedDenied = await proxyGet(
       new NextRequest("https://crypto.example.test/api/admin/db-schema", { headers: { cookie } }),
