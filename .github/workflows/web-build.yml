@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web/package.json
-      - run: npm install
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
       - run: npm test
       - run: npm run build
