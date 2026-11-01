@@ -242,7 +242,23 @@
 - [ ] В `main` не вносятся массовые или не связанные изменения.
 - [ ] Ни один PR не закрыт и не слит автоматически.
 
-## Этап 3 — Product Contour v1 audit
+### Актуальная PR-сверка — 2026-11-02
+
+Проверенная база `main`: `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`. На момент сверки открыты семь PR (#99, #102–#107); все Draft/Open, все без отставания от указанной базы, кроме stacked base у #104, который точно основан на #102. Статусы CI приведены в текущей контрольной точке выше.
+
+| PR | Категория | Подтверждённые изменения / пересечения | Рекомендация |
+|---|---|---|---|
+| #99 | needed | Проверка market inputs: строгий `days`, CoinGecko USD + provider timestamp, нормализация stored quote ratio; затрагивает `vps/api/src/app.ts` и asset page. | Оставить перед #103; regression tests и CI прошли. |
+| #102 | needed / hosting base | Self-hosted Web container, Docker build, Caddy routing и Compose; 4 файла, CI 3/3. | Первый в технической цепочке. |
+| #104 | needed / stacked on #102 | Admin signed sessions, CSRF/Origin, PostgreSQL login throttle, revocation и ADMIN_TOKEN control plane; 21 файл. Меняет Caddy/Compose/Web Docker/API workflow и `web/lib/api.ts`. | После #102; не отделять от его hosting base до решения по интеграции. CI 5/5. |
+| #103 | needed / shared-file integration required | Product Contour: scenario-state lineage, metric freshness/provenance и Evidence contracts; пересекается с #99 по `vps/api/src/app.ts` и asset page, с #104 по `web/lib/api.ts`. | Последним в цепочке; перед интеграцией обновить base/rebase после #102 → #104 → #99 и повторить combined CI. Текущая combined validation #107 прошла 5/5, но PR #103 сам по себе остаётся основан на main. |
+| #105 | needed documentation | Один staging runbook; изоляция DB/secrets/volumes, Worker выключен при GET acceptance, SELECT-only audit и backup/restore. | Сохранить как инструкцию; не считать provisioning или staging acceptance выполненными. |
+| #106 | needed docs + Worker fix | Plan 100/journal deduplication и актуализация, Worker error reporting; новый docs HEAD `d409367ac612af8fb7d57f00b18edee85725f81b`. | Оставить открытым; новый VPS API rehearsal ещё IN_PROGRESS на момент записи. |
+| #107 | validation-only | Combined diff для #102/#104/#99/#103; 30 файлов; 5/5 CI SUCCESS на exact HEAD. | Не интегрировать как самостоятельный продуктовый PR: использовать только как доказательство совместимости объединённого набора. |
+
+**Порядок интеграции-кандидат:** #102 → #104 → #99 → #103. #105 и #106 — отдельные документационные/подготовительные PR; #107 — validation artifact. Это рекомендация аудита, не разрешение на merge, retarget, rebase или закрытие PR. Перед интеграцией каждого шага сверить новый `main`, exact diff и CI; для #103 повторить combined checks после обновления base.
+
+
 
 **Цель:** подтвердить, что фактический продукт согласован по API, UI, lifecycle и данным.
 
