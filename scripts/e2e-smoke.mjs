@@ -64,6 +64,9 @@ for (const id of ["btc", "eth", "sol", "cake"]) {
   assert(Array.isArray(detail.research_scenarios), id + " scenarios contract");
   assert(Array.isArray(detail.monitoring_signals), id + " monitoring contract");
   assert(Array.isArray(detail.evidence), id + " evidence contract");
+  assert(Array.isArray(detail.metrics), id + " metrics contract");
+  assert(detail.metrics.every(m => Object.hasOwn(m, "observed_at") && Object.hasOwn(m, "retrieved_at") && Object.hasOwn(m, "source_updated_at") && Object.hasOwn(m, "period_start") && Object.hasOwn(m, "source_payload_sha256") && Object.hasOwn(m, "freshness") && Object.hasOwn(m, "revision")), id + " metric observation provenance fields");
+  assert(detail.metrics.every(m => ["fresh", "stale", "expired", "unclassified", "unknown"].includes(m.freshness)), id + " metric freshness enum");
   if (detail.research_snapshot) {
     assert(detail.research_blocks.length === 15, id + " published snapshot has 15 blocks");
     assert(detail.research_domains.length === 6, id + " published snapshot has six domains");
