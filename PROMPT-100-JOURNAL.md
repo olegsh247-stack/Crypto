@@ -355,3 +355,13 @@
 - API rehearsal включает disposable PostgreSQL migrations, backup/restore, duplicate/idempotency, API/admin/mutation/Worker E2E и offline invariants. Только CI; не staging/production acceptance.
 - PR #107 описание обновлено; все PR остаются Draft/Open, merge/close/deploy не выполнялись. Production DB, live capture/ingestion, runtime registry/scenario/probabilities, DNS/cutover не затрагивались.
 - Далее: оставшиеся Product Contour v1 contract gaps по Плану 100; BTC Rule v1 research не переоткрывать.
+
+
+## 2026-11-01 — Product Contour scenario lineage и повторная combined CI
+
+- Закрыт конкретный риск scenario-state lineage: legacy `scenario_states.scenario_id` не имеет FK на `research_scenarios`, поэтому добавлена проверка обеих связей — active published snapshot и scenario definition в том же snapshot. Регрессионные тесты покрывают valid/orphan/cross-snapshot/missing snapshot.
+- PR #103 exact HEAD `5c2938a8ec208b44fa037529303ec9c9a783bdc0`: Web #41344639499 + VPS API rehearsal #41344639489 — SUCCESS.
+- Combined PR #107 exact HEAD `c9435d3a5660e7b5b38dbdedad69d6e7b9434217`: 5/5 SUCCESS — Web #41344507119, Docker #41344507103, Release workflow #41344507110, Seed idempotency #41344507131, VPS API rehearsal #41344507113. Web run включает test suite и build; API run — disposable PostgreSQL, migrations, backup/restore и E2E.
+- Docs PR #106 exact HEAD `a70667b809ddf18fee7cdc647525d52a2bcadcba`: три workflow #41344188239/#41344188241/#41344188246 — SUCCESS.
+- Остаются только реальные acceptance gates: metric-level freshness parity и read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging пока нет.
+- PR #103/#106/#107 Draft/Open; merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes не выполнялись.
