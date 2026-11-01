@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAsset, getPairHistory, getPairTicker } from "../../../lib/api";
 import MarketTabs from "../../components/MarketTabs";
 import { getResearchProgress, getResearchStatusLabel, getResearchBlockStatusLabel, normalizeResearchBlocks, normalizeResearchFreshness, getResearchFreshnessLabel } from "../../../lib/research-status";
+import { selectSnapshotScenarioState } from "../../../lib/scenario-lineage";
 
 function scoreByType(scores: any[], terms: string[]) { return scores.find(s => terms.some(t => String(s.score_type ?? "").toLowerCase().includes(t))); }
 function scorePercent(score: any) {
@@ -90,7 +91,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const confidenceScore = scoreByType(scores, ["confidence"]);
   const thesisPercent = scorePercent(thesis);
   const confidenceValue = thesis?.confidence ?? confidenceScore?.value ?? null;
-  const currentScenarioState = (data.scenario_states ?? []).find((s: any) => !research?.snapshot_id || s.snapshot_id === research.snapshot_id) ?? null;
+  const currentScenarioState = selectSnapshotScenarioState(data.scenario_states ?? [], scenarios, research?.snapshot_id ?? null);
   const currentScenarioDefinition = currentScenarioState
     ? scenarios.find((s: any) => s.research_scenario_id === currentScenarioState.scenario_id)
     : scenarios.find((s: any) => s.scenario_type === "base") ?? null;
