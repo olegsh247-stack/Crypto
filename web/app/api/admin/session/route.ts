@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, adminSessionId, createAdminSession } from "../../../../lib/admin-session";
+import { adminCsrfCookie, adminOriginAllowed, adminSessionCookie, adminSessionId, createAdminSession, csrfMatches } from "../../../../lib/admin-session";
 
 export const runtime = "nodejs";
 
@@ -107,21 +107,24 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   if (!adminOriginAllowed(request)) return NextResponse.json({ status: "error", error: "admin_origin_rejected" }, { status: 403 });
+  if (!csrfMatches(request.cookies.get(adminCsrfCookie)?.value, request.headers.get("x-crypto-admin-csrf"))) {
+    return NextResponse.json({ status: "error", error: "admin_csrf_rejected" }, { status: 403, headers: { "Cache-Control": "no-store" } });
+  }
   const secure = process.env.CRYPTO_ADMIN_ORIGIN?.startsWith("https://") ?? true;
   const sessionId = adminSessionId(request.cookies.get(adminSessionCookie)?.value);
-  let response: NextResponse;
   if (sessionId) {
     try {
       const revoked = await securityApi("/api/admin/security/sessions/" + encodeURIComponent(sessionId), "DELETE");
       if (!revoked.response.ok) throw new Error("session_revocation_failed");
-      response = NextResponse.json({ status: "ok" });
     } catch {
-      response = NextResponse.json({ status: "error", error: "admin_security_store_unavailable" }, { status: 503 });
+      // Keep both cookies so the browser can retry logout after the security store recovers.
+      return NextResponse.json(
+        { status: "error", error: "admin_security_store_unavailable" },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
     }
-  } else {
-    response = NextResponse.json({ status: "ok" });
   }
-  return clearSessionCookies(response, secure);
+  return clearSessionCookies(NextResponse.json({ status: "ok" }), secure);
 }
 
 export async function GET(request: NextRequest) {
