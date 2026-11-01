@@ -2,7 +2,7 @@
 
 > **СТАТУС ДОКУМЕНТА: ГЛАВНЫЙ ПРИОРИТЕТ ПРОЕКТА.** Этот документ задаёт обязательную последовательность работ. При конфликте с отдельными старыми задачами, комментариями, ветками или PR приоритет имеет актуальная версия «План 100», кроме случаев, когда пользователь явно изменил план.
 
-**Актуальность контрольной точки:** 31 октября 2026 года (Europe/Riga). Исторические записи ниже сохраняют дату исходного события; текущий статус задаётся разделом «Текущая контрольная точка».  
+**Актуальность контрольной точки:** 2 ноября 2026 года (Europe/Riga). Исторические записи ниже сохраняют дату исходного события; текущий статус задаётся разделом «Текущая контрольная точка».  
 **Основной репозиторий:** https://github.com/olegsh247-stack/Crypto  
 **Основная ветка:** `main`  
 **Последняя проверка `main`:** `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4` (29 октября 2026). VPS API Build Rehearsal [#41179541901](https://github.com/olegsh247-stack/Crypto/actions/runs/41179541901) завершился успешно 31 октября на этом SHA. Это CI-репетиция на disposable PostgreSQL, не развёртывание VPS и не live-приёмка.  
@@ -28,19 +28,20 @@
 
 План не означает, что все этапы уже сделаны. Статус каждого этапа меняется только на основании проверяемых доказательств, тестов, результатов команд или актуальных данных GitHub.
 
-## Текущая контрольная точка — 31 октября 2026
+## Текущая контрольная точка — 2 ноября 2026
 
-**Проверенная база:** `main` SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4` (29.10.2026). Проверка GitHub Actions на этом SHA: VPS API Build Rehearsal [#41179541901](https://github.com/olegsh247-stack/Crypto/actions/runs/41179541901) — success.
+**Проверенная база:** `main` SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4` (последний подтверждённый main на момент этой проверки). Все приведённые ниже новые CI-результаты относятся к точным HEAD соответствующих PR, а не к `main`.
 
-- **Хостинг:** VPS у пользователя пока нет. Self-hosted конфигурация и CI-репетиции есть; staging-среда, реальный API/DB, backup/restore на отдельном сервере и live GET-приёмка не выполнены. PR #105 — draft/open, документация staging runbook; не считать VPS созданным.
-- **BTC Rule v1 research:** исследовательская часть завершена на зафиксированном историческом наборе: Base, directional score 0, low confidence; одинаковые входы дают одинаковый результат. Это завершение offline/research-этапа, а не утверждение о live BTC readiness или разрешение ingestion. Данные в test mode исторические по определению; не запускать повторные captures ради разработки.
-- **BTC live/production:** ingestion остаётся отключённым и не одобренным; live readiness, production ETF archive/retention и launch-time refresh — отдельные будущие operational gates. DXY, hashrate и fee/subsidy не блокируют Rule v1 research.
-- **Product Contour v1:** аудит и UI/API contract work продолжаются. PR #103 — draft/open, head `cacb5fc2eb65565deb62123b5b7125f81d95aa00`; Web build и VPS API Build Rehearsal на этом head прошли. Representative non-production payload validation для BTC/ETH/SOL/CAKE не выполнялась: staging DB ещё нет.
-- **PR #100/#101:** документационные сверки Plan 100 и Product Contour находятся в отдельных draft PR; их содержание нужно сверять с текущим `main`, а не считать уже применённым.
-- **Worker:** не запускать как read-only. Даже при `BTC_OBSERVATION_INGESTION_ENABLED=false` Worker обновляет daily candles и research review status. До появления staging и отдельного разрешения Worker должен оставаться выключенным.
-- **Безопасность:** production DB, runtime registry, scenario state/probabilities, live ingestion, deployment, DNS и merge не затрагивались этой контрольной точкой.
+- **Self-hosted hosting:** VPS/staging у пользователя пока нет. PR #105 — Draft/Open, runbook подготовки изолированной среды; provisioning, реальный staging API/DB, отдельный off-host backup/restore и live GET-приёмка не выполнены. CI rehearsal на disposable PostgreSQL не является live VPS acceptance.
+- **BTC Rule v1 research:** завершён на зафиксированном историческом наборе; не повторять captures и не открывать заново research scope. Live ingestion остаётся выключенным и не одобренным.
+- **Product Contour v1:** source/API/Web/Evidence contracts, scenario lineage и metric-level freshness подтверждены на CI уровне. PR #103 HEAD `443d46efb84303c4597d464c93b54d6668b04098`: Web #41345754751 и VPS API rehearsal #41345754811 — SUCCESS. Combined PR #107 HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: все 5 workflow SUCCESS (#41345762613, #41345762539, #41345762546, #41345762659, #41345762541).
+- **Admin-session security:** PR #104 HEAD `977e51b17d985796668934ac6fd5b559e4a8331f`: 5/5 workflow SUCCESS. Отдельный static review и combined API rehearsal подтвердили signed sessions, revocation, CSRF/Origin, route/method allowlist, PostgreSQL-backed login throttle и ADMIN_TOKEN boundary. Это CI/static evidence, не public-ingress acceptance.
+- **Документация / Worker:** PR #106 HEAD `3c08ed014f8452ebb7515caeccbd8bd5343910bc`; BTC readiness #41349595598, release workflow #41349595593, VPS API rehearsals #41349590284 и #41349595630 — все SUCCESS. Изменения Plan 100/journal и Worker error reporting проверены на этом exact HEAD.
+- **Открытые PR:** #99, #102, #103, #104, #105, #106 и #107 остаются Draft/Open; для текущих HEAD #99 (2/2), #102 (3/3), #103 (2/2), #104 (5/5), #106 (4/4), #107 (5/5) соответствующие известные workflow завершились SUCCESS. #105 — документационный runbook, не provisioning. Никакие PR не слиты и не закрыты.
+- **Worker:** не запускать как read-only. Он обновляет daily candles и research review status даже при отключённом BTC observation ingestion; до отдельной staging-проверки и разрешения Worker остаётся выключенным.
+- **Безопасность:** production DB, runtime registry, scenario state/probabilities, live ingestion, deployment, DNS, cutover и merge не затрагивались.
 
-**Текущий порядок:** завершить Product Contour v1/code-and-duplicate audit и синхронизировать документы; затем выполнить оставшиеся disposable CI проверки. VPS provisioning переносится на согласованный этап после того, как локальные/CI проверки максимально завершены.
+**Текущий порядок:** продолжить этап 2 — сверку открытых PR с текущим `main`, включая overlap/stacked dependencies; затем закрывать оставшиеся source/code acceptance пункты. Для Product Contour остаётся один фактический gate: read-only representative payload audit BTC/ETH/SOL/CAKE на отдельной approved non-production DB/API. Он требует предоставленной staging-среды; fixtures и CI не заменяют его.
 
 ## Обязательное решение по хостингу — НЕ ПЕРЕОТКРЫВАТЬ БЕЗ ЗАПРОСА ПОЛЬЗОВАТЕЛЯ
 
