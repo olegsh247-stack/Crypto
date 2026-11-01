@@ -402,3 +402,14 @@
 - PR #107 static review: signed 8h sessions, server-side revocation, CSRF + strict Origin, route/method allowlist, atomic login throttle; admin control-plane protected by server-side ADMIN_TOKEN.
 - Disposable VPS API rehearsal [#41345762541](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762541) SUCCESS: migration/rerun, throttle atomicity + persistence across restart, session revocation, admin endpoint 401/200 auth boundary.
 - Static review found no new blocker. CI-only evidence; no real VPS/public ingress acceptance. PRs remain Draft/Open; no merge/deploy.
+
+
+## 2026-11-02 — актуализация контрольной точки и проверка PR
+
+- Проверены актуальные открытые PR #99, #102, #103, #104, #105, #106, #107 и их HEAD. Все остаются Draft/Open; ни один не слит и не закрыт.
+- На точных HEAD завершились SUCCESS известные workflow: #99 — 2/2 (`800f04ce4f19786f8d838b4907c69d52efeacc0c`); #102 — 3/3 (`a8e59faabba42854b450977331d6487df145b745`); #103 — 2/2 (`443d46efb84303c4597d464c93b54d6668b04098`); #104 — 5/5 (`977e51b17d985796668934ac6fd5b559e4a8331f`); #106 — 4/4 (`3c08ed014f8452ebb7515caeccbd8bd5343910bc`); #107 — 5/5 (`6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`).
+- Для #106 отдельно подтверждены завершившиеся SUCCESS VPS API rehearsals #41349590284 и #41349595630, а также BTC readiness #41349595598 и release workflow #41349595593.
+- Product Contour source/API/Web/Evidence contracts, scenario lineage и metric-level freshness подтверждены на CI уровне; combined #107 прошёл 5/5. Это не заменяет read-only representative payload audit BTC/ETH/SOL/CAKE на отдельной non-production DB/API.
+- PR #105 содержит только staging runbook. VPS/staging не provisioned; provisioning, реальный staging API/DB и live GET acceptance не выполнены.
+- Обновлена текущая контрольная точка Plan 100. Открытые PR не merge/close; production DB, live ingestion, Worker execution, runtime registry/scenario/probability state, deployment, DNS и cutover не затрагивались.
+- Следующий шаг: продолжить PR audit против текущего `main`, начиная с проверки точных diffs и stacked dependencies; не повторять уже зелёные CI и не возвращаться к BTC research.
