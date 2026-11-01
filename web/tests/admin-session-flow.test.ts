@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 
 const env = {
@@ -40,6 +41,18 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
       { params: Promise.resolve({ path: ["db-schema"] }) },
     );
     assert.equal(denied.status, 401, "requests without a session must be denied");
+
+    const expiredPayload = `${Math.floor(Date.now() / 1000) - 60}.0123456789abcdefghijklmnop`;
+    const expiredSignature = createHmac("sha256", process.env.CRYPTO_ADMIN_SESSION_SECRET!)
+      .update(expiredPayload).digest("base64url");
+    const expiredSession = `${expiredPayload}.${expiredSignature}`;
+    const expiredDenied = await proxyGet(
+      new NextRequest("https://crypto.example.test/api/admin/db-schema", {
+        headers: { cookie: `crypto_admin_session=${expiredSession}` },
+      }),
+      { params: Promise.resolve({ path: ["db-schema"] }) },
+    );
+    assert.equal(expiredDenied.status, 401, "expired signed sessions must be denied");
 
     const badOrigin = await login(new NextRequest("https://crypto.example.test/api/admin/session", {
       method: "POST", headers: { origin: "https://attacker.example", "content-type": "application/json" },
