@@ -23,7 +23,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
   process.env.CRYPTO_ADMIN_TOKEN = "integration-upstream-token";
 
   const { GET: proxyGet, POST: proxyPost } = await import("../app/api/admin/[...path]/route.ts");
-  const { POST: login, DELETE: logout } = await import("../app/api/admin/session/route.ts");
+  const { GET: sessionStatus, POST: login, DELETE: logout } = await import("../app/api/admin/session/route.ts");
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
   let upstreamAuthorization = "";
@@ -106,6 +106,17 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     assert.equal(loggedOut.status, 200);
     assert.equal(loggedOut.cookies.get("crypto_admin_session")?.maxAge, 0);
     assert.equal(loggedOut.cookies.get("crypto_admin_csrf")?.maxAge, 0);
+
+    const revokedDenied = await proxyGet(
+      new NextRequest("https://crypto.example.test/api/admin/db-schema", { headers: { cookie } }),
+      { params: Promise.resolve({ path: ["db-schema"] }) },
+    );
+    assert.equal(revokedDenied.status, 401, "a logged-out session must be rejected server-side");
+
+    const statusAfterLogout = await sessionStatus(new NextRequest("https://crypto.example.test/api/admin/session", {
+      headers: { cookie },
+    }));
+    assert.equal((await statusAfterLogout.json() as { authenticated: boolean }).authenticated, false);
   } finally {
     globalThis.fetch = originalFetch;
     restore("CRYPTO_ADMIN_LOGIN_SECRET", env.login);
