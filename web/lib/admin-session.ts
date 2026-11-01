@@ -36,7 +36,7 @@ export function validAdminSession(token: string | undefined): boolean {
   const parts = token.split(".");
   if (parts.length !== 3) return false;
   const [expiresText, nonce, supplied] = parts;
-  if (!/^\d+$/.test(expiresText) || !/^[A-Za-z0-9_-]{20,}$/.test(nonce)) return false;
+  if (!/^\d+$/.test(expiresText) || !/^[A-Za-z0-9_-]{20,64}$/.test(nonce)) return false;
   const expires = Number(expiresText);
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isSafeInteger(expires) || expires <= now || expires > now + SESSION_TTL_SECONDS) return false;
