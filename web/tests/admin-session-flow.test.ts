@@ -29,6 +29,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
   let upstreamAuthorization = "";
   const activeSessions = new Set<string>();
   const failedAttempts = new Map<string, number>();
+  let failSessionRevocation = false;
   globalThis.fetch = (async (input: URL | RequestInfo, init?: RequestInit) => {
     const url = new URL(String(input));
     const payload = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
@@ -51,6 +52,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     const sessionMatch = /^[A-Za-z0-9_-]+$/.test(sessionId) ? sessionId : "";
     if (sessionMatch && (!init?.method || init.method === "GET")) return Response.json({ status: "ok", active: activeSessions.has(sessionMatch) });
     if (sessionMatch && init?.method === "DELETE") {
+      if (failSessionRevocation) return Response.json({ status: "error" }, { status: 503 });
       activeSessions.delete(sessionMatch);
       return Response.json({ status: "ok" });
     }
@@ -126,8 +128,24 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     );
     assert.equal(wrongOriginDenied.status, 403, "mutations from a different origin must be denied");
 
-    const loggedOut = await logout(new NextRequest("https://crypto.example.test/api/admin/session", {
+    const csrfMissing = await logout(new NextRequest("https://crypto.example.test/api/admin/session", {
       method: "DELETE", headers: { origin: "https://crypto.example.test", cookie },
+    }));
+    assert.equal(csrfMissing.status, 403, "logout without a matching CSRF header must be denied");
+
+    failSessionRevocation = true;
+    const revokeUnavailable = await logout(new NextRequest("https://crypto.example.test/api/admin/session", {
+      method: "DELETE",
+      headers: { origin: "https://crypto.example.test", cookie, "x-crypto-admin-csrf": csrfCookie! },
+    }));
+    assert.equal(revokeUnavailable.status, 503, "logout must report an unavailable security store");
+    assert.equal(revokeUnavailable.headers.get("set-cookie"), null, "cookies must be preserved when revocation is not confirmed");
+    assert.equal(activeSessions.size, 1, "the session remains active until revocation is confirmed");
+
+    failSessionRevocation = false;
+    const loggedOut = await logout(new NextRequest("https://crypto.example.test/api/admin/session", {
+      method: "DELETE",
+      headers: { origin: "https://crypto.example.test", cookie, "x-crypto-admin-csrf": csrfCookie! },
     }));
     assert.equal(loggedOut.status, 200);
     assert.equal(loggedOut.cookies.get("crypto_admin_session")?.maxAge, 0);
