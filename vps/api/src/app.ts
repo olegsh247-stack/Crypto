@@ -119,17 +119,13 @@ export default {
  if(url.pathname==="/api/admin/security/login-attempt"&&request.method==="POST"){
   const auth=requireAdmin(request,env);if(auth)return auth;
   const data=await body(request),keyHash=text(data?.key_hash),action=text(data?.action);
-  if(!/^[a-f0-9]{64}$/.test(keyHash)||!["check","failure","success"].includes(action))return json({status:"error",error:"invalid_admin_login_attempt"},400,env);
+  if(!/^[a-f0-9]{64}$/.test(keyHash)||!["attempt","success"].includes(action))return json({status:"error",error:"invalid_admin_login_attempt"},400,env);
   if(action==="success"){await sql`delete from admin_login_attempts where key_hash=${keyHash}`;return json({status:"ok",allowed:true,retry_after_seconds:0},200,env);}
-  if(action==="failure"){
-   const rows=await sql`insert into admin_login_attempts(key_hash,attempts,window_started_at,updated_at) values(${keyHash},1,now(),now()) on conflict(key_hash) do update set attempts=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then 1 else admin_login_attempts.attempts+1 end,window_started_at=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then now() else admin_login_attempts.window_started_at end,updated_at=now() returning attempts,window_started_at`;
-   return json({status:"ok",allowed:Number(rows[0]?.attempts??0)<=5,retry_after_seconds:Math.max(1,Math.ceil(900-(Date.now()-new Date(rows[0]?.window_started_at??Date.now()).getTime())/1000))},200,env);
-  }
-  const rows=await sql`select attempts,window_started_at from admin_login_attempts where key_hash=${keyHash}`;
-  const current=rows[0],active=!!current&&new Date(current.window_started_at).getTime()>Date.now()-900000;
-  const blocked=active&&Number(current.attempts)>=5;
-  const retry=blocked?Math.max(1,Math.ceil(900-(Date.now()-new Date(current.window_started_at).getTime())/1000)):0;
-  return json({status:"ok",allowed:!blocked,retry_after_seconds:retry},200,env);
+  // Atomic reservation: concurrent login requests cannot race around a check-then-increment window.
+  const rows=await sql`insert into admin_login_attempts(key_hash,attempts,window_started_at,updated_at) values(${keyHash},1,now(),now()) on conflict(key_hash) do update set attempts=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then 1 else admin_login_attempts.attempts+1 end,window_started_at=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then now() else admin_login_attempts.window_started_at end,updated_at=now() returning attempts,window_started_at`;
+  const attempts=Number(rows[0]?.attempts??0),windowStart=new Date(rows[0]?.window_started_at??Date.now()).getTime();
+  const allowed=attempts<=5,retry=allowed?0:Math.max(1,Math.ceil(900-(Date.now()-windowStart)/1000));
+  return json({status:"ok",allowed,retry_after_seconds:retry},200,env);
  }
  if(url.pathname==="/api/admin/security/sessions"&&request.method==="POST"){
   const auth=requireAdmin(request,env);if(auth)return auth;
