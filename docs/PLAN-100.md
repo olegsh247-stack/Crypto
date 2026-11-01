@@ -1440,3 +1440,11 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Combined PR #107 exact HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web [#41345762613](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762613), Docker [#41345762539](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762539), Release workflow [#41345762546](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762546), Seed idempotency [#41345762659](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762659), VPS API rehearsal [#41345762541](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762541).
 - Source/CI-level Product Contour contracts, including scenario lineage, Evidence provenance and metric-level freshness, проверены. Остался один фактический acceptance gate: read-only representative payload audit (snapshot IDs, row counts, null rates, source lineage) для BTC/ETH/SOL/CAKE на approved non-production DB/API. VPS/staging пока не provisioned; CI fixtures этот gate не заменяют.
 - PR #99/#102/#103/#104/#106/#107 остаются Draft/Open. Никаких merge/close, production writes, live ingestion, Worker execution/deploy, runtime registry/scenario/probability changes, DNS или cutover не выполнялось.
+
+
+## Дополнительная проверка admin-session security — 2026-11-01
+
+- Статически проверены объединённые изменения PR #107: HMAC-подписанная 8-часовая сессия, server-side revocation, HttpOnly session cookie, SameSite=Strict, CSRF cookie/header match, строгая Origin-проверка, allowlist административных методов/маршрутов, атомарный IP-keyed login throttle; API control-plane endpoints требуют server-side ADMIN_TOKEN.
+- VPS API Build Rehearsal [#41345762541](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762541) подтвердил disposable PostgreSQL migration + rerun, atomic login throttle, сохранение счётчика через restart, server-side session revoke, а также admin API 401 без токена / 200 с токеном. E2E job завершился SUCCESS.
+- Проверка относится к CI disposable environment, не к реальному VPS или публичному production ingress. Новых security дефектов при статическом review не выявлено; production security acceptance не заявляется.
+- PR #107 и source PRs остаются Draft/Open; merge/deploy не выполнялись.
