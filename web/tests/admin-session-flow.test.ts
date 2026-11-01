@@ -46,10 +46,12 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
       activeSessions.add(String(payload.session_id));
       return Response.json({ status: "ok" }, { status: 201 });
     }
-    const sessionMatch = url.pathname.match(/^\\/api\\/admin\\/security\\/sessions\\/([A-Za-z0-9_-]+)$/);
-    if (sessionMatch && init?.method === "GET") return Response.json({ status: "ok", active: activeSessions.has(sessionMatch[1]) });
+    const sessionPrefix = "/api/admin/security/sessions/";
+    const sessionId = url.pathname.startsWith(sessionPrefix) ? url.pathname.slice(sessionPrefix.length) : "";
+    const sessionMatch = /^[A-Za-z0-9_-]+$/.test(sessionId) ? sessionId : "";
+    if (sessionMatch && init?.method === "GET") return Response.json({ status: "ok", active: activeSessions.has(sessionMatch) });
     if (sessionMatch && init?.method === "DELETE") {
-      activeSessions.delete(sessionMatch[1]);
+      activeSessions.delete(sessionMatch);
       return Response.json({ status: "ok" });
     }
     upstreamUrl = String(input);
