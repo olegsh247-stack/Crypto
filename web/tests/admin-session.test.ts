@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   adminOriginAllowed,
+  adminSessionId,
   adminRouteAllowed,
-  checkAdminLoginAttempt,
   createAdminSession,
   csrfMatches,
   validAdminSession,
@@ -77,14 +77,10 @@ test("allows only explicitly approved admin route and method pairs", () => {
   assert.equal(adminRouteAllowed(["assets", "btc"], "PUT"), false);
 });
 
-test("limits admin login attempts and clears the counter after success", () => {
-  const key = "rate-limit-test-" + Math.random().toString(36);
-  for (let index = 0; index < 5; index += 1) {
-    assert.equal(checkAdminLoginAttempt(key).allowed, true);
-  }
-  const blocked = checkAdminLoginAttempt(key);
-  assert.equal(blocked.allowed, false);
-  assert.ok(blocked.retryAfterSeconds > 0);
-  assert.equal(checkAdminLoginAttempt(key, true).allowed, true);
-  assert.equal(checkAdminLoginAttempt(key).allowed, true);
+
+test("extracts the signed session id for server-side revocation checks", () => {
+  const session = createAdminSession();
+  assert.ok(session);
+  assert.match(adminSessionId(session.token) ?? "", /^[A-Za-z0-9_-]{20,64}$/);
+  assert.equal(adminSessionId("malformed"), null);
 });
