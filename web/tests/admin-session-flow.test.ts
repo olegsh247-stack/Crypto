@@ -127,7 +127,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     assert.equal(wrongOriginDenied.status, 403, "mutations from a different origin must be denied");
 
     const loggedOut = await logout(new NextRequest("https://crypto.example.test/api/admin/session", {
-      method: "DELETE", headers: { origin: "https://crypto.example.test" },
+      method: "DELETE", headers: { origin: "https://crypto.example.test", cookie },
     }));
     assert.equal(loggedOut.status, 200);
     assert.equal(loggedOut.cookies.get("crypto_admin_session")?.maxAge, 0);
