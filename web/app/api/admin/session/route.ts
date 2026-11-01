@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   const keyHash = clientKeyHash(request);
   let rate: Awaited<ReturnType<typeof securityApi>>;
   try {
-    rate = await securityApi("/api/admin/security/login-attempt", "POST", { key_hash: keyHash, action: "check" });
+    rate = await securityApi("/api/admin/security/login-attempt", "POST", { key_hash: keyHash, action: "attempt" });
   } catch {
     return NextResponse.json({ status: "error", error: "admin_security_store_unavailable" }, { status: 503 });
   }
@@ -70,12 +70,6 @@ export async function POST(request: NextRequest) {
   const a = Buffer.from(supplied);
   const b = Buffer.from(loginSecret);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    try {
-      const failure = await securityApi("/api/admin/security/login-attempt", "POST", { key_hash: keyHash, action: "failure" });
-      if (!failure.response.ok) throw new Error("rate_limit_write_failed");
-    } catch {
-      return NextResponse.json({ status: "error", error: "admin_security_store_unavailable" }, { status: 503 });
-    }
     return NextResponse.json({ status: "error", error: "admin_login_rejected" }, { status: 401 });
   }
 
