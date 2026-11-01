@@ -30,7 +30,7 @@ export function normalizeStoredQuoteRatio(
   return storedBase.flatMap((row) => {
     const quoteClose = quoteByTime.get(String(row.time));
     const baseClose = Number(row.close);
-    if (!Number.isFinite(quoteClose) || quoteClose <= 0 || !Number.isFinite(baseClose) || baseClose <= 0) return [];
+    if (quoteClose === undefined || !Number.isFinite(quoteClose) || quoteClose <= 0 || !Number.isFinite(baseClose) || baseClose <= 0) return [];
     const close = baseClose / quoteClose;
     return Number.isFinite(close) && close > 0 ? [{ time: row.time, close }] : [];
   });
