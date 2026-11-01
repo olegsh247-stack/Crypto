@@ -375,3 +375,14 @@
 - PR #106 docs exact HEAD `bfc5cc54876c1e83d06a7b8bbff9efb3153c39d6`: все три workflow #41344917390/#41344917447/#41344917468 — SUCCESS.
 - Дальше: полный metric-level freshness contract для metrics и read-only representative payload audit на approved non-production DB/API. VPS/staging нет; это не блокирует завершённую source-level CI работу, но остаётся acceptance gate.
 - Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
+
+
+## 2026-11-01 — metric-level freshness contract и повторная combined CI
+
+- Metrics API contract теперь явно типизирован и сохраняет observation timing/provenance (observed_at, retrieved_at, source_updated_at, period_start, source URL/ID, source_row_key, payload SHA-256, methodology/version, status, revision, created_at). Freshness различает fresh/stale/expired/unclassified/unknown.
+- Evidence UI показывает linked observation timing, period, freshness и revision; E2E проверяет provenance для BTC/ETH/SOL/CAKE на disposable PostgreSQL.
+- PR #103 exact HEAD `443d46efb84303c4597d464c93b54d6668b04098`: Web #41345754751 + VPS API #41345754811 — SUCCESS.
+- Combined PR #107 exact HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web #41345762613, Docker #41345762539, Release workflow #41345762546, Seed idempotency #41345762659, VPS API #41345762541.
+- Docs PR #106 exact HEAD `7d66e82eefb57fb19b270ba95241c47dfb437fad`: три workflow #41345569567/#41345569283/#41345569355 — SUCCESS.
+- Остаётся read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging нет; CI не заменяет эту acceptance.
+- Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
