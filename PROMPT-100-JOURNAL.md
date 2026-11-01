@@ -326,3 +326,14 @@
 - PR #99: Draft/Open, основан на текущем main `48295ca...`; Web Build и VPS API Build Rehearsal успешны. Diff ограничен `vps/api/src/app.ts` и Asset Dashboard. Исправляет CoinGecko USD quote/timestamp semantics, `days` validation, безопасную нормализацию stored history и UUID validation. Перед интеграцией нужен focused regression coverage для invalid `days`, CoinGecko provider timestamp/quote and zero/missing history denominator; текущий PR не добавляет отдельные тесты на эти случаи.
 - PR #103: Draft/Open, та же база main; Web Build и VPS API Build Rehearsal успешны. Diff ограничен Product Contour audit, E2E smoke, API detail/list payload, dashboard/deep-research UI и shared Web types. Улучшает freshness timestamps, score scale normalization, evidence lineage display, scenario fallback и monitoring metadata. E2E проверяет форму payload для BTC/ETH/SOL/CAKE, но не заменяет требуемую read-only проверку representative non-production DB payload.
 - #99 и #103 меняют общие `vps/api/src/app.ts` и `web/app/assets/[assetId]/page.tsx`; #103 также меняет `web/lib/api.ts`, пересекающийся с #104. Не интегрировать текущие ветки вслепую: после #102/#104 и #99 нужно обновить #103 на итоговую базу и прогнать combined CI. Никаких merge/close, live DB, production writes или deployment не выполнялось.
+
+
+## 2026-11-01 — PR #99 regression coverage завершено
+
+- PR #99 exact HEAD: `800f04ce4f19786f8d838b4907c69d52efeacc0c`.
+- Добавлены unit tests на invalid/missing/fractional `days`, cap defaults; CoinGecko quote USD-only + provider `last_updated_at` + invalid/missing price/time; исторический base/quote ratio с zero/missing/invalid/unmatched closes.
+- Чистые функции вынесены в `vps/api/src/market-input.ts`; `vps/api/package.json` запускает `node --test dist/*.test.js`.
+- Первичная сборка выявила TS narrowing для отсутствующего quote close; исправлено явной проверкой `quoteClose === undefined`.
+- Web Build #41338175202 и VPS API Build Rehearsal #41338175171 прошли SUCCESS на exact HEAD; API rehearsal — 31/31 шагов. Никакого production/staging доступа не было.
+- PR #106 exact HEAD `78e162c32ff33463a43f5dffe0550b5e8285f4d4`: три workflow завершились SUCCESS (BTC Scenario Readiness Gate, Validate VPS Release Workflow, VPS API Build Rehearsal).
+- Следующий шаг: повторный review/reconciliation PR #103 поверх изменений #99 и #104, затем combined CI. Не merge/close без отдельного разрешения.
