@@ -337,3 +337,12 @@
 - Web Build #41338175202 и VPS API Build Rehearsal #41338175171 прошли SUCCESS на exact HEAD; API rehearsal — 31/31 шагов. Никакого production/staging доступа не было.
 - PR #106 exact HEAD `78e162c32ff33463a43f5dffe0550b5e8285f4d4`: три workflow завершились SUCCESS (BTC Scenario Readiness Gate, Validate VPS Release Workflow, VPS API Build Rehearsal).
 - Следующий шаг: повторный review/reconciliation PR #103 поверх изменений #99 и #104, затем combined CI. Не merge/close без отдельного разрешения.
+
+
+## Контрольная точка — 2026-11-01, reconciliation PR #103
+
+- PR #103 сверён с #99/#104 на shared API/Web files; семантическое пересечение мониторинга устранено: directional summary учитывает только количественные сигналы с `metric_id`, конечными `current_value` и `threshold`; descriptive baseline не считается живым сигналом.
+- Exact HEAD PR #103: `e960d19dcd1905d12d0a46bc2c4309c618faf559`. Web Build [#41339713594](https://github.com/olegsh247-stack/Crypto/actions/runs/41339713594) и VPS API Build Rehearsal [#41339713579](https://github.com/olegsh247-stack/Crypto/actions/runs/41339713579) — SUCCESS.
+- PR #103 description обновлено exact HEAD и результатами CI. PR остаётся Draft/Open; не объединён.
+- Эти проверки выполнены отдельно на ветке #103 и не являются combined CI для интеграции #99/#104/#103. Следующий шаг — ограниченная combined validation/review общей API/Web поверхности; затем продолжить оставшиеся Product Contour v1 contract gaps по Плану 100.
+- Production/staging не затрагивались; никаких production writes, live ingestion, Worker deploy, runtime registry/scenario changes или merge не выполнялось.
