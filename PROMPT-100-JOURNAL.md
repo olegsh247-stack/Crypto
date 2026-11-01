@@ -346,3 +346,12 @@
 - PR #103 description обновлено exact HEAD и результатами CI. PR остаётся Draft/Open; не объединён.
 - Эти проверки выполнены отдельно на ветке #103 и не являются combined CI для интеграции #99/#104/#103. Следующий шаг — ограниченная combined validation/review общей API/Web поверхности; затем продолжить оставшиеся Product Contour v1 contract gaps по Плану 100.
 - Production/staging не затрагивались; никаких production writes, live ingestion, Worker deploy, runtime registry/scenario changes или merge не выполнялось.
+
+
+## 2026-11-01 — combined CI PR #107
+
+- Временный Draft/Open PR [#107](https://github.com/olegsh247-stack/Crypto/pull/107) проверяет совместное дерево #102/#104/#99/#103; exact HEAD `86544c510a72490d704f910f9c051a7cc82edc28`.
+- 5/5 SUCCESS: [Web #41341749074](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749074), [Docker #41341749076](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749076), [Release workflow #41341749084](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749084), [Seed idempotency #41341749148](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749148), [VPS API rehearsal #41341749116](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749116).
+- API rehearsal включает disposable PostgreSQL migrations, backup/restore, duplicate/idempotency, API/admin/mutation/Worker E2E и offline invariants. Только CI; не staging/production acceptance.
+- PR #107 описание обновлено; все PR остаются Draft/Open, merge/close/deploy не выполнялись. Production DB, live capture/ingestion, runtime registry/scenario/probabilities, DNS/cutover не затрагивались.
+- Далее: оставшиеся Product Contour v1 contract gaps по Плану 100; BTC Rule v1 research не переоткрывать.
