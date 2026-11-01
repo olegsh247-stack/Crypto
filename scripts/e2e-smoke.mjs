@@ -25,10 +25,15 @@ const canonicalAssets = assets.filter(a => a.asset_id !== "usdt");
 assert(canonicalAssets.length === expectedAssetIds.length, "canonical non-stable asset registry size");
 assert(expectedAssetIds.every(id => byId.has(id)), "canonical enabled asset registry identities");
 assert(byId.has("usdt") && byId.get("usdt").symbol === "USDT", "USDT quote asset");
-for (const id of ["btc", "eth"]) {
+for (const id of ["btc", "eth", "sol", "cake"]) {
   assert(byId.has(id), "asset " + id);
   assert(byId.get(id).asset_id === id, id + " canonical id");
   assert(byId.get(id).research_status, id + " research status");
+  if (byId.get(id).research_freshness) {
+    for (const field of ["last_research_at", "last_major_update_at", "next_review_at"]) {
+      assert(Object.hasOwn(byId.get(id).research_freshness, field), id + " list freshness " + field);
+    }
+  }
 }
 
 const eth = await get("/api/assets/eth");
@@ -49,6 +54,30 @@ assert(eth.research_blocks.every(b => ["complete", "n_a"].includes(b.status)), "
 assert(Array.isArray(eth.evidence) && eth.evidence.length > 0, "ETH evidence chain exposed");
 assert(eth.evidence.every(e => e.claim && e.source_id && e.observation_id && e.metric_id && e.thesis_impact && e.status), "ETH evidence traceability fields");
 
+for (const id of ["btc", "eth", "sol", "cake"]) {
+  const detail = id === "eth" ? eth : await get("/api/assets/" + id);
+  assert(detail.asset?.asset_id === id, id + " canonical detail");
+  assert(Array.isArray(detail.research_blocks), id + " research blocks contract");
+  assert(Array.isArray(detail.research_domains), id + " research domains contract");
+  assert(Array.isArray(detail.critical_factors), id + " factors contract");
+  assert(Array.isArray(detail.scores), id + " scores contract");
+  assert(Array.isArray(detail.research_scenarios), id + " scenarios contract");
+  assert(Array.isArray(detail.monitoring_signals), id + " monitoring contract");
+  assert(Array.isArray(detail.evidence), id + " evidence contract");
+  if (detail.research_snapshot) {
+    assert(detail.research_blocks.length === 15, id + " published snapshot has 15 blocks");
+    assert(detail.research_domains.length === 6, id + " published snapshot has six domains");
+    assert(detail.scores.every(s => s.methodology_version && s.calculated_at), id + " score metadata");
+    assert(detail.monitoring_signals.every(s => Object.hasOwn(s, "threshold") && Object.hasOwn(s, "threshold_type") && s.last_updated_at), id + " monitoring metadata");
+    assert(detail.research_scenarios.every(s => Object.hasOwn(s, "supporting_evidence")), id + " scenario evidence field");
+    assert(detail.evidence.every(e => Object.hasOwn(e, "snapshot_id") && Object.hasOwn(e, "research_block_id") && Object.hasOwn(e, "block_number")), id + " evidence lineage fields");
+    if (detail.asset?.research_freshness) {
+      for (const field of ["last_research_at", "last_major_update_at", "next_review_at"]) {
+        assert(Object.hasOwn(detail.asset.research_freshness, field), id + " detail freshness " + field);
+      }
+    }
+  }
+}
 const btc = await get("/api/assets/btc");
 assert(btc.asset?.asset_id === "btc", "BTC canonical detail");
 
