@@ -386,3 +386,12 @@
 - Docs PR #106 exact HEAD `7d66e82eefb57fb19b270ba95241c47dfb437fad`: три workflow #41345569567/#41345569283/#41345569355 — SUCCESS.
 - Остаётся read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging нет; CI не заменяет эту acceptance.
 - Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
+
+
+## 2026-11-01 — повторная проверка точных HEAD и статус Product Contour
+
+- PR #106 docs HEAD `75a46419a6a000aec9b6d39c724b07988b4d7c63`: BTC readiness #41346044965, release workflow #41346044969, VPS API rehearsal #41346045007 — все SUCCESS.
+- PR #103 HEAD `443d46efb84303c4597d464c93b54d6668b04098`: Web #41345754751 + VPS API #41345754811 — SUCCESS.
+- Combined PR #107 HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web #41345762613, Docker #41345762539, Release #41345762546, Seed idempotency #41345762659, VPS API #41345762541.
+- Scenario lineage, Evidence provenance и metric-level freshness закрыты на source/CI уровне. Единственный оставшийся Product Contour acceptance gate — read-only representative payload audit для BTC/ETH/SOL/CAKE на approved non-production DB/API; VPS/staging не provisioned.
+- Все PR остаются Draft/Open. Merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes/DNS/cutover не выполнялись.
