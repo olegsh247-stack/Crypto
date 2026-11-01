@@ -1387,3 +1387,13 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - PR #103 description обновлено exact HEAD и результатами CI. PR остаётся Draft/Open; не объединён.
 - Эти проверки выполнены отдельно на ветке #103 и не являются combined CI для интеграции #99/#104/#103. Следующий шаг — ограниченная combined validation/review общей API/Web поверхности; затем продолжить оставшиеся Product Contour v1 contract gaps по Плану 100.
 - Production/staging не затрагивались; никаких production writes, live ingestion, Worker deploy, runtime registry/scenario changes или merge не выполнялось.
+
+
+## Контрольная точка — 2026-11-01, combined CI PR #107
+
+- Создан временный Draft/Open PR [#107](https://github.com/olegsh247-stack/Crypto/pull/107) для проверки совместимости изменений #102 → #104 → #99 → #103 на едином дереве. Exact combined HEAD: `86544c510a72490d704f910f9c051a7cc82edc28`.
+- Все 5 workflow на этом exact HEAD завершились SUCCESS: [Build Crypto Web #41341749074](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749074), [VPS Docker image build #41341749076](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749076), [Validate VPS Release Workflow #41341749084](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749084), [Seed observation idempotency rehearsal #41341749148](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749148), [VPS API Build Rehearsal #41341749116](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749116).
+- VPS API rehearsal прошёл disposable PostgreSQL migrations, backup/restore, BTC observation idempotency/duplicate reconciliation, API contract E2E, admin/session/rate-limit E2E, mutation contract E2E, Worker ingestion E2E и offline invariants. Это только CI rehearsal; не staging/production acceptance.
+- PR #107 description обновлено результатами 5/5 CI. PR #107 и исходные PR остаются Draft/Open; ничего не объединено и не закрыто.
+- VPS/staging отсутствует. Не выполнялись production DB writes, live ingestion/capture, Worker execution/deploy, runtime registry/scenario/probability changes, DNS или cutover.
+- Следующий шаг по Плану 100: продолжить закрытие оставшихся Product Contour v1 contract gaps, не возвращаясь к завершённому BTC Rule v1 research и не трактуя combined CI как разрешение на merge/deploy.
