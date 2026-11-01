@@ -1,5 +1,6 @@
 import { assessBtcScenarioReadiness, createSqlClient } from "@crypto/vps-runtime";
 import { calculateResearchStatus } from "./research-status.js";
+import { normalizeStoredQuoteRatio, parseCoinGeckoUsdTicker, parseRequestedDays } from "./market-input.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
 function corsHeaders(env:Env){return {"Access-Control-Allow-Origin":process.env.CORS_ORIGIN??"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization"};}
@@ -42,15 +43,10 @@ async function krakenTicker(base:string,quote:string){
 }
 async function coingeckoTicker(base:string,quote:string){
  const id=COINGECKO_IDS[base];
- // CoinGecko returns a USD-denominated quote here; do not label it as USDT or USDC.
- if(!id||quote!=="USD")return null;
+ if(!id)return null;
  const response=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd&include_last_updated_at=true`,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(10_000)});
  if(!response.ok)throw new Error(`CoinGecko ticker ${base}: ${response.status}`);
- const data=await response.json() as any;
- const price=Number(data?.[id]?.usd);
- const updatedAt=Number(data?.[id]?.last_updated_at);
- if(!Number.isFinite(price)||price<=0||!Number.isFinite(updatedAt)||updatedAt<=0)throw new Error(`CoinGecko ticker unavailable or missing provider timestamp: ${base}/USD`);
- return {price,timestamp:new Date(updatedAt*1000).toISOString(),source:"CoinGecko"};
+ return parseCoinGeckoUsdTicker(base,quote,id,await response.json());
 }
 
 async function binanceKlines(symbol:string,interval:string,limit:number){
@@ -142,7 +138,7 @@ export default {
   return tickerJson({status:"error",error:"current_price_unavailable",pair:pairTicker},503,env);
  }
  const pairHistory=getPairHistorySymbol(url.pathname);if(pairHistory&&request.method==="GET"){
-  const interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);const rawDays=url.searchParams.get("days");const requestedDays=rawDays===null?(interval==="1d"?30:7):Number(rawDays);if(!Number.isInteger(requestedDays)||requestedDays<1)return json({status:"error",error:"invalid_days"},400);const maxDays=interval==="1d"?30:7;const days=Math.min(requestedDays,maxDays);
+  const interval=url.searchParams.get("interval")??"1d";if(!["1d","4h","1h"].includes(interval))return json({status:"error",error:"unsupported_interval"},400);const dayRequest=parseRequestedDays(url.searchParams.get("days"),interval);if(!dayRequest.ok)return json({status:"error",error:"invalid_days"},400);const days=dayRequest.days;
   const parts=pairHistory.split("/");if(parts.length!==2||!parts[0]||!parts[1])return json({status:"error",error:"invalid_pair_symbol"},400);
   const [baseAsset,quoteAsset]=parts;
   const pairRegistry=await sql`select mp.symbol,mp.base_asset_id,mp.quote_asset_id,mp.exchange,ba.symbol as base_symbol,qa.symbol as quote_symbol from market_pairs mp join assets ba on ba.asset_id=mp.base_asset_id join assets qa on qa.asset_id=mp.quote_asset_id where upper(mp.symbol)=${pairHistory} and mp.enabled=true order by case when lower(mp.exchange)='binance' then 0 else 1 end,mp.exchange limit 1`;
@@ -166,7 +162,7 @@ export default {
     ]);
     if(quoteIsStable&&storedBase.length){pair=storedBase.map((r:any)=>({time:r.time,close:r.close}));base=storedBase;}
     else if(baseIsStable&&storedQuote.length){pair=storedQuote.map((r:any)=>({time:r.time,close:r.close?1/r.close:0}));quote=storedQuote;}
-    else if(storedBase.length&&storedQuote.length){const qMap=new Map<string, number>(storedQuote.map((r:any)=>[String(r.time),Number(r.close)]));pair=storedBase.map((r:any)=>{const quoteClose=qMap.get(String(r.time));const baseClose=Number(r.close);return {time:r.time,close:Number.isFinite(quoteClose)&&Number(quoteClose)>0&&Number.isFinite(baseClose)&&baseClose>0?baseClose/Number(quoteClose):Number.NaN}}).filter((r:any)=>Number.isFinite(r.close)&&r.close>0);base=storedBase;quote=storedQuote;}
+    else if(storedBase.length&&storedQuote.length){pair=normalizeStoredQuoteRatio(storedBase,storedQuote);base=storedBase;quote=storedQuote;}
     historySource="stored_market_history";
   }else{
     try{
