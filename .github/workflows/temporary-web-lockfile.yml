@@ -1,0 +1,32 @@
+name: Temporary web lockfile generation
+
+on:
+  pull_request:
+    paths:
+      - "web/package.json"
+      - ".github/workflows/temporary-web-lockfile.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate lockfile from package.json
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Verify clean lockfile install
+        run: npm ci --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-package-lock
+          path: web/package-lock.json
+          if-no-files-found: error
+          retention-days: 1
