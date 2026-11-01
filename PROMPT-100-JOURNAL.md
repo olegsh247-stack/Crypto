@@ -395,3 +395,10 @@
 - Combined PR #107 HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web #41345762613, Docker #41345762539, Release #41345762546, Seed idempotency #41345762659, VPS API #41345762541.
 - Scenario lineage, Evidence provenance и metric-level freshness закрыты на source/CI уровне. Единственный оставшийся Product Contour acceptance gate — read-only representative payload audit для BTC/ETH/SOL/CAKE на approved non-production DB/API; VPS/staging не provisioned.
 - Все PR остаются Draft/Open. Merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes/DNS/cutover не выполнялись.
+
+
+## 2026-11-01 — admin-session security audit
+
+- PR #107 static review: signed 8h sessions, server-side revocation, CSRF + strict Origin, route/method allowlist, atomic login throttle; admin control-plane protected by server-side ADMIN_TOKEN.
+- Disposable VPS API rehearsal [#41345762541](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762541) SUCCESS: migration/rerun, throttle atomicity + persistence across restart, session revocation, admin endpoint 401/200 auth boundary.
+- Static review found no new blocker. CI-only evidence; no real VPS/public ingress acceptance. PRs remain Draft/Open; no merge/deploy.
