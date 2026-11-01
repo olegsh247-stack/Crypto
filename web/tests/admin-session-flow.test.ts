@@ -49,7 +49,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     const sessionPrefix = "/api/admin/security/sessions/";
     const sessionId = url.pathname.startsWith(sessionPrefix) ? url.pathname.slice(sessionPrefix.length) : "";
     const sessionMatch = /^[A-Za-z0-9_-]+$/.test(sessionId) ? sessionId : "";
-    if (sessionMatch && init?.method === "GET") return Response.json({ status: "ok", active: activeSessions.has(sessionMatch) });
+    if (sessionMatch && (!init?.method || init.method === "GET")) return Response.json({ status: "ok", active: activeSessions.has(sessionMatch) });
     if (sessionMatch && init?.method === "DELETE") {
       activeSessions.delete(sessionMatch);
       return Response.json({ status: "ok" });
