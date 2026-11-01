@@ -1,6 +1,12 @@
 name: Temporary web lockfile generation
 
 on:
+  push:
+    branches:
+      - "fix/admin-session-csrf-hardening"
+    paths:
+      - "web/package.json"
+      - ".github/workflows/temporary-web-lockfile.yml"
   pull_request:
     paths:
       - "web/package.json"
