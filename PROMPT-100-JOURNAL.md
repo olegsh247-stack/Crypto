@@ -413,3 +413,12 @@
 - PR #105 содержит только staging runbook. VPS/staging не provisioned; provisioning, реальный staging API/DB и live GET acceptance не выполнены.
 - Обновлена текущая контрольная точка Plan 100. Открытые PR не merge/close; production DB, live ingestion, Worker execution, runtime registry/scenario/probability state, deployment, DNS и cutover не затрагивались.
 - Следующий шаг: продолжить PR audit против текущего `main`, начиная с проверки точных diffs и stacked dependencies; не повторять уже зелёные CI и не возвращаться к BTC research.
+
+
+## 2026-11-02 — PR diff/stack audit against main
+
+- Сверены exact base/head SHA, compare metadata и changed-file lists для всех семи открытых PR #99, #102–#107. Все PR основаны на актуальном проверенном main SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`, кроме #104, который корректно stacked на #102; behind_by=0.
+- Подтверждён порядок hosting/security/data: #102 → #104 → #99 → #103. #104 меняет Caddy/Compose/Web Docker и API workflow поверх #102; #99 и #103 пересекаются в API app и asset page; #103 и #104 пересекаются в `web/lib/api.ts`. PR #107 уже собрал эти изменения вместе и прошёл 5/5 CI, но остаётся validation-only.
+- #99 добавляет регрессии для invalid days, CoinGecko USD/provider timestamp и некорректных stored quote ratios; #103 закрывает scenario snapshot lineage и typed freshness/provenance/Evidence contract. Оба имеют успешные проверки.
+- #105 — только runbook staging, не provisioning. #106 — docs/Worker error-reporting; обновлённый docs HEAD после дополнительной PR-сверки требует дождаться API rehearsal. #107 не следует сливать как самостоятельный продуктовый PR.
+- Рекомендованный порядок интеграции записан в Plan 100; это не разрешение на merge/rebase/retarget/close. Никакие PR не меняли base, не сливались и не закрывались.
