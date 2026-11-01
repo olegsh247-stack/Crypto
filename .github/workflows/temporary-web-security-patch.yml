@@ -26,6 +26,8 @@ jobs:
         run: |
           npm ci
           npm install next@15.5.28 --save-exact
+          npm pkg set 'overrides.postcss=8.5.23'
+          npm install
       - name: Confirm dependency audit is clean
         run: npm audit --audit-level=high
       - run: npm test
