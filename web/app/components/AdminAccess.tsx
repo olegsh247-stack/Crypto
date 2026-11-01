@@ -45,7 +45,13 @@ export default function AdminAccess() {
   async function logout() {
     setBusy(true);
     try {
-      const response = await fetch("/api/admin/session", { method: "DELETE", credentials: "same-origin" });
+      const csrfCookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("crypto_admin_csrf="));
+      const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("crypto_admin_csrf=".length)) : "";
+      const response = await fetch("/api/admin/session", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "x-crypto-admin-csrf": csrfToken },
+      });
       if (!response.ok) throw new Error("Admin logout failed");
       setAuthenticated(false);
       setStatus("Admin session ended");
