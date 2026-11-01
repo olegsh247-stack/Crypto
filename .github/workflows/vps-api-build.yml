@@ -219,6 +219,58 @@ jobs:
           assert asset.get('research_freshness',{}).get('status') in ('current','update_recommended','outdated'), asset
           print("VPS_API_ETH_OK lifecycle=1 freshness=1")
           PY
+      - name: VPS durable admin rate-limit and session-revocation E2E
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+          ADMIN_TOKEN: local-development-only
+        run: |
+          set -euo pipefail
+          key_hash=$(printf 'admin-rate-limit-ci-client' | sha256sum | awk '{print $1}')
+          attempt() {
+            curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
+              -X POST http://127.0.0.1:8080/api/admin/security/login-attempt \
+              -d "{\"key_hash\":\"$key_hash\",\"action\":\"attempt\"}"
+          }
+          for i in 1 2 3 4 5; do
+            allowed=$(attempt | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["allowed"]).lower())')
+            test "$allowed" = "true"
+          done
+          allowed=$(attempt | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["allowed"]).lower())')
+          test "$allowed" = "false"
+
+          session_id=ci_admin_session_revocation_2026
+          expires_at=$(date -u -d '+8 hours' '+%Y-%m-%dT%H:%M:%SZ')
+          curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
+            -X POST http://127.0.0.1:8080/api/admin/security/sessions \
+            -d "{\"session_id\":\"$session_id\",\"expires_at\":\"$expires_at\"}" | grep -q '"status":"ok"'
+
+          api_pid=$(cat /tmp/crypto-vps-api.pid)
+          kill "$api_pid"
+          for _ in $(seq 1 20); do
+            kill -0 "$api_pid" 2>/dev/null || break
+            sleep 1
+          done
+          nohup env DATABASE_URL="$DATABASE_URL" ADMIN_TOKEN="$ADMIN_TOKEN" PORT=8080 HOST=127.0.0.1 \
+            node vps/api/dist/server.js > /tmp/crypto-vps-api-restart.log 2>&1 &
+          echo $! > /tmp/crypto-vps-api.pid
+          for _ in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8080/api/health >/dev/null && break
+            sleep 1
+          done
+          allowed=$(attempt | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["allowed"]).lower())')
+          test "$allowed" = "false"
+          active=$(curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" \
+            "http://127.0.0.1:8080/api/admin/security/sessions/$session_id" | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["active"]).lower())')
+          test "$active" = "true"
+          curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" -X DELETE \
+            "http://127.0.0.1:8080/api/admin/security/sessions/$session_id" | grep -q '"status":"ok"'
+          active=$(curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" \
+            "http://127.0.0.1:8080/api/admin/security/sessions/$session_id" | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["active"]).lower())')
+          test "$active" = "false"
+          curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
+            -X POST http://127.0.0.1:8080/api/admin/security/login-attempt \
+            -d "{\"key_hash\":\"$key_hash\",\"action\":\"success\"}" | grep -q '"status":"ok"'
+          echo "VPS_ADMIN_SECURITY_E2E_OK atomic_rate_limit=1 persisted_across_restart=1 session_revocation=1"
       - name: VPS mutation contract E2E
         run: |
           set -euo pipefail
