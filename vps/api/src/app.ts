@@ -114,6 +114,43 @@ export default {
  if(url.pathname==="/api/health")return json({status:"ok",service:"crypto-api"});
  if(url.pathname==="/api/db-health"){try{const r=await sql`select now() as now`;return json({status:"ok",service:"crypto-api",database:"ok",now:r[0]?.now??null})}catch{return json({status:"error",service:"crypto-api",database:"unavailable"},503)}}
  if(url.pathname==="/api/admin/db-schema"&&request.method==="GET"){const auth=requireAdmin(request,env);if(auth)return auth;try{const [tables,columns,constraints,indexes]=await Promise.all([sql`select table_schema,table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type='BASE TABLE' order by table_schema,table_name`,sql`select table_schema,table_name,column_name,ordinal_position,data_type,udt_name,is_nullable,column_default from information_schema.columns where table_schema not in ('pg_catalog','information_schema') order by table_schema,table_name,ordinal_position`,sql`select tc.table_schema,tc.table_name,tc.constraint_name,tc.constraint_type,kcu.column_name,ccu.table_schema as foreign_table_schema,ccu.table_name as foreign_table_name,ccu.column_name as foreign_column_name from information_schema.table_constraints tc left join information_schema.key_column_usage kcu on tc.constraint_name=kcu.constraint_name and tc.table_schema=kcu.table_schema and tc.table_name=kcu.table_name left join information_schema.constraint_column_usage ccu on tc.constraint_name=ccu.constraint_name and tc.table_schema=ccu.table_schema where tc.table_schema not in ('pg_catalog','information_schema') order by tc.table_schema,tc.table_name,tc.constraint_name,kcu.ordinal_position`,sql`select schemaname as table_schema,tablename as table_name,indexname as index_name,indexdef as definition from pg_indexes where schemaname not in ('pg_catalog','information_schema') order by schemaname,tablename,indexname`]);return json({status:"ok",service:"crypto-api",schema_source:"postgres_information_schema",read_only:true,generated_at:new Date().toISOString(),tables,columns,constraints,indexes})}catch(error){return json({status:"error",service:"crypto-api",error:"schema_introspection_failed"},503)}}
+ 
+ // Internal admin security control plane. All endpoints require the existing server-side ADMIN_TOKEN.
+ if(url.pathname==="/api/admin/security/login-attempt"&&request.method==="POST"){
+  const auth=requireAdmin(request,env);if(auth)return auth;
+  const data=await body(request),keyHash=text(data?.key_hash),action=text(data?.action);
+  if(!/^[a-f0-9]{64}$/.test(keyHash)||!["check","failure","success"].includes(action))return json({status:"error",error:"invalid_admin_login_attempt"},400,env);
+  if(action==="success"){await sql`delete from admin_login_attempts where key_hash=${keyHash}`;return json({status:"ok",allowed:true,retry_after_seconds:0},200,env);}
+  if(action==="failure"){
+   const rows=await sql`insert into admin_login_attempts(key_hash,attempts,window_started_at,updated_at) values(${keyHash},1,now(),now()) on conflict(key_hash) do update set attempts=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then 1 else admin_login_attempts.attempts+1 end,window_started_at=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then now() else admin_login_attempts.window_started_at end,updated_at=now() returning attempts,window_started_at`;
+   return json({status:"ok",allowed:Number(rows[0]?.attempts??0)<=5,retry_after_seconds:Math.max(1,Math.ceil(900-(Date.now()-new Date(rows[0]?.window_started_at??Date.now()).getTime())/1000))},200,env);
+  }
+  const rows=await sql`select attempts,window_started_at from admin_login_attempts where key_hash=${keyHash}`;
+  const current=rows[0],active=!!current&&new Date(current.window_started_at).getTime()>Date.now()-900000;
+  const blocked=active&&Number(current.attempts)>=5;
+  const retry=blocked?Math.max(1,Math.ceil(900-(Date.now()-new Date(current.window_started_at).getTime())/1000)):0;
+  return json({status:"ok",allowed:!blocked,retry_after_seconds:retry},200,env);
+ }
+ if(url.pathname==="/api/admin/security/sessions"&&request.method==="POST"){
+  const auth=requireAdmin(request,env);if(auth)return auth;
+  const data=await body(request),sessionId=text(data?.session_id),expiresAt=text(data?.expires_at),expires=new Date(expiresAt);
+  if(!/^[A-Za-z0-9_-]{20,64}$/.test(sessionId)||!expiresAt||!Number.isFinite(expires.getTime())||expires.getTime()<=Date.now()||expires.getTime()>Date.now()+8*60*60*1000+60000)return json({status:"error",error:"invalid_admin_session"},400,env);
+  const rows=await sql`insert into admin_sessions(session_id,expires_at) values(${sessionId},${expires.toISOString()}) on conflict(session_id) do nothing returning session_id`;
+  if(!rows.length)return json({status:"error",error:"admin_session_id_conflict"},409,env);
+  return json({status:"ok"},201,env);
+ }
+ const adminSessionMatch=url.pathname.match(/^\/api\/admin\/security\/sessions\/([A-Za-z0-9_-]{20,64})\/?$/);
+ if(adminSessionMatch&&(request.method==="GET"||request.method==="DELETE")){
+  const auth=requireAdmin(request,env);if(auth)return auth;
+  const sessionId=adminSessionMatch[1];
+  if(request.method==="DELETE"){
+   await sql`update admin_sessions set revoked_at=coalesce(revoked_at,now()) where session_id=${sessionId}`;
+   return json({status:"ok"},200,env);
+  }
+  const rows=await sql`select session_id from admin_sessions where session_id=${sessionId} and revoked_at is null and expires_at>now()`;
+  return json({status:"ok",active:rows.length===1},200,env);
+ }
+
  const pairTicker=getPairTickerSymbol(url.pathname);if(pairTicker&&request.method==="GET"&&url.pathname.endsWith("/ticker")){
   const parts=pairTicker.split("/");
   if(parts.length!==2||!parts[0]||!parts[1])return tickerJson({status:"error",error:"invalid_pair_symbol"},400,env);
