@@ -55,9 +55,15 @@ export type ResearchScore = {
 
 export type ResearchSnapshot = { snapshot_id: string; research_version: string; methodology_version: string; research_date: string; title: string; content: Record<string, unknown>; status: "PUBLISHED" };
 
+export type MetricObservation = {
+  metric_id: string; value: unknown; unit?: string | null; observed_at?: string | null; retrieved_at?: string | null; source_updated_at?: string | null; period_start?: string | null;
+  source_id?: string | null; source_url?: string | null; source_row_key?: string | null; source_payload_sha256?: string | null; methodology?: string | null; methodology_version?: string | null;
+  status?: string | null; freshness: "fresh" | "stale" | "expired" | "unclassified" | "unknown"; revision: number; created_at?: string | null;
+};
+
 export type AssetDetailResponse = {
   api_version: string; engine: "DynamicAssetEngine"; asset: Asset & { secondary_asset_type_id?: string | null; asset_type_code?: string | null; asset_type_name?: string | null; asset_type_description?: string | null; research_status_source?: "server_engine"; research_freshness?: ResearchFreshness | null };
-  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: Array<Record<string, unknown>>; history: Array<Record<string, unknown>>;
+  research_progress: { status: string; completed: number; resolved: number; total: number; percentage: number }; metrics: MetricObservation[]; history: Array<Record<string, unknown>>;
   research_snapshot: ResearchSnapshot | null; research_blocks: ResearchBlock[];
   research_domains: Array<{ research_domain_id: string; code: string; name: string; description?: string | null; display_order: number }>;
   scenario_readiness?: BtcScenarioReadiness;
