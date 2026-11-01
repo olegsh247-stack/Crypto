@@ -121,7 +121,8 @@ export default {
   const data=await body(request),keyHash=text(data?.key_hash),action=text(data?.action);
   if(!/^[a-f0-9]{64}$/.test(keyHash)||!["attempt","success"].includes(action))return json({status:"error",error:"invalid_admin_login_attempt"},400,env);
   if(action==="success"){await sql`delete from admin_login_attempts where key_hash=${keyHash}`;return json({status:"ok",allowed:true,retry_after_seconds:0},200,env);}
-  // Atomic reservation: concurrent login requests cannot race around a check-then-increment window.
+  // Bound retention and atomically reserve an attempt so concurrent requests cannot race the limit.
+  await sql`delete from admin_login_attempts where window_started_at<=now()-interval '24 hours'`;
   const rows=await sql`insert into admin_login_attempts(key_hash,attempts,window_started_at,updated_at) values(${keyHash},1,now(),now()) on conflict(key_hash) do update set attempts=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then 1 else admin_login_attempts.attempts+1 end,window_started_at=case when admin_login_attempts.window_started_at<=now()-interval '15 minutes' then now() else admin_login_attempts.window_started_at end,updated_at=now() returning attempts,window_started_at`;
   const attempts=Number(rows[0]?.attempts??0),windowStart=new Date(rows[0]?.window_started_at??Date.now()).getTime();
   const allowed=attempts<=5,retry=allowed?0:Math.max(1,Math.ceil(900-(Date.now()-windowStart)/1000));
@@ -131,6 +132,7 @@ export default {
   const auth=requireAdmin(request,env);if(auth)return auth;
   const data=await body(request),sessionId=text(data?.session_id),expiresAt=text(data?.expires_at),expires=new Date(expiresAt);
   if(!/^[A-Za-z0-9_-]{20,64}$/.test(sessionId)||!expiresAt||!Number.isFinite(expires.getTime())||expires.getTime()<=Date.now()||expires.getTime()>Date.now()+8*60*60*1000+60000)return json({status:"error",error:"invalid_admin_session"},400,env);
+  await sql`delete from admin_sessions where expires_at<=now()-interval '1 day'`;
   const rows=await sql`insert into admin_sessions(session_id,expires_at) values(${sessionId},${expires.toISOString()}) on conflict(session_id) do nothing returning session_id`;
   if(!rows.length)return json({status:"error",error:"admin_session_id_conflict"},409,env);
   return json({status:"ok"},201,env);
