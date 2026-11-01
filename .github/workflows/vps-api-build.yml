@@ -231,7 +231,7 @@ jobs:
               -X POST http://127.0.0.1:8080/api/admin/security/login-attempt \
               -d "{\"key_hash\":\"$key_hash\",\"action\":\"attempt\"}"
           }
-          for i in 1 2 3 4 5; do
+          for _ in 1 2 3 4 5; do
             allowed=$(attempt | python3 -c 'import json,sys; print(str(json.load(sys.stdin)["allowed"]).lower())')
             test "$allowed" = "true"
           done
