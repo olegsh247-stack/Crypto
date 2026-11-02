@@ -29,6 +29,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
   let upstreamAuthorization = "";
   const activeSessions = new Set<string>();
   const failedAttempts = new Map<string, number>();
+  const observedAttemptKeys = new Set<string>();
   let failSessionRevocation = false;
   globalThis.fetch = (async (input: URL | RequestInfo, init?: RequestInit) => {
     const url = new URL(String(input));
@@ -36,6 +37,7 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     if (url.pathname === "/api/admin/security/login-attempt") {
       const key = String(payload.key_hash);
       if (payload.action === "attempt") {
+        observedAttemptKeys.add(key);
         const attempts = (failedAttempts.get(key) ?? 0) + 1;
         failedAttempts.set(key, attempts);
         return Response.json({ status: "ok", allowed: attempts <= 5, retry_after_seconds: 900 });
@@ -103,8 +105,8 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     assert.equal(loggedIn.status, 200, await loggedIn.clone().text());
     const trustedKeyHash = createHash("sha256").update(trustedClientIp).digest("hex");
     const spoofedKeyHash = createHash("sha256").update(spoofedForwardedIp).digest("hex");
-    assert.equal(failedAttempts.has(trustedKeyHash), true, "rate limiting must key from trusted X-Real-IP");
-    assert.equal(failedAttempts.has(spoofedKeyHash), false, "client-controlled X-Forwarded-For must be ignored");
+    assert.equal(observedAttemptKeys.has(trustedKeyHash), true, "rate limiting must key from trusted X-Real-IP");
+    assert.equal(observedAttemptKeys.has(spoofedKeyHash), false, "client-controlled X-Forwarded-For must be ignored");
     const sessionCookie = loggedIn.cookies.get("crypto_admin_session")?.value;
     const csrfCookie = loggedIn.cookies.get("crypto_admin_csrf")?.value;
     assert.ok(sessionCookie);
