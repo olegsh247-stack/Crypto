@@ -26,9 +26,7 @@ async function securityApi(path: string, method: string, payload?: Record<string
 function clientKeyHash(request: NextRequest) {
   // Caddy supplies X-Real-IP at the trusted reverse-proxy boundary.
   // Only the hash is persisted; raw client addresses are not stored.
-  const address = request.headers.get("x-real-ip")
-    ?? request.headers.get("x-forwarded-for")?.split(",").map((value) => value.trim()).at(-1)
-    ?? "unknown";
+  const address = request.headers.get("x-real-ip")?.trim() || "unknown";
   return createHash("sha256").update(address).digest("hex");
 }
 
