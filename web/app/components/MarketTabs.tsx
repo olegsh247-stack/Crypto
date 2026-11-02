@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import AdminAccess from "./AdminAccess";
 
 export default function MarketTabs() {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function MarketTabs() {
     <Link className={`tab ${active === "Assets" ? "active" : ""}`} href="/#assets">Assets</Link>
     <Link className={`tab ${active === "Research" ? "active" : ""}`} href="/research">Research</Link>
     <span className="tab-spacer" aria-hidden="true" />
+    <AdminAccess />
     <Link className={`tab secondary ${active === "Pair" ? "active" : ""}`} href="/pairs">Pair</Link>
     <Link className={`tab secondary ${active === "Commodities" ? "active" : ""}`} href="/commodities">Commodities</Link>
     <button className="tab action" type="button" disabled={!marketActive} aria-label="Add asset" onClick={() => router.push("/assets/add")}>+</button>
