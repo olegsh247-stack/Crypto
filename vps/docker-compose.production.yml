@@ -86,6 +86,9 @@ services:
     environment:
       CRYPTO_API_URL: http://api:8080
       CRYPTO_ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env.production}
+      CRYPTO_ADMIN_LOGIN_SECRET: ${CRYPTO_ADMIN_LOGIN_SECRET:?Set CRYPTO_ADMIN_LOGIN_SECRET in .env.production}
+      CRYPTO_ADMIN_SESSION_SECRET: ${CRYPTO_ADMIN_SESSION_SECRET:?Set CRYPTO_ADMIN_SESSION_SECRET in .env.production}
+      CRYPTO_ADMIN_ORIGIN: ${CRYPTO_ADMIN_ORIGIN:?Set CRYPTO_ADMIN_ORIGIN in .env.production}
       PORT: "3000"
       HOSTNAME: 0.0.0.0
     expose:
