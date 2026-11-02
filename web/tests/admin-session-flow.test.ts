@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 
 const env = {
@@ -88,12 +88,23 @@ test("admin browser session flow protects proxy and maps db-schema to the API ad
     }));
     assert.equal(badOrigin.status, 403, "login from a different origin must be denied");
 
+    const trustedClientIp = "198.51.100.42";
+    const spoofedForwardedIp = "203.0.113.99";
     const loggedIn = await login(new NextRequest("https://crypto.example.test/api/admin/session", {
       method: "POST",
-      headers: { origin: "https://crypto.example.test", "content-type": "application/json", "x-forwarded-for": "198.51.100.42" },
+      headers: {
+        origin: "https://crypto.example.test",
+        "content-type": "application/json",
+        "x-real-ip": trustedClientIp,
+        "x-forwarded-for": spoofedForwardedIp,
+      },
       body: JSON.stringify({ secret: "integration-login-secret-012345678901234567890123" }),
     }));
     assert.equal(loggedIn.status, 200, await loggedIn.clone().text());
+    const trustedKeyHash = createHash("sha256").update(trustedClientIp).digest("hex");
+    const spoofedKeyHash = createHash("sha256").update(spoofedForwardedIp).digest("hex");
+    assert.equal(failedAttempts.has(trustedKeyHash), true, "rate limiting must key from trusted X-Real-IP");
+    assert.equal(failedAttempts.has(spoofedKeyHash), false, "client-controlled X-Forwarded-For must be ignored");
     const sessionCookie = loggedIn.cookies.get("crypto_admin_session")?.value;
     const csrfCookie = loggedIn.cookies.get("crypto_admin_csrf")?.value;
     assert.ok(sessionCookie);
