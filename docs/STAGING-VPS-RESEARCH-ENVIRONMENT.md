@@ -31,20 +31,20 @@ On the host:
 
 ## Phase 2 — configure isolated staging
 
-Use `vps/docker-compose.production.yml` with a unique staging `.env` file and a separate Compose project name, for example `crypto-staging`.
+Use `vps/docker-compose.production.yml` with an environment file stored outside the repository (for example `/etc/crypto-staging/staging.env`) and a unique Compose project name, `crypto-staging`. Run the commands below from the repository root and always pass the explicit `--env-file`; do not rely on an implicit `.env` that could belong to another environment.
 
 Before startup:
-- Set a unique `POSTGRES_PASSWORD` and `ADMIN_TOKEN`.
-- Set `CADDY_DOMAIN` and `CORS_ORIGIN` only if a domain is configured.
-- Set a dedicated backup directory such as `/var/backups/crypto-staging`.
-- Confirm no variable points to a production database, volume, or host path.
-- Validate the rendered Compose configuration without printing secrets.
+- Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values.
+- Define all variables required by Compose interpolation: `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, and `BACKUP_DIR_HOST`. The last three are required by the compose file even when their services are not started. Use the actual staging origin/domain when configured; without public ingress, use a private/test origin and do not start Caddy.
+- Set `BACKUP_DIR_HOST` to a dedicated staging path such as `/var/backups/crypto-staging`; create it with restrictive permissions.
+- Confirm no variable points to a production database, volume, secret, or host path.
+- Validate Compose without printing resolved environment values: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml config --quiet`.
 
-Initial service sequence:
-1. Start PostgreSQL only.
-2. Apply schema and versioned migrations to the empty staging database.
-3. Start API and Caddy only.
-4. Do not start Worker until its write behavior is separately approved for staging.
+Initial service sequence (the explicit service list is important — never use an unrestricted `up -d`):
+1. Start PostgreSQL only: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml up -d postgres`.
+2. Apply schema and versioned migrations to the empty staging database: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml --profile ops run --rm migrate`.
+3. Start API, Web, and Caddy (Caddy depends on both API and Web): `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml up -d api web caddy`. If there is no configured staging domain/public HTTPS, omit `caddy` and access the private services only through an approved tunnel or private ingress.
+4. Do not start `worker` until its write behavior is separately approved for staging.
 5. Verify health endpoints and API GET contracts.
 
 The repository migration runner bootstraps schema and applies versioned migrations. It does not run the separate seed fixture file. Inspect each migration's inserted research rows and provenance before treating them as research evidence.
