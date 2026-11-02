@@ -16,7 +16,7 @@ on:
       - ".github/workflows/vps-docker-image-build.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-images:
@@ -31,19 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
-      - name: Generate and commit the Web dependency lockfile
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --prefix web
-          sed -i 's#COPY web/package.json ./web/package.json#COPY web/package.json web/package-lock.json ./web/#; s/RUN cd web && npm install/RUN cd web && npm ci/' web/Dockerfile
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/package-lock.json web/Dockerfile
-          if ! git diff --cached --quiet; then
-            git commit -m "build: lock Web dependencies for reproducible image"
-            git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
-          fi
       - name: Validate Compose configuration
         run: docker compose -f vps/docker-compose.production.yml config --quiet
       - name: Build Web, API and Worker images
