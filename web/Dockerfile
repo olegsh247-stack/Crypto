@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY web/package.json web/package-lock.json ./web/
-RUN cd web RUN cd web && npm installRUN cd web && npm install npm ci
+RUN cd web && npm ci
 COPY web/ ./web/
 COPY shared/ ./shared/
 WORKDIR /app/web
