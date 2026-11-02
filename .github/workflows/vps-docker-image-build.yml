@@ -1,0 +1,37 @@
+name: VPS Docker image build
+
+on:
+  pull_request:
+    paths:
+      - "vps/**"
+      - "web/**"
+      - "shared/**"
+      - ".github/workflows/vps-docker-image-build.yml"
+  push:
+    branches: [main]
+    paths:
+      - "vps/**"
+      - "web/**"
+      - "shared/**"
+      - ".github/workflows/vps-docker-image-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POSTGRES_PASSWORD: ci-only-postgres-password
+      ADMIN_TOKEN: ci-only-admin-token
+      CORS_ORIGIN: http://localhost:3000
+      CADDY_DOMAIN: localhost
+      BACKUP_DIR_HOST: /tmp/crypto-backups
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate Compose configuration
+        run: docker compose -f vps/docker-compose.production.yml config --quiet
+      - name: Build Web, API and Worker images
+        run: docker compose -f vps/docker-compose.production.yml build api worker web
