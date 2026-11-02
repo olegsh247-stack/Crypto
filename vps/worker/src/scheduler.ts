@@ -113,7 +113,7 @@ export function isClosedUtcDailyCandle(openAt:Date,now:Date=new Date()){
  return Number.isFinite(start)&&start+DAY_MS<=now.getTime();
 }
 
-async function refreshResearchReviewStatus(sql:any){
+export async function refreshResearchReviewStatus(sql:any){
  await sql`update research_status set status='outdated',reason='Scheduled ingestion review: published research is past its review date.',updated_at=now() where status='current' and next_review_at is not null and next_review_at < now()`;
 }
 
@@ -138,11 +138,14 @@ export async function runScheduledIngestion(env:WorkerEnv){
       }
     });
     // Review deadlines are independent of whether a market candle was fetched successfully.
-    try{await refreshResearchReviewStatus(sql);}catch{}
+    let researchStatusRefresh:{status:"ok"|"failed";reason?:string}={status:"ok"};
+    try{await refreshResearchReviewStatus(sql);}catch(error){
+      researchStatusRefresh={status:"failed",reason:error instanceof Error?error.message:"research_status_refresh_failed"};
+    }
     const btcObservations = env.BTC_OBSERVATION_INGESTION_ENABLED === "true"
       ? await refreshBtcObservationInputs(env.DATABASE_URL)
       : {status:"disabled",candidate_count:0,inserted:0,revised:0,unchanged:0,failures:[],unresolved_metrics:[]};
-    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0),candle_ingestion:{failures:ingestionFailures},btc_observations:btcObservations};
+    return {assets:assets.length,successful:successfulIngestion.length,written:successfulIngestion.reduce((sum,result)=>sum+result.value.rows,0),candle_ingestion:{failures:ingestionFailures},research_status_refresh:researchStatusRefresh,btc_observations:btcObservations};
   } finally {
     await closePool();
   }

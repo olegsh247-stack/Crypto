@@ -10,7 +10,8 @@ async function run(){
   try{
     const result=await runScheduledIngestion(env);
     const partial=(result as any).btc_observations?.status==="partial"
-      || ((result as any).candle_ingestion?.failures?.length ?? 0) > 0;
+      || ((result as any).candle_ingestion?.failures?.length ?? 0) > 0
+      || (result as any).research_status_refresh?.status === "failed";
     console.log(JSON.stringify({status:partial?"partial":"ok",service:"crypto-worker-vps",...result}));
     return !partial;
   }catch(error){

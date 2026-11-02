@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isClosedUtcDailyCandle, mergeRecentDailyCandleRows, utcDayBoundary } from "./scheduler.js";
+import { isClosedUtcDailyCandle, mergeRecentDailyCandleRows, refreshResearchReviewStatus, utcDayBoundary } from "./scheduler.js";
 
 const boundaryCases: Array<{ name: string; input: string; expected: string }> = [
   { name: "winter date uses UTC midnight", input: "2026-01-15T12:00:00.000Z", expected: "2026-01-15T00:00:00.000Z" },
@@ -69,4 +69,10 @@ test("daily candle selector ignores open UTC day and dates outside recent eight 
     "BTC","BTCUSDT",now
   );
   assert.deepEqual(rows,[]);
+});
+
+
+test("research status refresh propagates database failures for the scheduler to report", async () => {
+  const failingSql = async () => { throw new Error("research_status_db_unavailable"); };
+  await assert.rejects(() => refreshResearchReviewStatus(failingSql), /research_status_db_unavailable/);
 });
