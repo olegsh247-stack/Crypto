@@ -25,6 +25,9 @@ jobs:
     env:
       POSTGRES_PASSWORD: ci-only-postgres-password
       ADMIN_TOKEN: ci-only-admin-token
+      CRYPTO_ADMIN_LOGIN_SECRET: ci-only-login-secret-012345678901234567890123456789
+      CRYPTO_ADMIN_SESSION_SECRET: ci-only-session-secret-012345678901234567890123456789
+      CRYPTO_ADMIN_ORIGIN: http://localhost:3000
       CORS_ORIGIN: http://localhost:3000
       CADDY_DOMAIN: localhost
       BACKUP_DIR_HOST: /tmp/crypto-backups
