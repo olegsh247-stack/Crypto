@@ -101,7 +101,7 @@ No production database access or writes, live ingestion, Worker execution, runti
 | #107 | 105 ahead / 6 behind; 30 changed files | Temporary combined integration-validation artifact. Not a source PR and not a merge candidate; its historical CI does not replace post-merge main CI. |
 | #101 | 1 ahead / 6 behind; Product Contour audit doc only | Stale docs-only branch. Reconcile any unique content against the current audit and #109 before disposition; do not merge wholesale. |
 | #100 | 2 ahead / 6 behind; Plan/journal only | Superseded by #109's Plan/journal update. Do not merge. |
-| #86 | 29 ahead / 8 behind; 15 changed files | Do not merge wholesale. #102/#104 supersede its Web edge/admin-session implementation. Its unique server hardening and Add Asset work have now been isolated into #111 and #112 respectively. |
+| #86 | 29 ahead / 8 behind; 15 changed files | Do not merge wholesale. #102/#104 supersede its Web edge/admin-session implementation. Its unique server hardening, Add Asset flow and API 404 fallback have now been isolated into #111, #112 and #115 respectively. |
 | #89 | 2 ahead / 8 behind; API + dashboard files | Duplicate of #99's market-input/dashboard correctness changes; #99 is already merged. Do not merge again. |
 | #88 | 6 ahead / 8 behind; Worker scheduler + tests | Its UTC daily-candle behavior is superseded by the current Worker scheduler: UTC boundaries, completed-candle filtering, Binance-first/Kraken gap-fill selection, validation, and fetch-failure reporting. Do not port the old patch wholesale. |
 | #69 | 23 ahead / 406 behind; old BTC collector path | Canonical opt-in BTC observation pipeline is already in main. Do not add a second collector path; inspect only a specifically missing behavior if evidence appears. |
@@ -120,6 +120,19 @@ No production database access or writes, live ingestion, Worker execution, runti
 
 PR #105's runbook was reviewed against the current Compose file and Worker behavior. It has been ported to current main in #113, with explicit Stage 3 payload acceptance evidence requirements. #113 exact-head VPS API Build Rehearsal #41642632762 passed. Do not merge the stale #105 branch.
 
+### Focused follow-up PRs on current main (2026-11-03)
+
+| PR | Purpose | Exact-head validation / disposition |
+|---|---|---|
+| #110 | Plan 100 + open-PR reconciliation | Documentation-only. Earlier VPS API Build Rehearsal #41638043930 passed; later commits only refreshed the Plan/audit docs. Draft/open; not merged. |
+| #111 | HTTP request boundary hardening | Docker #41638246661 and full VPS API rehearsal #41638246690 passed. Draft/open. |
+| #112 | Add Asset classification and duplicate safety | Web #41642776499, release workflow validation #41642776487, Docker #41642776484 and full VPS API rehearsal #41642776670 passed. Mutation E2E now covers active type lookup, typed asset creation, duplicate rejection and invalid boolean input. Draft/open. |
+| #113 | Current isolated staging VPS runbook | Full VPS API rehearsal #41642632762 passed. Draft/open; documentation only. |
+| #114 | GET-only Product Contour Stage 3 payload audit script + unit tests | Full VPS API rehearsal #41644183647 and release workflow validation #41644183649 passed. Draft/open. Unit tests validate report logic only; they do not constitute actual Stage 3 acceptance. |
+| #115 | Unknown API route returns explicit 404 | CI is running at this checkpoint. Draft/open. |
+
+All six PRs are based on main `d49582d6180406728cd911d7dba6b4fda7b2dc5c`. None has been merged. No production database, Worker, ingestion, runtime registry, scenario state, deployment, DNS or cutover action was performed.
+
 ### Remaining project gates
 
 - Product Contour Stage 3 still requires read-only representative payload validation for BTC/ETH/SOL/CAKE against a separately approved non-production DB/API. Capture snapshot IDs, section row counts, null rates, source lineage, freshness display and cross-snapshot scenario-state checks. CI fixtures are not a substitute.
@@ -129,7 +142,7 @@ PR #105's runbook was reviewed against the current Compose file and Worker behav
 
 ### Next review order
 
-1. Complete exact-head CI for #112 and #113 and inspect all changed-file diffs.
-2. Review the four focused open PRs (#110–#113) for consistency, then prepare a safe merge sequence only after the user approves.
+1. Complete exact-head CI for #115 and inspect its API handler test.
+2. Review the focused open PRs (#110–#115) for consistency, then prepare a safe merge sequence only after the user approves.
 3. Keep #105/#106/#107/#100/#101 and stale BTC branches out of main unless a new, independently verified unique requirement is identified.
-4. Proceed to Stage 3 payload acceptance only when a separately approved isolated non-production DB/API is actually available.
+4. Run the #114 audit script only when a separately approved isolated non-production staging API is actually available; review the real BTC/ETH/SOL/CAKE report before marking Stage 3 accepted.
