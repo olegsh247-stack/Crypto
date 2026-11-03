@@ -266,3 +266,169 @@
 - This confirms CI/rehearsal behavior only. It does not authorize production writes/deployment or prove live BTC inputs are fresh.
 - PR #83 remains Draft/open and mergeability is still not confirmed: after the latest push GitHub reports `mergeable: null` / `mergeable_state: unknown` (the prior pre-push check returned `false`). Its 94-file scope is still too broad for automatic merge. Keep unmerged until base/mergeability and full-diff review are resolved.
 
+## 2026-10-31 — сверка Plan 100 / Prompt 100 с текущим main
+
+- Контрольная база: `main` SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`; VPS API Build Rehearsal [#41179541901](https://github.com/olegsh247-stack/Crypto/actions/runs/41179541901) прошёл на этом SHA. Это CI/disposable PostgreSQL, не VPS deployment.
+- BTC Rule v1 research завершён на историческом воспроизводимом наборе: Base, directional score 0, low confidence. Это не live readiness и не разрешение ingestion. Не повторять captures ради тестового режима; production launch-time refresh — отдельный будущий gate.
+- DXY, hashrate и fee/subsidy — необязательный supporting context для Rule v1, не блокирующие inputs. Mempool остаётся приоритетной основой именно для protocol-scheduled issuance; не смешивать её с circulating supply.
+- Product Contour v1 остаётся в работе; PR #103 открыт/draft. Проверка реальных non-production payloads BTC/ETH/SOL/CAKE невозможна до появления staging DB.
+- VPS пока отсутствует. PR #105 содержит только runbook; staging API/DB, реальный restore и read-only GET acceptance ещё не выполнялись.
+- Worker нельзя считать read-only даже при выключенном BTC observation ingestion: scheduler пишет daily candles и обновляет research review status. Worker остаётся остановленным до отдельной staging-проверки и разрешения.
+- В Plan 100 удалён повторный старый блок разделов 0–7; устаревшая октябрьская статусная таблица помечена исторической и заменена актуальной контрольной точкой.
+- Code audit выявил: повторяющиеся entries в workflow path list (без изменения поведения); отдельные исторические ETH migrations с повторным обновлением классификации (не удалять из-за migration history); параллельные BTC source definitions между runtime catalog и standalone candidate-preparation script (проверить/свести через contract test, не делать слепое удаление); старые открытые PR/ветки с пересекающимся scope. Детали — в `docs/PLAN-100-CODE-DUPLICATION-AUDIT-2026-10-31.md`.
+- Никаких production writes, ingestion, runtime registry/state/probability changes, deployment, DNS или merge не выполнялось.
+- Дополнительная code fix в текущей audit-ветке: Worker больше не скрывает ошибку обновления `research_status`; результат включает `research_status_refresh=failed`, Worker помечает запуск как partial, добавлен regression test. Worker всё равно остаётся выключенным до staging acceptance.
+
+## 2026-10-31 — CI PR #106 и порядок устранения пересечений
+
+- PR #106 head `cffb0859c1ea240385918aa8c9bb94604e4f0bb5`: BTC Scenario Readiness Gate [#41180866845](https://github.com/olegsh247-stack/Crypto/actions/runs/41180866845) и VPS API Build Rehearsal [#41180866852](https://github.com/olegsh247-stack/Crypto/actions/runs/41180866852) — оба SUCCESS. GitHub сообщает mergeable=true; PR остаётся draft/open и не объединён.
+- Перепроверены открытые PR: #86 основан на старом main `03f4a08...` и GitHub сообщает mergeable=false; #102 основан на текущем main; #104 зависит от #102; #89/#99 имеют одинаковые изменённые строки в обоих файлах, #99 основан на более новом main. Не объединять #89 и #99 одновременно.
+- Рекомендованный порядок интеграции после полного review: #102 → #104 → #99 → #103. #86 не объединять целиком; отдельно проверить его уникальные API/server/db/UI изменения и переносить только если они всё ещё отсутствуют в main. #103 повторно сверить после #99/#104 из-за общих API/Web файлов.
+- #102/#104/#99/#103 — пока review-кандидаты; перед каждым merge нужны полные diff review и успешные проверки соответствующей комбинации. Никаких merge/close действий не выполнялось.
+- Plan 100 остаётся главным источником последовательности; активный этап — Product Contour v1 + code/PR dedup audit. VPS provisioning и реальная staging DB остаются отложенными до завершения доступных репозиторных/CI проверок.
+- После уточнения аудита PR #89/#99 подтверждено: все добавленные/удалённые строки их двух файлов совпадают; #99 выбран как единственный кандидат из-за актуальной базы. PR #86 старый и non-mergeable; #102 → #104 — предпочтительная цепочка self-hosted runtime/admin, #99 → #103 — рекомендуемая последовательность market correctness и Product Contour с повторной проверкой общих файлов.
+- Новая документационная ревизия PR #106: head `6d16a7cdf488f47b95d0ae060c3ebef0ae1f10e3`. BTC Scenario Readiness Gate [#41181494384](https://github.com/olegsh247-stack/Crypto/actions/runs/41181494384) — SUCCESS; два VPS API Build Rehearsal запуска ещё выполняются [#41181494395](https://github.com/olegsh247-stack/Crypto/actions/runs/41181494395) и [#41181490773](https://github.com/olegsh247-stack/Crypto/actions/runs/41181490773). Старый head `cffb085...` имел все проверки успешными, но итоговый новый head пока не объявлять полностью проверенным.
+
+
+## 2026-10-31 — финальная проверка PR #106 и пересечений
+
+- Текущий head PR #106 `92179342fb2a4f0715923357b44aa2582aebb6ff`: BTC Scenario Readiness Gate [#41181560998](https://github.com/olegsh247-stack/Crypto/actions/runs/41181560998), VPS API Build Rehearsal [#41181560897](https://github.com/olegsh247-stack/Crypto/actions/runs/41181560897) и повторный VPS API Build Rehearsal [#41181556384](https://github.com/olegsh247-stack/Crypto/actions/runs/41181556384) — все SUCCESS. В обоих API rehearsal прошли сборка Worker/API, BTC parser tests, PostgreSQL backup/restore и E2E. PR #106 остаётся draft/open, mergeable=true, не объединён.
+- Перепроверены CI и базы кандидатов: #102 — Web Build + VPS Docker image build + VPS API rehearsal SUCCESS; #104 (основан на #102) — те же три проверки SUCCESS; #99 — Web Build + VPS API rehearsal SUCCESS; #103 — Web Build + VPS API rehearsal SUCCESS. Все четыре PR остаются draft/open и не объединены.
+- Diff overlap подтверждён: #102 и #104 пересекаются по `.github/workflows/vps-docker-image-build.yml` и `vps/docker-compose.production.yml`; это ожидаемая зависимость #104 поверх #102. #99 и #103 пересекаются по `vps/api/src/app.ts` и `web/app/assets/[assetId]/page.tsx`; перед интеграцией #103 обязательно повторно сверить его поверх результата #99. #103 дополнительно меняет `web/lib/api.ts`, что нужно учесть при совмещении с #104.
+- PR #104 security review (повторная проверка 2026-11-01): session HMAC + expiry, HttpOnly session cookie, SameSite=Strict, origin check, CSRF cookie/header match, route allowlist, login throttling; все пять workflow на exact HEAD успешны. Уточнение прежнего вывода: rate limiter хранится в PostgreSQL (`admin_login_attempts`) через атомарный upsert, 15-минутное окно и лимит пяти попыток; IP хешируется до записи, Caddy перезаписывает `X-Real-IP`, VPS API rehearsal подтверждает сохранение состояния после рестарта. Миграция остаётся отдельным deployment gate. Это не production security certification.
+- PR #102 меняет Caddy routing на Web/API split, добавляет Web container/healthchecks и Docker image CI. Все три проверки на его head успешны; комбинированный PR #104 также успешно собран на базе #102.
+- #99/#103 пока не следует объединять автоматически: их API и asset-detail изменения затрагивают общие участки; нужен focused combined diff review и последующий CI на итоговом совмещённом head. #86 остаётся исключённым из wholesale merge; #89 остаётся дубликатом #99.
+- Рекомендованный порядок не меняется: #102 → #104 → #99 → #103; #86 — только точечный перенос при доказанном отсутствующем поведении. #105 — независимый runbook, VPS всё ещё не provisioned.
+- Никаких merge/close действий, production writes, ingestion, Worker execution, registry/scenario changes, deployment, DNS/cutover не выполнялось.
+
+
+## 2026-10-31 — устранение оставшихся небольших пробелов аудита
+
+- Последний PR #106 head `8055996ee40621f940f5aab2917d22b0f576c8fa`: BTC Scenario Readiness Gate [#41181888833](https://github.com/olegsh247-stack/Crypto/actions/runs/41181888833) и VPS API Build Rehearsal [#41181888871](https://github.com/olegsh247-stack/Crypto/actions/runs/41181888871) — SUCCESS. Unit tests и полный PostgreSQL/API/Worker rehearsal завершились успешно.
+- Проведён focused diff review PR #99/#103: изменения CoinGecko quote semantics/provider timestamp, validation days, stored history division safety и UUID validation в #99 логически отделены от Product Contour freshness/evidence/monitoring contract additions в #103. Совместные файлы `vps/api/src/app.ts`, `web/app/assets/[assetId]/page.tsx`, `web/lib/api.ts` требуют финального combined CI после последовательной интеграции; автоматически переписывать или объединять PR не следует.
+- Закрыт source-catalog duplication gap: добавлен `scripts/validate-btc-source-endpoint-contract.test.mjs`, который проверяет соответствие Kraken spot URL, metric/source identity и USD/BTC unit между `vps/worker/src/btc-source-catalog.ts` и `scripts/prepare-btc-observation-candidates.mjs`.
+- Исправлена discoverability тестов: `vps/worker/package.json` теперь запускает через `npm test` scheduler tests, BTC collector/parser tests и новый endpoint contract test. Workflow вызывает один единый test command вместо отдельного parser run.
+- Все изменения добавлены в audit PR #106; CI запущен на новом head и должен завершиться до объявления полной проверки. Никаких merge/close, production writes, live capture/ingestion, Worker execution, registry/scenario changes или deployment не выполнялось.
+
+
+### PR #106 — финальная проверка нового Worker test command, 2026-10-31
+
+- Проверен exact head `cdd2a2bdecf064bc6a11f9c7ec63678bf1447d57`. Все три CI workflow завершились `SUCCESS`: BTC Scenario Readiness Gate [#41182376094](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376094), Validate VPS Release Workflow [#41182376060](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376060), VPS API Build Rehearsal [#41182376062](https://github.com/olegsh247-stack/Crypto/actions/runs/41182376062).
+- VPS rehearsal полностью прошёл: Worker build; единый `npm test` (scheduler, BTC collector/parser и source endpoint contract); API build/contract tests; Docker image build; disposable PostgreSQL bootstrap/migrations; canonical BTC registry и read-only provenance audit; observation idempotency/duplicate reconciliation; backup/restore; API/Worker E2E и cleanup.
+- Контрактный тест подтвердил согласованность Kraken endpoint, metric/source identity и USD/BTC unit между runtime catalog и review candidate preparation. Worker test command теперь включает ранее отдельно запускавшиеся collector/parser tests.
+- PR #106 остаётся draft/open, не merged. Это CI rehearsal в disposable environment, не VPS deployment и не production acceptance. VPS ещё не provisioned; production DB writes, live ingestion/capture, Worker execution, registry/scenario changes, deploy, DNS/cutover не выполнялись.
+
+
+## 2026-11-01 — продолжение аудита PR #102 → #104 → #99 → #103
+
+- PR #104 повторно проверен по коду и exact HEAD `977e51b17d985796668934ac6fd5b559e4a8331f`: все пять workflow успешны; критических блокеров в session/CSRF/proxy/security-store flow не обнаружено. PR #104 остаётся Draft/Open и зависит от #102; миграция `2026-11-01-admin-session-security` не применялась.
+- Исправлено устаревшее описание rate limiter в PR #106 и в `docs/PLAN-100.md`: состояние хранится в PostgreSQL, а не в памяти процесса. Обновления документации находятся в ветке PR #106; CI на новом HEAD ещё выполняется.
+- PR #99: Draft/Open, основан на текущем main `48295ca...`; Web Build и VPS API Build Rehearsal успешны. Diff ограничен `vps/api/src/app.ts` и Asset Dashboard. Исправляет CoinGecko USD quote/timestamp semantics, `days` validation, безопасную нормализацию stored history и UUID validation. Перед интеграцией нужен focused regression coverage для invalid `days`, CoinGecko provider timestamp/quote and zero/missing history denominator; текущий PR не добавляет отдельные тесты на эти случаи.
+- PR #103: Draft/Open, та же база main; Web Build и VPS API Build Rehearsal успешны. Diff ограничен Product Contour audit, E2E smoke, API detail/list payload, dashboard/deep-research UI и shared Web types. Улучшает freshness timestamps, score scale normalization, evidence lineage display, scenario fallback и monitoring metadata. E2E проверяет форму payload для BTC/ETH/SOL/CAKE, но не заменяет требуемую read-only проверку representative non-production DB payload.
+- #99 и #103 меняют общие `vps/api/src/app.ts` и `web/app/assets/[assetId]/page.tsx`; #103 также меняет `web/lib/api.ts`, пересекающийся с #104. Не интегрировать текущие ветки вслепую: после #102/#104 и #99 нужно обновить #103 на итоговую базу и прогнать combined CI. Никаких merge/close, live DB, production writes или deployment не выполнялось.
+
+
+## 2026-11-01 — PR #99 regression coverage завершено
+
+- PR #99 exact HEAD: `800f04ce4f19786f8d838b4907c69d52efeacc0c`.
+- Добавлены unit tests на invalid/missing/fractional `days`, cap defaults; CoinGecko quote USD-only + provider `last_updated_at` + invalid/missing price/time; исторический base/quote ratio с zero/missing/invalid/unmatched closes.
+- Чистые функции вынесены в `vps/api/src/market-input.ts`; `vps/api/package.json` запускает `node --test dist/*.test.js`.
+- Первичная сборка выявила TS narrowing для отсутствующего quote close; исправлено явной проверкой `quoteClose === undefined`.
+- Web Build #41338175202 и VPS API Build Rehearsal #41338175171 прошли SUCCESS на exact HEAD; API rehearsal — 31/31 шагов. Никакого production/staging доступа не было.
+- PR #106 exact HEAD `78e162c32ff33463a43f5dffe0550b5e8285f4d4`: три workflow завершились SUCCESS (BTC Scenario Readiness Gate, Validate VPS Release Workflow, VPS API Build Rehearsal).
+- Следующий шаг: повторный review/reconciliation PR #103 поверх изменений #99 и #104, затем combined CI. Не merge/close без отдельного разрешения.
+
+
+## Контрольная точка — 2026-11-01, reconciliation PR #103
+
+- PR #103 сверён с #99/#104 на shared API/Web files; семантическое пересечение мониторинга устранено: directional summary учитывает только количественные сигналы с `metric_id`, конечными `current_value` и `threshold`; descriptive baseline не считается живым сигналом.
+- Exact HEAD PR #103: `e960d19dcd1905d12d0a46bc2c4309c618faf559`. Web Build [#41339713594](https://github.com/olegsh247-stack/Crypto/actions/runs/41339713594) и VPS API Build Rehearsal [#41339713579](https://github.com/olegsh247-stack/Crypto/actions/runs/41339713579) — SUCCESS.
+- PR #103 description обновлено exact HEAD и результатами CI. PR остаётся Draft/Open; не объединён.
+- Эти проверки выполнены отдельно на ветке #103 и не являются combined CI для интеграции #99/#104/#103. Следующий шаг — ограниченная combined validation/review общей API/Web поверхности; затем продолжить оставшиеся Product Contour v1 contract gaps по Плану 100.
+- Production/staging не затрагивались; никаких production writes, live ingestion, Worker deploy, runtime registry/scenario changes или merge не выполнялось.
+
+
+## 2026-11-01 — combined CI PR #107
+
+- Временный Draft/Open PR [#107](https://github.com/olegsh247-stack/Crypto/pull/107) проверяет совместное дерево #102/#104/#99/#103; exact HEAD `86544c510a72490d704f910f9c051a7cc82edc28`.
+- 5/5 SUCCESS: [Web #41341749074](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749074), [Docker #41341749076](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749076), [Release workflow #41341749084](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749084), [Seed idempotency #41341749148](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749148), [VPS API rehearsal #41341749116](https://github.com/olegsh247-stack/Crypto/actions/runs/41341749116).
+- API rehearsal включает disposable PostgreSQL migrations, backup/restore, duplicate/idempotency, API/admin/mutation/Worker E2E и offline invariants. Только CI; не staging/production acceptance.
+- PR #107 описание обновлено; все PR остаются Draft/Open, merge/close/deploy не выполнялись. Production DB, live capture/ingestion, runtime registry/scenario/probabilities, DNS/cutover не затрагивались.
+- Далее: оставшиеся Product Contour v1 contract gaps по Плану 100; BTC Rule v1 research не переоткрывать.
+
+
+## 2026-11-01 — Product Contour scenario lineage и повторная combined CI
+
+- Закрыт конкретный риск scenario-state lineage: legacy `scenario_states.scenario_id` не имеет FK на `research_scenarios`, поэтому добавлена проверка обеих связей — active published snapshot и scenario definition в том же snapshot. Регрессионные тесты покрывают valid/orphan/cross-snapshot/missing snapshot.
+- PR #103 exact HEAD `5c2938a8ec208b44fa037529303ec9c9a783bdc0`: Web #41344639499 + VPS API rehearsal #41344639489 — SUCCESS.
+- Combined PR #107 exact HEAD `c9435d3a5660e7b5b38dbdedad69d6e7b9434217`: 5/5 SUCCESS — Web #41344507119, Docker #41344507103, Release workflow #41344507110, Seed idempotency #41344507131, VPS API rehearsal #41344507113. Web run включает test suite и build; API run — disposable PostgreSQL, migrations, backup/restore и E2E.
+- Docs PR #106 exact HEAD `a70667b809ddf18fee7cdc647525d52a2bcadcba`: три workflow #41344188239/#41344188241/#41344188246 — SUCCESS.
+- Остаются только реальные acceptance gates: metric-level freshness parity и read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging пока нет.
+- PR #103/#106/#107 Draft/Open; merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes не выполнялись.
+
+
+## 2026-11-01 — Evidence observation provenance и combined CI
+
+- Evidence API/UI теперь передаёт и показывает observed_at, retrieved_at, period_start, freshness и revision связанной observation; добавлены VPS E2E assertions для BTC/ETH/SOL/CAKE populated snapshots.
+- PR #103 exact HEAD `4e092465b0d7c851f72b2bf9893d5461ecc25c20`: Web #41345209542 и VPS API #41345209534 — SUCCESS.
+- Combined PR #107 exact HEAD `2b4078d60ea3805e603c36eb4a96696dcea74c4d`: 5/5 SUCCESS — Web #41345242196, Docker #41345242193, Release workflow #41345242120, Seed idempotency #41345242225, VPS API rehearsal #41345242080.
+- PR #106 docs exact HEAD `bfc5cc54876c1e83d06a7b8bbff9efb3153c39d6`: все три workflow #41344917390/#41344917447/#41344917468 — SUCCESS.
+- Дальше: полный metric-level freshness contract для metrics и read-only representative payload audit на approved non-production DB/API. VPS/staging нет; это не блокирует завершённую source-level CI работу, но остаётся acceptance gate.
+- Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
+
+
+## 2026-11-01 — metric-level freshness contract и повторная combined CI
+
+- Metrics API contract теперь явно типизирован и сохраняет observation timing/provenance (observed_at, retrieved_at, source_updated_at, period_start, source URL/ID, source_row_key, payload SHA-256, methodology/version, status, revision, created_at). Freshness различает fresh/stale/expired/unclassified/unknown.
+- Evidence UI показывает linked observation timing, period, freshness и revision; E2E проверяет provenance для BTC/ETH/SOL/CAKE на disposable PostgreSQL.
+- PR #103 exact HEAD `443d46efb84303c4597d464c93b54d6668b04098`: Web #41345754751 + VPS API #41345754811 — SUCCESS.
+- Combined PR #107 exact HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web #41345762613, Docker #41345762539, Release workflow #41345762546, Seed idempotency #41345762659, VPS API #41345762541.
+- Docs PR #106 exact HEAD `7d66e82eefb57fb19b270ba95241c47dfb437fad`: три workflow #41345569567/#41345569283/#41345569355 — SUCCESS.
+- Остаётся read-only representative payload audit на approved non-production DB/API для BTC/ETH/SOL/CAKE. VPS/staging нет; CI не заменяет эту acceptance.
+- Никаких merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes.
+
+
+## 2026-11-01 — повторная проверка точных HEAD и статус Product Contour
+
+- PR #106 docs HEAD `75a46419a6a000aec9b6d39c724b07988b4d7c63`: BTC readiness #41346044965, release workflow #41346044969, VPS API rehearsal #41346045007 — все SUCCESS.
+- PR #103 HEAD `443d46efb84303c4597d464c93b54d6668b04098`: Web #41345754751 + VPS API #41345754811 — SUCCESS.
+- Combined PR #107 HEAD `6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`: 5/5 SUCCESS — Web #41345762613, Docker #41345762539, Release #41345762546, Seed idempotency #41345762659, VPS API #41345762541.
+- Scenario lineage, Evidence provenance и metric-level freshness закрыты на source/CI уровне. Единственный оставшийся Product Contour acceptance gate — read-only representative payload audit для BTC/ETH/SOL/CAKE на approved non-production DB/API; VPS/staging не provisioned.
+- Все PR остаются Draft/Open. Merge/deploy/production writes/live ingestion/Worker execution/runtime registry/scenario/probability changes/DNS/cutover не выполнялись.
+
+
+## 2026-11-01 — admin-session security audit
+
+- PR #107 static review: signed 8h sessions, server-side revocation, CSRF + strict Origin, route/method allowlist, atomic login throttle; admin control-plane protected by server-side ADMIN_TOKEN.
+- Disposable VPS API rehearsal [#41345762541](https://github.com/olegsh247-stack/Crypto/actions/runs/41345762541) SUCCESS: migration/rerun, throttle atomicity + persistence across restart, session revocation, admin endpoint 401/200 auth boundary.
+- Static review found no new blocker. CI-only evidence; no real VPS/public ingress acceptance. PRs remain Draft/Open; no merge/deploy.
+
+
+## 2026-11-02 — актуализация контрольной точки и проверка PR
+
+- Проверены актуальные открытые PR #99, #102, #103, #104, #105, #106, #107 и их HEAD. Все остаются Draft/Open; ни один не слит и не закрыт.
+- На точных HEAD завершились SUCCESS известные workflow: #99 — 2/2 (`800f04ce4f19786f8d838b4907c69d52efeacc0c`); #102 — 3/3 (`a8e59faabba42854b450977331d6487df145b745`); #103 — 2/2 (`443d46efb84303c4597d464c93b54d6668b04098`); #104 — 5/5 (`977e51b17d985796668934ac6fd5b559e4a8331f`); #106 — 4/4 (`3c08ed014f8452ebb7515caeccbd8bd5343910bc`); #107 — 5/5 (`6ae073d5348a6b3c55d7fb67ebe282a4347d33f3`).
+- Для #106 отдельно подтверждены завершившиеся SUCCESS VPS API rehearsals #41349590284 и #41349595630, а также BTC readiness #41349595598 и release workflow #41349595593.
+- Product Contour source/API/Web/Evidence contracts, scenario lineage и metric-level freshness подтверждены на CI уровне; combined #107 прошёл 5/5. Это не заменяет read-only representative payload audit BTC/ETH/SOL/CAKE на отдельной non-production DB/API.
+- PR #105 содержит только staging runbook. VPS/staging не provisioned; provisioning, реальный staging API/DB и live GET acceptance не выполнены.
+- Обновлена текущая контрольная точка Plan 100. Открытые PR не merge/close; production DB, live ingestion, Worker execution, runtime registry/scenario/probability state, deployment, DNS и cutover не затрагивались.
+- Следующий шаг: продолжить PR audit против текущего `main`, начиная с проверки точных diffs и stacked dependencies; не повторять уже зелёные CI и не возвращаться к BTC research.
+
+
+## 2026-11-02 — PR diff/stack audit against main
+
+- Сверены exact base/head SHA, compare metadata и changed-file lists для всех семи открытых PR #99, #102–#107. Все PR основаны на актуальном проверенном main SHA `48295ca82fc2d76099f39f19cfbd840c1a1bf7b4`, кроме #104, который корректно stacked на #102; behind_by=0.
+- Подтверждён порядок hosting/security/data: #102 → #104 → #99 → #103. #104 меняет Caddy/Compose/Web Docker и API workflow поверх #102; #99 и #103 пересекаются в API app и asset page; #103 и #104 пересекаются в `web/lib/api.ts`. PR #107 уже собрал эти изменения вместе и прошёл 5/5 CI, но остаётся validation-only.
+- #99 добавляет регрессии для invalid days, CoinGecko USD/provider timestamp и некорректных stored quote ratios; #103 закрывает scenario snapshot lineage и typed freshness/provenance/Evidence contract. Оба имеют успешные проверки.
+- #105 — только runbook staging, не provisioning. #106 — docs/Worker error-reporting; обновлённый docs HEAD после дополнительной PR-сверки требует дождаться API rehearsal. #107 не следует сливать как самостоятельный продуктовый PR.
+- Рекомендованный порядок интеграции записан в Plan 100; это не разрешение на merge/rebase/retarget/close. Никакие PR не меняли base, не сливались и не закрывались.
+
+
+## 2026-11-03 — сверка Plan 100, PR #105/#106/#108 и актуального main
+
+- Текущий `main`: `716f5b5d03fba868d6555893858e97936d52f6a3`. PR #102, #104, #99 и #103 merged; #103 — последний merge commit. Post-merge CI на main прошёл 5/5. Исторические записи со статусами Draft/Open до 2026-11-03 не переписывать задним числом.
+- #108: Worker research-status refresh failure теперь явно возвращается как failed, классифицируется как partial и приводит к ненулевому результату one-shot запуска. Exact HEAD `c6a920e5d88d3692996d8cec4f91dcdf80c7d770`, три CI workflow SUCCESS (#41609906553, #41609868595, #41609906500); PR открыт/Ready for review, не merged.
+- #106: 46 commits ahead / 4 behind current main; contains duplicate Worker fix, so no wholesale merge. Preserve its Plan 100/journal cleanup, duplication audit, source endpoint contract test, Worker test command consolidation and duplicate workflow path cleanup in a clean current-main branch; exclude scheduler.ts/index.ts/scheduler.test.ts changes already isolated in #108.
+- #105: runbook audit found three missing mandatory Compose interpolation variables: `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, `CRYPTO_ADMIN_ORIGIN`. Added them to the runbook, with staging-only secret/origin guidance. Exact-head VPS API Build Rehearsal #41612362905 was queued at checkpoint time; wait for completion before claiming CI success. No host or service was provisioned.
+- #107 remains validation-only and stale; do not merge it.
+- Product Contour source/CI contract work is merged through #103. Actual read-only representative payload verification for BTC/ETH/SOL/CAKE on approved isolated non-production DB/API remains the Stage 3 acceptance blocker. No production data, live ingestion, Worker execution or deployment was used.

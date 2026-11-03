@@ -367,3 +367,14 @@ This batch extends the static contract audit into the dashboard and Deep Researc
 - Representative non-production database validation for BTC, ETH, SOL and CAKE remains **not run** until an approved non-production environment is available.
 - No synthetic asset records or fabricated research/evidence counts were introduced.
 - No production database access or writes, schema migrations, runtime registry changes, scenario/probability changes, Worker deployment, merge or production deployment were performed.
+
+
+## Current status — 2026-11-03, after Product Contour v1 merge
+
+PR #103 was merged into `main` at `716f5b5d03fba868d6555893858e97936d52f6a3`. Its API/Web changes now expose metric-level freshness and evidence provenance, scope scenario state to the active published snapshot and render the corresponding Product Contour fields. Post-merge CI passed on the merge commit. This closes the source/CI implementation batch, not the data acceptance gate.
+
+### Remaining Stage 3 acceptance gate
+
+Read-only representative payload validation for BTC, ETH, SOL and CAKE is still required against an approved, isolated non-production database/API. Record actual snapshot IDs, row counts by section, null rates, source/observation lineage, freshness display and cross-snapshot scenario-state exclusion. Disposable PostgreSQL fixtures validate contracts but are not representative live/non-production payload evidence. No VPS/staging environment is provisioned yet.
+
+No production DB access/writes, live ingestion, Worker execution, runtime registry/scenario/probability changes, migrations, deployment, DNS or cutover is authorized by this update.
