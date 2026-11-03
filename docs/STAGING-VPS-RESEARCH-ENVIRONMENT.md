@@ -1,6 +1,6 @@
 # Staging VPS research environment runbook
 
-Status: preparation only; reconciled against main `d49582d` on 2026-11-03. This runbook does not provision infrastructure or authorize production changes. The earlier PR #105 branch is a stale historical source; this version is based on current main.
+Status: preparation only; reconciled against main `510c05e` on 2026-11-03. This runbook does not provision infrastructure or authorize production changes. The earlier PR #105 branch is a stale historical source; this version is based on current main.
 
 ## Objective
 
