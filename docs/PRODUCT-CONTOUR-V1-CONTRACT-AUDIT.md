@@ -380,9 +380,9 @@ Read-only representative payload validation for BTC, ETH, SOL and CAKE is still 
 No production DB access/writes, live ingestion, Worker execution, runtime registry/scenario/probability changes, migrations, deployment, DNS or cutover is authorized by this update.
 
 
-## Current mainline verification — 2026-11-03
+## Current mainline verification — 2026-11-03 (main after PR #117)
 
-The earlier static findings above are historical audit records. The implementation status below was rechecked against main `d49582d6180406728cd911d7dba6b4fda7b2dc5c` after PR #103 and its follow-up contract work.
+The earlier static findings above are historical audit records. The implementation status below was rechecked against current main `2a39831aaf365322189139fd075430e23331d7e2` after PR #117. PR #117 was documentation-only; the API/Web implementation audited here is unchanged from the prior code review. Post-merge CI [#41694142690](https://github.com/olegsh247-stack/Crypto/actions/runs/41694142690) passed on this exact SHA (build-and-e2e, 34/34 steps). This CI evidence does not replace the isolated staging payload acceptance described below.
 
 ### Static contract findings now addressed
 
