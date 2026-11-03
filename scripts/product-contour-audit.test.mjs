@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildAssetAudit, calculateNullRates } from "./lib/product-contour-audit.mjs";
+import { buildAssetAudit, calculateNullRates, resolveAuditConfig } from "./lib/product-contour-audit.mjs";
 
 test("null-rate report keeps denominators and handles empty sections", () => {
   const result = calculateNullRates([{ source_id: "a", unit: null }, { source_id: "", unit: "BTC" }], ["source_id", "unit"]);
@@ -40,4 +40,37 @@ test("audit does not silently pass a missing published snapshot or omitted secti
   const report = buildAssetAudit("eth", { asset: { asset_id: "eth" } });
   assert.ok(report.issues.some(issue => issue.code === "published_snapshot_missing"));
   assert.ok(report.issues.some(issue => issue.code === "section_missing" && issue.section === "scenario_states"));
+});
+
+
+test("audit config refuses non-staging, unconfirmed, mismatched, or unidentified targets", () => {
+  const valid = {
+    PRODUCT_CONTOUR_ENVIRONMENT: "staging",
+    PRODUCT_CONTOUR_STAGING_CONFIRMATION: "I_CONFIRM_ISOLATED_NON_PRODUCTION",
+    CRYPTO_API_URL: "https://staging.example.internal/api",
+    PRODUCT_CONTOUR_STAGING_API_ORIGIN: "https://staging.example.internal",
+    PRODUCT_CONTOUR_API_COMMIT_SHA: "510c05eef969a3310fafe777bb48e699575c1456",
+  };
+  assert.deepEqual(resolveAuditConfig(valid), {
+    apiBase: "https://staging.example.internal/api",
+    apiOrigin: "https://staging.example.internal",
+    apiCommitSha: "510c05eef969a3310fafe777bb48e699575c1456",
+    assetIds: ["btc", "eth", "sol", "cake"],
+  });
+  assert.throws(() => resolveAuditConfig({ ...valid, PRODUCT_CONTOUR_ENVIRONMENT: "production" }), /must be staging/);
+  assert.throws(() => resolveAuditConfig({ ...valid, PRODUCT_CONTOUR_STAGING_CONFIRMATION: "" }), /confirmation/);
+  assert.throws(() => resolveAuditConfig({ ...valid, CRYPTO_API_URL: "https://production.example/api" }), /does not match/);
+  assert.throws(() => resolveAuditConfig({ ...valid, PRODUCT_CONTOUR_API_COMMIT_SHA: "" }), /deployed API commit/);
+  assert.throws(() => resolveAuditConfig({ ...valid, CRYPTO_API_URL: "https://user:secret@staging.example.internal/api" }), /without credentials/);
+});
+
+test("asset audit preserves the API's actual snapshot version and publication date fields", () => {
+  const report = buildAssetAudit("btc", {
+    asset: { asset_id: "btc", enabled: true },
+    research_snapshot: { snapshot_id: "snapshot-1", research_version: "7", research_date: "2026-11-03T12:00:00.000Z", title: "BTC", status: "PUBLISHED" },
+  });
+  assert.equal(report.snapshot_version, "7");
+  assert.equal(report.snapshot_published_at, "2026-11-03T12:00:00.000Z");
+  assert.equal(report.snapshot_title, "BTC");
+  assert.equal(report.asset_enabled, true);
 });
