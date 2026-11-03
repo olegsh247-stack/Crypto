@@ -16,7 +16,7 @@ test("audit reports snapshot lineage and source registry gaps without mutating d
     research_blocks: [], research_domains: [], critical_factors: [{ snapshot_id: "snapshot-current" }],
     scores: [{ snapshot_id: "snapshot-current" }],
     research_scenarios: [{ snapshot_id: "snapshot-current" }],
-    scenario_states: [{ snapshot_id: "snapshot-old" }],
+    scenario_states: [{ snapshot_id: "snapshot-old" }, { scenario_state_id: "state-without-snapshot" }],
     monitoring_signals: [], monitoring_events: [],
     sources: [{ source_id: "source-a", name: "Source A" }],
     evidence: [{ snapshot_id: "snapshot-current", source_id: "source-missing", claim: "claim" }],
@@ -26,10 +26,12 @@ test("audit reports snapshot lineage and source registry gaps without mutating d
   const report = buildAssetAudit("btc", payload);
   assert.equal(report.snapshot_id, "snapshot-current");
   assert.equal(report.section_row_counts.scenario_states, 1);
-  assert.equal(report.scenario_snapshot_lineage.cross_snapshot_state_count, 1);
+  assert.equal(report.scenario_snapshot_lineage.cross_snapshot_state_count, 2);
   assert.deepEqual(report.source_lineage.missing_source_ids, ["source-missing"]);
   assert.ok(report.issues.some(issue => issue.code === "snapshot_id_mismatch" && issue.section === "scenario_states"));
   assert.equal(report.freshness_display.metric_counts.stale, 1);
+  assert.ok(report.null_rates.research_blocks.block_number);
+  assert.ok(report.null_rates.scenario_states.snapshot_id);
 });
 
 test("audit does not silently pass a missing published snapshot or omitted section", () => {
