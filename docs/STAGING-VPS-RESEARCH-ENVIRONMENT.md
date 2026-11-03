@@ -1,6 +1,6 @@
 # Staging VPS research environment runbook
 
-Status: preparation only; reconciled against main `d49582d` on 2026-11-03. This runbook does not provision infrastructure or authorize production changes. The earlier PR #105 branch is a stale historical source; this version is based on current main.
+Status: preparation only; reconciled against main `510c05e` on 2026-11-03. This runbook does not provision infrastructure or authorize production changes. The earlier PR #105 branch is a stale historical source; this version is based on current main.
 
 ## Objective
 
@@ -34,7 +34,7 @@ On the host:
 Use `vps/docker-compose.production.yml` with an environment file stored outside the repository (for example `/etc/crypto-staging/staging.env`) and a unique Compose project name, `crypto-staging`. Run the commands below from the repository root and always pass the explicit `--env-file`; do not rely on an implicit `.env` that could belong to another environment.
 
 Before startup:
-- Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values.
+- Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values. For the Stage 3 audit command, also set `PRODUCT_CONTOUR_ENVIRONMENT=staging`, `PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION`, `PRODUCT_CONTOUR_STAGING_API_ORIGIN` to the exact staging API origin, `CRYPTO_API_URL` to that same origin plus any API path, and `PRODUCT_CONTOUR_API_COMMIT_SHA` to the exact deployed API commit SHA. These checks reduce accidental targeting; they do not replace verifying that the database and host are isolated.
 - Define all variables required by Compose interpolation: `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, `CRYPTO_ADMIN_ORIGIN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, and `BACKUP_DIR_HOST`. `CRYPTO_ADMIN_LOGIN_SECRET` and `CRYPTO_ADMIN_SESSION_SECRET` must be unique staging-only secrets; `CRYPTO_ADMIN_ORIGIN` and `CORS_ORIGIN` must use the staging UI/API origin. `CADDY_DOMAIN` and `BACKUP_DIR_HOST` are required by Compose interpolation even when Caddy/backup are not started. Without public ingress, use a private/test origin and do not start Caddy.
 - Set `BACKUP_DIR_HOST` to a dedicated staging path such as `/var/backups/crypto-staging`; create it with restrictive permissions.
 - Confirm no variable points to a production database, volume, secret, or host path.
@@ -72,7 +72,7 @@ Run GET-only checks against the staging API:
 - `/api/pairs`
 - `/api/asset-types` (active type catalog used by Add Asset)
 
-Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
+Run `PRODUCT_CONTOUR_ENVIRONMENT=staging PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION PRODUCT_CONTOUR_STAGING_API_ORIGIN=<staging-origin> CRYPTO_API_URL=<staging-origin> PRODUCT_CONTOUR_API_COMMIT_SHA=<deployed-commit-sha> node scripts/audit-product-contour-stage3.mjs` from the repository root. The generated immutable payload report records the API origin and deployed API commit SHA. Note that the asset API's `metrics` array is latest-per-metric (`DISTINCT ON metric_id`), not the complete observation history. Therefore also run the read-only SQL inventory against the isolated staging database: `psql "$STAGING_DATABASE_URL" --set ON_ERROR_STOP=1 --file scripts/audit-stage3-observations.sql > stage3-observations-audit.txt`. This second report supplies full observation row counts, provenance null counts, registered-source gaps, freshness counts, and duplicate logical-key groups for all four assets. Keep both outputs together as the Stage 3 evidence bundle. Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
 
 Capture one immutable acceptance report per run, including its UTC timestamp and the API build/commit SHA. For each of BTC, ETH, SOL, and CAKE record:
 - asset identity and enabled state;
@@ -86,7 +86,7 @@ Capture one immutable acceptance report per run, including its UTC timestamp and
 - duplicate logical observation keys and the disposition recorded for each;
 - market-history coverage and latest finalized candle timestamps.
 
-The acceptance report must include section row counts, null rates, lineage checks, and a cross-snapshot scenario-state check. Missing or empty data is a reported outcome, not a reason to load fixtures or create synthetic evidence. Preserve snapshot IDs and raw counts so a later run can be compared without silently changing the definition of completeness.
+The combined acceptance evidence must include section row counts, null rates, lineage checks, a cross-snapshot scenario-state check, full observation inventory, and duplicate logical-key review. The API JSON report alone does not assess full observation history or duplicate keys; the companion SQL report is mandatory. Missing or empty data is a reported outcome, not a reason to load fixtures or create synthetic evidence. Preserve snapshot IDs and raw counts so a later run can be compared without silently changing the definition of completeness.
 
 All acceptance queries must be SELECT-only. Keep output free of credentials and private keys.
 
