@@ -26,7 +26,9 @@ test("audit reports snapshot lineage and source registry gaps without mutating d
   const report = buildAssetAudit("btc", payload);
   assert.equal(report.snapshot_id, "snapshot-current");
   assert.equal(report.section_row_counts.scenario_states, 2);
-  assert.equal(report.scenario_snapshot_lineage.cross_snapshot_state_count, 2);
+  assert.equal(report.scenario_snapshot_lineage.cross_snapshot_state_count, 1);
+  assert.equal(report.scenario_snapshot_lineage.state_missing_snapshot_id_count, 1);
+  assert.equal(report.scenario_snapshot_lineage.invalid_state_lineage_count, 2);
   assert.deepEqual(report.source_lineage.missing_source_ids, ["source-missing"]);
   assert.ok(report.issues.some(issue => issue.code === "snapshot_id_mismatch" && issue.section === "scenario_states"));
   assert.equal(report.freshness_display.metric_counts.stale, 1);
