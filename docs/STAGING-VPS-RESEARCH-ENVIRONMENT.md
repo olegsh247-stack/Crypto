@@ -35,7 +35,7 @@ Use `vps/docker-compose.production.yml` with an environment file stored outside 
 
 Before startup:
 - Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values.
-- Define all variables required by Compose interpolation: `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, and `BACKUP_DIR_HOST`. The last three are required by the compose file even when their services are not started. Use the actual staging origin/domain when configured; without public ingress, use a private/test origin and do not start Caddy.
+- Define all variables required by Compose interpolation: `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, `CRYPTO_ADMIN_ORIGIN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, and `BACKUP_DIR_HOST`. `CRYPTO_ADMIN_LOGIN_SECRET` and `CRYPTO_ADMIN_SESSION_SECRET` must be unique staging-only secrets; `CRYPTO_ADMIN_ORIGIN` and `CORS_ORIGIN` must use the staging UI/API origin. `CADDY_DOMAIN` and `BACKUP_DIR_HOST` are required by Compose interpolation even when Caddy/backup are not started. Without public ingress, use a private/test origin and do not start Caddy.
 - Set `BACKUP_DIR_HOST` to a dedicated staging path such as `/var/backups/crypto-staging`; create it with restrictive permissions.
 - Confirm no variable points to a production database, volume, secret, or host path.
 - Validate Compose without printing resolved environment values: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml config --quiet`.
