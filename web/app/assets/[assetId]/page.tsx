@@ -13,6 +13,10 @@ function scorePercent(score: any) {
   if (max <= 1 && min >= 0) return value * 100;
   return value;
 }
+function isFiniteNumberLike(value: unknown) {
+  if (typeof value === "number") return Number.isFinite(value);
+  return typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value));
+}
 function confidencePercent(value: unknown) {
   if (value == null) return null;
   const n = Number(value);
@@ -99,11 +103,12 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const mainRisk = factors.filter((f: any) => f.thesis_impact === "negative").sort((a: any, b: any) => (a.monitoring_priority ?? 999) - (b.monitoring_priority ?? 999))[0] ?? null;
   const monitoringEvents = data.monitoring_events ?? [];
   const monitoringBaseline = research ? { snapshot_id: research.snapshot_id, research_date: research.research_date } : null;
-  const monitoringImproving = monitoring.filter((m: any) => m.direction === "improving");
-  const monitoringDeteriorating = monitoring.filter((m: any) => m.direction === "deteriorating");
+  const quantitativeMonitoring = monitoring.filter((m: any) => typeof m.metric_id === "string" && m.metric_id.trim() !== "" && isFiniteNumberLike(m.current_value) && isFiniteNumberLike(m.threshold));
+  const monitoringImproving = quantitativeMonitoring.filter((m: any) => m.direction === "improving");
+  const monitoringDeteriorating = quantitativeMonitoring.filter((m: any) => m.direction === "deteriorating");
   const monitoringImportant = monitoring.filter((m: any) => m.status === "triggered" || m.status === "watch" || m.thesis_impact === "negative");
   const monitoringRecentEvents = monitoringEvents.slice().sort((a: any, b: any) => new Date(b.observed_at ?? b.created_at ?? 0).getTime() - new Date(a.observed_at ?? a.created_at ?? 0).getTime()).slice(0, 10);
-  const monitoringOverall = monitoringDeteriorating.length > monitoringImproving.length ? "Pressure is increasing" : monitoringImproving.length > monitoringDeteriorating.length ? "Support is increasing" : monitoring.length ? "No material directional change" : "Monitoring baseline is not populated";
+  const monitoringOverall = quantitativeMonitoring.length === 0 ? "No live quantitative signals" : monitoringDeteriorating.length > monitoringImproving.length ? "More deteriorating signals" : monitoringImproving.length > monitoringDeteriorating.length ? "More improving signals" : "No directional majority";
 
   const history = Array.isArray(data.history) ? data.history : [];
   const marketRows = history.map((row: any) => ({
@@ -119,19 +124,14 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
 
   const positiveFactors = factors.filter((f: any) => f.thesis_impact === "positive").length;
   const negativeFactors = factors.filter((f: any) => f.thesis_impact === "negative").length;
-  const mixedFactors = factors.filter((f: any) => f.thesis_impact === "mixed").length;
-  const improvingSignals = monitoring.filter((m: any) => m.direction === "improving").length;
-  const deterioratingSignals = monitoring.filter((m: any) => m.direction === "deteriorating").length;
-  const thesisState = thesisPercent != null
-    ? thesisPercent >= 70 ? "Positive" : thesisPercent <= 40 ? "Negative" : "Neutral"
-    : positiveFactors > negativeFactors ? "Positive" : negativeFactors > positiveFactors ? "Negative" : "Mixed";
-  const marketDirection = weekChange == null ? "Unknown" : weekChange > 0.5 ? "Improving" : weekChange < -0.5 ? "Deteriorating" : "Stable";
-  const researchDirection = improvingSignals > deterioratingSignals ? "Improving" : deterioratingSignals > improvingSignals ? "Deteriorating" : mixedFactors > 0 ? "Mixed" : "Stable";
-  const decisionHeadline = thesisState === "Positive"
-    ? "The thesis currently has more support than pressure."
-    : thesisState === "Negative"
-      ? "The thesis currently has more pressure than support."
-      : "The thesis is currently balanced or insufficiently resolved.";
+  const improvingSignals = monitoringImproving.length;
+  const deterioratingSignals = monitoringDeteriorating.length;
+  const thesisState = thesisPercent != null ? "Score recorded" : "Not evaluated";
+  const marketDirection = weekChange == null ? "Unavailable" : weekChange > 0 ? "Up" : weekChange < 0 ? "Down" : "Unchanged";
+  const researchDirection = quantitativeMonitoring.length === 0 ? "Not evaluated" : improvingSignals > deterioratingSignals ? "More improving signals" : deterioratingSignals > improvingSignals ? "More deteriorating signals" : "No directional majority";
+  const decisionHeadline = thesisPercent != null
+    ? "A stored thesis score is available; the UI does not infer a positive or negative thesis classification."
+    : "No thesis score is recorded for this asset.";
   const invalidation = currentScenario?.invalidation_conditions ?? scenarios.find((s: any) => s.scenario_type === "base")?.invalidation_conditions ?? null;
   const decisionDrivers = [
     mainCatalyst?.name ? { label: "Catalyst", value: mainCatalyst.name } : null,
@@ -277,7 +277,7 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
       <div className="section-heading"><p className="eyebrow">07 · MONITORING</p><h2>What changed — and what does it mean?</h2><p className="muted">One Monitoring layer with three responsibilities: Dashboard explains the current state, Signals show what is happening now, Events preserve what changed.</p></div>
       <div className="monitoring-dashboard card"><div className="row"><div><p className="eyebrow">MONITORING DASHBOARD</p><h3>Current monitoring state</h3></div><span className="pill">{monitoringOverall}</span></div>
         <div className="monitoring-summary"><div><span className="muted">Improving</span><strong>{monitoringImproving.length}</strong></div><div><span className="muted">Deteriorating</span><strong>{monitoringDeteriorating.length}</strong></div><div><span className="muted">Needs attention</span><strong>{monitoringImportant.length}</strong></div><div><span className="muted">Recent events</span><strong>{monitoringRecentEvents.length}</strong></div></div>
-        <div className="monitoring-dashboard-grid"><div><span className="muted">Baseline snapshot</span><p>{monitoringBaseline ? `${monitoringBaseline.snapshot_id} · ${new Date(monitoringBaseline.research_date).toLocaleDateString()}` : "No research snapshot is available."}</p></div><div><span className="muted">What matters now?</span><p>{monitoringDeteriorating[0]?.name ? monitoringDeteriorating[0].name + " is the main negative monitoring signal." : monitoringImproving[0]?.name ? monitoringImproving[0].name + " is the strongest positive monitoring signal." : "No material directional monitoring change is recorded."}</p></div><div><span className="muted">Thesis context</span><p>{thesisState} thesis · {currentScenario?.scenario_type ?? "Scenario not recorded"}</p></div><div><span className="muted">What to watch next</span><p>{monitoringDeteriorating.slice(0, 3).map((m: any) => m.name).join(" · ") || "No monitoring priorities recorded yet."}</p></div></div>
+        <div className="monitoring-dashboard-grid"><div><span className="muted">Baseline snapshot</span><p>{monitoringBaseline ? `${monitoringBaseline.snapshot_id} · ${new Date(monitoringBaseline.research_date).toLocaleDateString()}` : "No research snapshot is available."}</p></div><div><span className="muted">What matters now?</span><p>{monitoringDeteriorating[0]?.name ? monitoringDeteriorating[0].name + " is a deteriorating quantitative signal." : monitoringImproving[0]?.name ? monitoringImproving[0].name + " is an improving quantitative signal." : quantitativeMonitoring.length ? "No material directional change is recorded in quantitative signals." : "No live quantitative monitoring signals are configured."}</p></div><div><span className="muted">Thesis context</span><p>{thesisState} thesis · {currentScenario?.scenario_type ?? "Scenario not recorded"}</p></div><div><span className="muted">What to watch next</span><p>{monitoringDeteriorating.slice(0, 3).map((m: any) => m.name).join(" · ") || "No monitoring priorities recorded yet."}</p></div></div>
       </div>
       <div className="section-heading monitoring-subheading"><p className="eyebrow">CURRENT SIGNALS</p><h3>What is happening now?</h3><p className="muted">Signals are persistent current-state representations of important thesis drivers.</p></div>
       <div className="grid">{monitoring.length ? monitoring.map((m: any) => <article className="card monitoring-signal" key={m.monitoring_signal_id}><div className="row"><h3>{m.name}</h3><span className="pill">{m.status}</span></div><div className="monitoring-signal-value"><span className="muted">{monitoringValueLabel(m.current_value)}</span><strong>{monitoringValueText(m.current_value)}</strong></div><div className="row"><span className="muted">Direction</span><strong>{m.direction ?? "—"}</strong></div><div className="row"><span className="muted">Thesis impact</span><span>{m.thesis_impact ?? "—"}</span></div><div className="row"><span className="muted">Confidence</span><span>{m.confidence ?? "—"}</span></div></article>) : <div className="card"><p className="muted">No monitoring signals recorded yet.</p></div>}</div>
