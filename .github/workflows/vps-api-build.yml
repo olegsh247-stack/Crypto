@@ -273,14 +273,49 @@ jobs:
         run: |
           set -euo pipefail
           auth=(-H 'Authorization: Bearer local-development-only' -H 'Content-Type: application/json')
-          code=$(curl -sS -o /tmp/asset-mutation.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d '{"symbol":"VPSQA","name":"VPS QA Asset","enabled":false}')
+          code=$(curl -sS -o /tmp/asset-types.json -w '%{http_code}' http://127.0.0.1:8080/api/asset-types)
+          test "$code" = "200"
+          asset_type_id=$(python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/asset-types.json'))
+          assert d.get('count', 0) > 0 and d.get('items')
+          assert all(x.get('asset_type_id') and x.get('code') and x.get('name') for x in d['items'])
+          print(d['items'][0]['asset_type_id'])
+          PY
+          )
+          payload=$(python3 - "$asset_type_id" <<'PY'
+          import json,sys
+          print(json.dumps({"symbol":"VPSQA","name":"VPS QA Asset","enabled":False,"primary_asset_type_id":sys.argv[1]}))
+          PY
+          )
+          code=$(curl -sS -o /tmp/asset-mutation.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d "$payload")
           test "$code" = "201"
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/asset-mutation.json'))
           assert d.get('status')=='ok'
           assert d['item']['asset_id']=='vpsqa'
+          assert d['item']['primary_asset_type_id']
           PY
+          duplicate_payload=$(python3 - "$asset_type_id" <<'PY'
+          import json,sys
+          print(json.dumps({"symbol":"VPSQA","name":"MUST NOT OVERWRITE","enabled":False,"primary_asset_type_id":sys.argv[1]}))
+          PY
+          )
+          code=$(curl -sS -o /tmp/asset-duplicate.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d "$duplicate_payload")
+          test "$code" = "409"
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/asset-duplicate.json'))
+          assert d.get('error')=='asset_already_exists'
+          PY
+          invalid_payload=$(python3 - <<'PY'
+          import json
+          print(json.dumps({"symbol":"VPSBAD","name":"VPS Bad Asset","enabled":"false"}))
+          PY
+          )
+          code=$(curl -sS -o /tmp/asset-invalid.json -w '%{http_code}' "${auth[@]}" -X POST http://127.0.0.1:8080/api/assets -d "$invalid_payload")
+          test "$code" = "400"
           asset_id=vpsqa
           code=$(curl -sS -o /tmp/asset-delete.json -w '%{http_code}' "${auth[@]}" -X DELETE "http://127.0.0.1:8080/api/assets/$asset_id")
           test "$code" = "200"
