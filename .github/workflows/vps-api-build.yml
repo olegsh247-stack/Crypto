@@ -39,6 +39,8 @@ jobs:
         run: npm test
       - name: Test read-only Product Contour audit report
         run: node --test scripts/product-contour-audit.test.mjs
+      - name: Test read-only Stage 3 SQL inventory guard
+        run: node --test scripts/audit-stage3-observations.test.mjs
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
@@ -138,6 +140,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
         run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-btc-input-provenance.sql
+      - name: Execute Stage 3 observation inventory (read-only PostgreSQL transaction)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
+        run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/audit-stage3-observations.sql
       - name: BTC observation idempotency and duplicate reconciliation rehearsal
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_test
