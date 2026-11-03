@@ -40,19 +40,20 @@
 - **Admin-session security:** #102/#104 объединены; signed sessions, revocation, CSRF/Origin, route/method allowlist и PostgreSQL-backed login throttle проверены на CI/static уровне. Это не public-ingress acceptance.
 - **Worker:** исправление error reporting из #108 объединено. Worker всё равно не является read-only: он пишет daily candles и обновляет research review status даже при выключенном BTC observation ingestion. Не запускать его до отдельной staging-проверки и разрешения пользователя.
 - **Открытые PR и текущая disposition:**
-  - #105 — сохранить как полезный staging runbook; сначала сверить и перенести на актуальную базу, не считать provisioning.
+  - #105 — устаревшая исходная ветка runbook; её полезное содержание перенесено и расширено в новом #113 на актуальной базе. Не объединять старую ветку.
   - #106 — историческая комбинированная ветка, 46 commits ahead / 6 behind; её Worker-часть заменена #108, полезные docs/tests перенесены в #109. Не объединять.
   - #107 — временная integration-validation ветка, 105 commits ahead / 6 behind; не является source PR и не является кандидатом на merge.
   - #100 и #101 — старые docs-only ветки, соответственно 2 и 1 commits ahead / 6 behind; их Plan/journal/Product Contour изменения пересекаются с уже объединённым #109. Не объединять без отдельного уникального diff.
-  - #86 — старый широкий runtime/admin PR, 29 commits ahead / 8 behind. Не объединять целиком: #102/#104 уже закрыли основную Web/edge/session часть. Остались отдельные кандидаты на точечный перенос — лимит тела HTTP-запроса и server timeouts/logging, а также расширенный Add Asset flow с выбором asset type/category/tier. Проверить каждый отдельно с тестами.
+  - #86 — старый широкий runtime/admin PR, 29 commits ahead / 8 behind. Не объединять целиком: #102/#104 закрыли Web/edge/session часть; уникальная защита API перенесена в #111, Add Asset classification flow — в #112. #86 остаётся историческим источником, не merge-кандидатом.
   - #89 — дубликат #99 (те же функциональные изменения); не объединять повторно.
   - #88 — старое исправление UTC daily candles; его поведение уже покрыто более полной реализацией Worker в main (UTC boundaries, closed-candle guard, Binance priority, Kraken gap-fill, validation и fetch-failure reporting). Не переносить повторно.
   - #69 — старая ветка BTC collectors, 23 commits ahead / 406 behind; canonical opt-in pipeline уже присутствует в main. Не объединять как второй collector path.
   - #84 — 263 commits ahead / 8 behind, огромная устаревшая BTC ветка; BTC Rule v1 research завершён, не объединять wholesale.
   - #82/#81/#80 — старые block-window, fee-window и freshness предложения (сотни commits behind); не возобновлять старые BTC capture/freshness задачи и не объединять wholesale.
+- **Новые PR на актуальной базе:** #110 — эта сверка Плана 100; #111 — ограничение HTTP body/timeouts; #112 — Add Asset type/category/tier и защита от перезаписи дублей; #113 — актуальный staging runbook с критериями Stage 3. #110 CI #41638043930 SUCCESS; #111 Docker #41638246661 и полная VPS API rehearsal #41638246690 SUCCESS; #112 Web #41642776499 и release workflow validation #41642776487 SUCCESS, Docker/API rehearsal ещё выполняются; #113 VPS API rehearsal #41642632762 ещё выполняется. Все PR остаются draft/open до полного CI и отдельного решения о merge.
 - **Безопасность:** production DB, runtime registry, scenario state/probabilities, live ingestion, Worker execution, deployment, DNS, cutover и production migration не затрагивались.
 
-**Текущий порядок:** завершить этап 2 точечной проверкой уникальных частей #86 и полезного runbook #105; не объединять старые/дублирующие ветки автоматически. Затем продолжать оставшиеся source/code acceptance пункты и Stage 3 payload gate при появлении отдельной non-production DB/API. VPS provisioning, production и live ingestion остаются отдельными этапами с отдельным разрешением.
+**Текущий порядок:** этап 2 сверки PR функционально завершён: уникальные части #86 выделены в #111/#112, runbook #105 перенесён на актуальную базу в #113. Дождаться CI #112/#113, затем провести отдельный review PR и подготовить merge-последовательность только после согласования. Далее — source/code acceptance и Stage 3 payload gate при появлении отдельной non-production DB/API. VPS provisioning, production и live ingestion остаются отдельными этапами с отдельным разрешением.
 
 ## Обязательное решение по хостингу — НЕ ПЕРЕОТКРЫВАТЬ БЕЗ ЗАПРОСА ПОЛЬЗОВАТЕЛЯ
 
