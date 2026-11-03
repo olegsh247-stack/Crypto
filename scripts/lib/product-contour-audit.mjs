@@ -126,7 +126,9 @@ export function buildAssetAudit(assetId, payload) {
     scenario_snapshot_lineage: {
       scenario_count: sections.research_scenarios.length,
       state_count: sections.scenario_states.length,
-      cross_snapshot_state_count: issues.filter(issue => issue.section === "scenario_states" && ["snapshot_id_mismatch", "snapshot_id_missing"].includes(issue.code)).length,
+      cross_snapshot_state_count: issues.filter(issue => issue.section === "scenario_states" && issue.code === "snapshot_id_mismatch").length,
+      state_missing_snapshot_id_count: issues.filter(issue => issue.section === "scenario_states" && issue.code === "snapshot_id_missing").length,
+      invalid_state_lineage_count: issues.filter(issue => issue.section === "scenario_states" && ["snapshot_id_mismatch", "snapshot_id_missing"].includes(issue.code)).length,
       issues: issues.filter(issue => ["research_scenarios", "scenario_states"].includes(issue.section)),
     },
     issues,
