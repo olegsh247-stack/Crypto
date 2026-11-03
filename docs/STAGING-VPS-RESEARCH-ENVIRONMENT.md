@@ -34,7 +34,7 @@ On the host:
 Use `vps/docker-compose.production.yml` with an environment file stored outside the repository (for example `/etc/crypto-staging/staging.env`) and a unique Compose project name, `crypto-staging`. Run the commands below from the repository root and always pass the explicit `--env-file`; do not rely on an implicit `.env` that could belong to another environment.
 
 Before startup:
-- Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values.
+- Set unique staging-only `POSTGRES_PASSWORD` and `ADMIN_TOKEN` values. For the Stage 3 audit command, also set `PRODUCT_CONTOUR_ENVIRONMENT=staging`, `PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION`, `PRODUCT_CONTOUR_STAGING_API_ORIGIN` to the exact staging API origin, `CRYPTO_API_URL` to that same origin plus any API path, and `PRODUCT_CONTOUR_API_COMMIT_SHA` to the exact deployed API commit SHA. These checks reduce accidental targeting; they do not replace verifying that the database and host are isolated.
 - Define all variables required by Compose interpolation: `POSTGRES_PASSWORD`, `ADMIN_TOKEN`, `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, `CRYPTO_ADMIN_ORIGIN`, `CORS_ORIGIN`, `CADDY_DOMAIN`, and `BACKUP_DIR_HOST`. `CRYPTO_ADMIN_LOGIN_SECRET` and `CRYPTO_ADMIN_SESSION_SECRET` must be unique staging-only secrets; `CRYPTO_ADMIN_ORIGIN` and `CORS_ORIGIN` must use the staging UI/API origin. `CADDY_DOMAIN` and `BACKUP_DIR_HOST` are required by Compose interpolation even when Caddy/backup are not started. Without public ingress, use a private/test origin and do not start Caddy.
 - Set `BACKUP_DIR_HOST` to a dedicated staging path such as `/var/backups/crypto-staging`; create it with restrictive permissions.
 - Confirm no variable points to a production database, volume, secret, or host path.
@@ -72,7 +72,7 @@ Run GET-only checks against the staging API:
 - `/api/pairs`
 - `/api/asset-types` (active type catalog used by Add Asset)
 
-Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
+Run `PRODUCT_CONTOUR_ENVIRONMENT=staging PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION PRODUCT_CONTOUR_STAGING_API_ORIGIN=<staging-origin> CRYPTO_API_URL=<staging-origin> PRODUCT_CONTOUR_API_COMMIT_SHA=<deployed-commit-sha> node scripts/audit-product-contour-stage3.mjs` from the repository root. The generated immutable report records the API origin and deployed API commit SHA. Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
 
 Capture one immutable acceptance report per run, including its UTC timestamp and the API build/commit SHA. For each of BTC, ETH, SOL, and CAKE record:
 - asset identity and enabled state;
