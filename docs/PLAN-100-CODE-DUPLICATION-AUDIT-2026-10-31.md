@@ -113,12 +113,12 @@ No production database access or writes, live ingestion, Worker execution, runti
 ### Unique #86 work now isolated
 
 1. **PR #111 — HTTP server boundary:** 1 MiB declared/streamed body cap, 413 response, bounded request/header/keep-alive/socket timeouts, safe structured request/error logs. Exact branch CI: Docker build #41638246661 SUCCESS and full VPS API rehearsal #41638246690 SUCCESS. No production server was changed.
-2. **PR #112 — Add Asset flow:** active asset-type catalog endpoint, required type/category/research tier selection, redirect to asset detail, strict boolean validation, and duplicate insert protection returning 409 rather than updating an existing row. The workflow now explicitly tests asset-type retrieval, typed creation, duplicate rejection, and invalid boolean input. Web build #41642776499 and release workflow validation #41642776487 SUCCESS; Docker/API rehearsal still in progress at this checkpoint.
+2. **PR #112 — Add Asset flow:** active asset-type catalog endpoint, required type/category/research tier selection, redirect to asset detail, strict boolean validation, and duplicate insert protection returning 409 rather than updating an existing row. The workflow explicitly tests asset-type retrieval, typed creation, duplicate rejection, and invalid boolean input. Exact-head CI passed: Web build #41642776499, release workflow validation #41642776487, Docker #41642776484, and full VPS API rehearsal #41642776670.
 3. **Already superseded:** #86's in-memory admin throttle/timing-safe bearer implementation is not the canonical session path after #104; its DB pool idle-error handler already exists in main; its Caddy/Web edge, session proxy and most API auth changes are superseded by #102/#104. Do not reintroduce parallel auth logic.
 
 ### Staging runbook source
 
-PR #105's runbook was reviewed against the current Compose file and Worker behavior. It has been ported to current main in #113, with explicit Stage 3 payload acceptance evidence requirements. #113 CI is still running at this checkpoint. Do not merge the stale #105 branch.
+PR #105's runbook was reviewed against the current Compose file and Worker behavior. It has been ported to current main in #113, with explicit Stage 3 payload acceptance evidence requirements. #113 exact-head VPS API Build Rehearsal #41642632762 passed. Do not merge the stale #105 branch.
 
 ### Remaining project gates
 
