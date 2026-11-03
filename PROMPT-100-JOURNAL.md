@@ -459,3 +459,13 @@
 - Follow-up verification: #41648026215 completed SUCCESS. Its job passed repository VPS-only guard, API/Worker builds, source/parser and response-contract tests, read-only Product Contour audit tests, Compose network-boundary validation, Docker builds, PostgreSQL migrations, BTC provenance/idempotency rehearsal, backup/restore, API E2E and Worker E2E. This does not mean Worker was run against a persistent staging or production DB; it ran only inside disposable CI rehearsal.
 - PR #116 is a documentation-only draft and remains unmerged pending review. Its own CI runs #41648262676 and #41648240221 both completed SUCCESS on head `da59b6bc7718055b93a30ffd76543060173cd541`.
 - VPS remains unpurchased/unprovisioned; no public IP, domain/DNS target or SSH access exists. No provisioning was attempted.
+
+
+## 2026-11-03 — PR #116 Stage 3 audit hardening и exact-head CI
+
+- В companion `scripts/audit-stage3-observations.sql` расширен provenance audit: пустые methodology/source_row_key/hash трактуются как отсутствующие; SHA-256 проверяется на 64 hex-символа; duplicate candidate comparison включает source_row_key, payload hash, retrieved_at, source_updated_at и methodology_version.
+- `scripts/audit-stage3-observations.test.mjs` дополнен проверками invalid hash и provenance fields; SQL остаётся SELECT-only и охватывает BTC/ETH/SOL/CAKE. Изменения находятся в PR #116.
+- Exact HEAD `a4346c65ec0220e13949ca7da892166b1ea3edd1`; VPS API Build Rehearsal [#41667135846](https://github.com/olegsh247-stack/Crypto/actions/runs/41667135846) завершился SUCCESS на точном HEAD. Прошёл полный disposable CI pipeline, включая API/Worker build/test, PostgreSQL migration/backup/restore, BTC idempotency и API/Worker E2E.
+- PR #116 остаётся Draft/Open и не объединён. Main не изменялся; PR #116 не merged. CI — только репетиция в disposable environment, не реальный VPS/staging acceptance.
+- Stage 3 остаётся IN PROGRESS до read-only аудита реальных payload BTC/ETH/SOL/CAKE на отдельном изолированном staging API/DB. VPS не provisioned; публичного IP/domain/SSH нет.
+- Production DB writes, live ingestion/capture, Worker execution/deploy, runtime registry/scenario/probability changes, production deployment, DNS и cutover не выполнялись.
