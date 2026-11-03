@@ -84,16 +84,49 @@
 No production database access or writes, live ingestion, Worker execution, runtime registry changes, scenario-state/probability changes, deployment, DNS change, cutover, merge or PR closure was performed.
 
 
-## Current reconciliation — 2026-11-03 (supersedes the 2026-10-31 PR inventory)
+## Current reconciliation — 2026-11-03 (verified against main d49582d)
 
-- Current main is `716f5b5d03fba868d6555893858e97936d52f6a3`; #102, #104, #99 and #103 have been merged. Do not use the historical Draft/Open labels in the inventory above as current status.
-- #108 is the canonical Worker research-status error-reporting PR, based on current main; exact-head CI 3/3 SUCCESS. The duplicate Worker implementation in #106 must be excluded from any follow-up branch.
-- #106 is 46 commits ahead and four behind current main. Do not merge it wholesale. Its useful non-Worker changes are: Plan 100 duplicate-section cleanup and master-prompt reconciliation; journal update; this duplication audit; a contract test tying review-only Kraken candidate endpoint/source/metric/unit to the runtime BTC source catalog; consolidated Worker npm test entry point; and duplicate workflow path cleanup.
-- The endpoint contract test is deliberately narrow: it checks the candidate-preparation script's Kraken URL against the runtime catalog and verifies the expected source ID, metric ID and USD/BTC unit. It does not unify runtime and review-only data paths.
-- #105 remains a preparation-only staging runbook. Re-audit found missing required Compose interpolation values `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, and `CRYPTO_ADMIN_ORIGIN`; corrected on its branch. Its updated exact-head VPS API rehearsal #41612362905 completed SUCCESS. It does not provision VPS or authorize Worker start.
-- #107 remains validation-only, stale and not a merge candidate. Do not treat its historical green combined CI as current-main validation.
-- Product Contour v1 source/API/Web contracts were merged via #103; the only remaining Stage 3 acceptance gate is real read-only representative payload verification for BTC/ETH/SOL/CAKE on an approved isolated non-production DB/API. No synthetic fixture counts may substitute.
+### Mainline and merged work
 
-### Safety boundary
+- Current `main`: `d49582d6180406728cd911d7dba6b4fda7b2dc5c`.
+- Merged PRs: #102 (`aece8a02`), #104 (`41491978`), #99 (`83dc2e97`), #103 (`716f5b5d`), #108 (`499a0dcc`) and #109 (`d49582d`). The corresponding post-merge CI on the final main SHA passed: Release Gate #41624191227, Docker image build #41624191232, BTC Scenario Readiness #41624191177, VPS API Build Rehearsal #41624191084 and Validate VPS Release Workflow #41624191061.
+- The older 2026-10-31 and 2026-11-02 inventories above are historical snapshots. Their open/draft labels and dependency order must not be reused as current status.
 
-No production database access/writes, live ingestion/capture, Worker execution, runtime registry/scenario/probability changes, migration, deployment, DNS, cutover, merge or PR closure is performed by this reconciliation.
+### Open PR reconciliation against current main
+
+| PR | Current branch delta vs main | Verified disposition |
+|---|---:|---|
+| #105 | 3 ahead / 6 behind; one new runbook file | Keep as useful documentation candidate. Exact-head VPS API Build Rehearsal #41612362905 passed. Rebase/port onto current main before merge consideration. No VPS exists and no live acceptance was performed. |
+| #106 | 46 ahead / 6 behind; 10 changed files | Historical combined branch. Worker error-reporting work was isolated and merged as #108; useful Plan/journal/audit/endpoint-test work was transferred and merged as #109. Do not merge this branch. |
+| #107 | 105 ahead / 6 behind; 30 changed files | Temporary combined integration-validation artifact. Not a source PR and not a merge candidate; its historical CI does not replace post-merge main CI. |
+| #101 | 1 ahead / 6 behind; Product Contour audit doc only | Stale docs-only branch. Reconcile any unique content against the current audit and #109 before disposition; do not merge wholesale. |
+| #100 | 2 ahead / 6 behind; Plan/journal only | Superseded by #109's Plan/journal update. Do not merge. |
+| #86 | 29 ahead / 8 behind; 15 changed files | Do not merge wholesale. #102/#104 supersede its Web edge/admin-session implementation. Review only the remaining unique server hardening and Add Asset flow below. |
+| #89 | 2 ahead / 8 behind; API + dashboard files | Duplicate of #99's market-input/dashboard correctness changes; #99 is already merged. Do not merge again. |
+| #88 | 6 ahead / 8 behind; Worker scheduler + tests | Its UTC daily-candle behavior is superseded by the current Worker scheduler: UTC boundaries, completed-candle filtering, Binance-first/Kraken gap-fill selection, validation, and fetch-failure reporting. Do not port the old patch wholesale. |
+| #69 | 23 ahead / 406 behind; old BTC collector path | Canonical opt-in BTC observation pipeline is already in main. Do not add a second collector path; inspect only a specifically missing behavior if evidence appears. |
+| #84 | 263 ahead / 8 behind; 44 files | Very large historical BTC reconciliation branch. BTC Rule v1 research is complete; do not merge wholesale or repeat source captures. |
+| #82 | 148 ahead / 344 behind; 30 files | Historical block-window/source-capture proposal; do not merge wholesale. |
+| #81 | 5 ahead / 344 behind; one documentation file | Historical fee/subsidy window proposal; not a current blocker for BTC Rule v1 research. |
+| #80 | 152 ahead / 345 behind; 30 files | Historical freshness/source-capture proposal; do not merge wholesale or reinstate freshness as a test-mode blocker. |
+
+### Remaining unique review from #86
+
+1. **HTTP server boundary:** current `vps/api/src/server.ts` still reads the complete request body into memory and does not set explicit request/header/keep-alive/socket timeouts. #86 proposes a 1 MiB body cap, 413 response for oversized requests, request timeouts, and safe structured request/error logs. This is not present in current main and is a legitimate focused hardening candidate. Port only with explicit tests for declared and streamed body sizes, ordinary requests, and timeout behavior; do not transplant the rest of #86.
+2. **Add Asset flow:** current `web/app/assets/add/page.tsx` still asks only for symbol/name and does not collect the asset type, category, research tier, or route to the new asset detail page. #86 contains a more complete form and an `/api/asset-types` read endpoint. Review its API contract against the merged #102/#104 admin proxy and #103 Product Contour API before porting; preserve the no-overwrite-on-duplicate behavior and test invalid/missing asset type cases.
+3. **Already superseded:** #86's in-memory admin throttle/timing-safe bearer implementation is not the canonical session path after #104; its DB pool idle-error handler already exists in main; its Caddy/Web edge, session proxy and most API auth changes are superseded by #102/#104. Do not reintroduce parallel auth logic.
+
+### Remaining project gates
+
+- Product Contour Stage 3 still requires read-only representative payload validation for BTC/ETH/SOL/CAKE against a separately approved non-production DB/API. Capture snapshot IDs, section row counts, null rates, source lineage, freshness display and cross-snapshot scenario-state checks. CI fixtures are not a substitute.
+- PR #105 is only a runbook. VPS provisioning, staging DB/API, independent off-host backup/restore and live GET acceptance remain unperformed.
+- Worker must remain stopped during initial staging read-only acceptance: it writes daily candles and may update research review status even when BTC observation ingestion is disabled.
+- No production database access/writes, live ingestion, Worker execution, runtime registry/scenario/probability changes, migration, deployment, DNS, cutover, merge or PR closure was performed by this reconciliation.
+
+### Next review order
+
+1. Port the #86 HTTP server boundary as a small isolated PR with regression tests.
+2. Review the #86 Add Asset form/API separately against current admin-session and Product Contour contracts; do not bundle it with server hardening.
+3. Rebase/port #105's staging runbook onto current main only after a final documentation consistency check.
+4. Keep #106/#107/#100/#101 and the stale BTC branches out of main unless a new, independently verified unique requirement is identified.
+5. Proceed to Stage 3 payload acceptance only when a separately approved isolated non-production DB/API is actually available.
