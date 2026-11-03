@@ -128,7 +128,7 @@ PR #105's runbook was reviewed against the current Compose file and Worker behav
 | #111 | HTTP request boundary hardening | Docker #41638246661 and full VPS API rehearsal #41638246690 passed. Draft/open. |
 | #112 | Add Asset classification and duplicate safety | Web #41642776499, release workflow validation #41642776487, Docker #41642776484 and full VPS API rehearsal #41642776670 passed. Mutation E2E now covers active type lookup, typed asset creation, duplicate rejection and invalid boolean input. Draft/open. |
 | #113 | Current isolated staging VPS runbook | Full VPS API rehearsal #41642632762 passed. Draft/open; documentation only. |
-| #114 | GET-only Product Contour Stage 3 payload audit script + unit tests | Full VPS API rehearsal #41644183647 and release workflow validation #41644183649 passed. Draft/open. Unit tests validate report logic only; they do not constitute actual Stage 3 acceptance. |
+| #114 | GET-only Product Contour Stage 3 payload audit script + unit tests | Latest exact-head full VPS API rehearsal #41645275756 and release workflow validation #41645275993 passed. Draft/open. Unit tests validate report logic only; they do not constitute actual Stage 3 acceptance. |
 | #115 | Unknown API route returns explicit 404 | Docker #41644499158 and full VPS API rehearsal #41644499113 passed. Draft/open. |
 
 All six PRs are based on main `d49582d6180406728cd911d7dba6b4fda7b2dc5c`. None has been merged. No production database, Worker, ingestion, runtime registry, scenario state, deployment, DNS or cutover action was performed.
