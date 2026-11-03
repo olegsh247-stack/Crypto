@@ -497,3 +497,12 @@
 - PR reconciliation: #110–#117 merged. Оставшиеся открытые legacy PR #105/#106/#107/#100/#101/#86/#89/#88/#69/#84/#82/#81/#80 reviewed and retained open; они не являются merge-кандидатами как есть. Не выполнялось автоматическое закрытие или объединение.
 - Product Contour Stage 3 остаётся IN PROGRESS/BLOCKED до реальной GET-only API и read-only SQL проверки BTC/ETH/SOL/CAKE на отдельной изолированной non-production staging API/DB. VPS/IP/SSH/staging endpoint не предоставлены; provisioning не выполнялся.
 - BTC Rule v1 research остаётся DONE в offline/research scope. Не выполнялись production DB writes, live ingestion/capture, persistent Worker execution, runtime registry/scenario/probability changes, production migrations/deployment, DNS или cutover.
+
+## 2026-11-03 — PR #118 merged, final mainline status baseline
+
+- PR [#118](https://github.com/olegsh247-stack/Crypto/pull/118) объединён через Squash после явного разрешения пользователя. Final PR HEAD: `58f07e688bf4661e0339071d0e4007ad122324db`; merge commit и база main: `11292ea4b4f7dfb7fc997e9241309c6979b6e4f6`.
+- Exact-head CI [#41698317532](https://github.com/olegsh247-stack/Crypto/actions/runs/41698317532) завершился SUCCESS на PR HEAD: `build-and-e2e`, 34/34 шага, без ошибок. Проверены VPS-only guard, API/Worker builds, source/parser/response contracts, read-only Product Contour audit, Stage 3 SQL inventory и исполнение в read-only PostgreSQL transaction, Compose network boundaries, Docker, disposable PostgreSQL migrations, BTC provenance/idempotency, backup/restore и API/Worker E2E.
+- PR #118 изменил только `docs/PLAN-100.md`, `PROMPT-100-JOURNAL.md` и `docs/PRODUCT-CONTOUR-V1-CONTRACT-AUDIT.md`; код/runtime/DB/infra не менялись. Эта запись фиксирует его merge и точный baseline, чтобы не повторять документационные PR для каждого последующего docs-only merge.
+- PR #110–#118 merged. Legacy PR #105/#106/#107/#100/#101/#86/#89/#88/#69/#84/#82/#81/#80 reviewed and retained open; не закрывать и не объединять автоматически.
+- Product Contour Stage 3 остаётся IN PROGRESS/BLOCKED до GET-only API и read-only SQL проверки BTC/ETH/SOL/CAKE на отдельной изолированной non-production staging API/DB. VPS/IP/SSH/staging endpoint не предоставлены; provisioning не выполнялся.
+- BTC Rule v1 research остаётся DONE в offline/research scope. Production DB writes, live ingestion/capture, persistent Worker execution, runtime registry/scenario/probability changes, production migrations/deployment, DNS и cutover не выполнялись.
