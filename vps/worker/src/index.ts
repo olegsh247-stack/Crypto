@@ -1,4 +1,4 @@
-import { runScheduledIngestion } from "./scheduler.js";
+import { isPartialIngestionResult, runScheduledIngestion } from "./scheduler.js";
 
 const scheduleUtc=process.env.WORKER_SCHEDULE_UTC??"00:30";
 const match=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(scheduleUtc);
@@ -9,8 +9,7 @@ const env={DATABASE_URL:process.env.DATABASE_URL??"",BTC_OBSERVATION_INGESTION_E
 async function run(){
   try{
     const result=await runScheduledIngestion(env);
-    const partial=(result as any).btc_observations?.status==="partial"
-      || ((result as any).candle_ingestion?.failures?.length ?? 0) > 0;
+    const partial=isPartialIngestionResult(result);
     console.log(JSON.stringify({status:partial?"partial":"ok",service:"crypto-worker-vps",...result}));
     return !partial;
   }catch(error){
