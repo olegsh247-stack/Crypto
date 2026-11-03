@@ -15,5 +15,8 @@ test("Stage 3 observation inventory is read-only and covers all four assets", ()
   }
   assert.match(executableSql, /HAVING count\(\*\) > 1/i);
   assert.match(executableSql, /source_payload_sha256/i);
+  assert.match(executableSql, /invalid_payload_sha256/i);
+  assert.match(executableSql, /source_row_key/i);
+  assert.match(executableSql, /methodology_version/i);
   assert.match(executableSql, /missing_registered_source/i);
 });
