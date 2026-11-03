@@ -75,6 +75,14 @@ export function buildAssetAudit(assetId, payload) {
   for (const section of missingSections) issues.push({ code: "section_missing", section });
 
   const nullRates = {
+    research_blocks: calculateNullRates(sections.research_blocks, ["research_block_id", "block_number", "title", "status"]),
+    research_domains: calculateNullRates(sections.research_domains, ["research_domain_id", "code", "name", "display_order"]),
+    critical_factors: calculateNullRates(sections.critical_factors, ["critical_factor_id", "name", "snapshot_id", "importance_weight", "current_state", "trend"]),
+    scores: calculateNullRates(sections.scores, ["score_id", "score_type", "value", "methodology_version", "calculated_at", "snapshot_id"]),
+    research_scenarios: calculateNullRates(sections.research_scenarios, ["research_scenario_id", "snapshot_id", "scenario_type", "probability", "assumptions"]),
+    scenario_states: calculateNullRates(sections.scenario_states, ["scenario_state_id", "snapshot_id", "scenario_id", "state", "observed_at"]),
+    monitoring_signals: calculateNullRates(sections.monitoring_signals, ["monitoring_signal_id", "name", "status", "last_updated_at"]),
+    monitoring_events: calculateNullRates(sections.monitoring_events, ["event_id", "metric_id", "event_type", "severity", "observed_at", "status"]),
     metrics: calculateNullRates(sections.metrics, [
       "metric_id", "value", "unit", "observed_at", "retrieved_at", "source_updated_at",
       "source_id", "source_url", "methodology", "methodology_version", "freshness", "revision",
@@ -84,6 +92,7 @@ export function buildAssetAudit(assetId, payload) {
       "metric_id", "claim", "evidence_type", "status", "thesis_impact",
     ]),
     sources: calculateNullRates(sections.sources, ["source_id", "name", "source_type", "base_url", "trust_level"]),
+    history: calculateNullRates(sections.history, ["candle_open_at", "candle_close_at", "open_price", "high_price", "low_price", "close_price", "source_id", "is_finalized"]),
   };
 
   const freshnessCounts = Object.fromEntries(
@@ -116,7 +125,7 @@ export function buildAssetAudit(assetId, payload) {
     scenario_snapshot_lineage: {
       scenario_count: sections.research_scenarios.length,
       state_count: sections.scenario_states.length,
-      cross_snapshot_state_count: issues.filter(issue => issue.section === "scenario_states" && issue.code === "snapshot_id_mismatch").length,
+      cross_snapshot_state_count: issues.filter(issue => issue.section === "scenario_states" && ["snapshot_id_mismatch", "snapshot_id_missing"].includes(issue.code)).length,
       issues: issues.filter(issue => ["research_scenarios", "scenario_states"].includes(issue.section)),
     },
     issues,
