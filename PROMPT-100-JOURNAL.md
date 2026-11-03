@@ -432,3 +432,15 @@
 - #105: runbook audit found three missing mandatory Compose interpolation variables: `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, `CRYPTO_ADMIN_ORIGIN`. Added them to the runbook, with staging-only secret/origin guidance. Exact-head VPS API Build Rehearsal #41612362905 completed SUCCESS, including Worker/API builds and tests, disposable PostgreSQL migrations, backup/restore, API/Worker E2E and cleanup. No host or service was provisioned.
 - #107 remains validation-only and stale; do not merge it.
 - Product Contour source/CI contract work is merged through #103. Actual read-only representative payload verification for BTC/ETH/SOL/CAKE on approved isolated non-production DB/API remains the Stage 3 acceptance blocker. No production data, live ingestion, Worker execution or deployment was used.
+
+
+## 2026-11-03 — PR reconciliation, API hardening and Stage 3 preparation
+
+- Verified current `main` at `d49582d6180406728cd911d7dba6b4fda7b2dc5c`; PR #108 and #109 are merged and final post-merge CI is green.
+- Opened focused follow-ups on that exact base: #110 (Plan 100, Product Contour audit and PR reconciliation), #111 (1 MiB HTTP body limit, timeouts and safe logs), #112 (Add Asset type/category/tier, strict enabled validation and duplicate no-overwrite), #113 (current isolated staging runbook), #114 (GET-only Stage 3 payload audit/report tests), #115 (404 for unknown API routes).
+- Exact-head CI passed for #111 (Docker #41638246661; API rehearsal #41638246690), #112 (Web #41642776499; release validation #41642776487; Docker #41642776484; API rehearsal #41642776670), #113 (API rehearsal #41642632762), #114 (API rehearsal #41644183647; release validation #41644183649), and #115 (Docker #41644499158; API rehearsal #41644499113). #110 contains documentation-only updates; its earlier API rehearsal #41638043930 passed before the final docs-only refresh.
+- PR #114's report helper tests caught and corrected a scenario-state row-count assertion; the exact final helper tests passed. It requires explicit `PRODUCT_CONTOUR_ENVIRONMENT=staging`, uses GET only, and reports section counts, empty sections, null rates, source references, freshness and snapshot lineage.
+- PR #115 adds a regression test for the API 404 fallback; its Docker and full disposable-PostgreSQL API rehearsal passed.
+- PR #105 remains a stale source branch; its runbook was ported and expanded in #113. The stale #86 implementation was split into #111, #112 and #115; do not merge #86 wholesale.
+- All PRs #110–#115 remain Draft/Open and unmerged pending a separate merge decision. No production database, live ingestion, Worker execution, runtime registry, scenario state/probability, deployment, DNS or cutover action was performed.
+- Product Contour Stage 3 remains open: actual read-only BTC/ETH/SOL/CAKE payload validation still requires a separately approved isolated non-production DB/API. CI fixtures and report-helper tests do not substitute for that evidence.
