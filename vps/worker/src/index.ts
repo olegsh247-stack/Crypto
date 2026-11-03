@@ -36,7 +36,12 @@ function scheduleNext(){
   const delay=Math.max(1,next.getTime()-Date.now());
   console.log(JSON.stringify({status:"scheduled",service:"crypto-worker-vps",schedule_utc:scheduleUtc,next_run_at:next.toISOString()}));
   timer=setTimeout(async()=>{
-    await run();
+    const ok=await run();
+    if(!ok){
+      stopped=true;
+      process.exitCode=1;
+      return;
+    }
     scheduleNext();
   },delay);
 }
