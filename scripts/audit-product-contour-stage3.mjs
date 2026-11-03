@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { buildAssetAudit, PRODUCT_CONTOUR_ASSETS } from "./lib/product-contour-audit.mjs";
 
+if (process.env.PRODUCT_CONTOUR_ENVIRONMENT !== "staging") {
+  throw new Error("Set PRODUCT_CONTOUR_ENVIRONMENT=staging only after verifying the target is an isolated non-production API");
+}
 const apiBase = (process.env.CRYPTO_API_URL ?? "").replace(/\/+$/, "");
 if (!apiBase) throw new Error("CRYPTO_API_URL is required");
 const assetIds = (process.env.PRODUCT_CONTOUR_ASSETS ?? PRODUCT_CONTOUR_ASSETS.join(","))
