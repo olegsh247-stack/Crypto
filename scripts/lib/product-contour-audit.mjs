@@ -107,6 +107,7 @@ export function buildAssetAudit(assetId, payload) {
     snapshot_version: payload?.research_snapshot?.version ?? null,
     snapshot_status: payload?.research_snapshot?.status ?? null,
     section_row_counts: Object.fromEntries(SECTION_NAMES.map(name => [name, sections[name].length])),
+    empty_sections: SECTION_NAMES.filter(name => sections[name].length === 0),
     null_rates: nullRates,
     source_lineage: {
       registry_source_count: sourceIds.size,
