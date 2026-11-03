@@ -8,7 +8,7 @@ export function resolveAuditConfig(env) {
     throw new Error("Explicit isolated non-production staging confirmation is required");
   }
 
-  const apiBase = (env.CRYPTO_API_URL ?? "").replace(/\\/+$/, "");
+  const apiBase = (env.CRYPTO_API_URL ?? "").replace(/\/+$/, "");
   if (!apiBase) throw new Error("CRYPTO_API_URL is required");
 
   let apiUrl;
