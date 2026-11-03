@@ -1503,3 +1503,12 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - Product Contour v1: API/Web/source contracts, evidence provenance, metric freshness enum и scenario snapshot lineage закрыты на source/CI уровне и merged через #103. Stage 3 остаётся **IN PROGRESS** до read-only representative payload audit для BTC/ETH/SOL/CAKE на отдельной approved non-production DB/API: snapshot IDs, section row counts, null rates, source lineage, freshness display и отсутствие cross-snapshot state. Синтетические CI payloads не считать фактическими данными.
 - VPS provisioning, staging DB/API, реальный backup/restore и GET acceptance не выполнены. Worker остаётся остановленным на начальном read-only staging этапе: даже при отключённом BTC observation ingestion он пишет daily candles и обновляет research review status.
 - За пределами текущего разрешения остаются production DB writes, live ingestion/capture, runtime registry/state/probability changes, Worker execution/deploy, production migrations/deployment, DNS/cutover и merge PR без отдельного согласования.
+
+
+## Контрольная точка — 2026-11-03, Stage 3 audit hardening и CI
+
+- В PR #116 усилен companion SQL inventory для Stage 3: проверяется не только отсутствие provenance, но и формат SHA-256; duplicate review включает source row key, payload hash, retrieval/source-update timestamps и methodology version. SQL остаётся SELECT-only; добавлены регрессионные проверки новых полей и read-only инвариантов.
+- Exact PR #116 HEAD: `a4346c65ec0220e13949ca7da892166b1ea3edd1`. VPS API Build Rehearsal [#41667135846](https://github.com/olegsh247-stack/Crypto/actions/runs/41667135846) завершился **SUCCESS** на этом exact HEAD. Полный disposable CI pipeline прошёл; это не staging deployment и не фактическая приёмка данных.
+- PR #116 остаётся Draft/Open, не merged. Main остаётся `510c05eef969a3310fafe777bb48e699575c1456`; никаких изменений main этим checkpoint не сделано.
+- Stage 3 остаётся **IN PROGRESS**: фактический read-only API + SQL payload audit BTC/ETH/SOL/CAKE ещё не выполнен, поскольку отдельный VPS/staging DB/API не provisioned. CI rehearsal не заменяет реальные snapshot IDs, counts, null rates, source lineage и freshness evidence.
+- Worker не запускать в начальной staging-приёмке. Не выполнялись production DB writes, live ingestion/capture, runtime registry/scenario/probability changes, Worker execution/deploy, migrations/deployment на сервере, DNS или cutover.
