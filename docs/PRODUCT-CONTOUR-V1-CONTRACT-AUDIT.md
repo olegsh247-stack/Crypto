@@ -369,7 +369,7 @@ This batch extends the static contract audit into the dashboard and Deep Researc
 - No production database access or writes, schema migrations, runtime registry changes, scenario/probability changes, Worker deployment, merge or production deployment were performed.
 
 
-## Current status — 2026-11-03, after Product Contour v1 merge
+## Historical status snapshot — 2026-11-03, after Product Contour v1 merge (superseded by the current mainline verification below)
 
 PR #103 was merged into `main` at `716f5b5d03fba868d6555893858e97936d52f6a3`. Its API/Web changes now expose metric-level freshness and evidence provenance, scope scenario state to the active published snapshot and render the corresponding Product Contour fields. Post-merge CI passed on the merge commit. This closes the source/CI implementation batch, not the data acceptance gate.
 
