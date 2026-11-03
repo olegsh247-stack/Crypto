@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isClosedUtcDailyCandle, mergeRecentDailyCandleRows, utcDayBoundary } from "./scheduler.js";
+import { isClosedUtcDailyCandle, isPartialIngestionResult, mergeRecentDailyCandleRows, refreshResearchReviewStatus, utcDayBoundary } from "./scheduler.js";
 
 const boundaryCases: Array<{ name: string; input: string; expected: string }> = [
   { name: "winter date uses UTC midnight", input: "2026-01-15T12:00:00.000Z", expected: "2026-01-15T00:00:00.000Z" },
@@ -69,4 +69,29 @@ test("daily candle selector ignores open UTC day and dates outside recent eight 
     "BTC","BTCUSDT",now
   );
   assert.deepEqual(rows,[]);
+});
+
+
+test("research status refresh failure is surfaced instead of swallowed", async () => {
+  const failingSql = async () => { throw new Error("research_status_db_unavailable"); };
+  assert.deepEqual(await refreshResearchReviewStatus(failingSql), {
+    status: "failed",
+    reason: "research_status_db_unavailable",
+  });
+});
+
+test("Worker classifies research status refresh failure as a partial run", () => {
+  assert.equal(isPartialIngestionResult({
+    candle_ingestion: { failures: [] },
+    btc_observations: { status: "disabled" },
+    research_status_refresh: { status: "failed", reason: "research_status_db_unavailable" },
+  }), true);
+});
+
+test("Worker keeps successful research status refresh as a successful run", () => {
+  assert.equal(isPartialIngestionResult({
+    candle_ingestion: { failures: [] },
+    btc_observations: { status: "disabled" },
+    research_status_refresh: { status: "ok" },
+  }), false);
 });
