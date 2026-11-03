@@ -479,3 +479,12 @@
 - VPS API Build Rehearsal #41675926805 (https://github.com/olegsh247-stack/Crypto/actions/runs/41675926805) завершился SUCCESS на exact HEAD bd3454d108f7f4597123c904d80449a62551c8bf. Новый SQL test прошёл, SQL был исполнен на PostgreSQL успешно, весь job build-and-e2e завершился SUCCESS.
 - Проверены все изменённые файлы PR #116; SQL diff теперь цельный, duplicate grouping единственный, read-only transaction и CI execution присутствуют. PR #116 остаётся Draft/Open, merge не выполнялся; main SHA неизменен.
 - Результат относится только к disposable CI PostgreSQL. Реальный Stage 3 acceptance BTC/ETH/SOL/CAKE по-прежнему требует изолированного staging VPS/API/DB. Production writes, live capture, persistent Worker, deployment, DNS и cutover не выполнялись.
+
+
+## 2026-11-03 — PR #116 merged и post-merge CI
+
+- PR [#116](https://github.com/olegsh247-stack/Crypto/pull/116) объединён через Squash после отдельного согласия пользователя. Final PR HEAD перед merge: `67c0ae6888ee91c6c7f952a1dce33c91ac3aab64`; merge commit и новый `main`: `bdb28da4dcdaa42aedc54d3927ee677524b0ddc9`.
+- PR #116 завершил Stage 3 audit hardening: read-only SQL transaction, SHA-256 validation, provenance-aware duplicate inventory, regression tests и фактическое выполнение SQL через `psql` на disposable PostgreSQL в CI. Exact-head VPS API Build Rehearsal #41676595853 завершился SUCCESS на final PR HEAD.
+- После merge проверены три workflow на актуальном main: [VPS API Build Rehearsal #41683807890](https://github.com/olegsh247-stack/Crypto/actions/runs/41683807890), [Crypto VPS Release Gate #41683808132](https://github.com/olegsh247-stack/Crypto/actions/runs/41683808132), [Validate VPS Release Workflow #41683807912](https://github.com/olegsh247-stack/Crypto/actions/runs/41683807912). Все 3/3 workflow и все jobs завершились SUCCESS.
+- Эти результаты подтверждают CI/rehearsal только на disposable окружениях. Реальная read-only Stage 3 приёмка BTC/ETH/SOL/CAKE ещё не проведена: staging VPS/API/DB не provisioned, фактического payload report нет.
+- Production DB writes, live ingestion/capture, persistent Worker execution, runtime registry/scenario/probability changes, production migrations/deployment, DNS и cutover не выполнялись. Worker не запускать на начальном read-only acceptance.
