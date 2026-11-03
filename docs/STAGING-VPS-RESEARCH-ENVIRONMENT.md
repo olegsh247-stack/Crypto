@@ -72,7 +72,7 @@ Run GET-only checks against the staging API:
 - `/api/pairs`
 - `/api/asset-types` (active type catalog used by Add Asset)
 
-Run `PRODUCT_CONTOUR_ENVIRONMENT=staging PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION PRODUCT_CONTOUR_STAGING_API_ORIGIN=<staging-origin> CRYPTO_API_URL=<staging-origin> PRODUCT_CONTOUR_API_COMMIT_SHA=<deployed-commit-sha> node scripts/audit-product-contour-stage3.mjs` from the repository root. The generated immutable report records the API origin and deployed API commit SHA. Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
+Run `PRODUCT_CONTOUR_ENVIRONMENT=staging PRODUCT_CONTOUR_STAGING_CONFIRMATION=I_CONFIRM_ISOLATED_NON_PRODUCTION PRODUCT_CONTOUR_STAGING_API_ORIGIN=<staging-origin> CRYPTO_API_URL=<staging-origin> PRODUCT_CONTOUR_API_COMMIT_SHA=<deployed-commit-sha> node scripts/audit-product-contour-stage3.mjs` from the repository root. The generated immutable payload report records the API origin and deployed API commit SHA. Note that the asset API's `metrics` array is latest-per-metric (`DISTINCT ON metric_id`), not the complete observation history. Therefore also run the read-only SQL inventory against the isolated staging database: `psql "$STAGING_DATABASE_URL" --set ON_ERROR_STOP=1 --file scripts/audit-stage3-observations.sql > stage3-observations-audit.txt`. This second report supplies full observation row counts, provenance null counts, registered-source gaps, freshness counts, and duplicate logical-key groups for all four assets. Keep both outputs together as the Stage 3 evidence bundle. Run `scripts/e2e-smoke.mjs` only if the staging database satisfies its full registry/history assumptions. Otherwise use targeted GET checks and report missing data as a result, not as a reason to insert fixtures.
 
 Capture one immutable acceptance report per run, including its UTC timestamp and the API build/commit SHA. For each of BTC, ETH, SOL, and CAKE record:
 - asset identity and enabled state;
@@ -86,7 +86,7 @@ Capture one immutable acceptance report per run, including its UTC timestamp and
 - duplicate logical observation keys and the disposition recorded for each;
 - market-history coverage and latest finalized candle timestamps.
 
-The acceptance report must include section row counts, null rates, lineage checks, and a cross-snapshot scenario-state check. Missing or empty data is a reported outcome, not a reason to load fixtures or create synthetic evidence. Preserve snapshot IDs and raw counts so a later run can be compared without silently changing the definition of completeness.
+The combined acceptance evidence must include section row counts, null rates, lineage checks, a cross-snapshot scenario-state check, full observation inventory, and duplicate logical-key review. The API JSON report alone does not assess full observation history or duplicate keys; the companion SQL report is mandatory. Missing or empty data is a reported outcome, not a reason to load fixtures or create synthetic evidence. Preserve snapshot IDs and raw counts so a later run can be compared without silently changing the definition of completeness.
 
 All acceptance queries must be SELECT-only. Keep output free of credentials and private keys.
 
