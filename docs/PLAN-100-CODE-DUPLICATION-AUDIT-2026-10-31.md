@@ -124,7 +124,7 @@ PR #105's runbook was reviewed against the current Compose file and Worker behav
 
 | PR | Purpose | Exact-head validation / disposition |
 |---|---|---|
-| #110 | Plan 100, Product Contour audit + open-PR reconciliation | Documentation-only. Earlier VPS API Build Rehearsal #41638043930 passed; later commits only refreshed the Plan/audit docs. Draft/open; not merged. |
+| #110 | Plan 100, Product Contour audit, journal + open-PR reconciliation | Documentation-only. Earlier VPS API Build Rehearsal #41638043930 passed; later commits only refreshed the Plan/audit docs. Draft/open; not merged. |
 | #111 | HTTP request boundary hardening | Docker #41638246661 and full VPS API rehearsal #41638246690 passed. Draft/open. |
 | #112 | Add Asset classification and duplicate safety | Web #41642776499, release workflow validation #41642776487, Docker #41642776484 and full VPS API rehearsal #41642776670 passed. Mutation E2E now covers active type lookup, typed asset creation, duplicate rejection and invalid boolean input. Draft/open. |
 | #113 | Current isolated staging VPS runbook | Full VPS API rehearsal #41642632762 passed. Draft/open; documentation only. |
