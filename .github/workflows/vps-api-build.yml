@@ -37,6 +37,8 @@ jobs:
       - name: Test VPS API response contracts
         working-directory: vps/api
         run: npm test
+      - name: Test read-only Product Contour audit report
+        run: node --test scripts/product-contour-audit.test.mjs
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
