@@ -457,7 +457,7 @@
 - No production DB writes, live ingestion/capture, Worker execution, runtime registry/scenario/probability changes, deployment, DNS or cutover occurred.
 
 - Follow-up verification: #41648026215 completed SUCCESS. Its job passed repository VPS-only guard, API/Worker builds, source/parser and response-contract tests, read-only Product Contour audit tests, Compose network-boundary validation, Docker builds, PostgreSQL migrations, BTC provenance/idempotency rehearsal, backup/restore, API E2E and Worker E2E. This does not mean Worker was run against a persistent staging or production DB; it ran only inside disposable CI rehearsal.
-- PR #116 is a documentation-only draft and remains unmerged pending review. Its own CI runs #41648262676 and #41648240221 both completed SUCCESS on head `da59b6bc7718055b93a30ffd76543060173cd541`.
+- PR #116 remains Draft/Open and unmerged pending review; it includes staging-audit code, SQL inventory, tests, runbook and Plan/journal updates. Its own CI runs #41648262676 and #41648240221 both completed SUCCESS on head `da59b6bc7718055b93a30ffd76543060173cd541`.
 - VPS remains unpurchased/unprovisioned; no public IP, domain/DNS target or SSH access exists. No provisioning was attempted.
 
 
@@ -469,3 +469,13 @@
 - PR #116 остаётся Draft/Open и не объединён. Main не изменялся; PR #116 не merged. CI — только репетиция в disposable environment, не реальный VPS/staging acceptance.
 - Stage 3 остаётся IN PROGRESS до read-only аудита реальных payload BTC/ETH/SOL/CAKE на отдельном изолированном staging API/DB. VPS не provisioned; публичного IP/domain/SSH нет.
 - Production DB writes, live ingestion/capture, Worker execution/deploy, runtime registry/scenario/probability changes, production deployment, DNS и cutover не выполнялись.
+
+
+## 2026-11-03 — исправление SQL Stage 3 и PostgreSQL execution CI
+
+- Ручное ревью выявило повреждение companion SQL inventory: оборванное выражение проверки SHA-256 и повторно вставленный SQL-фрагмент. Исправлено в PR #116, без изменений main.
+- Восстановлена проверка hash: непустое значение должно соответствовать 64 hex-символам. Добавлены явные счётчики отсутствующих methodology_version и source_row_key; duplicate payload comparison включает все согласованные provenance dimensions.
+- Весь SQL выполняется в BEGIN TRANSACTION READ ONLY / COMMIT; CI дополнен отдельным Node regression test и фактическим psql -v ON_ERROR_STOP=1 -f scripts/audit-stage3-observations.sql на disposable PostgreSQL после применения миграций.
+- VPS API Build Rehearsal #41675926805 (https://github.com/olegsh247-stack/Crypto/actions/runs/41675926805) завершился SUCCESS на exact HEAD bd3454d108f7f4597123c904d80449a62551c8bf. Новый SQL test прошёл, SQL был исполнен на PostgreSQL успешно, весь job build-and-e2e завершился SUCCESS.
+- Проверены все изменённые файлы PR #116; SQL diff теперь цельный, duplicate grouping единственный, read-only transaction и CI execution присутствуют. PR #116 остаётся Draft/Open, merge не выполнялся; main SHA неизменен.
+- Результат относится только к disposable CI PostgreSQL. Реальный Stage 3 acceptance BTC/ETH/SOL/CAKE по-прежнему требует изолированного staging VPS/API/DB. Production writes, live capture, persistent Worker, deployment, DNS и cutover не выполнялись.

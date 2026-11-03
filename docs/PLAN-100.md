@@ -1512,3 +1512,14 @@ Verification boundary: GitHub combined status returned no checks and the availab
 - PR #116 остаётся Draft/Open, не merged. Main остаётся `510c05eef969a3310fafe777bb48e699575c1456`; никаких изменений main этим checkpoint не сделано.
 - Stage 3 остаётся **IN PROGRESS**: фактический read-only API + SQL payload audit BTC/ETH/SOL/CAKE ещё не выполнен, поскольку отдельный VPS/staging DB/API не provisioned. CI rehearsal не заменяет реальные snapshot IDs, counts, null rates, source lineage и freshness evidence.
 - Worker не запускать в начальной staging-приёмке. Не выполнялись production DB writes, live ingestion/capture, runtime registry/scenario/probability changes, Worker execution/deploy, migrations/deployment на сервере, DNS или cutover.
+
+
+## Контрольная точка — 2026-11-03, исправление SQL Stage 3 и проверка на PostgreSQL
+
+- В PR #116 исправлен повреждённый scripts/audit-stage3-observations.sql: удалены оборванное SHA-256 выражение и повторяющийся фрагмент запроса; восстановлена проверка непустого hash на ровно 64 hex-символа.
+- SQL-инвентаризация теперь явно обёрнута в BEGIN TRANSACTION READ ONLY / COMMIT. Проверки отсутствующих methodology, methodology_version, source_row_key и hash сохранены; duplicate review сравнивает значения и provenance, включая source_row_key, hash, retrieved_at, source_updated_at и methodology_version.
+- CI дополнен двумя независимыми воротами: регрессионный тест SQL-инвариантов и реальное выполнение SQL через psql -v ON_ERROR_STOP=1 на disposable PostgreSQL после миграций.
+- VPS API Build Rehearsal #41675926805 (https://github.com/olegsh247-stack/Crypto/actions/runs/41675926805) завершился SUCCESS на точном code/workflow HEAD bd3454d108f7f4597123c904d80449a62551c8bf. В частности, новый шаг Execute Stage 3 observation inventory прошёл SUCCESS; все остальные шаги job также успешны.
+- Это CI-репетиция на временной crypto_test PostgreSQL. Она подтверждает синтаксис и выполнение SQL на актуальной схеме, но не является реальным staging audit BTC/ETH/SOL/CAKE.
+- PR #116 остаётся Draft/Open и не объединён; main остаётся 510c05eef969a3310fafe777bb48e699575c1456. Stage 3 остаётся IN PROGRESS до фактической read-only приёмки на отдельном staging API/DB.
+- Production DB, live ingestion, persistent Worker, runtime registry/scenario/probability, deployment, DNS и cutover не затрагивались.
