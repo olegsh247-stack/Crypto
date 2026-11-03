@@ -444,3 +444,14 @@
 - PR #105 remains a stale source branch; its runbook was ported and expanded in #113. The stale #86 implementation was split into #111, #112 and #115; do not merge #86 wholesale.
 - All PRs #110–#115 remain Draft/Open and unmerged pending a separate merge decision. No production database, live ingestion, Worker execution, runtime registry, scenario state/probability, deployment, DNS or cutover action was performed.
 - Product Contour Stage 3 remains open: actual read-only BTC/ETH/SOL/CAKE payload validation still requires a separately approved isolated non-production DB/API. CI fixtures and report-helper tests do not substitute for that evidence.
+
+
+## 2026-11-03 — объединение PR #110–#115 и post-merge контроль
+
+- По отдельному согласию пользователя последовательно объединены через Squash все шесть PR, ранее открытых Draft на базе `d49582d`: #110 Plan 100/Product Contour audit/journal; #111 HTTP request limits/timeouts; #112 Add Asset classification and duplicate protection; #115 unknown API route 404; #114 GET-only Stage 3 audit tool; #113 isolated staging VPS runbook.
+- Merge commits: #110 `c166524e4a3c9d9bc9cd4a992a4b862e1867feeb`; #111 `3f1a07127cd5e767391ac2a8087347f39aa27b7a`; #112 `12cd4a3f180c4a373555a8c5666623b27c96da8c`; #115 `7dd2291fbef72e6a10203246b1dd31cb786a843b`; #114 `39d076b6574889679b11d22b513a671ef2bfa2ee`; #113 `510c05eef969a3310fafe777bb48e699575c1456`.
+- Current main is `510c05eef969a3310fafe777bb48e699575c1456`. Exact-head CI for each PR passed before merge; the combined post-merge workflow #41648026215 was still in progress at the time of this entry and must be checked separately.
+- #114 audit script requires explicit `PRODUCT_CONTOUR_ENVIRONMENT=staging`, requires `CRYPTO_API_URL`, and uses GET only. It reports snapshot IDs, section counts, null rates, lineage/freshness and cross-snapshot scenario-state issues. CI tests do not establish actual Stage 3 acceptance.
+- #113 runbook requires a fully isolated staging DB, staging-only secrets/volumes and no production credentials. Do not start Worker during initial acceptance. Do not treat fixtures or seed data as real research evidence.
+- Stage 3 remains open: no staging VPS/API/DB has been provisioned and no actual BTC/ETH/SOL/CAKE payload report exists. The next step is non-production staging preparation, followed by read-only payload audit and review.
+- No production DB writes, live ingestion/capture, Worker execution, runtime registry/scenario/probability changes, deployment, DNS or cutover occurred.
