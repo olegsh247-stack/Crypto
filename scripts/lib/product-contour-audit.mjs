@@ -1,5 +1,51 @@
 export const PRODUCT_CONTOUR_ASSETS = ["btc", "eth", "sol", "cake"];
 
+export function resolveAuditConfig(env) {
+  if (env.PRODUCT_CONTOUR_ENVIRONMENT !== "staging") {
+    throw new Error("PRODUCT_CONTOUR_ENVIRONMENT must be staging");
+  }
+  if (env.PRODUCT_CONTOUR_STAGING_CONFIRMATION !== "I_CONFIRM_ISOLATED_NON_PRODUCTION") {
+    throw new Error("Explicit isolated non-production staging confirmation is required");
+  }
+
+  const apiBase = (env.CRYPTO_API_URL ?? "").replace(/\/+$/, "");
+  if (!apiBase) throw new Error("CRYPTO_API_URL is required");
+
+  let apiUrl;
+  try {
+    apiUrl = new URL(apiBase);
+  } catch {
+    throw new Error("CRYPTO_API_URL must be a valid absolute URL");
+  }
+  if (!["http:", "https:"].includes(apiUrl.protocol) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) {
+    throw new Error("CRYPTO_API_URL must be an HTTP(S) origin/path without credentials, query, or fragment");
+  }
+
+  const stagingOrigin = env.PRODUCT_CONTOUR_STAGING_API_ORIGIN ?? "";
+  let expectedOrigin;
+  try {
+    expectedOrigin = new URL(stagingOrigin).origin;
+  } catch {
+    throw new Error("PRODUCT_CONTOUR_STAGING_API_ORIGIN must be an explicit staging origin");
+  }
+  if (expectedOrigin !== apiUrl.origin) {
+    throw new Error("CRYPTO_API_URL origin does not match PRODUCT_CONTOUR_STAGING_API_ORIGIN");
+  }
+
+  const apiCommitSha = (env.PRODUCT_CONTOUR_API_COMMIT_SHA ?? "").trim();
+  if (!/^[a-f0-9]{7,40}$/i.test(apiCommitSha)) {
+    throw new Error("PRODUCT_CONTOUR_API_COMMIT_SHA must identify the deployed API commit");
+  }
+
+  const assetIds = (env.PRODUCT_CONTOUR_ASSETS ?? PRODUCT_CONTOUR_ASSETS.join(","))
+    .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
+  if (!assetIds.length || new Set(assetIds).size !== assetIds.length) {
+    throw new Error("PRODUCT_CONTOUR_ASSETS must contain unique asset IDs");
+  }
+
+  return { apiBase, apiOrigin: apiUrl.origin, apiCommitSha, assetIds };
+}
+
 const SECTION_NAMES = [
   "research_blocks",
   "research_domains",
@@ -104,7 +150,10 @@ export function buildAssetAudit(assetId, payload) {
   return {
     asset_id: assetId,
     snapshot_id: snapshotId,
-    snapshot_version: payload?.research_snapshot?.version ?? null,
+    snapshot_version: payload?.research_snapshot?.research_version ?? payload?.research_snapshot?.version ?? null,
+    snapshot_published_at: payload?.research_snapshot?.research_date ?? payload?.research_snapshot?.published_at ?? null,
+    snapshot_title: payload?.research_snapshot?.title ?? null,
+    asset_enabled: payload?.asset?.enabled ?? null,
     snapshot_status: payload?.research_snapshot?.status ?? null,
     section_row_counts: Object.fromEntries(SECTION_NAMES.map(name => [name, sections[name].length])),
     empty_sections: SECTION_NAMES.filter(name => sections[name].length === 0),
