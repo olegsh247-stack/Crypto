@@ -378,3 +378,33 @@ PR #103 was merged into `main` at `716f5b5d03fba868d6555893858e97936d52f6a3`. It
 Read-only representative payload validation for BTC, ETH, SOL and CAKE is still required against an approved, isolated non-production database/API. Record actual snapshot IDs, row counts by section, null rates, source/observation lineage, freshness display and cross-snapshot scenario-state exclusion. Disposable PostgreSQL fixtures validate contracts but are not representative live/non-production payload evidence. No VPS/staging environment is provisioned yet.
 
 No production DB access/writes, live ingestion, Worker execution, runtime registry/scenario/probability changes, migrations, deployment, DNS or cutover is authorized by this update.
+
+
+## Current mainline verification — 2026-11-03
+
+The earlier static findings above are historical audit records. The implementation status below was rechecked against main `d49582d6180406728cd911d7dba6b4fda7b2dc5c` after PR #103 and its follow-up contract work.
+
+### Static contract findings now addressed
+
+- **Research progress semantics:** `web/lib/research-status.ts` calculates both completed and resolved counts using the shared status contract; the percentage is based on resolved blocks (complete + N/A). The UI can distinguish completed from resolved.
+- **Factors and scores:** the API detail query scopes both collections to the latest published snapshot for the asset.
+- **Scenario definitions and states:** the API scopes both to the latest published snapshot. `web/lib/scenario-lineage.ts` additionally selects a state only when its snapshot matches the active published snapshot and its scenario ID belongs to the active definition set.
+- **Evidence and sources:** evidence rows are scoped to the latest published snapshot. The top-level source collection is the union of sources referenced by asset observations and active-snapshot evidence, deduplicated by source ID.
+- **Metric provenance/freshness:** the API returns observed/retrieved/source-updated timestamps, period, source ID/URL, row key, payload hash, methodology/version, status, freshness and revision. The Web `ResearchFreshness` type preserves status, reason and review timestamps; list and detail payloads expose the same timestamp fields.
+- **CI contract coverage:** the current VPS API rehearsal includes BTC evidence/snapshot lineage E2E, API response contract checks, offline invariants and Web build coverage. PR #114 adds tested reporting logic for actual representative payloads.
+
+### Remaining Stage 3 gate — not passed
+
+Static code and disposable-PostgreSQL CI do not prove the current representative payloads are complete or correctly populated in an isolated staging environment. Stage 3 remains open until a read-only run for BTC/ETH/SOL/CAKE records:
+- published snapshot IDs and versions;
+- row counts for every response section and explicit empty sections;
+- null counts/rates with denominators for provenance-bearing fields;
+- source registry references and missing lineage;
+- asset/metric/evidence freshness values as actually returned;
+- scenario definition/state snapshot matching, including missing or cross-snapshot state IDs.
+
+PR #114 provides a GET-only script for this report. It requires `PRODUCT_CONTOUR_ENVIRONMENT=staging`, reports only the API origin (not credentials), and uses no mutation endpoint. Its unit tests and CI rehearsal validate the report logic only; they do not run against real BTC/ETH/SOL/CAKE staging data and do not close Stage 3.
+
+### Acceptance boundary
+
+No staging VPS/API has been provisioned or supplied as of this checkpoint. Do not point the audit script at production. Do not insert fixtures, seed synthetic observations, start Worker, or change scenario states/probabilities to make the report look complete. Stage 3 acceptance requires the separate non-production environment and an explicit review of its actual report.

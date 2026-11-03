@@ -84,16 +84,65 @@
 No production database access or writes, live ingestion, Worker execution, runtime registry changes, scenario-state/probability changes, deployment, DNS change, cutover, merge or PR closure was performed.
 
 
-## Current reconciliation — 2026-11-03 (supersedes the 2026-10-31 PR inventory)
+## Current reconciliation — 2026-11-03 (verified against main d49582d)
 
-- Current main is `716f5b5d03fba868d6555893858e97936d52f6a3`; #102, #104, #99 and #103 have been merged. Do not use the historical Draft/Open labels in the inventory above as current status.
-- #108 is the canonical Worker research-status error-reporting PR, based on current main; exact-head CI 3/3 SUCCESS. The duplicate Worker implementation in #106 must be excluded from any follow-up branch.
-- #106 is 46 commits ahead and four behind current main. Do not merge it wholesale. Its useful non-Worker changes are: Plan 100 duplicate-section cleanup and master-prompt reconciliation; journal update; this duplication audit; a contract test tying review-only Kraken candidate endpoint/source/metric/unit to the runtime BTC source catalog; consolidated Worker npm test entry point; and duplicate workflow path cleanup.
-- The endpoint contract test is deliberately narrow: it checks the candidate-preparation script's Kraken URL against the runtime catalog and verifies the expected source ID, metric ID and USD/BTC unit. It does not unify runtime and review-only data paths.
-- #105 remains a preparation-only staging runbook. Re-audit found missing required Compose interpolation values `CRYPTO_ADMIN_LOGIN_SECRET`, `CRYPTO_ADMIN_SESSION_SECRET`, and `CRYPTO_ADMIN_ORIGIN`; corrected on its branch. Its updated exact-head VPS API rehearsal #41612362905 completed SUCCESS. It does not provision VPS or authorize Worker start.
-- #107 remains validation-only, stale and not a merge candidate. Do not treat its historical green combined CI as current-main validation.
-- Product Contour v1 source/API/Web contracts were merged via #103; the only remaining Stage 3 acceptance gate is real read-only representative payload verification for BTC/ETH/SOL/CAKE on an approved isolated non-production DB/API. No synthetic fixture counts may substitute.
+### Mainline and merged work
 
-### Safety boundary
+- Current `main`: `d49582d6180406728cd911d7dba6b4fda7b2dc5c`.
+- Merged PRs: #102 (`aece8a02`), #104 (`41491978`), #99 (`83dc2e97`), #103 (`716f5b5d`), #108 (`499a0dcc`) and #109 (`d49582d`). The corresponding post-merge CI on the final main SHA passed: Release Gate #41624191227, Docker image build #41624191232, BTC Scenario Readiness #41624191177, VPS API Build Rehearsal #41624191084 and Validate VPS Release Workflow #41624191061.
+- The older 2026-10-31 and 2026-11-02 inventories above are historical snapshots. Their open/draft labels and dependency order must not be reused as current status.
 
-No production database access/writes, live ingestion/capture, Worker execution, runtime registry/scenario/probability changes, migration, deployment, DNS, cutover, merge or PR closure is performed by this reconciliation.
+### Open PR reconciliation against current main
+
+| PR | Current branch delta vs main | Verified disposition |
+|---|---:|---|
+| #105 | 3 ahead / 6 behind; one new runbook file | Stale source branch. Its useful content was ported and expanded onto current main in #113, including explicit Stage 3 acceptance criteria. Do not merge #105. |
+| #106 | 46 ahead / 6 behind; 10 changed files | Historical combined branch. Worker error-reporting work was isolated and merged as #108; useful Plan/journal/audit/endpoint-test work was transferred and merged as #109. Do not merge this branch. |
+| #107 | 105 ahead / 6 behind; 30 changed files | Temporary combined integration-validation artifact. Not a source PR and not a merge candidate; its historical CI does not replace post-merge main CI. |
+| #101 | 1 ahead / 6 behind; Product Contour audit doc only | Stale docs-only branch. Reconcile any unique content against the current audit and #109 before disposition; do not merge wholesale. |
+| #100 | 2 ahead / 6 behind; Plan/journal only | Superseded by #109's Plan/journal update. Do not merge. |
+| #86 | 29 ahead / 8 behind; 15 changed files | Do not merge wholesale. #102/#104 supersede its Web edge/admin-session implementation. Its unique server hardening, Add Asset flow and API 404 fallback have now been isolated into #111, #112 and #115 respectively. |
+| #89 | 2 ahead / 8 behind; API + dashboard files | Duplicate of #99's market-input/dashboard correctness changes; #99 is already merged. Do not merge again. |
+| #88 | 6 ahead / 8 behind; Worker scheduler + tests | Its UTC daily-candle behavior is superseded by the current Worker scheduler: UTC boundaries, completed-candle filtering, Binance-first/Kraken gap-fill selection, validation, and fetch-failure reporting. Do not port the old patch wholesale. |
+| #69 | 23 ahead / 406 behind; old BTC collector path | Canonical opt-in BTC observation pipeline is already in main. Do not add a second collector path; inspect only a specifically missing behavior if evidence appears. |
+| #84 | 263 ahead / 8 behind; 44 files | Very large historical BTC reconciliation branch. BTC Rule v1 research is complete; do not merge wholesale or repeat source captures. |
+| #82 | 148 ahead / 344 behind; 30 files | Historical block-window/source-capture proposal; do not merge wholesale. |
+| #81 | 5 ahead / 344 behind; one documentation file | Historical fee/subsidy window proposal; not a current blocker for BTC Rule v1 research. |
+| #80 | 152 ahead / 345 behind; 30 files | Historical freshness/source-capture proposal; do not merge wholesale or reinstate freshness as a test-mode blocker. |
+
+### Unique #86 work now isolated
+
+1. **PR #111 — HTTP server boundary:** 1 MiB declared/streamed body cap, 413 response, bounded request/header/keep-alive/socket timeouts, safe structured request/error logs. Exact branch CI: Docker build #41638246661 SUCCESS and full VPS API rehearsal #41638246690 SUCCESS. No production server was changed.
+2. **PR #112 — Add Asset flow:** active asset-type catalog endpoint, required type/category/research tier selection, redirect to asset detail, strict boolean validation, and duplicate insert protection returning 409 rather than updating an existing row. The workflow explicitly tests asset-type retrieval, typed creation, duplicate rejection, and invalid boolean input. Exact-head CI passed: Web build #41642776499, release workflow validation #41642776487, Docker #41642776484, and full VPS API rehearsal #41642776670.
+3. **Already superseded:** #86's in-memory admin throttle/timing-safe bearer implementation is not the canonical session path after #104; its DB pool idle-error handler already exists in main; its Caddy/Web edge, session proxy and most API auth changes are superseded by #102/#104. Do not reintroduce parallel auth logic.
+
+### Staging runbook source
+
+PR #105's runbook was reviewed against the current Compose file and Worker behavior. It has been ported to current main in #113, with explicit Stage 3 payload acceptance evidence requirements. #113 exact-head VPS API Build Rehearsal #41642632762 passed. Do not merge the stale #105 branch.
+
+### Focused follow-up PRs on current main (2026-11-03)
+
+| PR | Purpose | Exact-head validation / disposition |
+|---|---|---|
+| #110 | Plan 100, Product Contour audit, journal + open-PR reconciliation | Documentation-only. Earlier VPS API Build Rehearsal #41638043930 passed; later commits only refreshed the Plan/audit docs. Draft/open; not merged. |
+| #111 | HTTP request boundary hardening | Docker #41638246661 and full VPS API rehearsal #41638246690 passed. Draft/open. |
+| #112 | Add Asset classification and duplicate safety | Web #41642776499, release workflow validation #41642776487, Docker #41642776484 and full VPS API rehearsal #41642776670 passed. Mutation E2E now covers active type lookup, typed asset creation, duplicate rejection and invalid boolean input. Draft/open. |
+| #113 | Current isolated staging VPS runbook | Full VPS API rehearsal #41642632762 passed. Draft/open; documentation only. |
+| #114 | GET-only Product Contour Stage 3 payload audit script + unit tests | Latest exact-head full VPS API rehearsal #41645275756 and release workflow validation #41645275993 passed. Draft/open. Unit tests validate report logic only; they do not constitute actual Stage 3 acceptance. |
+| #115 | Unknown API route returns explicit 404 | Docker #41644499158 and full VPS API rehearsal #41644499113 passed. Draft/open. |
+
+All six PRs are based on main `d49582d6180406728cd911d7dba6b4fda7b2dc5c`. None has been merged. No production database, Worker, ingestion, runtime registry, scenario state, deployment, DNS or cutover action was performed.
+
+### Remaining project gates
+
+- Product Contour Stage 3 still requires read-only representative payload validation for BTC/ETH/SOL/CAKE against a separately approved non-production DB/API. Capture snapshot IDs, section row counts, null rates, source lineage, freshness display and cross-snapshot scenario-state checks. CI fixtures are not a substitute.
+- PR #105 is only a runbook. VPS provisioning, staging DB/API, independent off-host backup/restore and live GET acceptance remain unperformed.
+- Worker must remain stopped during initial staging read-only acceptance: it writes daily candles and may update research review status even when BTC observation ingestion is disabled.
+- No production database access/writes, live ingestion, Worker execution, runtime registry/scenario/probability changes, migration, deployment, DNS, cutover, merge or PR closure was performed by this reconciliation.
+
+### Next review order
+
+1. Inspect the exact #115 API handler test and complete changed-file diffs for #110–#115.
+2. Review the focused open PRs (#110–#115) for consistency, then prepare a safe merge sequence only after the user approves.
+3. Keep #105/#106/#107/#100/#101 and stale BTC branches out of main unless a new, independently verified unique requirement is identified.
+4. Run the #114 audit script only when a separately approved isolated non-production staging API is actually available; review the real BTC/ETH/SOL/CAKE report before marking Stage 3 accepted.
