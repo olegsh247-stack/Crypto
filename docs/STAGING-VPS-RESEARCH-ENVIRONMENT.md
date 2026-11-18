@@ -44,7 +44,7 @@ Initial service sequence (the explicit service list is important — never use a
 1. Start PostgreSQL only: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml up -d postgres`.
 2. Apply schema and versioned migrations to the empty staging database: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml --profile ops run --rm migrate`.
 3. Start API, Web, and Caddy (Caddy depends on both API and Web): `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml up -d api web caddy`. If there is no configured staging domain/public HTTPS, omit `caddy` and access the private services only through an approved tunnel or private ingress.
-4. Do not start `worker` until its write behavior is separately approved for staging.
+4. Worker is excluded from the default Compose profile. Do not enable it during initial read-only acceptance. Its dedicated `ingestion` profile must be selected explicitly; BTC observation ingestion remains disabled by default.
 5. Verify health endpoints and API GET contracts.
 
 The repository migration runner bootstraps schema and applies versioned migrations. It does not run the separate seed fixture file. Inspect each migration's inserted research rows and provenance before treating them as research evidence.
@@ -108,8 +108,8 @@ Only after API/data acceptance:
 1. Review the exact Worker write set and schedule.
 2. Keep BTC observation ingestion disabled unless separately approved.
 3. Use a staging-only database role and staging-only secrets.
-4. Start Worker manually in one-shot mode only after explicit approval; inspect write counts and provenance.
-5. Enable a schedule only after the one-shot run is accepted.
+4. After explicit approval, run one controlled pass with the dedicated profile: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml --profile ingestion run --rm -e WORKER_RUN_ONCE=1 worker`. Inspect write counts and provenance.
+5. Enable the recurring schedule only after the one-shot run is accepted: `docker compose --project-name crypto-staging --env-file /etc/crypto-staging/staging.env -f vps/docker-compose.production.yml --profile ingestion up -d worker`.
 
 The current Worker is not read-only: it upserts daily market candles and updates expired research review statuses even when BTC observation ingestion is disabled. Therefore it must remain stopped during initial read-only acceptance.
 

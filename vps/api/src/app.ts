@@ -2,8 +2,16 @@ import { assessBtcScenarioReadiness, createSqlClient } from "@crypto/vps-runtime
 import { calculateResearchStatus } from "./research-status.js";
 import { normalizeStoredQuoteRatio, parseCoinGeckoUsdTicker, parseRequestedDays } from "./market-input.js";
 
-export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; }
-function corsHeaders(env:Env){return {"Access-Control-Allow-Origin":process.env.CORS_ORIGIN??"*","Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization"};}
+export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; CORS_ORIGIN?: string; }
+function corsHeaders(env:Env):Record<string,string>{
+ const configuredOrigin=env.CORS_ORIGIN?.trim()??"";
+ if(!configuredOrigin||configuredOrigin==="*")return {};
+ try{
+  const parsed=new URL(configuredOrigin);
+  if(!["http:","https:"].includes(parsed.protocol)||parsed.origin!==configuredOrigin||parsed.username||parsed.password)return {};
+  return {"Access-Control-Allow-Origin":parsed.origin,"Access-Control-Allow-Methods":"GET, POST, DELETE, OPTIONS","Access-Control-Allow-Headers":"Content-Type, Authorization","Vary":"Origin"};
+ }catch{return {};}
+}
 function json(data:unknown,status=200,env?:Env):Response{return Response.json(data,{status,headers:{"Cache-Control":"no-store",...corsHeaders(env??{DATABASE_URL:""})}})}
 async function body(request:Request){try{return await request.json() as Record<string,unknown>}catch{return null}}
 function text(value:unknown){return typeof value==="string"?value.trim():""}
