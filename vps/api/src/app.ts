@@ -3,7 +3,7 @@ import { calculateResearchStatus } from "./research-status.js";
 import { normalizeStoredQuoteRatio, parseCoinGeckoUsdTicker, parseRequestedDays } from "./market-input.js";
 
 export interface Env { DATABASE_URL: string; ADMIN_TOKEN?: string; CORS_ORIGIN?: string; }
-function corsHeaders(env:Env){
+function corsHeaders(env:Env):Record<string,string>{
  const configuredOrigin=env.CORS_ORIGIN?.trim()??"";
  if(!configuredOrigin||configuredOrigin==="*")return {};
  try{
