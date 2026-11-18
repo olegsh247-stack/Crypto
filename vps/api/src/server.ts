@@ -5,7 +5,7 @@ import { configureApiServerTimeouts, isRequestBodyTooLarge } from "./server-guar
 
 const port=Number(process.env.PORT??8080);
 const host=process.env.HOST??"127.0.0.1";
-const env:Env={DATABASE_URL:process.env.DATABASE_URL??"",ADMIN_TOKEN:process.env.ADMIN_TOKEN};
+const env:Env={DATABASE_URL:process.env.DATABASE_URL??"",ADMIN_TOKEN:process.env.ADMIN_TOKEN,CORS_ORIGIN:process.env.CORS_ORIGIN};
 
 const server=http.createServer(async(req,res)=>{
   const startedAt=Date.now();
