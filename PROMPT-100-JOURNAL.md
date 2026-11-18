@@ -506,3 +506,12 @@
 - PR #110–#118 merged. Legacy PR #105/#106/#107/#100/#101/#86/#89/#88/#69/#84/#82/#81/#80 reviewed and retained open; не закрывать и не объединять автоматически.
 - Product Contour Stage 3 остаётся IN PROGRESS/BLOCKED до GET-only API и read-only SQL проверки BTC/ETH/SOL/CAKE на отдельной изолированной non-production staging API/DB. VPS/IP/SSH/staging endpoint не предоставлены; provisioning не выполнялся.
 - BTC Rule v1 research остаётся DONE в offline/research scope. Production DB writes, live ingestion/capture, persistent Worker execution, runtime registry/scenario/probability changes, production migrations/deployment, DNS и cutover не выполнялись.
+
+
+## 2026-11-18 — аудит 14 открытых PR и единый runtime-hardening пакет
+
+- Сверен список открытых PR репозитория против актуального `main` `4ca4bc99efadc36dc2634c4582919e9b1754be04`: 14 PR, из них #120 — единственный актуальный пакет; остальные 13 — исторические ветки, перекрытые main или требующие выборочного переноса. Ни один старый PR не закрыт и не объединён.
+- Выборочная проверка #84/#82/#81/#80 не выявила безопасного готового к переносу пакета: #84 дублирует текущие source registries и содержит несогласованный ETF freshness policy status, а его сценарный калькулятор передаёт потенциально null hashrate в обязательное правило; #82/#80 заменены текущими BTC fee-window/source validation contracts; #81 superseded действующим 144-block контрактом. Повторный BTC collector из #69 не нужен.
+- В существующей рабочей ветке `fix/self-hosted-runtime-boundaries-2026-11-18` продолжен единый пакет #120: Worker opt-in, Compose network segmentation, staging runbook, PostgreSQL 16 backup/restore rehearsal и fail-closed CORS с regression tests. Plan 100 синхронизирован с текущей базой main, результатами аудита и новым правилом: небольшие изменения накапливаются в одной рабочей ветке, без отдельного PR на каждую правку.
+- Exact HEAD `6c6b9bde32bbb32df3e50ec6c787bff9fec79308`: VPS API Build Rehearsal #44323477661, VPS Docker image build #44323477720 и Validate VPS Release Workflow #44323477836 — все SUCCESS. API rehearsal включал disposable PostgreSQL migrations, read-only Stage 3 inventory, BTC provenance/idempotency, backup/restore и API/Worker E2E.
+- PR #120 остаётся Draft/Open. Main не менялся. Ни один legacy PR не закрыт/merged; VPS provisioning, deployment, production DB access/writes, live ingestion, DNS и cutover не выполнялись.
