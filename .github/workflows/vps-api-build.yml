@@ -44,11 +44,16 @@ jobs:
       - name: Validate production Compose network boundaries
         run: |
           set -euo pipefail
-          docker compose --profile ops --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose.json
+          docker compose --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose-default.json
+          docker compose --profile ops --profile ingestion --env-file vps/.env.production.example -f vps/docker-compose.production.yml config --format json > /tmp/crypto-production-compose-all.json
           python3 - <<'PY'
           import json
-          config=json.load(open('/tmp/crypto-production-compose.json'))
+          default=json.load(open('/tmp/crypto-production-compose-default.json'))
+          config=json.load(open('/tmp/crypto-production-compose-all.json'))
           services=config['services']
+          default_services=default['services']
+          assert 'worker' not in default_services, default_services.keys()
+          assert 'ingestion' in services['worker'].get('profiles',[]), services['worker'].get('profiles')
           assert not services['postgres'].get('ports'), services['postgres'].get('ports')
           assert not services['api'].get('ports'), services['api'].get('ports')
           assert not services['worker'].get('ports'), services['worker'].get('ports')
@@ -57,7 +62,13 @@ jobs:
           caddy_ports={str(p['published']) for p in services['caddy'].get('ports',[])}
           assert {'80','443'} <= caddy_ports, caddy_ports
           assert services['worker']['environment']['WORKER_SCHEDULE_UTC']=='00:30'
-          print('VPS_PRODUCTION_COMPOSE_OK public_ports=80,443 postgres_private=1 api_private=1 worker_private=1')
+          assert set(services['postgres']['networks'])=={'database'}
+          assert set(services['api']['networks'])=={'database','edge'}
+          assert set(services['web']['networks'])=={'edge'}
+          assert set(services['worker']['networks'])=={'database','worker-egress'}
+          assert set(services['caddy']['networks'])=={'edge'}
+          assert config['networks']['database'].get('internal') is True
+          print('VPS_PRODUCTION_COMPOSE_OK worker_opt_in=1 web_db_isolation=1 database_internal=1 public_ports=80,443')
           PY
       - name: Build VPS API and Worker Docker images
         run: |

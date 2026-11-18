@@ -14,7 +14,7 @@ services:
       timeout: 3s
       retries: 20
     networks:
-      - backend
+      - database
 
   migrate:
     image: postgres:16
@@ -31,7 +31,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend
+      - database
 
   backup:
     image: postgres:16
@@ -50,7 +50,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend
+      - database
 
   api:
     build:
@@ -75,7 +75,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend
+      - database
       - edge
 
   web:
@@ -103,10 +103,10 @@ services:
       api:
         condition: service_healthy
     networks:
-      - backend
       - edge
 
   worker:
+    profiles: ["ingestion"]
     build:
       context: .
       dockerfile: worker/Dockerfile
@@ -118,7 +118,8 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - backend
+      - database
+      - worker-egress
 
   caddy:
     image: caddy:2
@@ -142,9 +143,12 @@ services:
       - edge
 
 networks:
-  backend:
+  database:
     driver: bridge
+    internal: true
   edge:
+    driver: bridge
+  worker-egress:
     driver: bridge
 
 volumes:
