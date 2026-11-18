@@ -170,13 +170,22 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf "$BACKUP_DIR"
-          bash scripts/backup-postgres.sh
+          # Use PostgreSQL 16 client tools for both dump and restore. A newer pg_dump
+          # can emit SET commands unsupported by the PostgreSQL 16 restore target.
+          docker run --rm --network host \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e BACKUP_DIR=/backups \
+            -e BACKUP_RETENTION_DAYS="$BACKUP_RETENTION_DAYS" \
+            -v "$BACKUP_DIR:/backups" \
+            -v "$GITHUB_WORKSPACE/scripts/backup-postgres.sh:/repo/backup-postgres.sh:ro" \
+            postgres:16 bash /repo/backup-postgres.sh
           dump=$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'crypto-postgres-*.dump' -print -quit)
           test -n "$dump"
           sha256sum -c "$dump.sha256"
           psql "$DATABASE_URL" --set=ON_ERROR_STOP=1 --command="CREATE DATABASE crypto_restore_test;"
           restore_url='postgresql://postgres:postgres@127.0.0.1:${{ steps.postgres.outputs.port }}/crypto_restore_test'
-          pg_restore --exit-on-error --no-owner --no-acl --dbname="$restore_url" "$dump"
+          docker run --rm --network host -v "$BACKUP_DIR:/backups:ro" postgres:16 \
+            pg_restore --exit-on-error --no-owner --no-acl --dbname="$restore_url" "/backups/$(basename "$dump")"
           table_counts() {
             local url="$1"
             psql "$url" -X -A -t -F '|' -v ON_ERROR_STOP=1 -c "
